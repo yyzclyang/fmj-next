@@ -1,0 +1,71 @@
+package fmj.combat.actions
+
+import fmj.characters.FightingCharacter
+import fmj.characters.Monster
+import fmj.characters.Player
+import fmj.combat.anim.RaiseAnimation
+
+import graphics.Canvas
+import kotlin.js.Math
+
+class ActionPhysicalAttackAll(attacker: FightingCharacter,
+                              targets: List<FightingCharacter>) : ActionMultiTarget(attacker, targets) {
+
+    private val TOTAL_FRAME = 5
+    private var dx: Float = 0.toFloat()
+    private var dy: Float = 0.toFloat()
+    private var ox: Int = 0
+    private var oy: Int = 0
+
+//    private val buffRound: Int = 0
+    override fun preproccess() {
+        // TODO 记下伤害值、异常状态
+        var damage: Int
+        ox = mAttacker!!.combatX
+        oy = mAttacker!!.combatY
+        dx = (44.0f - mAttacker!!.combatX) / TOTAL_FRAME
+        dy = (14.0f - mAttacker!!.combatY) / TOTAL_FRAME
+        for (i in 0 until mTargets!!.size) {
+            val fc = mTargets!![i]
+            damage = mAttacker!!.attack - fc.defend
+            if (damage <= 0) {
+                damage = 1
+            }
+            damage += (Math.random() * 3).toInt()
+            fc.hp = fc.hp - damage
+            mRaiseAnis!!.add(RaiseAnimation(mTargets!![i].combatX, mTargets!![i].combatY, -damage, 0))
+        }
+    }
+
+    override fun update(delta: Long): Boolean {
+        super.update(delta)
+        if (mCurrentFrame < TOTAL_FRAME) { // 发起动作
+            mAttacker!!.setCombatPos((ox + dx * mCurrentFrame).toInt(), (oy + dy * mCurrentFrame).toInt())
+            if (mAttacker is Monster) {
+                val fs = mAttacker!!.fightingSprite!!
+                fs.currentFrame = fs.frameCnt * mCurrentFrame / TOTAL_FRAME + 1
+            } else if (mAttacker is Player) {
+                val fs = mAttacker!!.fightingSprite!!
+                fs.currentFrame = 5 * mCurrentFrame / TOTAL_FRAME + 1
+            }
+        } else if (mCurrentFrame > TOTAL_FRAME) { // 扣血、异常状态的动画
+            return updateRaiseAnimation(delta)
+        } else {
+            mAttacker!!.setCombatPos(ox, oy)
+            if (mAttacker is Monster) {
+                mAttacker!!.fightingSprite!!.currentFrame = 1
+            } else if (mAttacker is Player) {
+                val fs = mAttacker!!.fightingSprite!!
+                fs.currentFrame = 1 // TODO the old state 眠
+            }
+        }
+        return true
+    }
+
+    override fun draw(canvas: Canvas) {
+        if (mCurrentFrame >= TOTAL_FRAME) {
+            drawRaiseAnimation(canvas)
+        }
+    }
+
+}

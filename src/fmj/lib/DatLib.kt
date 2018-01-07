@@ -1,0 +1,208 @@
+package fmj.lib
+
+import fmj.characters.Monster
+import fmj.characters.NPC
+import fmj.characters.Player
+import fmj.characters.ResLevelupChain
+import fmj.characters.SceneObj
+import fmj.goods.BaseGoods
+import fmj.goods.GoodsDecorations
+import fmj.goods.GoodsDrama
+import fmj.goods.GoodsEquipment
+import fmj.goods.GoodsHiddenWeapon
+import fmj.goods.GoodsMedicine
+import fmj.goods.GoodsMedicineChg4Ever
+import fmj.goods.GoodsMedicineLife
+import fmj.goods.GoodsStimulant
+import fmj.goods.GoodsTudun
+import fmj.goods.GoodsWeapon
+import fmj.magic.MagicAttack
+import fmj.magic.MagicAuxiliary
+import fmj.magic.MagicEnhance
+import fmj.magic.MagicRestore
+import fmj.magic.MagicSpecial
+import fmj.magic.ResMagicChain
+import java.File
+import java.gbkBytes
+
+
+class DatLib(buffer: ByteArray) {
+
+    /**
+     * DAT.LIB文件的所有内容
+     */
+    private var mBuffer = buffer
+
+    /**
+     * 保存资源数据相对文件首字节的偏移量
+     */
+    private val mDataOffset = HashMap<Int, Int>(2048)
+
+    init {
+        getAllResOffset()
+    }
+
+    private fun getAllResOffset() {
+        var i = 0x10
+        var j = 0x2000
+
+        while (mBuffer[i].toInt() != -1) {
+            val key = getKey(mBuffer[i++].toInt(), mBuffer[i++].toInt(),
+                    mBuffer[i++].toInt() and 0xFF)
+            val block = mBuffer[j++].toInt() and 0xFF
+            val low = mBuffer[j++].toInt() and 0xFF
+            val high = mBuffer[j++].toInt() and 0xFF
+            val value = block * 0x4000 or (high shl 8 or low)
+            mDataOffset.put(key, value)
+        }
+    }
+
+    /**
+     *
+     * @param resType
+     * 资源文件类型号1-12
+     * @param type
+     * 资源类型
+     * @param index
+     * 资源索引号
+     * @return 资源对象，不存在则返回`null`
+     */
+    fun getRes(resType: ResType, type: Int, index: Int): ResBase? {
+        val offset = getDataOffset(resType, type, index)
+        val res = (if (offset != -1) {
+            val res: ResBase? =
+                    when (resType) {
+                        ResType.GUT -> ResGut()
+
+                        ResType.MAP -> ResMap()
+
+                        ResType.ARS -> when (type) {
+                            1 // 玩家角色
+                            -> Player()
+
+                            2 // NPC角色
+                            -> NPC()
+
+                            3 // 敌人角色
+                            -> Monster()
+
+                            4 // 场景对象
+                            -> SceneObj()
+
+                            else -> null
+                        }
+
+                        ResType.MRS -> getMagic(type, index)
+
+                        ResType.SRS -> ResSrs()
+
+                        ResType.GRS -> getGoods(type, index)
+
+                        ResType.TIL, ResType.ACP, ResType.GDP, ResType.GGJ, ResType.PIC -> ResImage()
+
+                        ResType.MLR -> when(type) {
+                            1 -> ResMagicChain()
+                            2 -> ResLevelupChain()
+                            else -> null
+                        }
+                    }
+            res?.setData(mBuffer, offset)
+            res
+        } else {
+            // 资源不存在
+            null
+        })
+        return res ?: throw Error("res not found:resType=$resType,type=$type,index=$index")
+    }
+
+    private fun getGoods(type: Int, index: Int): BaseGoods? {
+        if (type >= 1 && type <= 5) {
+            return GoodsEquipment()
+        }
+        var rtn: BaseGoods? = null
+        when (type) {
+            6 -> rtn = GoodsDecorations()
+
+            7 -> rtn = GoodsWeapon()
+
+            8 -> rtn = GoodsHiddenWeapon()
+
+            9 -> rtn = GoodsMedicine()
+
+            10 -> rtn = GoodsMedicineLife()
+
+            11 -> rtn = GoodsMedicineChg4Ever()
+
+            12 -> rtn = GoodsStimulant()
+
+            13 -> rtn = GoodsTudun()
+
+            14 -> rtn = GoodsDrama()
+        }
+        return rtn
+    }
+
+    private fun getMagic(type: Int, index: Int): ResBase? {
+        when (type) {
+            1 -> return MagicAttack()
+            2 -> return MagicEnhance()
+            3 -> return MagicRestore()
+            4 -> return MagicAuxiliary()
+            5 -> return MagicSpecial()
+        }
+        return null
+    }
+
+    /**
+     *
+     * @param resType
+     * 资源文件类型号1-12
+     * @param type
+     * 资源类型
+     * @param index
+     * 资源索引号
+     * @return 资源所在位置, 返回-1表示不存在
+     */
+    private fun getDataOffset(resType: ResType, type: Int, index: Int): Int {
+        return mDataOffset[getKey(resType.v, type, index)] ?: -1
+    }
+
+    /**
+     *
+     * @param resType
+     * 资源文件类型号1-12
+     * @param type
+     * 资源类型
+     * @param index
+     * 资源索引号
+     * @return 每个资源唯一的编号，用于哈希表键
+     */
+    private fun getKey(resType: Int, type: Int, index: Int): Int {
+        return resType shl 16 or (type shl 8) or index
+    }
+
+    enum class ResType(val v: Int) {
+        GUT(1), // 剧情脚本
+        MAP(2), // 地图资源
+        ARS(3), // 角色资源
+        MRS(4), // 魔法资源
+        SRS(5), // 特效资源
+        GRS(6), // 道具资源
+        TIL(7), // tile资源
+        ACP(8), // 角色图片
+        GDP(9), // 道具图片
+        GGJ(10), // 特效图片
+        PIC(11), // 杂类图片
+        MLR(12), // 链资源
+    }
+
+    companion object {
+        val instance: DatLib by lazy {
+            DatLib(File.contentsOf("DAT.LIB"))
+        }
+
+        fun GetRes(resType: ResType, type: Int, index: Int): ResBase? {
+            return instance.getRes(resType, type, index)
+        }
+    }
+}

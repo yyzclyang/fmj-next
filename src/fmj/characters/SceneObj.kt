@@ -22,7 +22,7 @@ class SceneObj : NPC() {
         step = buf[offset + 3].toInt() and 0xFF
     }
 
-    override fun writeExternal(out: ObjectOutput) {
+    override fun encode(out: ObjectOutput) {
         out.writeInt(type)
         out.writeInt(index)
         out.writeInt(state.v)
@@ -35,7 +35,7 @@ class SceneObj : NPC() {
         out.writeInt(posInMap.y)
     }
 
-    override fun readExternal(coder: ObjectInput) {
+    override fun decode(coder: ObjectInput) {
         type = coder.readInt()
         index = coder.readInt()
         state = State.fromInt(coder.readInt())

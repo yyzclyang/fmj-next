@@ -1,12 +1,12 @@
 package fmj.characters
 
 import java.Random
-import java.Externalizable
+import java.Coder
 import java.ObjectOutput
 import java.ObjectInput
 
 
-open class NPC : Character(), Externalizable {
+open class NPC : Character(), Coder {
 
     /**
      * 暂停状态，等到延时到了后转变为巡逻状态
@@ -43,7 +43,7 @@ open class NPC : Character(), Externalizable {
         step = buf[offset + 3].toInt() and 0xFF
     }
 
-    override fun writeExternal(out: ObjectOutput) {
+    override fun encode(out: ObjectOutput) {
         out.writeInt(type)
         out.writeInt(index)
         out.writeInt(state.v)
@@ -59,7 +59,7 @@ open class NPC : Character(), Externalizable {
         out.writeInt(posInMap.y)
     }
 
-    override fun readExternal(coder: ObjectInput) {
+    override fun decode(coder: ObjectInput) {
         type = coder.readInt()
         index = coder.readInt()
         state = State.fromInt(coder.readInt())

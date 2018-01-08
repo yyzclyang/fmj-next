@@ -52,9 +52,9 @@ class Random {
     }
 }
 
-interface Externalizable {
-    fun writeExternal(out: ObjectOutput)
-    fun readExternal(coder: ObjectInput)
+interface Coder {
+    fun encode(out: ObjectOutput)
+    fun decode(coder: ObjectInput)
 }
 
 interface ObjectOutput {

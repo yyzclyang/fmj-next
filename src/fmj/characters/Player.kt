@@ -10,12 +10,12 @@ import fmj.magic.ResMagicChain
 
 import graphics.Canvas
 
-import java.Externalizable
+import java.Coder
 import java.ObjectInput
 import java.ObjectOutput
 
 
-class Player : FightingCharacter(), Externalizable {
+class Player : FightingCharacter(), Coder {
 
     private var mImgHead: ResImage? = null
 
@@ -240,7 +240,7 @@ class Player : FightingCharacter(), Externalizable {
         }
     }
 
-    override fun readExternal(coder: ObjectInput) {
+    override fun decode(coder: ObjectInput) {
         type = coder.readInt()
         index = coder.readInt()
         mImgHead = DatLib.GetRes(DatLib.ResType.PIC, 1, index) as ResImage?
@@ -273,7 +273,7 @@ class Player : FightingCharacter(), Externalizable {
         }
     }
 
-    override fun writeExternal(out: ObjectOutput) {
+    override fun encode(out: ObjectOutput) {
         out.writeInt(type)
         out.writeInt(index)
         out.writeInt(walkingSpriteId)

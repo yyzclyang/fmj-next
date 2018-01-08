@@ -57,7 +57,7 @@ object SaveLoadGame {
 
         out.writeInt(ScreenMainGame.sPlayerList.size)
         for (i in 0 until ScreenMainGame.sPlayerList.size) {
-            ScreenMainGame.sPlayerList[i].writeExternal(out)
+            ScreenMainGame.sPlayerList[i].encode(out)
         }
         out.writeInt(Player.sMoney)
         Player.sGoodsList.write(out)
@@ -68,7 +68,7 @@ object SaveLoadGame {
             } else {
                 io.writeByte(0)
             }
-            obj.writeExternal(io)
+            obj.encode(io)
         }
         Combat.write(out)
     }
@@ -88,7 +88,7 @@ object SaveLoadGame {
         ScreenMainGame.sPlayerList.clear()
         for (i in 0 until size) {
             val p = Player()
-            p.readExternal(coder)
+            p.decode(coder)
             ScreenMainGame.sPlayerList.add(p)
         }
         Player.sMoney = coder.readInt()
@@ -102,7 +102,7 @@ object SaveLoadGame {
                         1 -> SceneObj()
                         else -> throw Error("Bad obj type")
                     }
-            npc.readExternal(it)
+            npc.decode(it)
             npc
         }
 

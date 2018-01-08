@@ -1,12 +1,8 @@
 package java
 
-import kotlin.js.Math
 import kotlin.math.floor
 
-class Stack<T>(list:MutableList<T>): Iterator<T> {
-
-    private var itCounter: Int = 0
-
+class Stack<T>(list:MutableList<T>) {
     private var items: MutableList<T> = list
 
     val size: Int
@@ -23,8 +19,7 @@ class Stack<T>(list:MutableList<T>): Iterator<T> {
         return if (items.isEmpty()) {
             null
         } else {
-            val item =  items.count() - 1
-            items.removeAt(item)
+            items.removeAt(items.count() - 1)
         }
     }
 
@@ -32,27 +27,15 @@ class Stack<T>(list:MutableList<T>): Iterator<T> {
         return if (items.isEmpty()) {
             null
         } else {
-            items[items.count() - 1]
-        }
-    }
-
-    override fun hasNext(): Boolean {
-        return itCounter < items.count()
-    }
-
-    override fun next(): T {
-        if (hasNext()) {
-            val topPos: Int = (items.count() - 1) - itCounter
-            itCounter++
-            return items[topPos]
-        } else {
-            throw NoSuchElementException("No such element")
+            items.last()
         }
     }
 
     fun clear() {
         items.clear()
     }
+
+    operator fun iterator() = items.iterator()
 
     companion object {
         fun<T> create() = Stack<T>(mutableListOf())
@@ -61,7 +44,7 @@ class Stack<T>(list:MutableList<T>): Iterator<T> {
 
 class Random {
     fun nextInt(rng: Int): Int {
-        return floor(Math.random() * rng).toInt()
+        return floor(random() * rng).toInt()
     }
 
     fun nextBoolean(): Boolean {
@@ -341,9 +324,12 @@ fun objectOutputOf(f: File): ObjectOutput {
     return ObjectOutputStream(f)
 }
 
+fun random() = jsRandom()
+
 external fun jsStorageGet(path: String): String?
 external fun jsStorageSet(path: String, value: String?)
 external fun jsStorageHas(path: String): Boolean
 external fun jsGbkEncode(path: String): Array<Byte>
 external fun jsGbkDecode(data: Array<Byte>): String
+external fun jsRandom(): Double
 

@@ -24,7 +24,7 @@ import graphics.Paint
 import graphics.Rect
 import graphics.RectF
 import java.System
-import kotlin.js.Math
+import java.random
 
 
 class ScriptProcess private constructor() {
@@ -1545,7 +1545,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
-                    if ((Math.random() * 1000).toInt() <= get2ByteInt(code, start)) {
+                    if ((random() * 1000).toInt() <= get2ByteInt(code, start)) {
                         mScreenMainGame!!.gotoAddress(get2ByteInt(code, start + 2))
                     }
                     return false

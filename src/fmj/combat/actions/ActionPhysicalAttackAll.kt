@@ -6,7 +6,7 @@ import fmj.characters.Player
 import fmj.combat.anim.RaiseAnimation
 
 import graphics.Canvas
-import kotlin.js.Math
+import java.random
 
 class ActionPhysicalAttackAll(attacker: FightingCharacter,
                               targets: List<FightingCharacter>) : ActionMultiTarget(attacker, targets) {
@@ -31,7 +31,7 @@ class ActionPhysicalAttackAll(attacker: FightingCharacter,
             if (damage <= 0) {
                 damage = 1
             }
-            damage += (Math.random() * 3).toInt()
+            damage += (random() * 3).toInt()
             fc.hp = fc.hp - damage
             mRaiseAnis!!.add(RaiseAnimation(mTargets!![i].combatX, mTargets!![i].combatY, -damage, 0))
         }

@@ -5,7 +5,7 @@ import fmj.characters.Monster
 import fmj.characters.Player
 import fmj.combat.anim.RaiseAnimation
 import graphics.Canvas
-import kotlin.js.Math
+import java.random
 
 class ActionPhysicalAttackOne(attacker: FightingCharacter,
                               target: FightingCharacter) : ActionSingleTarget(attacker, target) {
@@ -34,7 +34,7 @@ class ActionPhysicalAttackOne(attacker: FightingCharacter,
         if (mAttacker is Player) {
             damage *= 10
         }
-        damage += (Math.random() * 10).toInt()
+        damage += (random() * 10).toInt()
         mTarget.hp = mTarget.hp - damage
         mRaiseAni = RaiseAnimation(mTarget.combatLeft, mTarget.combatTop, -damage, 0)
     }

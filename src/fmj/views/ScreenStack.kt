@@ -37,6 +37,7 @@ class ScreenStack: ScreenDelegate {
 
     override fun pushScreen(scr: BaseScreen) {
         mScreenStack.push(scr)
+        scr.delegate = this
     }
 
     override fun popScreen() {

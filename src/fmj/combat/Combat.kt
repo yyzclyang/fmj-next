@@ -313,16 +313,16 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
                     val lvuplist = mutableListOf<Player>()
                     for (p in mPlayerList) { // 获得经验
                         if (p.isAlive) {
-                            if (p.level >= p.levelupChain!!.maxLevel)
+                            if (p.level >= p.levelupChain.maxLevel)
                             // 满级
                                 break
-                            val nextExp = p.levelupChain!!.getNextLevelExp(p.level)
+                            val nextExp = p.levelupChain.getNextLevelExp(p.level)
                             val exp = mWinExp + p.currentExp
                             if (exp < nextExp) {
                                 p.currentExp = exp
                             } else { // 升级
                                 val cl = p.level // 当前等级
-                                val c = p.levelupChain!!
+                                val c = p.levelupChain
                                 p.currentExp = exp - nextExp
                                 p.level = cl + 1
                                 p.maxHP = p.maxHP + c.getMaxHP(cl + 1) - c.getMaxHP(cl)
@@ -331,7 +331,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
                                 p.mp = p.maxMP
                                 p.attack = p.attack + c.getAttack(cl + 1) - c.getAttack(cl)
                                 p.defend = p.defend + c.getDefend(cl + 1) - c.getDefend(cl)
-                                p.magicChain!!.learnNum = c.getLearnMagicNum(cl + 1)
+                                p.magicChain.learnNum = c.getLearnMagicNum(cl + 1)
                                 p.speed = p.speed + c.getSpeed(cl + 1) - c.getSpeed(cl)
                                 p.lingli = p.lingli + c.getLingli(cl + 1) - c.getLingli(cl)
                                 p.luck = p.luck + c.getLuck(cl + 1) - c.getLuck(cl)
@@ -385,10 +385,6 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
             }
 
             Combat.CombatState.Win -> {
-                // TODO if (winAddr...)
-                //			if (mTimeCnt > 1000) {
-                //				mCombatState = CombatState.Exit;
-                //			}
                 mIsWin = true
                 if (mCombatSuccess!!.update(delta)) {
                     mCombatState = CombatState.Exit
@@ -396,7 +392,6 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
             }
 
             Combat.CombatState.Loss ->
-                // TODO if (lossAddr...)
                 if (sIsRandomFight && mFlyPeach.update(delta)) {
 
                 } else {

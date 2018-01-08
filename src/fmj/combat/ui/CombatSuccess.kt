@@ -35,9 +35,9 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
         for (p in lvuplist) {
             mLvupList.add(MsgScreen(p.name + "修行提升"))
             mLvupList.add(LevelupScreen(p))
-            if (p.levelupChain!!.getLearnMagicNum(p.level) > p.levelupChain!!.getLearnMagicNum(p.level - 1)) {
+            if (p.levelupChain.getLearnMagicNum(p.level) > p.levelupChain.getLearnMagicNum(p.level - 1)) {
                 mLvupList.add(LearnMagicScreen(p.name,
-                        p.magicChain!!.getMagic(p.levelupChain!!.getLearnMagicNum(p.level) - 1).magicName!!))
+                        p.magicChain.getMagic(p.levelupChain.getLearnMagicNum(p.level) - 1).magicName))
             }
         }
     }
@@ -91,14 +91,7 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
         constructor(msg: String) : this((96 - 24) / 2, msg)
 
         init {
-            var msg: ByteArray
-            try {
-                msg = _msg.gbkBytes()
-            } catch (e: Error) {
-                println("Encode error: $_msg")
-                msg = ByteArray(0)
-            }
-
+            val msg = _msg.gbkBytes()
             val side = DatLib.GetRes(DatLib.ResType.PIC, 2, 8) as ResImage
             mMsg = Bitmap.createBitmap(msg.size * 8 + 8, 24)
             val c = Canvas(mMsg)
@@ -136,7 +129,7 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
             mInfo = ri.getBitmap(0)!!
 
             val canvas = Canvas(mInfo)
-            val lc = p.levelupChain!!
+            val lc = p.levelupChain
             val curl = p.level
             Util.drawSmallNum(canvas, p.hp, 37, 9)
             p.hp = p.maxHP

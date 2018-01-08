@@ -26,7 +26,7 @@ abstract class FightingCharacter : Character() {
     /**
      * 魔法链
      */
-    var magicChain: ResMagicChain? = null
+    lateinit var magicChain: ResMagicChain
 
     /**
      * 等级

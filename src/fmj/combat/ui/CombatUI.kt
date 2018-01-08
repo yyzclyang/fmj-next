@@ -221,7 +221,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                     }
 
                     2//魔法技能
-                    -> delegate.pushScreen(ScreenMagic(mPlayerList[mCurPlayerIndex].magicChain!!,
+                    -> delegate.pushScreen(ScreenMagic(mPlayerList[mCurPlayerIndex].magicChain,
                             object : ScreenMagic.OnItemSelectedListener {
 
                                 override fun onItemSelected(magic: BaseMagic) {

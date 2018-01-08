@@ -43,7 +43,6 @@ object TextRender {
         Global.COLOR_WHITE = tmpColor
     }
 
-    @Deprecated("")
     fun drawText(canvas: Canvas, text: ByteArray, x: Int, y: Int) {
         var x = x
         var i = 0

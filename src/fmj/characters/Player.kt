@@ -19,7 +19,7 @@ class Player : FightingCharacter(), Coder {
 
     private var mImgHead: ResImage? = null
 
-    var levelupChain: ResLevelupChain? = null
+    lateinit var levelupChain: ResLevelupChain
         private set
 
     var currentExp: Int = 0 // 当前经验值
@@ -56,8 +56,8 @@ class Player : FightingCharacter(), Coder {
         direction = Direction.fromInt(buf[offset + 2].toInt() and 0xFF)
         step = buf[offset + 3].toInt() and 0xff
         setPosInMap(buf[offset + 5].toInt() and 0xFF, buf[offset + 6].toInt() and 0xFF)
-        magicChain = DatLib.GetRes(DatLib.ResType.MLR, 1, buf[offset + 0x17].toInt() and 0xff) as ResMagicChain?
-        magicChain?.learnNum = buf[offset + 9].toInt() and 0xff
+        magicChain = DatLib.GetRes(DatLib.ResType.MLR, 1, buf[offset + 0x17].toInt() and 0xff) as ResMagicChain
+        magicChain.learnNum = buf[offset + 9].toInt() and 0xff
         name = getString(buf, offset + 0x0a)
         level = buf[offset + 0x20].toInt() and 0xff
         maxHP = get2BytesInt(buf, offset + 0x26)
@@ -70,11 +70,10 @@ class Player : FightingCharacter(), Coder {
         lingli = buf[offset + 0x37].toInt() and 0xff
         luck = buf[offset + 0x38].toInt() and 0xff
         currentExp = get2BytesInt(buf, offset + 0x32)
-        levelupChain = DatLib.GetRes(DatLib.ResType.MLR, 2, index) as ResLevelupChain?
+        levelupChain = DatLib.GetRes(DatLib.ResType.MLR, 2, index) as ResLevelupChain
 
-        var tmp: Int
+        var tmp = buf[offset + 0x1e].toInt() and 0xff
 
-        tmp = buf[offset + 0x1e].toInt() and 0xff
         if (tmp != 0) {
             equipmentsArray[0] = DatLib.GetRes(DatLib.ResType.GRS, 6, tmp) as GoodsEquipment?
         }
@@ -213,7 +212,7 @@ class Player : FightingCharacter(), Coder {
             TextRender.drawText(canvas, "经验值", 41, 4)
             val w = Util.drawSmallNum(canvas, currentExp, 97, 4)
             TextRender.drawText(canvas, "/", 97 + w + 2, 4)
-            Util.drawSmallNum(canvas, levelupChain!!.getNextLevelExp(level), 97 + w + 9, 10)
+            Util.drawSmallNum(canvas, levelupChain.getNextLevelExp(level), 97 + w + 9, 10)
             TextRender.drawText(canvas, "身法   $speed", 41, 23)
             TextRender.drawText(canvas, "灵力   $lingli", 41, 41)
             TextRender.drawText(canvas, "幸运   $luck", 41, 59)
@@ -244,14 +243,14 @@ class Player : FightingCharacter(), Coder {
         type = coder.readInt()
         index = coder.readInt()
         mImgHead = DatLib.GetRes(DatLib.ResType.PIC, 1, index) as ResImage?
-        levelupChain = DatLib.GetRes(DatLib.ResType.MLR, 2, index) as ResLevelupChain?
+        levelupChain = DatLib.GetRes(DatLib.ResType.MLR, 2, index) as ResLevelupChain
         setWalkingSprite(WalkingSprite(type, coder.readInt()))
         fightingSprite = FightingSprite(DatLib.ResType.PIC, index)
         direction = Direction.fromInt(coder.readInt())
         step = coder.readInt()
         setPosInMap(coder.readInt(), coder.readInt())
-        magicChain = DatLib.GetRes(DatLib.ResType.MLR, 1, coder.readInt()) as ResMagicChain?
-        magicChain?.learnNum = coder.readInt()
+        magicChain = DatLib.GetRes(DatLib.ResType.MLR, 1, coder.readInt()) as ResMagicChain
+        magicChain.learnNum = coder.readInt()
         name = coder.readString()
         level = coder.readInt()
         maxHP = coder.readInt()
@@ -281,8 +280,8 @@ class Player : FightingCharacter(), Coder {
         out.writeInt(step)
         out.writeInt(posInMap.x)
         out.writeInt(posInMap.y)
-        out.writeInt(magicChain!!.index)
-        out.writeInt(magicChain!!.learnNum)
+        out.writeInt(magicChain.index)
+        out.writeInt(magicChain.learnNum)
         out.writeString(name)
         out.writeInt(level)
         out.writeInt(maxHP)

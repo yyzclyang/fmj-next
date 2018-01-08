@@ -40,8 +40,8 @@ class Monster : FightingCharacter() {
     override fun setData(buf: ByteArray, offset: Int) {
         type = buf[offset].toInt() and 0xff
         index = buf[offset + 1].toInt() and 0xff
-        magicChain = DatLib.Companion.GetRes(DatLib.ResType.MLR, 1, buf[offset + 0x2f].toInt() and 0xff) as ResMagicChain
-        magicChain?.learnNum = buf[offset + 2].toInt() and 0xff
+        magicChain = DatLib.GetRes(DatLib.ResType.MLR, 1, buf[offset + 0x2f].toInt() and 0xff) as ResMagicChain
+        magicChain.learnNum = buf[offset + 2].toInt() and 0xff
         addBuff(buf[offset + 3].toInt() and 0xff)
         mAtbuff = buf[offset + 4].toInt() and 0xff
         mLastRound = buf[offset + 0x17].toInt() and 0xff

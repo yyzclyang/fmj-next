@@ -16,6 +16,7 @@ import fmj.lib.ResGut
 import fmj.lib.ResImage
 import fmj.lib.ResSrs
 import fmj.scene.ScreenMainGame
+import fmj.views.ScreenDelegate
 import fmj.views.ScreenStack
 
 import graphics.Bitmap
@@ -28,6 +29,7 @@ import java.random
 
 
 class ScriptProcess private constructor() {
+    lateinit var delegate: ScreenDelegate
 
     private var mScript: ResGut? = null
 
@@ -55,7 +57,9 @@ class ScriptProcess private constructor() {
                 val cmdCode = code[pointer].toInt() and 0xFF
                 val cmd = mCmds[cmdCode]
                 if (cmd != null) {
-                    operateList.add(cmd.getOperate(code, pointer + 1))
+                    val operate = cmd.getOperate(code, pointer + 1)
+                    operate.delagete = delegate
+                    operateList.add(operate)
                     pointer = cmd.getNextPos(code, pointer + 1)
                 } else {
                     throw Error("ECMD: $cmdCode")
@@ -411,7 +415,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
-                    ScreenStack.instance.changeScreen(ScreenViewType.SCREEN_MENU)
+                    delegate.changeScreen(ScreenViewType.SCREEN_MENU)
                     return false
                 }
             }
@@ -684,7 +688,7 @@ class ScriptProcess private constructor() {
                         tmp[tmp.size - 1] = 0
                         choice1 = tmp
                     }
-                    bg = ScreenStack.instance.getFrameBitmap(w, 16 * 2 + 6)
+                    bg = delegate.getFrameBitmap(w, 16 * 2 + 6)
                     bgx = (160 - bg.width) / 2
                     bgy = (96 - bg.height) / 2
                 }

@@ -69,7 +69,7 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
         when (goods.type) {
             8 // 暗器
                 , 12 // 兴奋剂
-            -> ScreenStack.instance.showMessage("战斗中才能使用!", 1000)
+            -> msgDelegate.showMessage("战斗中才能使用!", 1000)
 
             13 // 土遁
             -> {
@@ -83,7 +83,7 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
             14 // 剧情类
             ->
                 // TODO 剧情类物品用法
-                ScreenStack.instance.showMessage("当前无法使用!", 1000)
+                msgDelegate.showMessage("当前无法使用!", 1000)
 
             9 // 药物
                 , 10 // 灵药
@@ -96,10 +96,10 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
         val list = ScreenMainGame.sPlayerList
                 .filter { goods.canPlayerUse(it.index) }
         if (list.isEmpty()) { // 没人能装备
-            ScreenStack.instance.showMessage("不能装备!", 1000)
+            msgDelegate.showMessage("不能装备!", 1000)
         } else if (list.size == 1) { // 一个人能装备
             if (list[0].hasEquipt(goods.type, goods.index)) {
-                ScreenStack.instance.showMessage("已装备!", 1000)
+                msgDelegate.showMessage("已装备!", 1000)
             } else {
                 delegate?.pushScreen(ScreenChgEquipment(list[0], goods as GoodsEquipment))
             }
@@ -127,7 +127,7 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
                 override fun onKeyUp(key: Int) {
                     if (key == Global.KEY_ENTER) {
                         if (list[curSel].hasEquipt(goods.type, goods.index)) {
-                            ScreenStack.instance.showMessage("已装备!", 1000)
+                            msgDelegate.showMessage("已装备!", 1000)
                         } else {
                             delegate?.popScreen()
                             delegate?.pushScreen(ScreenChgEquipment(list[curSel], goods as GoodsEquipment))

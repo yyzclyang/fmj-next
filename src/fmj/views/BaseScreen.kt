@@ -1,7 +1,9 @@
 package fmj.views
 
-import graphics.Canvas
 import fmj.ScreenViewType
+
+import graphics.Canvas
+import graphics.Bitmap
 
 interface ScreenDelegate {
     fun popScreen()
@@ -9,12 +11,15 @@ interface ScreenDelegate {
     fun changeScreen(scr: ScreenViewType)
     fun getCurScreen(): BaseScreen
     fun showMessage(msg:String, delay:Long)
+    fun getFrameBitmap(w: Int, h: Int): Bitmap
     fun keyDown(key: Int)
     fun keyUp(key: Int)
 }
 
 abstract class BaseScreen {
-    var delegate: ScreenDelegate? = null
+    lateinit var delegate: ScreenDelegate
+    val msgDelegate
+        get() = delegate
 
     open val isPopup: Boolean
         get() = false

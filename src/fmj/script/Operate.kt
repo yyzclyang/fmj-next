@@ -1,8 +1,10 @@
 package fmj.script
 
+import fmj.views.ScreenDelegate
 import graphics.Canvas
 
 abstract class Operate {
+    lateinit var delagete: ScreenDelegate
 
     /**
      *

@@ -608,10 +608,10 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                 }
             }
             if (list.size == 0) { // 没人能装备
-                ScreenStack.instance.showMessage("不能装备!", 1000)
+                msgDelegate.showMessage("不能装备!", 1000)
             } else if (list.size == 1) { // 一个人能装备
                 if (list[0].hasEquipt(goods.type, goods.index)) {
-                    ScreenStack.instance.showMessage("已装备!", 1000)
+                    msgDelegate.showMessage("已装备!", 1000)
                 } else {
                     delegate?.pushScreen(ScreenChgEquipment(list[0], goods as GoodsEquipment))
                 }
@@ -636,7 +636,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                     override fun onKeyUp(key: Int) {
                         if (key == Global.KEY_ENTER) {
                             if (list[curSel].hasEquipt(goods.type, goods.index)) {
-                                ScreenStack.instance.showMessage("已装备!", 1000)
+                                msgDelegate.showMessage("已装备!", 1000)
                             } else {
                                 delegate?.popScreen()
                                 delegate?.pushScreen(ScreenChgEquipment(list[curSel], goods as GoodsEquipment))

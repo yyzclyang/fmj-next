@@ -72,7 +72,7 @@ class ScreenStack: ScreenDelegate {
         })
     }
 
-    fun getFrameBitmap(w: Int, h: Int): Bitmap {
+    override fun getFrameBitmap(w: Int, h: Int): Bitmap {
         // 先创建Bitmap
         val bmp = Bitmap.createBitmap(w, h)
         val tmpC = Canvas(bmp)
@@ -87,10 +87,6 @@ class ScreenStack: ScreenDelegate {
 
     fun draw(canvas: Canvas) {
         TODO()
-    }
-
-    companion object {
-        val instance: ScreenStack = ScreenStack()
     }
 }
 

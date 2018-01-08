@@ -36,7 +36,7 @@ class OperateBuy(internal var data: ByteArray, internal var start: Int) : Operat
             goodsList.add(g)
             i += 2
         }
-        ScreenStack.instance.pushScreen(ScreenGoodsList(goodsList, this, Mode.Buy))
+        delagete.pushScreen(ScreenGoodsList(goodsList, this, Mode.Buy))
         return true
     }
 
@@ -54,10 +54,10 @@ class OperateBuy(internal var data: ByteArray, internal var start: Int) : Operat
 
     override fun onItemSelected(goods: BaseGoods) {
         if (Player.sMoney < goods.buyPrice) {
-            ScreenStack.instance.showMessage("金钱不足!", 1000)
+            delagete.showMessage("金钱不足!", 1000)
         } else {
             mBuyScreen.init(goods)
-            ScreenStack.instance.pushScreen(mBuyScreen)
+            delagete.pushScreen(mBuyScreen)
         }
     }
 
@@ -65,6 +65,9 @@ class OperateBuy(internal var data: ByteArray, internal var start: Int) : Operat
         private var goods: BaseGoods? = null
         private var buyCnt: Int = 0
         private var money: Int = 0
+        private val bmpBg by lazy {
+            delegate.getFrameBitmap(136, 55)
+        }
 
         override val isPopup: Boolean
             get() = true
@@ -112,10 +115,6 @@ class OperateBuy(internal var data: ByteArray, internal var start: Int) : Operat
                 goods!!.addGoodsNum(-1)
                 money += goods!!.buyPrice
             }
-        }
-
-        companion object {
-            private val bmpBg = ScreenStack.instance.getFrameBitmap(136, 55)
         }
     }
 

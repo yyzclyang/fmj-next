@@ -20,7 +20,7 @@ class OperateSale : Operate(), ScreenGoodsList.OnItemSelectedListener {
         val list = mutableListOf<BaseGoods>()
         list.addAll(Player.sGoodsList.goodsList)
         list.addAll(Player.sGoodsList.equipList)
-        ScreenStack.instance.pushScreen(ScreenGoodsList(list, this, Mode.Sale))
+        delagete.pushScreen(ScreenGoodsList(list, this, Mode.Sale))
         return true
     }
 
@@ -36,19 +36,21 @@ class OperateSale : Operate(), ScreenGoodsList.OnItemSelectedListener {
 
     override fun onItemSelected(goods: BaseGoods) {
         if (goods is GoodsDrama) {
-            ScreenStack.instance.showMessage("任务物品!", 1000)
+            delagete.showMessage("任务物品!", 1000)
         } else {
             mSaleScreen.init(goods)
-            ScreenStack.instance.pushScreen(mSaleScreen)
+            delagete.pushScreen(mSaleScreen)
         }
     }
 
     private inner class SaleGoodsScreen : BaseScreen() {
-
-        private val bmpBg = ScreenStack.instance.getFrameBitmap(136, 55)
         private var goods: BaseGoods? = null
         private var saleCnt: Int = 0
         private var money: Int = 0
+
+        private val bmpBg by lazy {
+            delegate.getFrameBitmap(136, 55)
+        }
 
         override val isPopup: Boolean
             get() = true

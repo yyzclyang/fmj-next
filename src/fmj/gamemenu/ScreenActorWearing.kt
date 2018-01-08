@@ -139,7 +139,7 @@ class ScreenActorWearing : BaseScreen() {
                                     delegate?.popScreen()
                                     delegate?.pushScreen(ScreenChgEquipment(actor, goods as GoodsEquipment))
                                 } else {
-                                    ScreenStack.instance.showMessage("不能装备!", 1000)
+                                    msgDelegate.showMessage("不能装备!", 1000)
                                 }
                             }
                         }, Mode.Use))

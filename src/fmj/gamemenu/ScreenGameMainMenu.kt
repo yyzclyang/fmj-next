@@ -161,7 +161,7 @@ class ScreenGameMainMenu : BaseScreen() {
                             delegate?.pushScreen(ScreenUseMagic(magic,
                                     ScreenMainGame.instance.playerList[id]))
                         } else {
-                            ScreenStack.instance.showMessage("此处无法使用!", 1000)
+                            msgDelegate.showMessage("此处无法使用!", 1000)
                         }
                     }
                 })

@@ -1,37 +1,35 @@
 package fmj
 
+import fmj.script.ScriptProcess
 import fmj.views.ScreenStack
 
 import graphics.Canvas
 import graphics.Bitmap
 
 class GameView {
-    internal var canvas: Canvas
-
-    init {
-        addL()//键盘监听
-        canvas = Canvas(Bitmap(Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT))
-    }
+    private val screen = ScreenStack()
+    internal val canvas = Canvas(Bitmap(Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT))
 
     fun draw() {
-        ScreenStack.instance.draw(canvas)
+        screen.draw(canvas)
     }
 
     fun update() {
     }
 
     fun keyDown(key: Int) {
-        ScreenStack.instance.keyDown(key)
+        screen.keyDown(key)
     }
 
     fun keyUp(key: Int) {
-        ScreenStack.instance.keyUp(key)
+        screen.keyUp(key)
     }
 
     fun addL() {
     }
 
     fun start() {
+        ScriptProcess.instance.delegate = screen
         addL()
     }
 }

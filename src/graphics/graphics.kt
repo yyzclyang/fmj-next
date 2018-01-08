@@ -205,31 +205,31 @@ class Canvas(b: Bitmap) {
         drawR(x, y, i - x, j - y, paint, paint.color)
     }
 
-    fun drawRect(mRectTop: Rect, paint: Paint) {
-        drawR(mRectTop.left, mRectTop.top,
-                mRectTop.right - mRectTop.left,
-                mRectTop.bottom - mRectTop.top,
+    fun drawRect(rect: Rect, paint: Paint) {
+        drawR(rect.left, rect.top,
+                rect.right - rect.left,
+                rect.bottom - rect.top,
                 paint, paint.color)
     }
 
-    fun drawRect(rWithPic: RectF, paint: Paint) {
-        drawR(rWithPic.left.toInt(),
-                rWithPic.top.toInt(),
-                (rWithPic.right - rWithPic.left).toInt(),
-                (rWithPic.bottom - rWithPic.top).toInt(),
+    fun drawRect(rect: RectF, paint: Paint) {
+        drawR(rect.left.toInt(),
+                rect.top.toInt(),
+                (rect.right - rect.left).toInt(),
+                (rect.bottom - rect.top).toInt(),
                 paint, paint.color)
     }
 
-    fun drawLines(pts: FloatArray, paint: Paint) {
+    fun drawLines(dots: FloatArray, paint: Paint) {
         bg.color = paint.color
 
-        val size = pts.size / 4
+        val size = dots.size / 4
         for (i in 0 until size) {
             bg.drawLine(
-                    pts[i * 4].toInt(),
-                    pts[i * 4 + 1].toInt(),
-                    pts[i * 4 + 2].toInt(),
-                    pts[i * 4 + 3].toInt())
+                    dots[i * 4].toInt(),
+                    dots[i * 4 + 1].toInt(),
+                    dots[i * 4 + 2].toInt(),
+                    dots[i * 4 + 3].toInt())
         }
     }
 

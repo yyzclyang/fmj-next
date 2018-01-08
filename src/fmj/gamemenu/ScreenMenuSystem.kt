@@ -90,17 +90,17 @@ class ScreenMenuSystem : BaseScreen() {
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate?.popScreen()
+            delegate.popScreen()
         } else if (key == Global.KEY_ENTER) {
             when (index) {
-                0 -> delegate?.pushScreen(ScreenSaveLoadGame(Operate.LOAD))
+                0 -> delegate.pushScreen(ScreenSaveLoadGame(Operate.LOAD))
 
-                1 -> delegate?.pushScreen(ScreenSaveLoadGame(Operate.SAVE))
+                1 -> delegate.pushScreen(ScreenSaveLoadGame(Operate.SAVE))
 
                 2 -> {
                 }
 
-                3 -> delegate?.changeScreen(ScreenViewType.SCREEN_MENU)
+                3 -> delegate.changeScreen(ScreenViewType.SCREEN_MENU)
             }
         }
     }

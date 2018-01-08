@@ -231,7 +231,7 @@ class ScreenMainGame : BaseScreen() {
             Combat.KeyUp(key)
             return
         } else if (key == Global.KEY_CANCEL) {
-            delegate?.pushScreen(ScreenGameMainMenu())
+            delegate.pushScreen(ScreenGameMainMenu())
         }
     }
 
@@ -275,7 +275,7 @@ class ScreenMainGame : BaseScreen() {
      * @param x
      * @param y
      */
-    fun triggerMapEvent(x: Int, y: Int): Boolean {
+    private fun triggerMapEvent(x: Int, y: Int): Boolean {
         if (currentMap != null && mScriptExecutor != null) {
             val id = currentMap!!.getEventNum(x, y)
             if (id != 0) {
@@ -295,11 +295,11 @@ class ScreenMainGame : BaseScreen() {
      * @param y
      * @return
      */
-    fun canPlayerWalk(x: Int, y: Int): Boolean {
+    private fun canPlayerWalk(x: Int, y: Int): Boolean {
         return if (currentMap == null) false else currentMap!!.canPlayerWalk(x, y) && getNpcFromPosInMap(x, y) == null
     }
 
-    fun walkLeft() {
+    private fun walkLeft() {
         val (x, y) = player!!.posInMap
         triggerMapEvent(x - 1, y)
         if (canPlayerWalk(x - 1, y)) {
@@ -311,7 +311,7 @@ class ScreenMainGame : BaseScreen() {
         }
     }
 
-    fun walkUp() {
+    private fun walkUp() {
         val (x, y) = player!!.posInMap
         triggerMapEvent(x, y - 1)
         if (canPlayerWalk(x, y - 1)) {
@@ -323,7 +323,7 @@ class ScreenMainGame : BaseScreen() {
         }
     }
 
-    fun walkRight() {
+    private fun walkRight() {
         val (x, y) = player!!.posInMap
         triggerMapEvent(x + 1, y)
         if (canPlayerWalk(x + 1, y)) {
@@ -335,7 +335,7 @@ class ScreenMainGame : BaseScreen() {
         }
     }
 
-    fun walkDown() {
+    private fun walkDown() {
         val (x, y) = player!!.posInMap
         triggerMapEvent(x, y + 1)
         if (canPlayerWalk(x, y + 1)) {

@@ -77,15 +77,15 @@ class OperateSale : Operate(), ScreenGoodsList.OnItemSelectedListener {
                 if (saleCnt > 0) {
                     Player.sGoodsList.useGoodsNum(goods!!.type, goods!!.index, saleCnt)
                 }
-                delegate?.popScreen()
+                delegate.popScreen()
                 // 重创物品选择界面，防止数量0还显示
-                delegate?.popScreen()
+                delegate.popScreen()
                 val list = mutableListOf<BaseGoods>()
                 list.addAll(Player.sGoodsList.goodsList)
                 list.addAll(Player.sGoodsList.equipList)
-                delegate?.pushScreen(ScreenGoodsList(list, this@OperateSale, Mode.Sale))
+                delegate.pushScreen(ScreenGoodsList(list, this@OperateSale, Mode.Sale))
             } else if (key == Global.KEY_CANCEL) {
-                delegate?.popScreen()
+                delegate.popScreen()
             }
         }
 

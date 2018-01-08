@@ -221,11 +221,11 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                     }
 
                     2//魔法技能
-                    -> delegate?.pushScreen(ScreenMagic(mPlayerList[mCurPlayerIndex].magicChain,
+                    -> delegate.pushScreen(ScreenMagic(mPlayerList[mCurPlayerIndex].magicChain!!,
                             object : ScreenMagic.OnItemSelectedListener {
 
                                 override fun onItemSelected(magic: BaseMagic) {
-                                    delegate?.popScreen() // 弹出魔法选择界面
+                                    delegate.popScreen() // 弹出魔法选择界面
                                     if (magic is MagicAttack || magic is MagicSpecial) { // 选一个敌人
                                         if (magic.isForAll) {
                                             onActionSelected(ActionMagicAttackAll(mPlayerList[mCurPlayerIndex],
@@ -540,7 +540,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                 this@CombatUI.mScreenStack.pop() // 弹出子菜单
                 when (mSelIndex) {
                     0// 装备
-                    -> delegate?.pushScreen(ScreenGoodsList(Player.sGoodsList.equipList,
+                    -> delegate.pushScreen(ScreenGoodsList(Player.sGoodsList.equipList,
                             object : ScreenGoodsList.OnItemSelectedListener {
                                 override fun onItemSelected(goods: BaseGoods) {
                                     equipSelected(goods)
@@ -548,11 +548,11 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                             }, Mode.Use))
 
                     1// 投掷
-                    -> delegate?.pushScreen(ScreenGoodsList(throwableGoodsList,
+                    -> delegate.pushScreen(ScreenGoodsList(throwableGoodsList,
                             object : ScreenGoodsList.OnItemSelectedListener {
 
                                 override fun onItemSelected(goods: BaseGoods) {
-                                    delegate?.popScreen() // pop goods list
+                                    delegate.popScreen() // pop goods list
                                     this@CombatUI.mScreenStack.pop() // pop misc menu
                                     if (goods.effectAll()) {
                                         // 投掷伤害全体敌人
@@ -572,11 +572,11 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                             }, Mode.Use))
 
                     2// 使用
-                    -> delegate?.pushScreen(ScreenGoodsList(useableGoodsList,
+                    -> delegate.pushScreen(ScreenGoodsList(useableGoodsList,
                             object : ScreenGoodsList.OnItemSelectedListener {
 
                                 override fun onItemSelected(goods: BaseGoods) {
-                                    delegate?.popScreen() // pop goods list
+                                    delegate.popScreen() // pop goods list
                                     this@CombatUI.mScreenStack.pop() // pop misc menu
                                     if (goods.effectAll()) {
                                         onActionSelected(ActionUseItemAll(mPlayerList[mCurPlayerIndex],
@@ -613,10 +613,10 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                 if (list[0].hasEquipt(goods.type, goods.index)) {
                     msgDelegate.showMessage("已装备!", 1000)
                 } else {
-                    delegate?.pushScreen(ScreenChgEquipment(list[0], goods as GoodsEquipment))
+                    delegate.pushScreen(ScreenChgEquipment(list[0], goods as GoodsEquipment))
                 }
             } else { // 多人可装备
-                delegate?.pushScreen(object : BaseScreen() {
+                delegate.pushScreen(object : BaseScreen() {
                     internal var bg = Util.getFrameBitmap(16 * 5 + 6, 6 + 16 * list.size)
                     internal var curSel = 0
                     internal var itemsText = Array(list.size) { ByteArray(11) }
@@ -638,11 +638,11 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                             if (list[curSel].hasEquipt(goods.type, goods.index)) {
                                 msgDelegate.showMessage("已装备!", 1000)
                             } else {
-                                delegate?.popScreen()
-                                delegate?.pushScreen(ScreenChgEquipment(list[curSel], goods as GoodsEquipment))
+                                delegate.popScreen()
+                                delegate.pushScreen(ScreenChgEquipment(list[curSel], goods as GoodsEquipment))
                             }
                         } else if (key == Global.KEY_CANCEL) {
-                            delegate?.popScreen()
+                            delegate.popScreen()
                         }
                     }
 

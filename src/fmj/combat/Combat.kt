@@ -246,7 +246,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
             sInstanceBk = null
         } else {
             if (!mIsWin) { // 死了，游戏结束
-                delegate?.changeScreen(ScreenViewType.SCREEN_MENU)
+                delegate.changeScreen(ScreenViewType.SCREEN_MENU)
             }
         }
 

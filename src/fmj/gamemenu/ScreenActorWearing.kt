@@ -123,7 +123,7 @@ class ScreenActorWearing : BaseScreen() {
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate?.popScreen()
+            delegate.popScreen()
         } else if (key == Global.KEY_ENTER) {
             if (!showingDesc && mEquipments[mCurItem] != null) {
                 showingDesc = true
@@ -131,13 +131,13 @@ class ScreenActorWearing : BaseScreen() {
                 mTextDesc = getGBKBytes(mEquipments[mCurItem]?.description ?: "")
             } else { // put change equipment screen
                 resetDesc()
-                delegate?.pushScreen(ScreenGoodsList(getTheEquipList(Player.sEquipTypes[mCurItem]),
+                delegate.pushScreen(ScreenGoodsList(getTheEquipList(Player.sEquipTypes[mCurItem]),
                         object : ScreenGoodsList.OnItemSelectedListener {
                             override fun onItemSelected(goods: BaseGoods) {
                                 val actor = ScreenMainGame.sPlayerList[mActorIndex]
                                 if (goods.canPlayerUse(actor.index)) {
-                                    delegate?.popScreen()
-                                    delegate?.pushScreen(ScreenChgEquipment(actor, goods as GoodsEquipment))
+                                    delegate.popScreen()
+                                    delegate.pushScreen(ScreenChgEquipment(actor, goods as GoodsEquipment))
                                 } else {
                                     msgDelegate.showMessage("不能装备!", 1000)
                                 }

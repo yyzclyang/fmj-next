@@ -37,10 +37,10 @@ class ScreenUseMagic(private val mMagic: MagicRestore, private var mScr: Player)
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate?.popScreen()
+            delegate.popScreen()
         } else if (key == Global.KEY_ENTER) {
             mMagic.use(mScr, ScreenMainGame.sPlayerList[mCurActor])
-            delegate?.popScreen()
+            delegate.popScreen()
         }
     }
 

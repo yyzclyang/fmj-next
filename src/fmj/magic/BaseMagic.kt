@@ -38,7 +38,7 @@ abstract class BaseMagic : ResBase() {
     var magicName: String = ""
         private set // 魔法名
 
-    var magicDescription: String? = null
+    var magicDescription: String = ""
         private set  // 魔方描述
 
     protected abstract fun setOtherData(buf: ByteArray, offset: Int)

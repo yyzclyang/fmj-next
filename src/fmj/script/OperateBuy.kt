@@ -94,10 +94,10 @@ class OperateBuy(internal var data: ByteArray, internal var start: Int) : Operat
                 if (buyCnt == goods!!.goodsNum && buyCnt > 0) {
                     Player.sGoodsList.addGoods(goods!!.type, goods!!.index, buyCnt)
                 }
-                delegate?.popScreen()
+                delegate.popScreen()
             } else if (key == Global.KEY_CANCEL) {
                 goods!!.addGoodsNum(-buyCnt)
-                delegate?.popScreen()
+                delegate.popScreen()
             }
         }
 
@@ -108,7 +108,7 @@ class OperateBuy(internal var data: ByteArray, internal var start: Int) : Operat
                     goods!!.addGoodsNum(1)
                     money -= goods!!.buyPrice
                 } else {
-                    delegate?.showMessage("金钱不足!", 1000)
+                    delegate.showMessage("金钱不足!", 1000)
                 }
             } else if (key == Global.KEY_DOWN && buyCnt > 0) {
                 --buyCnt

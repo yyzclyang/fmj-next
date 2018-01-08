@@ -58,7 +58,7 @@ class ScreenMessageBox(msg: String?, private val mOnOkClickListener: OnOKClickLi
     }
 
     private fun exit() {
-        delegate?.popScreen()
+        delegate.popScreen()
     }
 
     companion object {

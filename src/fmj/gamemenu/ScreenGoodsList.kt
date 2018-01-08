@@ -61,7 +61,7 @@ class ScreenGoodsList(private val mGoodsList: List<BaseGoods>, private val mOnIt
 
     override fun update(delta: Long) {
         if (mGoodsList.size <= 0) {
-            delegate?.popScreen()
+            delegate.popScreen()
         }
     }
 
@@ -131,7 +131,7 @@ class ScreenGoodsList(private val mGoodsList: List<BaseGoods>, private val mOnIt
         if (key == Global.KEY_ENTER && mLastDownKey == Global.KEY_ENTER) {
             mOnItemSelectedListener.onItemSelected(mGoodsList[mCurItemIndex])
         } else if (key == Global.KEY_CANCEL) {
-            delegate?.popScreen()
+            delegate.popScreen()
         }
     }
 

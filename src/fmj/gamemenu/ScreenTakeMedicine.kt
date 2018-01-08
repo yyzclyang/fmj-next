@@ -44,7 +44,7 @@ class ScreenTakeMedicine(private val mMedicine: BaseGoods) : BaseScreen() {
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate?.popScreen()
+            delegate.popScreen()
         } else if (key == Global.KEY_ENTER) {
             if (mMedicine.goodsNum > 0) {
                 if (mMedicine.type == 9 && (mMedicine as GoodsMedicine).effectAll()) { // 普通药物，判断是否全体
@@ -55,7 +55,7 @@ class ScreenTakeMedicine(private val mMedicine: BaseGoods) : BaseScreen() {
                     (mMedicine as IEatMedicine).eat(ScreenMainGame.sPlayerList[mActorIndex])
                 }
             } else {
-                delegate?.popScreen()
+                delegate.popScreen()
             }
         }
     }

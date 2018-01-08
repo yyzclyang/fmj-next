@@ -59,7 +59,7 @@ class ScreenStack: ScreenDelegate {
                 cnt += delta
                 if (cnt > delay)
                 {
-                    delegate?.popScreen()
+                    delegate.popScreen()
                 }
             }
             override fun draw(canvas:Canvas) {
@@ -67,7 +67,7 @@ class ScreenStack: ScreenDelegate {
             }
             override fun onKeyUp(key:Int) {}
             override fun onKeyDown(key:Int) {
-                delegate?.popScreen()
+                delegate.popScreen()
             }
         })
     }

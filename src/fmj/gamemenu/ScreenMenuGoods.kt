@@ -47,10 +47,10 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate?.popScreen()
+            delegate.popScreen()
         } else if (key == Global.KEY_ENTER) {
-            delegate?.popScreen()
-            delegate?.pushScreen(ScreenGoodsList(if (mSelId == 0)
+            delegate.popScreen()
+            delegate.pushScreen(ScreenGoodsList(if (mSelId == 0)
                 Player.sGoodsList.goodsList
             else
                 Player.sGoodsList.equipList, this, Mode.Use))
@@ -75,8 +75,8 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
             -> {
                 // TODO 迷宫中的用法，调用脚本
                 ScreenMainGame.instance.triggerEvent(255)
-                while (delegate?.getCurScreen() !is ScreenMainGame) {
-                    delegate?.popScreen()
+                while (delegate.getCurScreen() !is ScreenMainGame) {
+                    delegate.popScreen()
                 }
             }
 
@@ -88,7 +88,7 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
             9 // 药物
                 , 10 // 灵药
                 , 11 // 仙药
-            -> delegate?.pushScreen(ScreenTakeMedicine(goods))
+            -> delegate.pushScreen(ScreenTakeMedicine(goods))
         }
     }
 
@@ -101,10 +101,10 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
             if (list[0].hasEquipt(goods.type, goods.index)) {
                 msgDelegate.showMessage("已装备!", 1000)
             } else {
-                delegate?.pushScreen(ScreenChgEquipment(list[0], goods as GoodsEquipment))
+                delegate.pushScreen(ScreenChgEquipment(list[0], goods as GoodsEquipment))
             }
         } else { // 多人可装备
-            delegate?.pushScreen(object : BaseScreen() {
+            delegate.pushScreen(object : BaseScreen() {
                 internal var bg = Util.getFrameBitmap(16 * 5 + 6, 6 + 16 * list.size)
                 internal var curSel = 0
                 internal var itemsText: Array<ByteArray> = Array(list.size) { ByteArray(11) }
@@ -129,11 +129,11 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
                         if (list[curSel].hasEquipt(goods.type, goods.index)) {
                             msgDelegate.showMessage("已装备!", 1000)
                         } else {
-                            delegate?.popScreen()
-                            delegate?.pushScreen(ScreenChgEquipment(list[curSel], goods as GoodsEquipment))
+                            delegate.popScreen()
+                            delegate.pushScreen(ScreenChgEquipment(list[curSel], goods as GoodsEquipment))
                         }
                     } else if (key == Global.KEY_CANCEL) {
-                        delegate?.popScreen()
+                        delegate.popScreen()
                     }
                 }
 

@@ -88,10 +88,10 @@ class ScreenGameMainMenu : BaseScreen() {
 
         override fun onKeyUp(key: Int) {
             if (key == Global.KEY_CANCEL) {
-                delegate?.popScreen()
+                delegate.popScreen()
             } else if (key == Global.KEY_ENTER) {
-                delegate?.popScreen()
-                delegate?.pushScreen(getScreenMagic(index))
+                delegate.popScreen()
+                delegate.pushScreen(getScreenMagic(index))
             }
         }
     }
@@ -141,10 +141,10 @@ class ScreenGameMainMenu : BaseScreen() {
                         else -> null
                     }
             if (screen != null) {
-                delegate?.pushScreen(screen)
+                delegate.pushScreen(screen)
             }
         } else if (key == Global.KEY_CANCEL) {
-            delegate?.popScreen()
+            delegate.popScreen()
         }
     }
 
@@ -154,11 +154,11 @@ class ScreenGameMainMenu : BaseScreen() {
      * @return
      */
     private fun getScreenMagic(id: Int): ScreenMagic {
-        return ScreenMagic(ScreenMainGame.instance.playerList[id].magicChain,
+        return ScreenMagic(ScreenMainGame.instance.playerList[id].magicChain!!,
                 object : ScreenMagic.OnItemSelectedListener {
                     override fun onItemSelected(magic: BaseMagic) {
                         if (magic is MagicRestore) {
-                            delegate?.pushScreen(ScreenUseMagic(magic,
+                            delegate.pushScreen(ScreenUseMagic(magic,
                                     ScreenMainGame.instance.playerList[id]))
                         } else {
                             msgDelegate.showMessage("此处无法使用!", 1000)

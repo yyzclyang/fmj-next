@@ -51,7 +51,7 @@ class ScreenActorState : BaseScreen() {
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate?.popScreen()
+            delegate.popScreen()
         }
     }
 }

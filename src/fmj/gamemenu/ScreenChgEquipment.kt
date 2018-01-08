@@ -67,7 +67,7 @@ class ScreenChgEquipment
             if (mGoods.size > 1) {
                 mActor.putOn(mGoods[0])
             }
-            delegate?.popScreen()
+            delegate.popScreen()
         } else if (key == Global.KEY_ENTER) {
             if (mSelIndex == mGoods.size - 1) { // 换了新装备
                 // 物品链中删除该装备
@@ -78,7 +78,7 @@ class ScreenChgEquipment
                     Player.sGoodsList.addGoods(mGoods[0].type, mGoods[0].index)
                 }
             }
-            delegate?.popScreen()
+            delegate.popScreen()
         }
     }
 }

@@ -37,13 +37,13 @@ class ScreenMenuProperties : BaseScreen() {
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate?.popScreen()
+            delegate.popScreen()
         } else if (key == Global.KEY_ENTER) {
-            delegate?.popScreen()
+            delegate.popScreen()
             if (mSelId == 0) {
-                delegate?.pushScreen(ScreenActorState())
+                delegate.pushScreen(ScreenActorState())
             } else {
-                delegate?.pushScreen(ScreenActorWearing())
+                delegate.pushScreen(ScreenActorWearing())
             }
         }
     }

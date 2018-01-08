@@ -96,7 +96,7 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate?.popScreen()
+            delegate.popScreen()
         } else if (key == Global.KEY_ENTER) {
             val file = File("./assets/" + mFileNames[index])
             if (mOperate == Operate.LOAD) { // 加载存档
@@ -105,26 +105,26 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
                 }
                 if (loadGame(file)) { // 读档成功
                     SaveLoadGame.startNewGame = false
-                    delegate?.changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
+                    delegate.changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
                 } else { // 读档失败
                     SaveLoadGame.startNewGame = true
-                    delegate?.changeScreen(ScreenViewType.SCREEN_MENU)
+                    delegate.changeScreen(ScreenViewType.SCREEN_MENU)
                 }
             } else { // 保存存档
                 if (!file.exists()) {
                     file.createNewFile()
                     saveGame(file)
-                    delegate?.popScreen()
-                    delegate?.popScreen()
-                    delegate?.popScreen()
+                    delegate.popScreen()
+                    delegate.popScreen()
+                    delegate.popScreen()
                 } else { // 询问是否覆盖存档
-                    delegate?.pushScreen(ScreenMessageBox("覆盖原进度?",
+                    delegate.pushScreen(ScreenMessageBox("覆盖原进度?",
                             object : ScreenMessageBox.OnOKClickListener {
                                 override fun onOKClick() {
                                     saveGame(file)
-                                    delegate?.popScreen()
-                                    delegate?.popScreen()
-                                    delegate?.popScreen()
+                                    delegate.popScreen()
+                                    delegate.popScreen()
+                                    delegate.popScreen()
                                 }
                             }))
                 }

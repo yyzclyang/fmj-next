@@ -14,7 +14,7 @@ import graphics.Rect
 import java.Stack
 import java.gbkBytes
 
-class ScreenMagic(private val mMagicChain: ResMagicChain?, private val mOnItemSelectedListener: OnItemSelectedListener?) : BaseScreen() {
+class ScreenMagic(private val mMagicChain: ResMagicChain, private val mOnItemSelectedListener: OnItemSelectedListener) : BaseScreen() {
 
     private var mFirstItemIndex = 0 // 界面上显示的第一个魔法的序号
 
@@ -38,9 +38,6 @@ class ScreenMagic(private val mMagicChain: ResMagicChain?, private val mOnItemSe
     }
 
     init {
-        if (mMagicChain == null || mOnItemSelectedListener == null) {
-            throw IllegalArgumentException("ScreenMagic construtor params can't be null.")
-        }
         mFramePaint.color = Global.COLOR_BLACK
         mFramePaint.style = Style.STROKE
         mFramePaint.strokeWidth = 1
@@ -82,11 +79,11 @@ class ScreenMagic(private val mMagicChain: ResMagicChain?, private val mOnItemSe
         canvas.drawColor(Global.COLOR_WHITE)
         canvas.drawRect(mRectTop, mFramePaint)
         canvas.drawRect(mRectBtm, mFramePaint)
-        TextRender.drawText(canvas, mMagicChain!!.getMagic(mFirstItemIndex).magicName, mRectTop.left + 1, mRectTop.top + 1)
+        TextRender.drawText(canvas, mMagicChain.getMagic(mFirstItemIndex).magicName, mRectTop.left + 1, mRectTop.top + 1)
         if (mFirstItemIndex + 1 < mMagicChain.learnNum) {
             TextRender.drawText(canvas, mMagicChain.getMagic(mFirstItemIndex + 1).magicName, mRectTop.left + 1, mRectTop.top + 1 + 16)
         }
-        mNextToDraw = TextRender.drawText(canvas, mMagicChain.getMagic(mCurItemIndex).magicDescription!!, mToDraw, mRectDsp)
+        mNextToDraw = TextRender.drawText(canvas, mMagicChain.getMagic(mCurItemIndex).magicDescription, mToDraw, mRectDsp)
         TextRender.drawText(canvas, "耗真气:" + mMagicChain.getMagic(mCurItemIndex).costMp, mTextPos.x, mTextPos.y)
         canvas.drawBitmap(mBmpCursor, 100, if (mFirstItemIndex == mCurItemIndex) 10 else 26)
         canvas.drawBitmap(if (mFirstItemIndex == 0) mBmpMarker else mBmpMarker2, 135, 6)
@@ -104,7 +101,7 @@ class ScreenMagic(private val mMagicChain: ResMagicChain?, private val mOnItemSe
             mNextToDraw = 0
             mToDraw = mNextToDraw
             mStackLastToDraw.clear()
-        } else if (key == Global.KEY_DOWN && mCurItemIndex + 1 < mMagicChain!!.learnNum) {
+        } else if (key == Global.KEY_DOWN && mCurItemIndex + 1 < mMagicChain.learnNum) {
             ++mCurItemIndex
             if (mCurItemIndex >= mFirstItemIndex + ITEM_NUM) {
                 ++mFirstItemIndex
@@ -113,7 +110,7 @@ class ScreenMagic(private val mMagicChain: ResMagicChain?, private val mOnItemSe
             mToDraw = mNextToDraw
             mStackLastToDraw.clear()
         } else if (key == Global.KEY_PAGEDOWN) {
-            val len = mMagicChain!!.getMagic(mCurItemIndex).magicDescription!!.gbkBytes().size
+            val len = mMagicChain.getMagic(mCurItemIndex).magicDescription.gbkBytes().size
             if (mNextToDraw < len) {
                 mStackLastToDraw.push(mToDraw) // 保存旧位置
                 mToDraw = mNextToDraw // 更新位置
@@ -127,9 +124,9 @@ class ScreenMagic(private val mMagicChain: ResMagicChain?, private val mOnItemSe
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_ENTER) { // 回调接口
-            mOnItemSelectedListener!!.onItemSelected(mMagicChain!!.getMagic(mCurItemIndex))
+            mOnItemSelectedListener.onItemSelected(mMagicChain.getMagic(mCurItemIndex))
         } else if (key == Global.KEY_CANCEL) {
-            delegate?.popScreen()
+            delegate.popScreen()
         }
     }
 

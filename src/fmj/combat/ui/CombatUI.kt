@@ -41,8 +41,8 @@ import graphics.Point
 import graphics.Rect
 
 import java.Stack
-import java.encode
 import java.System
+import java.gbkBytes
 
 class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: Int) : BaseScreen() {
 
@@ -147,7 +147,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
     }
 
     fun getGBKBytes(s: String): ByteArray {
-        return s.encode("GBK")
+        return s.gbkBytes()
     }
 
 
@@ -627,7 +627,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                             for (j in 0..9) {
                                 itemsText[i][j] = ' '.toByte()
                             }
-                            val tmp = list[i].name.encode("GBK")
+                            val tmp = list[i].name.gbkBytes()
                             System.arraycopy(tmp, 0, itemsText[i], 0, tmp.size)
                         }
                     }

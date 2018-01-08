@@ -98,15 +98,14 @@ interface Runnable {
     fun run()
 }
 
-fun String.encode(encoding: String): ByteArray {
-    TODO()
-}
-
 fun ByteArray.gbkString(offset: Int, length: Int): String {
-    TODO()
+    val arr = sliceArray(offset until offset+length).toTypedArray()
+    return jsGbkDecode(arr)
 }
 
-fun String.gbkBytes(): ByteArray = encode("GBK")
+fun String.gbkBytes(): ByteArray {
+    return jsGbkEncode(this).toByteArray()
+}
 
 object System {
     fun arraycopy(src:ByteArray, srcPos:Int,

@@ -15,7 +15,6 @@ import fmj.views.ScreenStack
 import graphics.Bitmap
 import graphics.Canvas
 import graphics.Rect
-import java.encode
 import java.gbkBytes
 
 class ScreenGameMainMenu : BaseScreen() {

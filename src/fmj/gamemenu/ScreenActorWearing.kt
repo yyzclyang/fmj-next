@@ -18,7 +18,7 @@ import graphics.Point
 import graphics.Rect
 
 import java.Stack
-import java.encode
+import java.gbkBytes
 
 class ScreenActorWearing : BaseScreen() {
 
@@ -53,7 +53,7 @@ class ScreenActorWearing : BaseScreen() {
     }
 
     private fun getGBKBytes(s: String): ByteArray {
-        return s.encode("GBK")
+        return s.gbkBytes()
     }
 
     override fun update(delta: Long) {}

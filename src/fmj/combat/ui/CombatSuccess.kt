@@ -13,7 +13,7 @@ import graphics.Bitmap
 import graphics.Canvas
 import graphics.Paint
 import graphics.Paint.Style
-import java.encode
+import java.gbkBytes
 
 class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<BaseGoods>, lvuplist: List<Player>) {
 
@@ -93,7 +93,7 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
         init {
             var msg: ByteArray
             try {
-                msg = _msg.encode("GBK")
+                msg = _msg.gbkBytes()
             } catch (e: Error) {
                 println("Encode error: $_msg")
                 msg = ByteArray(0)
@@ -180,8 +180,8 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
             var pn: ByteArray
             var mn: ByteArray
             try {
-                pn = playerName.encode("GBK")
-                mn = magicName.encode("GBK")
+                pn = playerName.gbkBytes()
+                mn = magicName.gbkBytes()
             } catch (e: Error) {
                 pn = ByteArray(0)
                 mn = ByteArray(0)

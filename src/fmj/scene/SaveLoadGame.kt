@@ -2,9 +2,12 @@ package fmj.scene
 
 import fmj.characters.NPC
 import fmj.characters.Player
+import fmj.characters.SceneObj
 import fmj.combat.Combat
 import java.ObjectInput
 import java.ObjectOutput
+import java.readArray
+import java.writeArray
 
 object SaveLoadGame {
 
@@ -58,9 +61,15 @@ object SaveLoadGame {
         }
         out.writeInt(Player.sMoney)
         Player.sGoodsList.write(out)
-
-        out.writeArray(NpcObjs)
-
+        writeArray(out, NpcObjs) {
+            io, obj ->
+            if (obj is SceneObj) {
+                io.writeByte(1)
+            } else {
+                io.writeByte(0)
+            }
+            obj.writeExternal(io)
+        }
         Combat.write(out)
     }
 
@@ -78,15 +87,24 @@ object SaveLoadGame {
         val size = coder.readInt()
         ScreenMainGame.sPlayerList.clear()
         for (i in 0 until size) {
-            //TODO TODO TODO
-//            val p = coder.readObject() as Player
-//            ScreenMainGame.sPlayerList.add(p)
+            val p = Player()
+            p.readExternal(coder)
+            ScreenMainGame.sPlayerList.add(p)
         }
         Player.sMoney = coder.readInt()
         Player.sGoodsList.read(coder)
 
-        //TODO TODO TODO
-        NpcObjs = coder.readArray()
+        NpcObjs = readArray(coder) {
+            val type = it.readByte()
+            val npc =
+                    when (type.toInt()) {
+                        0 -> NPC()
+                        1 -> SceneObj()
+                        else -> throw Error("Bad obj type")
+                    }
+            npc.readExternal(it)
+            npc
+        }
 
         Combat.read(coder)
     }

@@ -409,7 +409,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
     }
 
     override fun draw(canvas: Canvas) {
-        canvas.drawBitmap(mBackground, 0, 0, null)
+        canvas.drawBitmap(mBackground, 0, 0)
 
         // draw the monsters and players
         for (i in mMonsterList.indices) {

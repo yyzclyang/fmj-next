@@ -29,7 +29,7 @@ class ScreenMessageBox(msg: String?, private val mOnOkClickListener: OnOKClickLi
     override fun update(delta: Long) {}
 
     override fun draw(canvas: Canvas) {
-        canvas.drawBitmap(bmpBg, 27, 15, null)
+        canvas.drawBitmap(bmpBg, 27, 15)
         TextRender.drawText(canvas, mMsg, 33, 23)
         if (index == 0) {
             TextRender.drawSelText(canvas, "是 ", 45, 53)

@@ -1,19 +1,16 @@
 package fmj.script
 
-import fmj.GameView
 import fmj.Global
 import fmj.characters.Player
 import fmj.gamemenu.ScreenGoodsList
 import fmj.gamemenu.ScreenGoodsList.Mode
 import fmj.goods.BaseGoods
 import fmj.graphics.TextRender
-import fmj.graphics.Util
 import fmj.lib.DatLib
 import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
 import fmj.views.ScreenStack
 
-import graphics.Bitmap
 import graphics.Canvas
 
 class OperateBuy(internal var data: ByteArray, internal var start: Int) : Operate(), ScreenGoodsList.OnItemSelectedListener {
@@ -81,7 +78,7 @@ class OperateBuy(internal var data: ByteArray, internal var start: Int) : Operat
         override fun update(delta: Long) {}
 
         override fun draw(canvas: Canvas) {
-            canvas.drawBitmap(bmpBg, 12, 21, null)
+            canvas.drawBitmap(bmpBg, 12, 21)
             TextRender.drawText(canvas, "金钱：" + money, 15, 24)
             TextRender.drawText(canvas, goods!!.name, 15, 40)
             TextRender.drawText(canvas, ": " + goods!!.goodsNum, 93, 40)

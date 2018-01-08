@@ -115,13 +115,14 @@ object System {
             dest[destPos+i] = src[srcPos+i]
         }
     }
-//    fun<T> arraycopy(src:Array<T>, srcPos:Int,
-//                  dest:Array<T>, destPos:Int,
-//                  length:Int) {
-//        for (i in 0 until length) {
-//            dest[destPos+i] = src[srcPos+i]
-//        }
-//    }
+
+    fun<T> arraycopy(src:Array<T>, srcPos:Int,
+                  dest:Array<T>, destPos:Int,
+                  length:Int) {
+        for (i in 0 until length) {
+            dest[destPos+i] = src[srcPos+i]
+        }
+    }
 }
 
 interface Queue<T> {

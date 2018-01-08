@@ -1,6 +1,5 @@
 package fmj.magic
 
-import fmj.GameView
 import fmj.Global
 import fmj.graphics.TextRender
 import fmj.views.BaseScreen
@@ -89,11 +88,11 @@ class ScreenMagic(private val mMagicChain: ResMagicChain?, private val mOnItemSe
         }
         mNextToDraw = TextRender.drawText(canvas, mMagicChain.getMagic(mCurItemIndex).magicDescription!!, mToDraw, mRectDsp)
         TextRender.drawText(canvas, "耗真气:" + mMagicChain.getMagic(mCurItemIndex).costMp, mTextPos.x, mTextPos.y)
-        canvas.drawBitmap(mBmpCursor, 100, if (mFirstItemIndex == mCurItemIndex) 10 else 26, null)
-        canvas.drawBitmap(if (mFirstItemIndex == 0) mBmpMarker else mBmpMarker2, 135, 6, null)
-        canvas.drawBitmap(mBmpMarker, 135, 6 + 8, null)
-        canvas.drawBitmap(mBmpMarker, 135, 6 + 16, null)
-        canvas.drawBitmap(if (mFirstItemIndex + 2 < mMagicChain.learnNum) mBmpMarker2 else mBmpMarker, 135, 6 + 24, null)
+        canvas.drawBitmap(mBmpCursor, 100, if (mFirstItemIndex == mCurItemIndex) 10 else 26)
+        canvas.drawBitmap(if (mFirstItemIndex == 0) mBmpMarker else mBmpMarker2, 135, 6)
+        canvas.drawBitmap(mBmpMarker, 135, 6 + 8)
+        canvas.drawBitmap(mBmpMarker, 135, 6 + 16)
+        canvas.drawBitmap(if (mFirstItemIndex + 2 < mMagicChain.learnNum) mBmpMarker2 else mBmpMarker, 135, 6 + 24)
     }
 
     override fun onKeyDown(key: Int) {

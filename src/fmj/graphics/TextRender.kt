@@ -52,11 +52,11 @@ object TextRender {
             if (t >= 0xa1) {
                 ++i
                 val offset = (94 * (t - 0xa1) + (text[i].toInt() and 0xFF) - 0xa1) * 32
-                canvas.drawBitmap(getHzk(offset), x, y, null)
+                canvas.drawBitmap(getHzk(offset), x, y)
                 x += 16
             } else if (t < 128) {
                 val offset = t * 16
-                canvas.drawBitmap(getAsc(offset), x, y, null)
+                canvas.drawBitmap(getAsc(offset), x, y)
                 x += 8
             } else {
                 x += 8
@@ -109,11 +109,11 @@ object TextRender {
                 if (t >= 0xa1) {
                     ++i
                     val offset = (94 * (t - 0xa1) + (buf[i].toInt() and 0xFF) - 0xa1) * 32
-                    canvas.drawBitmap(getHzk(offset), tmpX, tmpY, null)
+                    canvas.drawBitmap(getHzk(offset), tmpX, tmpY)
                     tmpX += 16
                 } else if (t < 128) {
                     val offset = t * 16
-                    canvas.drawBitmap(getAsc(offset), tmpX, tmpY, null)
+                    canvas.drawBitmap(getAsc(offset), tmpX, tmpY)
                     tmpX += 8
                 } else {
                     tmpX += 8
@@ -155,11 +155,11 @@ object TextRender {
                 if (t >= 0xa1) {
                     ++i
                     val offset = (94 * (t - 0xa1) + (buf[i].toInt() and 0xFF) - 0xa1) * 32
-                    canvas.drawBitmap(getHzk(offset), x, y, null)
+                    canvas.drawBitmap(getHzk(offset), x, y)
                     x += 16
                 } else if (t < 128) {
                     val offset = t * 16
-                    canvas.drawBitmap(getAsc(offset), x, y, null)
+                    canvas.drawBitmap(getAsc(offset), x, y)
                     x += 8
                 } else {
                     x += 8
@@ -185,7 +185,7 @@ object TextRender {
             mPixels[k or 6] = if (t and 0x02 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
             mPixels[k or 7] = if (t and 0x01 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
         }
-        mBmpHzk.setPixels(mPixels, 0, 16, 0, 0, 16, 16)
+        mBmpHzk.setPixels(mPixels, 0, 0, 0, 16, 16)
         return mBmpHzk
     }
 
@@ -202,7 +202,7 @@ object TextRender {
             mPixels[k or 6] = if (t and 0x02 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
             mPixels[k or 7] = if (t and 0x01 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
         }
-        mBmpAsc.setPixels(mPixels, 0, 8, 0, 0, 8, 16)
+        mBmpAsc.setPixels(mPixels, 0, 0, 0, 8, 16)
         return mBmpAsc
     }
 }

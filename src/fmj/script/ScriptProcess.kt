@@ -723,7 +723,7 @@ class ScriptProcess private constructor() {
 
                 override fun draw(canvas: Canvas) {
                     mScreenMainGame!!.drawScene(canvas)
-                    canvas.drawBitmap(bg, bgx, bgy, null)
+                    canvas.drawBitmap(bg, bgx, bgy)
                     if (curChoice == 0) {
                         TextRender.drawSelText(canvas, choice1, bgx + 3, bgy + 3)
                         TextRender.drawText(canvas, choice2, bgx + 3, bgy + 3 + 16)

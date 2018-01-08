@@ -29,7 +29,7 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
     override fun update(delta: Long) {}
 
     override fun draw(canvas: Canvas) {
-        canvas.drawBitmap(mFrameBmp, 39, 39, null)
+        canvas.drawBitmap(mFrameBmp, 39, 39)
         if (mSelId == 0) {
             TextRender.drawSelText(canvas, strs[0], 39 + 3, 39 + 3)
             TextRender.drawText(canvas, strs[1], 39 + 3, 39 + 3 + 16)
@@ -146,7 +146,7 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
                 }
 
                 override fun draw(canvas: Canvas) {
-                    canvas.drawBitmap(bg, 50, 14, null)
+                    canvas.drawBitmap(bg, 50, 14)
                     for (i in itemsText.indices) {
                         if (i != curSel) {
                             TextRender.drawText(canvas, itemsText[i], 50 + 3, 14 + 3 + 16 * i)

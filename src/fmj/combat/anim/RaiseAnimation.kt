@@ -80,7 +80,7 @@ class RaiseAnimation(private val x: Int, private val y: Int, hitpoint: Int, buff
 
     fun draw(canvas: Canvas) {
         if (bShowNum) {
-            canvas.drawBitmap(raiseNum, x, y + dy, null)
+            canvas.drawBitmap(raiseNum, x, y + dy)
         } else {
             if (srsList.size > 0) {
                 srsList.first().drawAbsolutely(canvas, x, y)

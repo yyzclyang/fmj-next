@@ -1,6 +1,9 @@
 package graphics
 
 import fmj.Global
+import java.System
+import kotlin.math.abs
+import kotlin.math.min
 
 class Color {
     var rgb: Int = 0
@@ -26,7 +29,7 @@ class Color {
 
 class Paint {
     var style = Style.FILL
-    var color = Color.WHITE
+    var color = Color.BLACK
     var strokeWidth = 1
 
     enum class Style {
@@ -34,36 +37,101 @@ class Paint {
     }
 }
 
-class Bitmap(val width:Int, val height:Int) {
+class Bitmap(val width:Int, val height:Int, private val buffer: Array<Color>) {
+    constructor(width: Int, height: Int):
+            this(width, height, Array(width * height) { Color.WHITE })
+
     var color: Color = Color.WHITE
-    fun drawImage(bmp: Bitmap, x: Int, y: Int) {
-        // TODO
+
+    fun drawImage(src: Bitmap, x: Int, y: Int) {
+        setPixels(src.buffer, 0, x, y, width, height)
     }
+
+    private fun setPixel(col: Int, row: Int, color: Color) {
+        buffer[width * row + col] = color
+    }
+
     fun fillRect(x: Int, y: Int, w: Int, h: Int) {
-        // TODO
+        for (col in x until x + w)
+            for (row in y until y + h) {
+                setPixel(col, row, color)
+            }
     }
 
-    fun drawLine(x: Int, y: Int, stopX: Int, stopY: Int) {
-        // TODO
+    fun drawLine(x1: Int, y1: Int, x2: Int, y2: Int) {
+        var dx = x2 - x1
+        var dy = y2 - y1
+        val ux = if (dx > 0) 1 else - 1
+        val uy = if (dy > 0) 1 else - 1
+        var x = x1
+        var y = y1
+        var eps = 0
+
+        dx = abs(dx)
+        dy = abs(dy)
+        if (dx > dy) {
+            x = x1
+            while (true) {
+                setPixel(x, y, color)
+                if (x == x2)
+                    break
+                eps += dy
+                if (eps shl 1 >= dx) {
+                    y += uy
+                    eps -= dx
+                }
+                x += ux
+            }
+        } else {
+            y = y1
+            while (true) {
+                setPixel(x, y, color)
+                if (y == y2)
+                    break
+                eps += dx
+                if (eps shl 1 >= dy) {
+                    x += ux
+                    eps -= dy
+                }
+                y += uy
+            }
+        }
     }
+
     fun drawRect(x: Int, y: Int, w: Int, h: Int) {
-        // TODO
+        drawLine(x, y, x + w, y)
+        drawLine(x + w, y, x + w, y + h)
+        drawLine(x, y + h, x + w, y + h)
+        drawLine(x, y, x, y + h)
     }
 
-    fun setPixels(pixels: Array<Color>, offset: Int, stride: Int, x: Int, y: Int, width: Int, height: Int) {
-        // TODO
+    fun setPixels(pixels: Array<Color>, offset: Int, x: Int, y: Int, w: Int, h: Int) {
+        if (width == w && x == 0) {
+            val start = width * y
+            val dLen = width * height - start
+            val sLen = w * h
+            val len = min(sLen, dLen)
+            System.arraycopy(pixels, offset, buffer, start, len)
+        } else {
+            val xWidth = min(width - x, w)
+            val xHeight = min(height - y, h)
+            for (col in 0 until xWidth)
+                for (row in 0 until xHeight) {
+                    val dOff = width * (y + row) + x + col
+                    val sOff = w * row + col
+                    buffer[dOff] = pixels[offset+sOff]
+                }
+        }
     }
 
     fun copy(): Bitmap {
-        TODO()
+        return Bitmap(width, height, buffer.copyOf())
     }
 
     companion object {
         fun createBitmap(w: Int, h: Int): Bitmap = Bitmap(w, h)
         fun createBitmap(pixels: Array<Color>, w: Int, h: Int): Bitmap {
-            val bmp = Bitmap(w, h)
-            // TODO
-            return bmp
+            return Bitmap(w, h, pixels)
         }
     }
 }
@@ -90,28 +158,21 @@ data class Point(var x: Int = 0, var y: Int = 0) {
 
 class Canvas(b: Bitmap) {
 
-    var background: Bitmap = b
+    private var bg: Bitmap = b
 
     constructor(): this(Bitmap.createBitmap(Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT))
 
-    fun drawBitmap(bitmap: Bitmap, left: Int, top: Int, paint: Paint?) {
-        drawBitmap(bitmap, left.toFloat(), top.toFloat(), paint)
+    fun drawBitmap(bitmap: Bitmap, left: Int, top: Int) {
+        drawBitmap(bitmap, left.toFloat(), top.toFloat())
     }
 
-    fun drawBitmap(bitmap: Bitmap, left: Float, top: Float, paint: Paint?) {
-        val g = background
-        if (paint != null) {
-            g.color = Color.BLACK
-        } else {
-            g.color = Color.WHITE
-        }
-        g.drawImage(bitmap, left.toInt(), top.toInt())
+    fun drawBitmap(bitmap: Bitmap, left: Float, top: Float) {
+        bg.drawImage(bitmap, left.toInt(), top.toInt())
     }
 
     fun drawColor(color: Int) {
-        val g = background
-        g.color = Color(color)
-        g.fillRect(0, 0, background.width, background.height)
+        bg.color = Color(color)
+        bg.fillRect(0, 0, this.bg.width, this.bg.height)
     }
 
     fun drawColor(color: Color) {
@@ -123,49 +184,57 @@ class Canvas(b: Bitmap) {
     }
 
     fun drawLine(startX: Float, startY: Float, stopX: Float, stopY: Float, paint: Paint) {
-        val g = background
-        g.color = Color.BLACK
-        g.drawLine(startX.toInt(), startY.toInt(), stopX.toInt(), stopY.toInt())
+        bg.color = paint.color
+        bg.drawLine(startX.toInt(), startY.toInt(), stopX.toInt(), stopY.toInt())
     }
 
-    private fun drawR(x: Int, y: Int, i: Int, j: Int, sBlackPaint: Paint, color: Color) {
-        val g = background
-        g.color = color
+    private fun drawR(x: Int, y: Int, i: Int, j: Int, paint: Paint, color: Color) {
+        bg.color = color
 
-        if (sBlackPaint.style == Paint.Style.FILL) {
-            g.fillRect(x, y, i, j)
-        } else if (sBlackPaint.style == Paint.Style.STROKE) {
-            g.drawRect(x, y, i, j)
-        } else {
-            g.fillRect(x, y, i, j)
+        when(paint.style) {
+            Paint.Style.FILL
+                -> bg.fillRect(x, y, i, j)
+            Paint.Style.STROKE
+                -> bg.drawRect(x, y, i, j)
+            else
+                -> bg.fillRect(x, y, i, j)
         }
     }
 
-    fun drawRect(x: Int, y: Int, i: Int, j: Int, sBlackPaint: Paint) {
-        drawR(x, y, i - x, j - y, sBlackPaint, Color.BLACK)
+    fun drawRect(x: Int, y: Int, i: Int, j: Int, paint: Paint) {
+        drawR(x, y, i - x, j - y, paint, paint.color)
     }
 
-    fun drawRect(mRectTop: Rect, mFramePaint: Paint) {
-        drawR(mRectTop.left, mRectTop.top, mRectTop.right - mRectTop.left, mRectTop.bottom - mRectTop.top, mFramePaint, Color.BLACK)
+    fun drawRect(mRectTop: Rect, paint: Paint) {
+        drawR(mRectTop.left, mRectTop.top,
+                mRectTop.right - mRectTop.left,
+                mRectTop.bottom - mRectTop.top,
+                paint, paint.color)
     }
 
     fun drawRect(rWithPic: RectF, paint: Paint) {
-        val color = Color.BLACK
-        drawR(rWithPic.left.toInt(), rWithPic.top.toInt(), (rWithPic.right - rWithPic.left).toInt(), (rWithPic.bottom - rWithPic.top).toInt(), paint, color)
+        drawR(rWithPic.left.toInt(),
+                rWithPic.top.toInt(),
+                (rWithPic.right - rWithPic.left).toInt(),
+                (rWithPic.bottom - rWithPic.top).toInt(),
+                paint, paint.color)
     }
 
-    fun drawLines(pts: FloatArray, sBlackPaint: Paint) {
-        val g = background
-        g.color = Color.BLACK
+    fun drawLines(pts: FloatArray, paint: Paint) {
+        bg.color = paint.color
 
         val size = pts.size / 4
         for (i in 0 until size) {
-            g.drawLine(pts[i * 4].toInt(), pts[i * 4 + 1].toInt(), pts[i * 4 + 2].toInt(), pts[i * 4 + 3].toInt())
+            bg.drawLine(
+                    pts[i * 4].toInt(),
+                    pts[i * 4 + 1].toInt(),
+                    pts[i * 4 + 2].toInt(),
+                    pts[i * 4 + 3].toInt())
         }
     }
 
     fun setBitmap(bmp: Bitmap) {
-        background = bmp
+        bg = bmp
     }
 }
 

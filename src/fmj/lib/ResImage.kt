@@ -145,10 +145,10 @@ class ResImage : ResBase() {
      */
     fun draw(canvas: Canvas, num: Int, left: Int, top: Int) {
         if (num <= number) {
-            canvas.drawBitmap(mBitmaps!![num - 1], left, top, null)
+            canvas.drawBitmap(mBitmaps!![num - 1], left, top)
         } else {
             if (number > 0) { // 要改？
-                canvas.drawBitmap(mBitmaps!![0], left, top, null)
+                canvas.drawBitmap(mBitmaps!![0], left, top)
             } else {
                 TextRender.drawText(canvas, "烫", left, top)
             }

@@ -1,10 +1,8 @@
 package fmj.graphics
 
-import fmj.GameView
 import fmj.Global
 import fmj.lib.DatLib
 import fmj.lib.ResImage
-import fmj.views.BaseScreen
 
 import graphics.Bitmap
 import graphics.Canvas
@@ -73,12 +71,12 @@ object Util {
         val b = Global.COLOR_BLACK
         val w = Global.COLOR_WHITE
         val pixels = arrayOf(w, w, w, w, w, w, w, w, w, b, b, b, w, w, w, w, w, w, w, w, w, w, w, w, w, b, b, w, w, b, b, b, b, b, b, b, b, b, b, b, b, b, w, w, w, w, b, b, b, b, b, w, w, w, w, w, w, w, w, b, b, b, b, b, w, w, w, w, b, b, w, w, w, b, b, b, w, w, b, b, b, w, w, w, b, b, w, w, w, w, w, b, w, w, b, w, w, w, w, w, w, w, w, w, w, w, b, b, w, w, w, w, w, b, w, w, b, b, b, b, b, b, b, b, b, b, b, w, w, w, w, w, w, w, w, w, w, w, w, b, w, w, w, w, b, b, w, w, w, w, w, w, w, w, w, w, w, w, w, w, b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, w, w, w, w, w, w, b, b, w, w, w, b, b, b, b, w, b, b, b, b, b, b, w, w, w, w, w, w, w, w, w, b, b, b, b, b, b, w, w, w, b, b, b, w, w, w, w, w, w, w, b, b, b, b, w, w, b, b, b, w, w, w, w, w, w, w, b, b, b, b, b, b, b, b, w, w, w, w, b, b, b, w, w, w, w, w, w, w, w, b, b, b, b, w, w, w, w, w, w, w, b, b, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, b, b, b, b, b, b, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, b, b, b, b, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, b, w, w, w, w, b, b, w, w, w, b, w, w, w, w, w, w, w, w, b, b, b, b, b, b, b, w, b, b, w, w, b, b, w, w, w, w, w, w, w, b, b, w, w, b, w, w, w, w, b, b, w, b, w, w, w, w, w, w, w, w, w, b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, w, w, w, w, b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, b, w, w, w, w, w, w, w, w, b, b, b, b, b, b, b, w, b, b, w, b, b, w, w, w, w, w, w, w, w, w, b, b, w, b, b, b, b, w, b, b, w, b, b, w, w, w, w, w, w, w, w, w, b, w, b, b, w, w, b, w, w, b, w, b, b, w, w, w, w, w, w, w, w, w, b, b, b, b, b, b, b, w, w, b, b, b, b, w, w, w, w, w, w, w, w, w, b, b, b, b, b, b, b, w, w, b, b, b, w, w, w, w, w, w, w, w, w, w, w, b, b, b, b, b, w, w, w, w, b, b, b, w, w, w, w, w, w, b, b, b, b, b, w, w, w, w, b, b, b, b, b, b, b, b, b, b, w, w, w, w, w, w, b, b, b, w, w, b, b, w, b, b, w, w, b, b, b, b, b, b, b, w, w, b, b, w, w, w, w, w, w, b, w, w, w, w, w, b, b, b, b, b, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, w, b, b, w, w)
-        bmpChuandai.setPixels(pixels, 0, 22, 0, 0, 22, 39)
+        bmpChuandai.setPixels(pixels, 0, 0, 0, 22, 39)
     }
 
     // 用于showscenename
     fun showInformation(canvas: Canvas, msg: String) {
-        canvas.drawBitmap(bmpInformationBg[0], 11, 37, null)
+        canvas.drawBitmap(bmpInformationBg[0], 11, 37)
         TextRender.drawText(canvas, msg, 16, 39)
     }
 
@@ -92,13 +90,13 @@ object Util {
         var lineNum = msg.size / 16
         if (lineNum >= 5) lineNum = 4
         val textY = 39 - lineNum * 8
-        canvas.drawBitmap(bmpInformationBg[lineNum], 11, textY - 2, null)
+        canvas.drawBitmap(bmpInformationBg[lineNum], 11, textY - 2)
         TextRender.drawText(canvas, msg, 0, Rect(16, textY, 16 + 16 * 8, textY + 16 * lineNum + 16))
     }
 
     fun drawSideFrame(canvas: Canvas) {
-        canvas.drawBitmap(bmpSideFrame, 0, 0, null)
-        canvas.drawBitmap(bmpSideFrame, 152, 0, null)
+        canvas.drawBitmap(bmpSideFrame, 0, 0)
+        canvas.drawBitmap(bmpSideFrame, 152, 0)
     }
 
     init {
@@ -116,7 +114,7 @@ object Util {
     }
 
     fun drawTriangleCursor(canvas: Canvas, x: Int, y: Int) {
-        canvas.drawBitmap(bmpTriangleCursor, x, y, null)
+        canvas.drawBitmap(bmpTriangleCursor, x, y)
     }
 
     /**

@@ -118,7 +118,7 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
         override fun update(delta: Long) {}
 
         override fun draw(canvas: Canvas) {
-            canvas.drawBitmap(mMsg, mX, mY, null)
+            canvas.drawBitmap(mMsg, mX, mY)
         }
 
         override fun onKeyDown(key: Int) {}
@@ -163,7 +163,7 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
         override fun update(delta: Long) {}
 
         override fun draw(canvas: Canvas) {
-            canvas.drawBitmap(mInfo, (160 - mInfo.width) / 2, (96 - mInfo.height) / 2, null)
+            canvas.drawBitmap(mInfo, (160 - mInfo.width) / 2, (96 - mInfo.height) / 2)
         }
 
         override fun onKeyDown(key: Int) {}
@@ -195,7 +195,7 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
         override fun update(delta: Long) {}
 
         override fun draw(canvas: Canvas) {
-            canvas.drawBitmap(mInfo, (160 - mInfo.width) / 2, (96 - mInfo.height) / 2, null)
+            canvas.drawBitmap(mInfo, (160 - mInfo.width) / 2, (96 - mInfo.height) / 2)
         }
 
         override fun onKeyDown(key: Int) {}

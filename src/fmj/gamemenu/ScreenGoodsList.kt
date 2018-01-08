@@ -66,7 +66,7 @@ class ScreenGoodsList(private val mGoodsList: List<BaseGoods>, private val mOnIt
     }
 
     override fun draw(canvas: Canvas) {
-        canvas.drawBitmap(sbmpBg!!, 0, 0, null)
+        canvas.drawBitmap(sbmpBg!!, 0, 0)
         if (mGoodsList.size <= 0) return
 
         while (mCurItemIndex >= mGoodsList.size) showPreItem()

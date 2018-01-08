@@ -1,6 +1,5 @@
 package fmj.combat.ui
 
-import fmj.GameView
 import fmj.Global
 import fmj.characters.FightingCharacter
 import fmj.characters.Monster
@@ -377,7 +376,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
         override fun update(delta: Long) {}
 
         override fun draw(canvas: Canvas) {
-            canvas.drawBitmap(mBg, 9, 4, null)
+            canvas.drawBitmap(mBg, 9, 4)
             TextRender.drawText(canvas, mText, 0, mTextRect)
             TextRender.drawSelText(canvas, mItemText[mCurSelIndex], mTextRect.left, mTextRect.top + mCurSelIndex * 16)
         }
@@ -521,7 +520,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
         override fun update(delta: Long) {}
 
         override fun draw(canvas: Canvas) {
-            canvas.drawBitmap(mBg, 29, 14, null)
+            canvas.drawBitmap(mBg, 29, 14)
             TextRender.drawText(canvas, mText, 0, mTextRect)
             TextRender.drawSelText(canvas, mItemText[mSelIndex], mTextRect.left, mTextRect.top + 16 * mSelIndex)
         }
@@ -658,7 +657,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                     }
 
                     override fun draw(canvas: Canvas) {
-                        canvas.drawBitmap(bg, 50, 14, null)
+                        canvas.drawBitmap(bg, 50, 14)
                         for (i in itemsText.indices) {
                             if (i != curSel) {
                                 TextRender.drawText(canvas, itemsText[i], 50 + 3, 14 + 3 + 16 * i)

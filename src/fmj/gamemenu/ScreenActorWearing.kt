@@ -1,6 +1,5 @@
 package fmj.gamemenu
 
-import fmj.GameView
 import fmj.Global
 import fmj.characters.Player
 import fmj.gamemenu.ScreenGoodsList.Mode
@@ -12,7 +11,6 @@ import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
 import fmj.views.ScreenStack
 
-import graphics.Bitmap
 import graphics.Canvas
 import graphics.Point
 import graphics.Rect
@@ -60,7 +58,7 @@ class ScreenActorWearing : BaseScreen() {
 
     override fun draw(canvas: Canvas) {
         canvas.drawColor(Global.COLOR_WHITE)
-        canvas.drawBitmap(Util.bmpChuandai, 160 - Util.bmpChuandai.width, 0, null)
+        canvas.drawBitmap(Util.bmpChuandai, 160 - Util.bmpChuandai.width, 0)
 
         // 画装备
         for (i in 0..7) {
@@ -78,8 +76,8 @@ class ScreenActorWearing : BaseScreen() {
         }
 
         if (showingDesc) {
-            canvas.drawBitmap(bmpName, 9, 10, null)
-            canvas.drawBitmap(bmpDesc, 9, 28, null)
+            canvas.drawBitmap(bmpName, 9, 10)
+            canvas.drawBitmap(bmpDesc, 9, 28)
             TextRender.drawText(canvas, mTextName, 9 + 3, 10 + 3)
             mNextToDraw = TextRender.drawText(canvas, mTextDesc, mToDraw, sRectDesc)
         }

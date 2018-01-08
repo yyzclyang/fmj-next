@@ -1,6 +1,5 @@
 package fmj.gamemenu
 
-import fmj.GameView
 import fmj.Global
 import fmj.characters.Player
 import fmj.graphics.TextRender
@@ -12,7 +11,6 @@ import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
 import fmj.views.ScreenStack
 
-import graphics.Bitmap
 import graphics.Canvas
 import graphics.Rect
 import java.gbkBytes
@@ -62,7 +60,7 @@ class ScreenGameMainMenu : BaseScreen() {
         override fun update(delta: Long) {}
 
         override fun draw(canvas: Canvas) {
-            canvas.drawBitmap(this.bmpFrame, this.mFrameRect.left, this.mFrameRect.top, null)
+            canvas.drawBitmap(this.bmpFrame, this.mFrameRect.left, this.mFrameRect.top)
             for (i in 0 until mSum) {
                 if (i == index) {
                     TextRender.drawSelText(canvas, mNames!![i], this.mFrameRect.left + 3,
@@ -109,9 +107,9 @@ class ScreenGameMainMenu : BaseScreen() {
     override fun update(delta: Long) {}
 
     override fun draw(canvas: Canvas) {
-        canvas.drawBitmap(bmpFrame1, 9, 3, null)
+        canvas.drawBitmap(bmpFrame1, 9, 3)
         TextRender.drawText(canvas, "金钱:" + Player.sMoney, 9 + 3, 3 + 3)
-        canvas.drawBitmap(bmpFrame2, 9, 3 + 16 + 6 - 1, null)
+        canvas.drawBitmap(bmpFrame2, 9, 3 + 16 + 6 - 1)
         TextRender.drawText(canvas, menuItems, 0, menuItemsRect)
         TextRender.drawSelText(canvas, menuItemsS[mSelIndex], menuItemsRect.left,
                 menuItemsRect.top + mSelIndex * 16)

@@ -54,12 +54,12 @@ class ScreenMenuSystem : BaseScreen() {
     override fun update(delta: Long) {}
 
     override fun draw(canvas: Canvas) {
-        canvas.drawBitmap(bmpFrame, 39, 29, null)
+        canvas.drawBitmap(bmpFrame, 39, 29)
         TextRender.drawText(canvas, str[first], strX, strY)
         TextRender.drawText(canvas, str[first + 1], strX, strY + 16)
         TextRender.drawText(canvas, str[first + 2], strX, strY + 32)
         TextRender.drawSelText(canvas, str[index], strX, selY)
-        canvas.drawBitmap(bmpArr[bmpi], arrowX, arrowY, null)
+        canvas.drawBitmap(bmpArr[bmpi], arrowX, arrowY)
     }
 
     override fun onKeyDown(key: Int) {

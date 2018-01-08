@@ -62,7 +62,7 @@ class OperateSale : Operate(), ScreenGoodsList.OnItemSelectedListener {
         override fun update(delta: Long) {}
 
         override fun draw(canvas: Canvas) {
-            canvas.drawBitmap(bmpBg, 12, 21, null)
+            canvas.drawBitmap(bmpBg, 12, 21)
             TextRender.drawText(canvas, "金钱：" + money, 15, 24)
             TextRender.drawText(canvas, goods!!.name, 15, 40)
             TextRender.drawText(canvas, ": " + (goods!!.goodsNum - saleCnt), 93, 40)

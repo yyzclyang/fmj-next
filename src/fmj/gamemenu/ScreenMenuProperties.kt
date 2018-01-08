@@ -19,7 +19,7 @@ class ScreenMenuProperties : BaseScreen() {
     override fun update(delta: Long) {}
 
     override fun draw(canvas: Canvas) {
-        canvas.drawBitmap(mFrameBmp, 39, 16, null)
+        canvas.drawBitmap(mFrameBmp, 39, 16)
         if (mSelId == 0) {
             TextRender.drawSelText(canvas, strs[0], 39 + 3, 16 + 3)
             TextRender.drawText(canvas, strs[1], 39 + 3, 16 + 3 + 16)

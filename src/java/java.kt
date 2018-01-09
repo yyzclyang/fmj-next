@@ -329,7 +329,7 @@ fun random() = sysRandom()
 external fun sysStorageGet(path: String): String?
 external fun sysStorageSet(path: String, value: String?)
 external fun sysStorageHas(path: String): Boolean
-external fun sysGbkEncode(path: String): Array<Byte>
+external fun sysGbkEncode(str: String): Array<Byte>
 external fun sysGbkDecode(data: Array<Byte>): String
 external fun sysRandom(): Double
 external fun sysAddKeyDownListener(callback:(keyCode: Int) -> Unit)

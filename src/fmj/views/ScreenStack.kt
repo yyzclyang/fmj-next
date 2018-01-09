@@ -8,8 +8,11 @@ import graphics.Bitmap
 import graphics.Canvas
 import graphics.Paint
 import java.Stack
+import java.sysRandom
 
 class ScreenStack: ScreenDelegate {
+    private val mScreenStack = Stack.create<BaseScreen>()
+
     override fun keyDown(key: Int) {
         mScreenStack.peek()!!.onKeyDown(key)
     }
@@ -17,8 +20,6 @@ class ScreenStack: ScreenDelegate {
     override fun keyUp(key: Int) {
         mScreenStack.peek()!!.onKeyUp(key)
     }
-
-    private val mScreenStack = Stack.create<BaseScreen>()
 
     override fun changeScreen(scr: ScreenViewType) {
         val tmp: BaseScreen =
@@ -86,7 +87,16 @@ class ScreenStack: ScreenDelegate {
     }
 
     fun draw(canvas: Canvas) {
-        TODO()
+        println("ScreenStack draw")
+        var visible = false
+        for (scr in mScreenStack) {
+            if (!visible && scr.isPopup) {
+                visible = true
+            }
+            if (visible) {
+                scr.draw(canvas)
+            }
+        }
     }
     fun update(delta: Long) {
         mScreenStack.peek()?.update(delta)

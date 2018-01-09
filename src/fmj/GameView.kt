@@ -28,10 +28,12 @@ class GameView {
     }
 
     private fun keyDown(key: Int) {
+        println("keyDown: $key")
         screen.keyDown(key)
     }
 
     private fun keyUp(key: Int) {
+        println("keyUp: $key")
         screen.keyUp(key)
     }
 

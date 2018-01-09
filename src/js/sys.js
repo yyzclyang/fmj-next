@@ -34,15 +34,15 @@
     };
 
     global.sysStorageGet = function(path) {
-        return localStorage[path];
+        return sfsData[path];
     };
 
     global.sysStorageSet = function(path, value) {
-        localStorage[path] = value;
+        return sfsData[path] = value;
     };
 
     global.sysStorageHas = function(path) {
-        return localStorage[path] != null;
+        return sfsData[path] != undefined;
     };
 
     global.sysGbkEncode = function(str) {

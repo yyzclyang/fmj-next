@@ -1,6 +1,7 @@
 package fmj
 
 import fmj.script.ScriptProcess
+import fmj.views.ScreenAnimation
 import fmj.views.ScreenStack
 
 import graphics.Canvas
@@ -17,6 +18,8 @@ class GameView {
     fun start() {
         ScriptProcess.instance.delegate = screen
         listenUIEvents()
+        val scr = ScreenAnimation(247)
+        screen.pushScreen(scr)
     }
 
     fun draw() {
@@ -28,12 +31,10 @@ class GameView {
     }
 
     private fun keyDown(key: Int) {
-        println("keyDown: $key")
         screen.keyDown(key)
     }
 
     private fun keyUp(key: Int) {
-        println("keyUp: $key")
         screen.keyUp(key)
     }
 

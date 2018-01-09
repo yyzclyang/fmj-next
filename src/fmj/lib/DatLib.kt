@@ -45,7 +45,7 @@ class DatLib(buffer: ByteArray) {
         var i = 0x10
         var j = 0x2000
 
-        while (mBuffer[i].toInt() != -1) {
+        while (i < mBuffer.size && mBuffer[i].toInt() != -1) {
             val key = getKey(mBuffer[i++].toInt(), mBuffer[i++].toInt(),
                     mBuffer[i++].toInt() and 0xFF)
             val block = mBuffer[j++].toInt() and 0xFF

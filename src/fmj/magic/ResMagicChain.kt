@@ -31,7 +31,7 @@ class ResMagicChain : ResBase() {
 
         var index = offset + 3
         mMagics = Array(magicSum) {
-            DatLib.GetRes(DatLib.ResType.MRS,
+            DatLib.getRes(DatLib.ResType.MRS,
                     buf[index++].toInt(), buf[index++].toInt()) as BaseMagic
         }
     }

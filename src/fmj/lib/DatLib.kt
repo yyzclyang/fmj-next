@@ -23,7 +23,6 @@ import fmj.magic.MagicRestore
 import fmj.magic.MagicSpecial
 import fmj.magic.ResMagicChain
 import java.File
-import java.gbkBytes
 
 
 class DatLib(buffer: ByteArray) {
@@ -92,11 +91,11 @@ class DatLib(buffer: ByteArray) {
                             else -> null
                         }
 
-                        ResType.MRS -> getMagic(type, index)
+                        ResType.MRS -> getMagic(type)
 
                         ResType.SRS -> ResSrs()
 
-                        ResType.GRS -> getGoods(type, index)
+                        ResType.GRS -> getGoods(type)
 
                         ResType.TIL, ResType.ACP, ResType.GDP, ResType.GGJ, ResType.PIC -> ResImage()
 
@@ -115,8 +114,8 @@ class DatLib(buffer: ByteArray) {
         return res ?: throw Error("res not found:resType=$resType,type=$type,index=$index")
     }
 
-    private fun getGoods(type: Int, index: Int): BaseGoods? {
-        if (type >= 1 && type <= 5) {
+    private fun getGoods(type: Int): BaseGoods? {
+        if (type in 1..5) {
             return GoodsEquipment()
         }
         var rtn: BaseGoods? = null
@@ -142,7 +141,7 @@ class DatLib(buffer: ByteArray) {
         return rtn
     }
 
-    private fun getMagic(type: Int, index: Int): ResBase? {
+    private fun getMagic(type: Int): ResBase? {
         when (type) {
             1 -> return MagicAttack()
             2 -> return MagicEnhance()
@@ -201,7 +200,7 @@ class DatLib(buffer: ByteArray) {
             DatLib(File.contentsOf("DAT.LIB"))
         }
 
-        fun GetRes(resType: ResType, type: Int, index: Int): ResBase? {
+        fun getRes(resType: ResType, type: Int, index: Int): ResBase? {
             return instance.getRes(resType, type, index)
         }
     }

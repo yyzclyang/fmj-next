@@ -1,6 +1,5 @@
 package fmj.scene
 
-import fmj.GameView
 import fmj.Global
 import fmj.characters.Direction
 import fmj.characters.NPC
@@ -356,7 +355,7 @@ class ScreenMainGame : BaseScreen() {
             tmpP = player!!.getPosOnScreen(mMapScreenPos)
         }
 
-        currentMap = DatLib.GetRes(DatLib.ResType.MAP, type, index) as ResMap
+        currentMap = DatLib.getRes(DatLib.ResType.MAP, type, index) as ResMap
         mMapScreenPos.set(x, y)
         if (tmpP != null) {
             player!!.setPosOnScreen(tmpP.x, tmpP.y, mMapScreenPos)
@@ -379,7 +378,7 @@ class ScreenMainGame : BaseScreen() {
      * @param y
      */
     fun createActor(actorId: Int, x: Int, y: Int) {
-        player = DatLib.GetRes(DatLib.ResType.ARS, 1, actorId) as Player?
+        player = DatLib.getRes(DatLib.ResType.ARS, 1, actorId) as Player?
         player!!.setPosOnScreen(x, y, mMapScreenPos)
         sPlayerList.add(player!!)
         player = sPlayerList[0]
@@ -412,7 +411,7 @@ class ScreenMainGame : BaseScreen() {
      * @param y
      */
     fun createNpc(id: Int, npc: Int, x: Int, y: Int) {
-        val npcobj = DatLib.GetRes(DatLib.ResType.ARS, 2, npc) as NPC?
+        val npcobj = DatLib.getRes(DatLib.ResType.ARS, 2, npc) as NPC?
         npcobj!!.setPosInMap(x, y)
         npcobj.setICanWalk(mCanWalk)
         mNPCObj[id] = npcobj
@@ -466,7 +465,7 @@ class ScreenMainGame : BaseScreen() {
      * 位置为（x，y），id为操作号（与NPC共用)
      */
     fun createBox(id: Int, boxIndex: Int, x: Int, y: Int) {
-        val box = DatLib.GetRes(DatLib.ResType.ARS, 4, boxIndex) as SceneObj?
+        val box = DatLib.getRes(DatLib.ResType.ARS, 4, boxIndex) as SceneObj?
         box!!.setPosInMap(x, y)
         mNPCObj[id] = box
     }

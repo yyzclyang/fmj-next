@@ -32,7 +32,7 @@ class Monster : FightingCharacter() {
             if (mCarryGoods2[0] == 0 || mCarryGoods2[1] == 0 || mCarryGoods2[2] == 0) {
                 return null
             }
-            val g = DatLib.Companion.GetRes(DatLib.ResType.GRS, mCarryGoods2[0], mCarryGoods2[1]) as BaseGoods
+            val g = DatLib.Companion.getRes(DatLib.ResType.GRS, mCarryGoods2[0], mCarryGoods2[1]) as BaseGoods
             g.goodsNum = mCarryGoods2[2]
             return g
         }
@@ -40,7 +40,7 @@ class Monster : FightingCharacter() {
     override fun setData(buf: ByteArray, offset: Int) {
         type = buf[offset].toInt() and 0xff
         index = buf[offset + 1].toInt() and 0xff
-        magicChain = DatLib.GetRes(DatLib.ResType.MLR, 1, buf[offset + 0x2f].toInt() and 0xff) as ResMagicChain
+        magicChain = DatLib.getRes(DatLib.ResType.MLR, 1, buf[offset + 0x2f].toInt() and 0xff) as ResMagicChain
         magicChain.learnNum = buf[offset + 2].toInt() and 0xff
         addBuff(buf[offset + 3].toInt() and 0xff)
         mAtbuff = buf[offset + 4].toInt() and 0xff

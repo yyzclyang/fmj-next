@@ -13,7 +13,7 @@ class ScreenAnimation(private val index: Int) : BaseScreen() {
         if (index != 247 && index != 248 && index != 249) {
             throw IllegalArgumentException("只能是247,248,249")
         }
-        mResSrs = DatLib.GetRes(DatLib.ResType.SRS, 1, index) as ResSrs
+        mResSrs = DatLib.getRes(DatLib.ResType.SRS, 1, index) as ResSrs
         mResSrs.setIteratorNum(4)
         mResSrs.startAni()
     }

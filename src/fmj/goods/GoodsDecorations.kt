@@ -15,7 +15,7 @@ class GoodsDecorations : GoodsEquipment() {
     private var mMagic: Int = 0 // 合体魔方序号
 
     val coopMagic: MagicAttack
-        get() = DatLib.GetRes(DatLib.ResType.MRS, 1, mMagic) as MagicAttack
+        get() = DatLib.getRes(DatLib.ResType.MRS, 1, mMagic) as MagicAttack
 
     override fun setOtherData(buf: ByteArray, offset: Int) {
         mMp = get1ByteSInt(buf, offset + 0x16)

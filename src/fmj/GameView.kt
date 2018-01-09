@@ -5,32 +5,48 @@ import fmj.views.ScreenStack
 
 import graphics.Canvas
 import graphics.Bitmap
+import java.sysAddKeyDownListener
+import java.sysAddKeyUpListener
+import java.sysSetInterval
 
 class GameView {
     private val screen = ScreenStack()
     internal val canvas = Canvas(Bitmap(Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT))
+    private val delta = 1000
+
+    fun start() {
+        ScriptProcess.instance.delegate = screen
+        listenUIEvents()
+    }
 
     fun draw() {
         screen.draw(canvas)
     }
 
-    fun update() {
+    fun update(delta: Long) {
+        screen.update(delta)
     }
 
-    fun keyDown(key: Int) {
+    private fun keyDown(key: Int) {
         screen.keyDown(key)
     }
 
-    fun keyUp(key: Int) {
+    private fun keyUp(key: Int) {
         screen.keyUp(key)
     }
 
-    fun addL() {
-    }
-
-    fun start() {
-        ScriptProcess.instance.delegate = screen
-        addL()
+    private fun listenUIEvents() {
+        val delta = this.delta.toLong()
+        sysAddKeyDownListener {
+            keyDown(it)
+        }
+        sysAddKeyUpListener {
+            keyUp(it)
+        }
+        sysSetInterval(this.delta) {
+            update(delta)
+            draw()
+        }
     }
 }
 

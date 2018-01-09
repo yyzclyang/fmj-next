@@ -17,7 +17,6 @@ import fmj.lib.ResImage
 import fmj.lib.ResSrs
 import fmj.scene.ScreenMainGame
 import fmj.views.ScreenDelegate
-import fmj.views.ScreenStack
 
 import graphics.Bitmap
 import graphics.Canvas
@@ -297,7 +296,7 @@ class ScriptProcess private constructor() {
                 internal var paint = Paint()
 
                 init {
-                    headImg = DatLib.GetRes(DatLib.ResType.PIC, 1, picNum) as ResImage
+                    headImg = DatLib.getRes(DatLib.ResType.PIC, 1, picNum) as ResImage
                     paint.color = Global.COLOR_BLACK
                     paint.style = Paint.Style.FILL_AND_STROKE
                 }
@@ -616,7 +615,7 @@ class ScriptProcess private constructor() {
                 }
 
                 override fun process(): Boolean {
-                    movie = DatLib.GetRes(DatLib.ResType.SRS, type, index) as ResSrs
+                    movie = DatLib.getRes(DatLib.ResType.SRS, type, index) as ResSrs
                     movie.setIteratorNum(5)
                     movie.startAni()
                     return true
@@ -788,7 +787,7 @@ class ScriptProcess private constructor() {
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : Operate() {
-                internal var goods = DatLib.GetRes(DatLib.ResType.GRS,
+                internal var goods = DatLib.getRes(DatLib.ResType.GRS,
                         get2ByteInt(code, start), get2ByteInt(code, start + 2)) as BaseGoods
                 internal var msg = "获得:" + goods.name
                 internal var time: Long = 0
@@ -1458,8 +1457,8 @@ class ScriptProcess private constructor() {
                 init {
                     val top = code[start].toInt() and 0xFF or (code[start + 1].toInt() shl 8 and 0xFF00)
                     val btm = code[start + 2].toInt() and 0xFF or (code[start + 3].toInt() shl 8 and 0xFF00)
-                    imgTop = DatLib.GetRes(DatLib.ResType.PIC, 5, top) as ResImage
-                    imgBottom = DatLib.GetRes(DatLib.ResType.PIC, 5, btm) as ResImage
+                    imgTop = DatLib.getRes(DatLib.ResType.PIC, 5, top) as ResImage
+                    imgBottom = DatLib.getRes(DatLib.ResType.PIC, 5, btm) as ResImage
                     text = ResBase.Companion.getString(code, start + 4)
                     curY = if (imgBottom != null) 96 - imgBottom!!.height else 96
                     rect = Rect(0,
@@ -1867,7 +1866,7 @@ class ScriptProcess private constructor() {
     }
 
     fun loadScript(type: Int, index: Int): Boolean {
-        mScript = DatLib.GetRes(DatLib.ResType.GUT, type, index) as ResGut
+        mScript = DatLib.getRes(DatLib.ResType.GUT, type, index) as ResGut
         return mScript != null
     }
 

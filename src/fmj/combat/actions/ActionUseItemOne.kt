@@ -31,7 +31,7 @@ class ActionUseItemOne(attacker: FightingCharacter, target: FightingCharacter, i
             (goods as GoodsMedicine).eat(mTarget as Player)
             hp = mTarget.hp - hp
         } else {
-            mAni = DatLib.Companion.GetRes(DatLib.ResType.SRS, 2, 1) as ResSrs
+            mAni = DatLib.Companion.getRes(DatLib.ResType.SRS, 2, 1) as ResSrs
         }
         mAni.startAni()
         mAni.setIteratorNum(2)

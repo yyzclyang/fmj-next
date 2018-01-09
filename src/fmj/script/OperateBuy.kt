@@ -9,7 +9,6 @@ import fmj.graphics.TextRender
 import fmj.lib.DatLib
 import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
-import fmj.views.ScreenStack
 
 import graphics.Canvas
 
@@ -27,7 +26,7 @@ class OperateBuy(internal var data: ByteArray, internal var start: Int) : Operat
                     data[i].toInt() and 0xff)
 
             if (g == null) {
-                g = DatLib.GetRes(DatLib.ResType.GRS,
+                g = DatLib.getRes(DatLib.ResType.GRS,
                         data[i + 1].toInt() and 0xff,
                         data[i].toInt() and 0xff) as BaseGoods
                 g.goodsNum = 0

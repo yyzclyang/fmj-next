@@ -50,13 +50,13 @@ class Player : FightingCharacter(), Coder {
     override fun setData(buf: ByteArray, offset: Int) {
         type = buf[offset].toInt() and 0xFF
         index = buf[offset + 1].toInt() and 0xFF
-        mImgHead = DatLib.GetRes(DatLib.ResType.PIC, 1, index) as ResImage?
+        mImgHead = DatLib.getRes(DatLib.ResType.PIC, 1, index) as ResImage?
         setWalkingSprite(WalkingSprite(type, buf[offset + 0x16].toInt() and 0xFF))
         fightingSprite = FightingSprite(DatLib.ResType.PIC, index)
         direction = Direction.fromInt(buf[offset + 2].toInt() and 0xFF)
         step = buf[offset + 3].toInt() and 0xff
         setPosInMap(buf[offset + 5].toInt() and 0xFF, buf[offset + 6].toInt() and 0xFF)
-        magicChain = DatLib.GetRes(DatLib.ResType.MLR, 1, buf[offset + 0x17].toInt() and 0xff) as ResMagicChain
+        magicChain = DatLib.getRes(DatLib.ResType.MLR, 1, buf[offset + 0x17].toInt() and 0xff) as ResMagicChain
         magicChain.learnNum = buf[offset + 9].toInt() and 0xff
         name = getString(buf, offset + 0x0a)
         level = buf[offset + 0x20].toInt() and 0xff
@@ -70,47 +70,47 @@ class Player : FightingCharacter(), Coder {
         lingli = buf[offset + 0x37].toInt() and 0xff
         luck = buf[offset + 0x38].toInt() and 0xff
         currentExp = get2BytesInt(buf, offset + 0x32)
-        levelupChain = DatLib.GetRes(DatLib.ResType.MLR, 2, index) as ResLevelupChain
+        levelupChain = DatLib.getRes(DatLib.ResType.MLR, 2, index) as ResLevelupChain
 
         var tmp = buf[offset + 0x1e].toInt() and 0xff
 
         if (tmp != 0) {
-            equipmentsArray[0] = DatLib.GetRes(DatLib.ResType.GRS, 6, tmp) as GoodsEquipment?
+            equipmentsArray[0] = DatLib.getRes(DatLib.ResType.GRS, 6, tmp) as GoodsEquipment?
         }
 
         tmp = buf[offset + 0x1f].toInt() and 0xff
         if (tmp != 0) {
-            equipmentsArray[1] = DatLib.GetRes(DatLib.ResType.GRS, 6, tmp) as GoodsEquipment?
+            equipmentsArray[1] = DatLib.getRes(DatLib.ResType.GRS, 6, tmp) as GoodsEquipment?
         }
 
         tmp = buf[offset + 0x1b].toInt() and 0xff
         if (tmp != 0) {
-            equipmentsArray[2] = DatLib.GetRes(DatLib.ResType.GRS, 5, tmp) as GoodsEquipment?
+            equipmentsArray[2] = DatLib.getRes(DatLib.ResType.GRS, 5, tmp) as GoodsEquipment?
         }
 
         tmp = buf[offset + 0x1d].toInt() and 0xff
         if (tmp != 0) {
-            equipmentsArray[3] = DatLib.GetRes(DatLib.ResType.GRS, 3, tmp) as GoodsEquipment?
+            equipmentsArray[3] = DatLib.getRes(DatLib.ResType.GRS, 3, tmp) as GoodsEquipment?
         }
 
         tmp = buf[offset + 0x1c].toInt() and 0xff
         if (tmp != 0) {
-            equipmentsArray[4] = DatLib.GetRes(DatLib.ResType.GRS, 7, tmp) as GoodsEquipment?
+            equipmentsArray[4] = DatLib.getRes(DatLib.ResType.GRS, 7, tmp) as GoodsEquipment?
         }
 
         tmp = buf[offset + 0x19].toInt() and 0xff
         if (tmp != 0) {
-            equipmentsArray[5] = DatLib.GetRes(DatLib.ResType.GRS, 2, tmp) as GoodsEquipment?
+            equipmentsArray[5] = DatLib.getRes(DatLib.ResType.GRS, 2, tmp) as GoodsEquipment?
         }
 
         tmp = buf[offset + 0x1a].toInt() and 0xff
         if (tmp != 0) {
-            equipmentsArray[6] = DatLib.GetRes(DatLib.ResType.GRS, 4, tmp) as GoodsEquipment?
+            equipmentsArray[6] = DatLib.getRes(DatLib.ResType.GRS, 4, tmp) as GoodsEquipment?
         }
 
         tmp = buf[offset + 0x18].toInt() and 0xff
         if (tmp != 0) {
-            equipmentsArray[7] = DatLib.GetRes(DatLib.ResType.GRS, 1, tmp) as GoodsEquipment?
+            equipmentsArray[7] = DatLib.getRes(DatLib.ResType.GRS, 1, tmp) as GoodsEquipment?
         }
 
     }
@@ -242,14 +242,14 @@ class Player : FightingCharacter(), Coder {
     override fun decode(coder: ObjectInput) {
         type = coder.readInt()
         index = coder.readInt()
-        mImgHead = DatLib.GetRes(DatLib.ResType.PIC, 1, index) as ResImage?
-        levelupChain = DatLib.GetRes(DatLib.ResType.MLR, 2, index) as ResLevelupChain
+        mImgHead = DatLib.getRes(DatLib.ResType.PIC, 1, index) as ResImage?
+        levelupChain = DatLib.getRes(DatLib.ResType.MLR, 2, index) as ResLevelupChain
         setWalkingSprite(WalkingSprite(type, coder.readInt()))
         fightingSprite = FightingSprite(DatLib.ResType.PIC, index)
         direction = Direction.fromInt(coder.readInt())
         step = coder.readInt()
         setPosInMap(coder.readInt(), coder.readInt())
-        magicChain = DatLib.GetRes(DatLib.ResType.MLR, 1, coder.readInt()) as ResMagicChain
+        magicChain = DatLib.getRes(DatLib.ResType.MLR, 1, coder.readInt()) as ResMagicChain
         magicChain.learnNum = coder.readInt()
         name = coder.readString()
         level = coder.readInt()
@@ -267,7 +267,7 @@ class Player : FightingCharacter(), Coder {
             val type = coder.readInt()
             val index = coder.readInt()
             if (type != 0 && index != 0) {
-                equipmentsArray[i] = DatLib.GetRes(DatLib.ResType.GRS, type, index) as GoodsEquipment?
+                equipmentsArray[i] = DatLib.getRes(DatLib.ResType.GRS, type, index) as GoodsEquipment?
             }
         }
     }

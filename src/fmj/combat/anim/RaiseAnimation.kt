@@ -25,31 +25,31 @@ class RaiseAnimation(private val x: Int, private val y: Int, hitpoint: Int, buff
         this.bShowNum = hitpoint != 0
         srsList = mutableListOf()
         if (buff and FightingCharacter.BUFF_MASK_DU == FightingCharacter.BUFF_MASK_DU) {
-            srsList.add(DatLib.GetRes(DatLib.ResType.SRS, 1, 243) as ResSrs)
+            srsList.add(DatLib.getRes(DatLib.ResType.SRS, 1, 243) as ResSrs)
             srsList.last().startAni()
         }
         if (buff and FightingCharacter.BUFF_MASK_LUAN == FightingCharacter.BUFF_MASK_LUAN) {
-            srsList.add(DatLib.GetRes(DatLib.ResType.SRS, 1, 244) as ResSrs)
+            srsList.add(DatLib.getRes(DatLib.ResType.SRS, 1, 244) as ResSrs)
             srsList.last().startAni()
         }
         if (buff and FightingCharacter.BUFF_MASK_FENG == FightingCharacter.BUFF_MASK_FENG) {
-            srsList.add(DatLib.GetRes(DatLib.ResType.SRS, 1, 245) as ResSrs)
+            srsList.add(DatLib.getRes(DatLib.ResType.SRS, 1, 245) as ResSrs)
             srsList.last().startAni()
         }
         if (buff and FightingCharacter.BUFF_MASK_MIAN == FightingCharacter.BUFF_MASK_MIAN) {
-            srsList.add(DatLib.GetRes(DatLib.ResType.SRS, 1, 246) as ResSrs)
+            srsList.add(DatLib.getRes(DatLib.ResType.SRS, 1, 246) as ResSrs)
             srsList.last().startAni()
         }
         if (buff and FightingCharacter.BUFF_MASK_GONG == FightingCharacter.BUFF_MASK_GONG) {
-            srsList.add(DatLib.GetRes(DatLib.ResType.SRS, 1, 240) as ResSrs)
+            srsList.add(DatLib.getRes(DatLib.ResType.SRS, 1, 240) as ResSrs)
             srsList.last().startAni()
         }
         if (buff and FightingCharacter.BUFF_MASK_FANG == FightingCharacter.BUFF_MASK_FANG) {
-            srsList.add(DatLib.GetRes(DatLib.ResType.SRS, 1, 241) as ResSrs)
+            srsList.add(DatLib.getRes(DatLib.ResType.SRS, 1, 241) as ResSrs)
             srsList.last().startAni()
         }
         if (buff and FightingCharacter.BUFF_MASK_SU == FightingCharacter.BUFF_MASK_SU) {
-            srsList.add(DatLib.GetRes(DatLib.ResType.SRS, 1, 242) as ResSrs)
+            srsList.add(DatLib.getRes(DatLib.ResType.SRS, 1, 242) as ResSrs)
             srsList.last().startAni()
         }
     }

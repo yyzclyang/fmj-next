@@ -29,7 +29,7 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
     }
 
     init {
-        mImgBg = DatLib.GetRes(DatLib.ResType.PIC, 2,
+        mImgBg = DatLib.getRes(DatLib.ResType.PIC, 2,
                 if (mOperate == Operate.LOAD) 16 else 15) as ResImage
         mHeadImgs.add(ArrayList<ResImage>())
         mHeadImgs.add(ArrayList<ResImage>())
@@ -60,7 +60,7 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
         var name =  file.readString()
         val actorNum =  file.readInt()
         for (i in 0 until actorNum) {
-            heads.add(DatLib.GetRes(DatLib.ResType.PIC, 1,  file.readInt()) as ResImage)
+            heads.add(DatLib.getRes(DatLib.ResType.PIC, 1,  file.readInt()) as ResImage)
         }
         file.close()
         return name

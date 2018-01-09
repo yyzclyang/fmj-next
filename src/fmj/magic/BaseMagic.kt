@@ -49,7 +49,7 @@ abstract class BaseMagic : ResBase() {
         roundNum = buf[offset + 3].toInt() and 0x7f
         isForAll = buf[offset + 3].toInt() and 0x80 != 0
         costMp = buf[offset + 4].toInt()
-        magicAni = DatLib.GetRes(DatLib.ResType.SRS, 2, buf[offset + 5].toInt() and 0xFF) as ResSrs
+        magicAni = DatLib.getRes(DatLib.ResType.SRS, 2, buf[offset + 5].toInt() and 0xFF) as ResSrs
         magicName = Companion.getString(buf, offset + 6)
         if (buf[offset + 2].toInt() and 0xff > 0x70) { // 魔法描述过长
             buf[offset + 0x70] = 0

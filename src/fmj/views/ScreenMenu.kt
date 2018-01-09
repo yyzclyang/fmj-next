@@ -18,10 +18,10 @@ class ScreenMenu : BaseScreen() {
     private var isCancelKeyDown = false
 
     init {
-        mImgMenu = DatLib.GetRes(DatLib.ResType.PIC, 2, 14) as ResImage
+        mImgMenu = DatLib.getRes(DatLib.ResType.PIC, 2, 14) as ResImage
         mSrsSelector = arrayOf(
-                DatLib.GetRes(DatLib.ResType.SRS, 1, 250) as ResSrs,
-                DatLib.GetRes(DatLib.ResType.SRS, 1, 251) as ResSrs)
+                DatLib.getRes(DatLib.ResType.SRS, 1, 250) as ResSrs,
+                DatLib.getRes(DatLib.ResType.SRS, 1, 251) as ResSrs)
         mSrsSelector[0].startAni()
         mSrsSelector[1].startAni()
         mLeft = (160 - mImgMenu.width) / 2

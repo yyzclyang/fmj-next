@@ -20,7 +20,7 @@ class GoodsMedicine : BaseGoods(), IEatMedicine {
     override fun setOtherData(buf: ByteArray, offset: Int) {
         mHp = get2BytesInt(buf, offset + 0x16)
         mMp = get2BytesInt(buf, offset + 0x18)
-        ani = DatLib.GetRes(DatLib.ResType.SRS, 2/*(int)buf[offset + 0x1b] & 0xff*/,
+        ani = DatLib.getRes(DatLib.ResType.SRS, 2/*(int)buf[offset + 0x1b] & 0xff*/,
                 buf[offset + 0x1a].toInt() and 0xff) as ResSrs?
         mBitMask = buf[offset + 0x1c].toInt() and 0xff
     }

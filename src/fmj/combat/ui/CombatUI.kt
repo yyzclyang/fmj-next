@@ -33,7 +33,6 @@ import fmj.magic.MagicAttack
 import fmj.magic.MagicSpecial
 import fmj.magic.ScreenMagic
 import fmj.views.BaseScreen
-import fmj.views.ScreenStack
 
 import graphics.Canvas
 import graphics.Point
@@ -60,9 +59,9 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
     private val mMonsterIndicator: FrameAnimation
 
     private val mHeadsImg = arrayOf(
-            DatLib.GetRes(DatLib.ResType.PIC, 1, 1) as ResImage,
-            DatLib.GetRes(DatLib.ResType.PIC, 1, 2) as ResImage,
-            DatLib.GetRes(DatLib.ResType.PIC, 1, 3) as ResImage)
+            DatLib.getRes(DatLib.ResType.PIC, 1, 1) as ResImage,
+            DatLib.getRes(DatLib.ResType.PIC, 1, 2) as ResImage,
+            DatLib.getRes(DatLib.ResType.PIC, 1, 3) as ResImage)
 
     interface CallBack {
         /**
@@ -90,10 +89,10 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
     init {
         mScreenStack.push(MainMenu())
 
-        var tmpImg = DatLib.GetRes(DatLib.ResType.PIC, 2, 4) as ResImage
+        var tmpImg = DatLib.getRes(DatLib.ResType.PIC, 2, 4) as ResImage
         mPlayerIndicator = FrameAnimation(tmpImg, 1, 2)
         mTargetIndicator = FrameAnimation(tmpImg, 3, 4)
-        tmpImg = DatLib.GetRes(DatLib.ResType.PIC, 2, 3) as ResImage
+        tmpImg = DatLib.getRes(DatLib.ResType.PIC, 2, 3) as ResImage
         mMonsterIndicator = FrameAnimation(tmpImg)
     }
 
@@ -154,10 +153,10 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
     private inner class MainMenu : BaseScreen() {
 
         /** 1↑、2←、3↓、4→ */
-        private val mMenuIcon = DatLib.GetRes(DatLib.ResType.PIC, 2, 1) as ResImage
+        private val mMenuIcon = DatLib.getRes(DatLib.ResType.PIC, 2, 1) as ResImage
 
         /** 显示角色HP MP的背景图 */
-        private val mPlayerInfoBg = DatLib.GetRes(DatLib.ResType.PIC, 2, 2) as ResImage
+        private val mPlayerInfoBg = DatLib.getRes(DatLib.ResType.PIC, 2, 2) as ResImage
 
         private var mCurIconIndex = 1
 
@@ -420,10 +419,10 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
         /** 战斗中，显示玩家异常状态 */
         private inner class MenuState : BaseScreen() {
 
-            private val mBg = DatLib.GetRes(DatLib.ResType.PIC, 2, 11) as ResImage
+            private val mBg = DatLib.getRes(DatLib.ResType.PIC, 2, 11) as ResImage
 
             /**1↑2↓3×4√5回 */
-            private val mMarker = DatLib.GetRes(DatLib.ResType.PIC, 2, 12) as ResImage
+            private val mMarker = DatLib.getRes(DatLib.ResType.PIC, 2, 12) as ResImage
 
             private var mCurPlayer: Int = 0
 

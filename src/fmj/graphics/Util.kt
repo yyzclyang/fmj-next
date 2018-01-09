@@ -65,7 +65,7 @@ object Util {
             canvas.drawLine(i, i, i, 13 - i, paint)
         }
 
-        imgSmallNum = DatLib.GetRes(DatLib.ResType.PIC, 2, 5) as ResImage
+        imgSmallNum = DatLib.getRes(DatLib.ResType.PIC, 2, 5) as ResImage
 
         bmpChuandai = Bitmap.createBitmap(22, 39)
         val b = Global.COLOR_BLACK
@@ -137,7 +137,7 @@ object Util {
 
     fun getSmallSignedNumBitmap(num: Int): Bitmap {
         val digits = (if (num > 0) num else -num).toString()
-        val sign = DatLib.GetRes(DatLib.ResType.PIC, 2, if (num > 0) 6 else 7) as ResImage
+        val sign = DatLib.getRes(DatLib.ResType.PIC, 2, if (num > 0) 6 else 7) as ResImage
         val bmp = Bitmap.createBitmap(
                 sign.width + digits.length * imgSmallNum.width + 1 + digits.length,
                 imgSmallNum.height)

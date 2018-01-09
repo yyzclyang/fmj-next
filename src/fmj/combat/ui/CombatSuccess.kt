@@ -92,7 +92,7 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
 
         init {
             val msg = _msg.gbkBytes()
-            val side = DatLib.GetRes(DatLib.ResType.PIC, 2, 8) as ResImage
+            val side = DatLib.getRes(DatLib.ResType.PIC, 2, 8) as ResImage
             mMsg = Bitmap.createBitmap(msg.size * 8 + 8, 24)
             val c = Canvas(mMsg)
             c.drawColor(Global.COLOR_WHITE)
@@ -125,7 +125,7 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
         private val mInfo: Bitmap
 
         init {
-            val ri = DatLib.GetRes(DatLib.ResType.PIC, 2, 9) as ResImage
+            val ri = DatLib.getRes(DatLib.ResType.PIC, 2, 9) as ResImage
             mInfo = ri.getBitmap(0)!!
 
             val canvas = Canvas(mInfo)
@@ -167,7 +167,7 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
 
     private inner class LearnMagicScreen(playerName: String, magicName: String) : BaseScreen() {
 
-        private val mInfo: Bitmap = (DatLib.GetRes(DatLib.ResType.PIC, 2, 10) as ResImage).getBitmap(0)!!
+        private val mInfo: Bitmap = (DatLib.getRes(DatLib.ResType.PIC, 2, 10) as ResImage).getBitmap(0)!!
 
         init {
             var pn: ByteArray

@@ -7,7 +7,7 @@ import graphics.Canvas
 
 class Tiles(index: Int) {
 
-    private val mTileRes = DatLib.GetRes(DatLib.ResType.TIL, 1, index) as ResImage
+    private val mTileRes = DatLib.getRes(DatLib.ResType.TIL, 1, index) as ResImage
 
     /**
      *

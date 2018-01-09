@@ -110,7 +110,7 @@ class ActionCoopMagic : Action {
         }
 
         if (magic == null) {
-            mAni = DatLib.GetRes(DatLib.ResType.SRS, 2, 240) as ResSrs
+            mAni = DatLib.getRes(DatLib.ResType.SRS, 2, 240) as ResSrs
         } else {
             mAni = magic!!.magicAni!!
         }

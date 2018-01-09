@@ -48,7 +48,7 @@ abstract class BaseGoods : ResBase() {
         index = buf[offset + 1].toInt() and 0xFF
         mEnable = buf[offset + 3].toInt() and 0xFF
         sumRound = buf[offset + 4].toInt() and 0xff
-        mImage = DatLib.Companion.GetRes(DatLib.ResType.GDP, type, buf[offset + 5].toInt() and 0xff) as ResImage
+        mImage = DatLib.Companion.getRes(DatLib.ResType.GDP, type, buf[offset + 5].toInt() and 0xff) as ResImage
         name = ResBase.getString(buf, offset + 6)
         buyPrice = ResBase.get2BytesInt(buf, offset + 0x12)
         sellPrice = ResBase.get2BytesInt(buf, offset + 0x14)

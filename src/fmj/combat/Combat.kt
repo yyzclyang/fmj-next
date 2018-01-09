@@ -79,7 +79,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
     private var mLossAddr: Int = 0
     private var mWinAddr: Int = 0
 
-    private val mFlyPeach = DatLib.GetRes(DatLib.ResType.SRS, 1, 249) as ResSrs
+    private val mFlyPeach = DatLib.getRes(DatLib.ResType.SRS, 1, 249) as ResSrs
 
     private var mIsWin = false
 
@@ -170,11 +170,11 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
         mBackground = Bitmap.createBitmap(160, 96)
         val canvas = Canvas(mBackground)
         var img: ResImage?
-        img = DatLib.GetRes(DatLib.ResType.PIC, 4, scrb) as ResImage
+        img = DatLib.getRes(DatLib.ResType.PIC, 4, scrb) as ResImage
         img.draw(canvas, 1, 0, 0) // 背景
-        img = DatLib.GetRes(DatLib.ResType.PIC, 4, scrl) as ResImage
+        img = DatLib.getRes(DatLib.ResType.PIC, 4, scrl) as ResImage
         img.draw(canvas, 1, 0, 96 - img.height) // 左下角
-        img = DatLib.GetRes(DatLib.ResType.PIC, 4, scrr) as ResImage
+        img = DatLib.getRes(DatLib.ResType.PIC, 4, scrr) as ResImage
         img.draw(canvas, 1, 160 - img.width, 0) // 右上角
 
         mScrb = scrb
@@ -226,7 +226,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
 
         if (!sIsRandomFight && mMonsterList.size == 1) { // 剧情战斗，只有一个怪时，怪的位置在中间
             val m = mMonsterList[0]
-            val n = DatLib.GetRes(DatLib.ResType.ARS, m.type, m.index) as Monster
+            val n = DatLib.getRes(DatLib.ResType.ARS, m.type, m.index) as Monster
             n.hp = -1
             n.isVisiable = false
             mMonsterList.add(0, n) // 加入一个看不见的怪
@@ -683,7 +683,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
             sInstance!!.mMonsterList = mutableListOf<Monster>()
             monstersType.indices
                     .filter { monstersType[it] > 0 }
-                    .map { DatLib.GetRes(DatLib.ResType.ARS, 3, monstersType[it]) as Monster }
+                    .map { DatLib.getRes(DatLib.ResType.ARS, 3, monstersType[it]) as Monster }
                     .forEach { sInstance!!.mMonsterList.add(it) }
 
             sInstance!!.mMaxRound = roundMax
@@ -733,7 +733,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
             var i = sRandom.nextInt(3)
             var j = 0
             while (i >= 0) {
-                val m = DatLib.GetRes(DatLib.ResType.ARS, 3, sInstance!!.mMonsterType!![j++]) as Monster
+                val m = DatLib.getRes(DatLib.ResType.ARS, 3, sInstance!!.mMonsterType!![j++]) as Monster
                 sInstance!!.mMonsterList.add(m)
                 i--
             }

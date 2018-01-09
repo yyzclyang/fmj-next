@@ -37,7 +37,7 @@ class GoodsHiddenWeapon : BaseGoods() {
     override fun setOtherData(buf: ByteArray, offset: Int) {
         affectHp = get2ByteSint(buf, offset + 0x16)
         affectMp = get2ByteSint(buf, offset + 0x18)
-        ani = DatLib.GetRes(DatLib.ResType.SRS, buf[offset + 0x1b].toInt() and 0xff,
+        ani = DatLib.getRes(DatLib.ResType.SRS, buf[offset + 0x1b].toInt() and 0xff,
                 buf[offset + 0x1a].toInt() and 0xff) as ResSrs?
         mBitMask = buf[offset + 0x1c].toInt() and 0xff
     }

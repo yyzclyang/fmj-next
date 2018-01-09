@@ -141,7 +141,7 @@ class GoodsManage {
             }
         }
         // 加入链表
-        val item = DatLib.GetRes(DatLib.ResType.GRS, type, index) as BaseGoods
+        val item = DatLib.getRes(DatLib.ResType.GRS, type, index) as BaseGoods
         item.goodsNum = num
         list.add(item)
     }
@@ -199,14 +199,14 @@ class GoodsManage {
         clear()
         var size = coder.readInt()
         for (i in 0 until size) {
-            val g = DatLib.GetRes(DatLib.ResType.GRS, coder.readInt(), coder.readInt()) as BaseGoods
+            val g = DatLib.getRes(DatLib.ResType.GRS, coder.readInt(), coder.readInt()) as BaseGoods
             g.goodsNum = coder.readInt()
             mEquipList.add(g)
         }
 
         size = coder.readInt()
         for (i in 0 until size) {
-            val g = DatLib.GetRes(DatLib.ResType.GRS, coder.readInt(), coder.readInt()) as BaseGoods
+            val g = DatLib.getRes(DatLib.ResType.GRS, coder.readInt(), coder.readInt()) as BaseGoods
             g.goodsNum = coder.readInt()
             mGoodsList.add(g)
         }

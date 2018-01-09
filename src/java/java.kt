@@ -83,11 +83,11 @@ interface Runnable {
 
 fun ByteArray.gbkString(offset: Int, length: Int): String {
     val arr = sliceArray(offset until offset+length).toTypedArray()
-    return jsGbkDecode(arr)
+    return sysGbkDecode(arr)
 }
 
 fun String.gbkBytes(): ByteArray {
-    return jsGbkEncode(this).toByteArray()
+    return sysGbkEncode(this).toByteArray()
 }
 
 object System {
@@ -176,14 +176,14 @@ class File(private val path: String) {
     }
 
     fun exists(): Boolean {
-        return jsStorageHas(path)
+        return sysStorageHas(path)
     }
 
     fun createNewFile() {
     }
 
     fun readAll(): ByteArray {
-        val s = jsStorageGet(path)
+        val s = sysStorageGet(path)
         return if (s == null) {
             byteArrayOf()
         } else {
@@ -192,7 +192,7 @@ class File(private val path: String) {
     }
 
     fun wholeWrite(buf: ByteArray) {
-        jsStorageSet(path, hexEncode(buf))
+        sysStorageSet(path, hexEncode(buf))
     }
 
     fun close() {
@@ -324,12 +324,15 @@ fun objectOutputOf(f: File): ObjectOutput {
     return ObjectOutputStream(f)
 }
 
-fun random() = jsRandom()
+fun random() = sysRandom()
 
-external fun jsStorageGet(path: String): String?
-external fun jsStorageSet(path: String, value: String?)
-external fun jsStorageHas(path: String): Boolean
-external fun jsGbkEncode(path: String): Array<Byte>
-external fun jsGbkDecode(data: Array<Byte>): String
-external fun jsRandom(): Double
+external fun sysStorageGet(path: String): String?
+external fun sysStorageSet(path: String, value: String?)
+external fun sysStorageHas(path: String): Boolean
+external fun sysGbkEncode(path: String): Array<Byte>
+external fun sysGbkDecode(data: Array<Byte>): String
+external fun sysRandom(): Double
+external fun sysAddKeyDownListener(callback:(keyCode: Int) -> Unit)
+external fun sysAddKeyUpListener(callback:(keyCode: Int) -> Unit)
+external fun sysSetInterval(interval: Int, callback:() -> Unit): Int
 

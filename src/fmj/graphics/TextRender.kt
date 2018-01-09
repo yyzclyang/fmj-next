@@ -1,11 +1,8 @@
 package fmj.graphics
 
 import fmj.Global
+import graphics.*
 
-import graphics.Bitmap
-import graphics.Canvas
-import graphics.Color
-import graphics.Rect
 import java.File
 import java.gbkBytes
 
@@ -23,42 +20,34 @@ object TextRender {
     }
 
     fun drawSelText(canvas: Canvas, text: String, x: Int, y: Int) {
-        // TODO: refactor me, don't touch the global!
-        var tmpColor = Global.COLOR_BLACK
-        Global.COLOR_BLACK = Global.COLOR_WHITE
-        Global.COLOR_WHITE = tmpColor
-        drawText(canvas, text, x, y)
-        tmpColor = Global.COLOR_BLACK
-        Global.COLOR_BLACK = Global.COLOR_WHITE
-        Global.COLOR_WHITE = tmpColor
+        drawSelText(canvas, text.gbkBytes(), x, y)
     }
 
     fun drawSelText(canvas: Canvas, text: ByteArray, x: Int, y: Int) {
-        var tmpColor = Global.COLOR_BLACK
-        Global.COLOR_BLACK = Global.COLOR_WHITE
-        Global.COLOR_WHITE = tmpColor
+        // TODO: refactor me, don't touch the global!
+        Global.fgColor = Global.COLOR_WHITE
+        Global.bgColor = Global.COLOR_BLACK
         drawText(canvas, text, x, y)
-        tmpColor = Global.COLOR_BLACK
-        Global.COLOR_BLACK = Global.COLOR_WHITE
-        Global.COLOR_WHITE = tmpColor
+        Global.fgColor = Global.COLOR_BLACK
+        Global.bgColor = Global.COLOR_WHITE
     }
 
     fun drawText(canvas: Canvas, text: ByteArray, x: Int, y: Int) {
-        var x = x
+        var x0 = x
         var i = 0
         while (i < text.size && text[i].toInt() != 0) {
             val t = text[i].toInt() and 0xFF
             if (t >= 0xa1) {
                 ++i
                 val offset = (94 * (t - 0xa1) + (text[i].toInt() and 0xFF) - 0xa1) * 32
-                canvas.drawBitmap(getHzk(offset), x, y)
-                x += 16
+                canvas.drawBitmap(getHzk(offset), x0, y)
+                x0 += 16
             } else if (t < 128) {
                 val offset = t * 16
-                canvas.drawBitmap(getAsc(offset), x, y)
-                x += 8
+                canvas.drawBitmap(getAsc(offset), x0, y)
+                x0 += 8
             } else {
-                x += 8
+                x0 += 8
             }
             i++
         }
@@ -122,7 +111,7 @@ object TextRender {
             tmpY += 16
         }
 
-        return if (i == 0 && buf.size > 0) {
+        return if (i == 0 && buf.isNotEmpty()) {
             2
         } else 1
 
@@ -175,14 +164,14 @@ object TextRender {
         for (i in 0..31) {
             val t = mHZKBuf[offset + i].toInt()
             val k = i shl 3
-            mPixels[k] = if (t and 0x80 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 1] = if (t and 0x40 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 2] = if (t and 0x20 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 3] = if (t and 0x10 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 4] = if (t and 0x08 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 5] = if (t and 0x04 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 6] = if (t and 0x02 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 7] = if (t and 0x01 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
+            mPixels[k] = if (t and 0x80 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 1] = if (t and 0x40 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 2] = if (t and 0x20 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 3] = if (t and 0x10 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 4] = if (t and 0x08 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 5] = if (t and 0x04 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 6] = if (t and 0x02 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 7] = if (t and 0x01 != 0) Global.fgColor else Global.bgColor
         }
         mBmpHzk.setPixels(mPixels, 0, 0, 0, 16, 16)
         return mBmpHzk
@@ -192,14 +181,14 @@ object TextRender {
         for (i in 0..15) {
             val t = mASCBuf[offset + i].toInt()
             val k = i shl 3
-            mPixels[k] = if (t and 0x80 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 1] = if (t and 0x40 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 2] = if (t and 0x20 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 3] = if (t and 0x10 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 4] = if (t and 0x08 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 5] = if (t and 0x04 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 6] = if (t and 0x02 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
-            mPixels[k or 7] = if (t and 0x01 != 0) Global.COLOR_BLACK else Global.COLOR_WHITE
+            mPixels[k] = if (t and 0x80 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 1] = if (t and 0x40 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 2] = if (t and 0x20 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 3] = if (t and 0x10 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 4] = if (t and 0x08 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 5] = if (t and 0x04 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 6] = if (t and 0x02 != 0) Global.fgColor else Global.bgColor
+            mPixels[k or 7] = if (t and 0x01 != 0) Global.fgColor else Global.bgColor
         }
         mBmpAsc.setPixels(mPixels, 0, 0, 0, 8, 16)
         return mBmpAsc

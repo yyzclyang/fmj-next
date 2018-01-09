@@ -88,5 +88,8 @@ class ScreenStack: ScreenDelegate {
     fun draw(canvas: Canvas) {
         TODO()
     }
+    fun update(delta: Long) {
+        mScreenStack.peek()?.update(delta)
+    }
 }
 

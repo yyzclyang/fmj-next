@@ -31,9 +31,9 @@ class FightingSprite(resType: DatLib.ResType, index: Int) {
 
     init {
         if (resType == DatLib.ResType.ACP) { // 怪物的
-            mImage = DatLib.Companion.GetRes(DatLib.ResType.ACP, 3, index) as ResImage
+            mImage = DatLib.Companion.getRes(DatLib.ResType.ACP, 3, index) as ResImage
         } else if (resType == DatLib.ResType.PIC) { // 玩家角色的
-            mImage = DatLib.Companion.GetRes(DatLib.ResType.PIC, 3, index) as ResImage
+            mImage = DatLib.Companion.getRes(DatLib.ResType.PIC, 3, index) as ResImage
         } else {
             throw Error("resType Error. resType=$resType")
         }

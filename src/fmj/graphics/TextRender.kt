@@ -7,8 +7,8 @@ import java.File
 import java.gbkBytes
 
 object TextRender {
-    private var mHZKBuf: ByteArray = File.contentsOf("./assets/HZK16")
-    private var mASCBuf: ByteArray = File.contentsOf("./assets/ASC16")
+    private var mHZKBuf: ByteArray = File.contentsOf("HZK16")
+    private var mASCBuf: ByteArray = File.contentsOf("ASC16")
 
     private var mPixels = Array(16 * 16) { Color.WHITE }
     private var mBmpHzk = Bitmap.createBitmap(16, 16)

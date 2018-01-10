@@ -87,15 +87,9 @@ class ScreenStack: ScreenDelegate {
     }
 
     fun draw(canvas: Canvas) {
-        println("ScreenStack draw")
-        var visible = false
+        // TODO: optimize: redraw dirty layers only
         for (scr in mScreenStack) {
-            if (!visible && scr.isPopup) {
-                visible = true
-            }
-            if (visible) {
-                scr.draw(canvas)
-            }
+            scr.draw(canvas)
         }
     }
     fun update(delta: Long) {

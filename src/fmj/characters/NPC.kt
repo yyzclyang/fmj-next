@@ -141,9 +141,10 @@ open class NPC : Character(), Coder {
         }
     }
 
-    val isEmpty = type == 0
+    val isEmpty
+        get() = type == 0
 
     companion object {
-        val empty: NPC = NPC()
+        val empty = NPC()
     }
 }

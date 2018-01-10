@@ -4,7 +4,7 @@ import graphics.Color
 
 
 object Global {
-    val COLOR_WHITE = Color(250, 245, 255, 255)
+    val COLOR_WHITE = Color(180, 180, 180, 255)
     val COLOR_BLACK = Color(0, 0, 0, 255)
     val COLOR_TRANSP = Color(0, 0, 0, 0)
 

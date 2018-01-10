@@ -281,22 +281,26 @@ class ScriptProcess private constructor() {
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : Operate() {
-                internal var picNum = get2ByteInt(code, start)
-                internal var headImg: ResImage
-                internal var text = getStringBytes(code, start + 2)
+                internal val picNum = get2ByteInt(code, start)
+                internal val headImg: ResImage?
+                internal val text = getStringBytes(code, start + 2)
                 internal var iOfText = 0
                 internal var iOfNext = 0
                 internal var isAnyKeyDown = false
-                internal var rWithPic = RectF(9f, 50f, 151f, 96 - 0.5f) // 有图边框
-                internal var rWithTextT = Rect(44, 58, 145, 75) // 上
-                internal var rWithTextB = Rect(14, 76, 145, 93) // 下
-                internal var rWithoutPic = RectF(9f, 55f, 151f, 96 - 0.5f) // 无图边框
-                internal var rWithoutTextT = Rect(14, 58, 145, 75) // 上
-                internal var rWithoutTextB = Rect(14, 76, 145, 93) // 下
-                internal var paint = Paint()
+                internal val rWithPic = RectF(9f, 50f, 151f, 96 - 0.5f) // 有图边框
+                internal val rWithTextT = Rect(44, 58, 145, 75) // 上
+                internal val rWithTextB = Rect(14, 76, 145, 93) // 下
+                internal val rWithoutPic = RectF(9f, 55f, 151f, 96 - 0.5f) // 无图边框
+                internal val rWithoutTextT = Rect(14, 58, 145, 75) // 上
+                internal val rWithoutTextB = Rect(14, 76, 145, 93) // 下
+                internal val paint = Paint()
 
                 init {
-                    headImg = DatLib.getRes(DatLib.ResType.PIC, 1, picNum) as ResImage
+                    headImg = if (picNum != 0) {
+                        DatLib.getRes(DatLib.ResType.PIC, 1, picNum) as ResImage
+                    } else {
+                        null
+                    }
                     paint.color = Global.COLOR_BLACK
                     paint.style = Paint.Style.FILL_AND_STROKE
                 }
@@ -329,7 +333,7 @@ class ScriptProcess private constructor() {
                     if (!Combat.Companion.IsActive()) {
                         mScreenMainGame!!.drawScene(canvas)
                     }
-                    if (picNum == 0) { // 没头像
+                    if (headImg == null) { // 没头像
                         // 画矩形
                         paint.color = Global.COLOR_WHITE
                         paint.style = Paint.Style.FILL

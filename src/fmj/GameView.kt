@@ -16,7 +16,7 @@ import java.sysSetInterval
 class GameView {
     private val screen = ScreenStack()
     internal val canvas = Canvas(Bitmap(Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT))
-    private val delta = 1000
+    private val delta = 100
 
     fun start() {
         ScriptProcess.instance.delegate = screen

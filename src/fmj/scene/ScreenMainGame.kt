@@ -46,7 +46,7 @@ class ScreenMainGame : BaseScreen() {
     private// 选择排序
     val sortedNpcObjs: Array<NPC>
         get() {
-            return mNPCObj.filterNotNull()
+            return mNPCObj.filterNot { it.isEmpty }
                     .sortedByDescending { it.posInMap.y }
                     .toTypedArray()
 //            var arr = arrayOfNulls<NPC>(40)
@@ -94,7 +94,7 @@ class ScreenMainGame : BaseScreen() {
     init {
         instance = this
 
-        mScriptSys = ScriptProcess.instance!!
+        mScriptSys = ScriptProcess.instance
         mScriptSys.setScreenMainGame(this)
 
         if (SaveLoadGame.startNewGame) { // 开始新游戏
@@ -135,9 +135,9 @@ class ScreenMainGame : BaseScreen() {
         ScriptExecutor.goonExecute = false
     }
 
-    fun runScript() {
-        mRunScript = true
-    }
+//    fun runScript() {
+//        mRunScript = true
+//    }
 
     fun startChapter(type: Int, index: Int) {
         println("ScreenMainGame.startChapter $type $index")
@@ -160,10 +160,9 @@ class ScreenMainGame : BaseScreen() {
         } else if (Combat.IsActive()) { // TODO fix this test
             Combat.Update(delta)
         } else {
-            for (i in 1..40) {
-                if (mNPCObj[i] == null) continue
-                mNPCObj[i].update(delta)
-            }
+            (1..40)
+                    .filterNot { mNPCObj[it].isEmpty }
+                    .forEach { mNPCObj[it].update(delta) }
         }
     }
 
@@ -248,7 +247,7 @@ class ScreenMainGame : BaseScreen() {
     /**
      * 按enter键后，检测并触发场景对象里的事件，如NPC对话，开宝箱等
      */
-    fun triggerSceneObjEvent() {
+    private fun triggerSceneObjEvent() {
         val p = player
         var x = p!!.posInMap.x
         var y = p.posInMap.y
@@ -437,9 +436,9 @@ class ScreenMainGame : BaseScreen() {
                 y >= 0 && y <= ResMap.HEIGHT
     }
 
-    fun isNpcVisible(id: Int): Boolean {
-        return isNpcVisible(getNPC(id))
-    }
+//    fun isNpcVisible(id: Int): Boolean {
+//        return isNpcVisible(getNPC(id))
+//    }
 
     /**
      * 得到地图的(x,y)处的NPC，没有就返回null
@@ -451,7 +450,7 @@ class ScreenMainGame : BaseScreen() {
         return mNPCObj[getNpcIdFromPosInMap(x, y)]
     }
 
-    fun getNpcIdFromPosInMap(x: Int, y: Int): Int {
+    private fun getNpcIdFromPosInMap(x: Int, y: Int): Int {
         for (i in 1..40) {
             if (!mNPCObj[i].isEmpty && mNPCObj[i].posInMap == Point(x, y)) {
                 return i

@@ -33,6 +33,7 @@ class ScreenStack: ScreenDelegate {
                 }
         mScreenStack.clear()
         mScreenStack.push(tmp)
+        tmp.delegate = this
     }
 
     override fun pushScreen(scr: BaseScreen) {

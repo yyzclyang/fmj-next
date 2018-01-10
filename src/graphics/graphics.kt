@@ -99,22 +99,17 @@ class Bitmap(val width:Int, val height:Int, val buffer: Array<Color>) {
     }
 
     fun setPixels(pixels: Array<Color>, offset: Int, x: Int, y: Int, w: Int, h: Int) {
-        if (width == w && x == 0) {
-            val start = width * y
-            val dLen = width * height - start
-            val sLen = w * h
-            val len = min(sLen, dLen)
-            System.arraycopy(pixels, offset, buffer, start, len)
-        } else {
-            val xWidth = min(width - x, w)
-            val xHeight = min(height - y, h)
-            for (col in 0 until xWidth)
-                for (row in 0 until xHeight) {
-                    val dOff = width * (y + row) + x + col
-                    val sOff = w * row + col
+        val xWidth = min(width - x, w)
+        val xHeight = min(height - y, h)
+        for (col in 0 until xWidth)
+            for (row in 0 until xHeight) {
+                val dOff = width * (y + row) + x + col
+                val sOff = w * row + col
+                // TODO: mix transparent
+                if (pixels[offset+sOff].a > 0) {
                     buffer[dOff] = pixels[offset+sOff]
                 }
-        }
+            }
     }
 
     fun copy(): Bitmap {

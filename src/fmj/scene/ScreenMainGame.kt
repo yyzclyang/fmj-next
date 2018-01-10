@@ -86,7 +86,7 @@ class ScreenMainGame : BaseScreen() {
 
         override fun canWalk(x: Int, y: Int): Boolean {
             return currentMap!!.canWalk(x, y) &&
-                    getNpcFromPosInMap(x, y) == null &&
+                    getNpcFromPosInMap(x, y).isEmpty &&
                     player!!.posInMap != Point(x, y)
         }
     }
@@ -294,7 +294,7 @@ class ScreenMainGame : BaseScreen() {
      * @return
      */
     private fun canPlayerWalk(x: Int, y: Int): Boolean {
-        return if (currentMap == null) false else currentMap!!.canPlayerWalk(x, y) && getNpcFromPosInMap(x, y) == null
+        return if (currentMap == null) false else currentMap!!.canPlayerWalk(x, y) && getNpcFromPosInMap(x, y).isEmpty
     }
 
     private fun walkLeft() {
@@ -446,17 +446,13 @@ class ScreenMainGame : BaseScreen() {
      * @param y
      * @return
      */
-    fun getNpcFromPosInMap(x: Int, y: Int): NPC? {
+    fun getNpcFromPosInMap(x: Int, y: Int): NPC {
         return mNPCObj[getNpcIdFromPosInMap(x, y)]
     }
 
     private fun getNpcIdFromPosInMap(x: Int, y: Int): Int {
-        for (i in 1..40) {
-            if (!mNPCObj[i].isEmpty && mNPCObj[i].posInMap == Point(x, y)) {
-                return i
-            }
-        }
-        return 0
+        val id = mNPCObj.indexOfFirst { !it.isEmpty && it.posInMap == Point(x, y) }
+        return if (id == -1) 0 else id
     }
 
     /**

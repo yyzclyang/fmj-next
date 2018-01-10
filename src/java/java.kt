@@ -87,6 +87,10 @@ fun ByteArray.gbkString(offset: Int, length: Int): String {
     return sysGbkDecode(arr)
 }
 
+fun ByteArray.gbkString(): String {
+    return sysGbkDecode(this.toTypedArray())
+}
+
 fun String.gbkBytes(): ByteArray {
     return sysGbkEncode(this).toByteArray()
 }

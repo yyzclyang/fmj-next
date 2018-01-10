@@ -8,15 +8,12 @@ import fmj.views.ScreenStack
 import graphics.Canvas
 import graphics.Bitmap
 import graphics.Color
-import java.sysAddKeyDownListener
-import java.sysAddKeyUpListener
-import java.sysDrawScreen
-import java.sysSetInterval
+import java.*
 
 class GameView {
     private val screen = ScreenStack()
     internal val canvas = Canvas(Bitmap(Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT))
-    private val delta = 100
+    private val delta = 40
 
     fun start() {
         ScriptProcess.instance.delegate = screen

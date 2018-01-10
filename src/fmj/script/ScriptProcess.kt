@@ -1307,7 +1307,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
-                    mScreenMainGame!!.sceneName = ResBase.Companion.getString(code, start)
+                    mScreenMainGame!!.sceneName = ResBase.getString(code, start)
                     return false
                 }
             }

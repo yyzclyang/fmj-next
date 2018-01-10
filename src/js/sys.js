@@ -70,7 +70,7 @@
     };
 
     global.sysGbkDecode = function(data) {
-        return gbkDecoder.decode(data);
+        return gbkDecoder.decode(new Int8Array(data));
     };
 
     global.sysRandom = Math.random;

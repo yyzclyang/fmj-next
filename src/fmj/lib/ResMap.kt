@@ -143,7 +143,7 @@ class ResMap : ResBase() {
                 val event = getEventNum(tx, ty)
                 if (event != 0) {
                     // TODO: refactor
-                    Global.bgColor = Color(-0x10000)
+                    Global.bgColor = Color.RED
                     TextRender.drawText(canvas, event.toString(), sx, sy)
                     Global.bgColor = Global.COLOR_WHITE
                 }

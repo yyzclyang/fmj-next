@@ -1,13 +1,17 @@
 package fmj
 
+import fmj.graphics.TextRender
 import fmj.script.ScriptProcess
 import fmj.views.ScreenAnimation
 import fmj.views.ScreenStack
 
 import graphics.Canvas
 import graphics.Bitmap
+import graphics.Color
+import graphics.Paint
 import java.sysAddKeyDownListener
 import java.sysAddKeyUpListener
+import java.sysDrawScreen
 import java.sysSetInterval
 
 class GameView {
@@ -49,6 +53,7 @@ class GameView {
         sysSetInterval(this.delta) {
             update(delta)
             draw()
+            sysDrawScreen(canvas.buffer, canvas.width, canvas.height)
         }
     }
 }

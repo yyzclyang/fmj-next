@@ -33,6 +33,26 @@
         }
     };
 
+    function getLCD() {
+        var canvas = document.getElementById('lcd');
+        var ctx = canvas.getContext('2d');
+        return ctx;
+    }
+
+    function imagePixel(img, i, color)
+    {
+        img.data[i] = color.r;
+        img.data[i+1] = color.g;
+        img.data[i+2] = color.b;
+        img.data[i+3] = color.a;
+    }
+
+    function imageDot(img, x, y, lineSize, color)
+    {
+        var ind = lineSize*y + x;
+        imagePixel(img, ind*4, color);
+    }
+
     global.sysStorageGet = function(path) {
         return sfsData[path];
     };
@@ -70,5 +90,25 @@
     global.sysSetInterval = function(interval, callback) {
         return setInterval(callback, interval);
     };
+
+    global.sysDrawScreen = function(buffer, wid, hgt) {
+        var lcd = getLCD();
+        var w = wid;
+        var h = hgt;
+
+        var img = lcd.createImageData(wid, hgt);
+
+        for (var y = 0; y < h; y += 1) {
+            for (var x = 0; x < w; x += 1) {
+                var ind = w*y + x;
+                var pixel = buffer[ind];
+                imageDot(img, x, y, w, pixel);
+            }
+        }
+        lcd.imageSmoothingEnabled = false;
+        lcd.putImageData(img, 0, 0);
+    }
+
+    global.fmj = {fs: {}};
 })(this);
 

@@ -8,7 +8,6 @@ import graphics.Bitmap
 import graphics.Canvas
 import graphics.Paint
 import java.Stack
-import java.sysRandom
 
 class ScreenStack: ScreenDelegate {
     private val mScreenStack = Stack.create<BaseScreen>()

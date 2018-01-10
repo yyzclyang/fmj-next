@@ -1,5 +1,6 @@
 package java
 
+import graphics.Color
 import kotlin.math.floor
 
 class Stack<T>(list:MutableList<T>) {
@@ -102,6 +103,12 @@ object System {
     fun<T> arraycopy(src:Array<T>, srcPos:Int,
                   dest:Array<T>, destPos:Int,
                   length:Int) {
+        if (dest.size - destPos < length) {
+            throw Error("array copy dst overflow")
+        }
+        if (src.size - srcPos < length) {
+            throw Error("array copy src overflow")
+        }
         for (i in 0 until length) {
             dest[destPos+i] = src[srcPos+i]
         }
@@ -185,7 +192,7 @@ class File(private val path: String) {
     fun readAll(): ByteArray {
         val s = sysStorageGet(path)
         return if (s == null) {
-            byteArrayOf()
+            throw Error("File not found: $path")
         } else {
             hexDecode(s)
         }
@@ -335,4 +342,4 @@ external fun sysRandom(): Double
 external fun sysAddKeyDownListener(callback:(keyCode: Int) -> Unit)
 external fun sysAddKeyUpListener(callback:(keyCode: Int) -> Unit)
 external fun sysSetInterval(interval: Int, callback:() -> Unit): Int
-
+external fun sysDrawScreen(buffer: Array<Color>, width: Int, height: Int)

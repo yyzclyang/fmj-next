@@ -8,6 +8,8 @@ import graphics.Canvas
 
 class ScreenAnimation(private val index: Int) : BaseScreen() {
     private val mResSrs: ResSrs
+    override val isPopup: Boolean
+        get() = true
 
     init {
         if (index != 247 && index != 248 && index != 249) {

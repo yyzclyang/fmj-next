@@ -5,25 +5,18 @@ import java.System
 import kotlin.math.abs
 import kotlin.math.min
 
-class Color {
-    var rgb: Int = 0
-        internal set
+class Color(val r: Int, val g: Int, val b: Int, val a: Int) {
+    val rgb
+        get() = r shr 24 and g shr 16 and b
+
     constructor(r: Int, g: Int, b: Int) : this(r, g, b, 255)
-
-    constructor(r: Int, g: Int, b: Int, a: Int) {
-        rgb = a and 0xFF shl 24 or
-                (r and 0xFF shl 16) or
-                (g and 0xFF shl 8) or
-                (b and 0xFF shl 0)
-    }
-
-    constructor(rgb: Int) {
-        this.rgb = -0x1000000 or rgb
-    }
 
     companion object {
         val WHITE = Color(0xff, 0xff, 0xff)
         val BLACK = Color(0, 0, 0)
+        val RED = Color(0xff, 0, 0)
+//        val GREEN = Color(0, 0xff, 0)
+//        val BLUE = Color(0, 0, 0xff)
     }
 }
 
@@ -37,14 +30,14 @@ class Paint {
     }
 }
 
-class Bitmap(val width:Int, val height:Int, private val buffer: Array<Color>) {
+class Bitmap(val width:Int, val height:Int, val buffer: Array<Color>) {
     constructor(width: Int, height: Int):
             this(width, height, Array(width * height) { Color.WHITE })
 
     var color: Color = Color.WHITE
 
     fun drawImage(src: Bitmap, x: Int, y: Int) {
-        setPixels(src.buffer, 0, x, y, width, height)
+        setPixels(src.buffer, 0, x, y, src.width, src.height)
     }
 
     private fun setPixel(col: Int, row: Int, color: Color) {
@@ -157,26 +150,25 @@ data class Point(var x: Int = 0, var y: Int = 0) {
 }
 
 class Canvas(b: Bitmap) {
-
     private var bg: Bitmap = b
-
     constructor(): this(Bitmap.createBitmap(Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT))
+    constructor(width: Int, height: Int): this(Bitmap.createBitmap(width, height))
+
+    val width get() = bg.width
+    val height get() = bg.height
+    val buffer get() = bg.buffer
 
     fun drawBitmap(bitmap: Bitmap, left: Int, top: Int) {
-        drawBitmap(bitmap, left.toFloat(), top.toFloat())
+        bg.drawImage(bitmap, left, top)
     }
 
     fun drawBitmap(bitmap: Bitmap, left: Float, top: Float) {
-        bg.drawImage(bitmap, left.toInt(), top.toInt())
-    }
-
-    fun drawColor(color: Int) {
-        bg.color = Color(color)
-        bg.fillRect(0, 0, this.bg.width, this.bg.height)
+        drawBitmap(bitmap, left.toInt(), top.toInt())
     }
 
     fun drawColor(color: Color) {
-        drawColor(color.rgb)
+        bg.color = color
+        bg.fillRect(0, 0, this.bg.width, this.bg.height)
     }
 
     fun drawLine(startX: Int, startY: Int, stopX: Int, stopY: Int, paint: Paint) {

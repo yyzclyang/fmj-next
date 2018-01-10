@@ -31,19 +31,19 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
     init {
         mImgBg = DatLib.getRes(DatLib.ResType.PIC, 2,
                 if (mOperate == Operate.LOAD) 16 else 15) as ResImage
-        mHeadImgs.add(ArrayList<ResImage>())
-        mHeadImgs.add(ArrayList<ResImage>())
-        mHeadImgs.add(ArrayList<ResImage>())
-        var file = File("./assets/" + mFileNames[0])
+        mHeadImgs.add(ArrayList())
+        mHeadImgs.add(ArrayList())
+        mHeadImgs.add(ArrayList())
+        var file = File("sav/" + mFileNames[0])
 
         if (file.exists()) {
             mText[0] = format(getSceneNameAndHeads(file, mHeadImgs[0]))
         }
-        file = File("./assets/" + mFileNames[1])
+        file = File("sav/" + mFileNames[1])
         if (file.exists()) {
             mText[1] = format(getSceneNameAndHeads(file, mHeadImgs[1]))
         }
-        file = File("./assets/" + mFileNames[2])
+        file = File("sav/" + mFileNames[2])
         if (file.exists()) {
             mText[2] = format(getSceneNameAndHeads(file, mHeadImgs[2]))
         }
@@ -98,18 +98,14 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
         if (key == Global.KEY_CANCEL) {
             delegate.popScreen()
         } else if (key == Global.KEY_ENTER) {
-            val file = File("./assets/" + mFileNames[index])
+            val file = File("sav/" + mFileNames[index])
             if (mOperate == Operate.LOAD) { // 加载存档
                 if (!file.exists()) {
                     return
                 }
-                if (loadGame(file)) { // 读档成功
-                    SaveLoadGame.startNewGame = false
-                    delegate.changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
-                } else { // 读档失败
-                    SaveLoadGame.startNewGame = true
-                    delegate.changeScreen(ScreenViewType.SCREEN_MENU)
-                }
+                loadGame(file)
+                SaveLoadGame.startNewGame = false
+                delegate.changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
             } else { // 保存存档
                 if (!file.exists()) {
                     file.createNewFile()
@@ -132,32 +128,18 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
         }
     }
 
-    fun loadGame(file: File): Boolean {
-        try {
-            val ioIn = objectInputOf(file)
-            SaveLoadGame.read(ioIn)
-            ScriptResources.read(ioIn)
-            ioIn.close()
-        } catch (e: Exception) {
-            println("-_-。sorry！读档出错了。")
-            return false
-        }
-
-        return true
+    fun loadGame(file: File) {
+        val ioIn = objectInputOf(file)
+        SaveLoadGame.read(ioIn)
+        ScriptResources.read(ioIn)
+        ioIn.close()
     }
 
-    fun saveGame(file: File): Boolean {
-        try {
-            val o = objectOutputOf(file)
-            SaveLoadGame.write(o)
-            ScriptResources.write(o)
-            o.close()
-        } catch (e: Exception) {
-            println("存档出错了!")
-            return false
-        }
-
-        return true
+    fun saveGame(file: File) {
+        val o = objectOutputOf(file)
+        SaveLoadGame.write(o)
+        ScriptResources.write(o)
+        o.close()
     }
 
 }

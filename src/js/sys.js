@@ -53,16 +53,24 @@
         imagePixel(img, ind*4, color);
     }
 
+    function getStorage(path) {
+        if (path.startsWith("sav/")) {
+            return window.localStorage
+        } else {
+            return sfsData;
+        }
+    }
+
     global.sysStorageGet = function(path) {
-        return sfsData[path];
+        return getStorage(path)[path];
     };
 
     global.sysStorageSet = function(path, value) {
-        return sfsData[path] = value;
+        return getStorage(path)[path] = value;
     };
 
     global.sysStorageHas = function(path) {
-        return sfsData[path] != undefined;
+        return getStorage(path)[path] != null;
     };
 
     global.sysGbkEncode = function(str) {

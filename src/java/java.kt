@@ -147,7 +147,7 @@ class ArrayQueue<T>(private val base: MutableList<T>): MutableList<T> by base, Q
 private fun hexByte(b: Byte): String {
     val tbl = "0123456789ABCDEF"
     val l = tbl[b.toInt() and 0xF]
-    val h = tbl[(b.toInt() shl 4) and 0xF]
+    val h = tbl[(b.toInt() shr 4) and 0xF]
     return "$h$l"
 }
 

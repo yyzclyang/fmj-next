@@ -28,6 +28,10 @@
                 return KEY_LEFT;
             case 39:
                 return KEY_RIGHT;
+            case 219:
+                return KEY_PAGEUP;
+            case 221:
+                return KEY_PAGEDOWN;
             default:
                 return 255;
         }

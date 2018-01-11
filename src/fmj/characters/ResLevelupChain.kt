@@ -17,7 +17,7 @@ class ResLevelupChain : ResBase() {
         maxLevel = buf[offset + 2].toInt() and 0xff
         mLevelData = ByteArray(maxLevel * LEVEL_BYTES)
 
-        System.arraycopy(mLevelData, 0, buf, offset + 4, mLevelData.size)
+        System.arraycopy(buf, offset + 4, mLevelData, 0, mLevelData.size)
     }
 
     fun getMaxHP(level: Int): Int {

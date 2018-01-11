@@ -847,6 +847,7 @@ class ScriptProcess private constructor() {
                     }
                     Combat.InitFight(arr, get2ByteInt(code, start + 16),
                             get2ByteInt(code, start + 18), get2ByteInt(code, start + 20))
+                    Combat.SetDelegate(delegate)
                     return false
                 }
             }
@@ -928,6 +929,7 @@ class ScriptProcess private constructor() {
                     val lossto = get2ByteInt(code, start + 26)
                     val winto = get2ByteInt(code, start + 28)
                     Combat.EnterFight(get2ByteInt(code, start), monstersType, scr, evtRnds, evts, lossto, winto)
+                    Combat.SetDelegate(delegate)
                     mScreenMainGame!!.exitScript()
                     return false
                 }

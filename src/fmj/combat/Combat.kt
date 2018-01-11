@@ -20,6 +20,7 @@ import fmj.lib.ResSrs
 import fmj.scene.ScreenMainGame
 import fmj.script.ScriptExecutor
 import fmj.views.BaseScreen
+import fmj.views.ScreenDelegate
 
 import graphics.Bitmap
 import graphics.Canvas
@@ -641,6 +642,10 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
             sInstance!!.mMaxRound = 0 // 回合数无限制
 
             sInstance!!.createBackgroundBitmap(scrb, scrl, scrr)
+        }
+
+        fun SetDelegate(delegate: ScreenDelegate) {
+            sInstance?.delegate = delegate
         }
 
         fun write(out: ObjectOutput) {

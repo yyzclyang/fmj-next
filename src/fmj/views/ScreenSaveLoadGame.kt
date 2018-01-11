@@ -2,6 +2,7 @@ package fmj.views
 
 import fmj.Global
 import fmj.ScreenViewType
+import fmj.combat.Combat
 import fmj.graphics.TextRender
 import fmj.lib.DatLib
 import fmj.lib.ResImage
@@ -131,6 +132,7 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
     fun loadGame(file: File) {
         val ioIn = objectInputOf(file)
         SaveLoadGame.read(ioIn)
+        Combat.SetDelegate(delegate)
         ScriptResources.read(ioIn)
         ioIn.close()
     }

@@ -45,10 +45,6 @@ open class NPC : Character(), Coder {
 
     override fun encode(out: ObjectOutput) {
         out.writeInt(type)
-        if (isEmpty) {
-            return
-        }
-        out.writeInt(type)
         out.writeInt(index)
         out.writeInt(state.v)
         out.writeString(name)
@@ -65,9 +61,6 @@ open class NPC : Character(), Coder {
 
     override fun decode(coder: ObjectInput) {
         type = coder.readInt()
-        if (isEmpty) {
-            return
-        }
         index = coder.readInt()
         state = State.fromInt(coder.readInt())
         name = coder.readString()

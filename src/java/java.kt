@@ -310,7 +310,7 @@ class ObjectOutputStream(private val file: File): ObjectOutput {
     }
 
     override fun writeBoolean(v: Boolean) {
-        val i = if (v) 0 else 1
+        val i = if (v) 1 else 0
         writeByte(i.toByte())
     }
 

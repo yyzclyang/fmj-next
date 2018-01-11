@@ -63,12 +63,17 @@ object SaveLoadGame {
         Player.sGoodsList.write(out)
         writeArray(out, NpcObjs) {
             io, obj ->
-            if (obj is SceneObj) {
-                io.writeByte(1)
-            } else {
+
+            if (obj.isEmpty) {
                 io.writeByte(0)
+            } else {
+                if(obj is SceneObj) {
+                    io.writeByte(2)
+                } else {
+                    io.writeByte(1)
+                }
+                obj.encode(io)
             }
-            obj.encode(io)
         }
         Combat.write(out)
     }
@@ -98,11 +103,13 @@ object SaveLoadGame {
             val type = it.readByte()
             val npc =
                     when (type.toInt()) {
-                        0 -> NPC()
-                        1 -> SceneObj()
+                        0, 1 -> NPC()
+                        2 -> SceneObj()
                         else -> throw Error("Bad obj type")
                     }
-            npc.decode(it)
+            if (type.toInt() != 0) {
+                npc.decode(it)
+            }
             npc
         }
 

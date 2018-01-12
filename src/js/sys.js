@@ -61,7 +61,7 @@
         if (path.startsWith("sav/")) {
             return window.localStorage
         } else {
-            return sfsData;
+            return fmj.rom;
         }
     }
 
@@ -121,6 +121,6 @@
         lcd.putImageData(img, 0, 0);
     }
 
-    global.fmj = {fs: {}};
+    global.fmj = {rom: {}};
 })(this);
 

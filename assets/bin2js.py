@@ -5,7 +5,7 @@ import sys
 def encode(filename):
     basename = os.path.basename(filename)
     js = '''
-    fmj.fs["%s"] = "%s";
+    fmj.rom["%s"] = "%s";
     ''' % (basename, open(filename).read().encode('hex').upper())
     open(filename + '.js', 'w').write(js)
 

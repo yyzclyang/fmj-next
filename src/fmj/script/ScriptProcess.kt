@@ -250,7 +250,7 @@ class ScriptProcess private constructor() {
                     val va = get2ByteInt(code, start)
                     val addr = get2ByteInt(code, start + 2)
                     val value = ScriptResources.globalEvents[va]
-                    cmdPrint("cmd_if $va=($value) goto $addr")
+                    cmdPrint("cmd_if $va(=$value) goto $addr")
                     if (value) {
                         mScreenMainGame!!.gotoAddress(addr)
                     }

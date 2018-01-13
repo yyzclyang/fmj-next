@@ -1450,9 +1450,9 @@ class ScriptProcess private constructor() {
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : Operate() {
-                internal var imgTop: ResImage? = null
-                internal var imgBottom: ResImage? = null
-                internal var text: String // TODO change to bytes
+                internal val imgTop: ResImage?
+                internal val imgBottom: ResImage?
+                internal var text: String
                 internal var goon = true
                 internal var interval: Long = 50
                 internal var timeCnt: Long = 0
@@ -1463,12 +1463,16 @@ class ScriptProcess private constructor() {
                 init {
                     val top = code[start].toInt() and 0xFF or (code[start + 1].toInt() shl 8 and 0xFF00)
                     val btm = code[start + 2].toInt() and 0xFF or (code[start + 3].toInt() shl 8 and 0xFF00)
-                    imgTop = DatLib.getRes(DatLib.ResType.PIC, 5, top) as ResImage
-                    imgBottom = DatLib.getRes(DatLib.ResType.PIC, 5, btm) as ResImage
+                    imgTop = if (top > 0)
+                        DatLib.getRes(DatLib.ResType.PIC, 5, top) as ResImage
+                    else null
+                    imgBottom = if (btm > 0)
+                        DatLib.getRes(DatLib.ResType.PIC, 5, btm) as ResImage
+                    else null
                     text = ResBase.Companion.getString(code, start + 4)
-                    curY = if (imgBottom != null) 96 - imgBottom!!.height else 96
+                    curY = if (imgBottom != null) 96 - imgBottom.height else 96
                     rect = Rect(0,
-                            if (imgTop != null) imgTop!!.height else 0,
+                            imgTop?.height ?: 0,
                             160, curY)
                 }
 
@@ -1477,7 +1481,7 @@ class ScriptProcess private constructor() {
                     interval = 50
                     timeCnt = 0
                     step = 1
-                    curY = if (imgBottom != null) 96 - imgBottom!!.height else 96
+                    curY = if (imgBottom != null) 96 - imgBottom.height else 96
                     return true
                 }
 
@@ -1510,12 +1514,8 @@ class ScriptProcess private constructor() {
                     if (e != 1 && e != 2) {
                         goon = false
                     }
-                    if (imgTop != null) {
-                        imgTop!!.draw(canvas, 1, 0, 0)
-                    }
-                    if (imgTop != null) {
-                        imgBottom!!.draw(canvas, 1, 0, 96 - imgBottom!!.height)
-                    }
+                    imgTop?.draw(canvas, 1, 0, 0)
+                    imgBottom?.draw(canvas, 1, 0, 96 - imgBottom.height)
                 }
             }
         }

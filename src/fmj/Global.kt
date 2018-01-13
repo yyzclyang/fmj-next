@@ -4,12 +4,12 @@ import graphics.Color
 
 
 object Global {
-    val COLOR_WHITE = Color(180, 180, 180, 255)
-    val COLOR_BLACK = Color(0, 0, 0, 255)
-    val COLOR_TRANSP = Color(0, 0, 0, 0)
+    val COLOR_WHITE = Color.WHITE
+    val COLOR_BLACK = Color.BLACK
+    val COLOR_TRANSP = Color.TRANSP
 
-    var fgColor = COLOR_BLACK
-    var bgColor = COLOR_WHITE
+    var fgColor = Color.BLACK
+    var bgColor = Color.WHITE
 
     val Scale = 3//游戏放大缩小倍数
     val SCREEN_WIDTH = 160

@@ -12,8 +12,9 @@ class Color(val r: Int, val g: Int, val b: Int, val a: Int) {
     constructor(r: Int, g: Int, b: Int) : this(r, g, b, 255)
 
     companion object {
-        val WHITE = Color(0xff, 0xff, 0xff)
-        val BLACK = Color(0, 0, 0)
+        val WHITE = Color(180, 180, 180, 255)
+        val BLACK = Color(0, 0, 0, 255)
+        val TRANSP = Color(0, 0, 0, 0)
         val RED = Color(0xff, 0, 0)
 //        val GREEN = Color(0, 0xff, 0)
 //        val BLUE = Color(0, 0, 0xff)

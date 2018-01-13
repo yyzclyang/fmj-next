@@ -14,9 +14,9 @@ class ActionCoopMagic : Action {
 
     private var mState = STATE_MOV
 
-    internal var mActors: List<Player>
+    private var mActors: List<Player>
 
-    internal var mMonsters: MutableList<FightingCharacter> = mutableListOf()
+    private var mMonsters: MutableList<FightingCharacter> = mutableListOf()
 
     private var mMonster: FightingCharacter
         get() = mMonsters[0]
@@ -29,11 +29,11 @@ class ActionCoopMagic : Action {
 
     internal var magic: MagicAttack? = null
 
-    internal var mAni: ResSrs = ResSrs() // TODO: construct it
+    private var mAni: ResSrs = ResSrs() // TODO: construct it
 
-    internal var mRaiseAni: RaiseAnimation? = null
+    private val mRaiseAni: RaiseAnimation? = null
 
-    internal var mRaiseAnis: MutableList<RaiseAnimation>? = null
+    private val mRaiseAnis: MutableList<RaiseAnimation>? = null
 
     private var dxy: Array<FloatArray>? = null
     private var oxy: Array<IntArray>? = null
@@ -55,17 +55,10 @@ class ActionCoopMagic : Action {
         get() = mActors[0].isAlive
 
     override val isTargetAlive: Boolean
-        get() {
-            if (isSingleTarget) {
-                return mMonster.isAlive
-            } else {
-                for (m in mMonsters) {
-                    if (m.isAlive) {
-                        return true
-                    }
-                }
-            }
-            return false
+        get() = if (isSingleTarget) {
+            mMonster.isAlive
+        } else {
+            mMonsters.any { it.isAlive }
         }
 
     constructor(actors: List<Player>, monster: FightingCharacter) {
@@ -109,10 +102,10 @@ class ActionCoopMagic : Action {
             mAniX = mAniY
         }
 
-        if (magic == null) {
-            mAni = DatLib.getRes(DatLib.ResType.SRS, 2, 240) as ResSrs
+        mAni = if (magic == null) {
+            DatLib.getRes(DatLib.ResType.SRS, 2, 240) as ResSrs
         } else {
-            mAni = magic!!.magicAni!!
+            magic!!.magicAni!!
         }
         mAni.startAni()
     }
@@ -165,39 +158,26 @@ class ActionCoopMagic : Action {
 
     override fun postExecute() {
         // TODO Auto-generated method stub
-
     }
 
     override fun updateRaiseAnimation(delta: Long): Boolean {
         if (isSingleTarget) {
-            return mRaiseAni != null && mRaiseAni!!.update(delta)
+            return mRaiseAni?.update(delta) ?: false
         }
 
-        if (mRaiseAnis != null) { // 全体
-            if (mRaiseAnis!!.size == 0) {
-                return false
-            } else {
-                for (i in mRaiseAnis!!.indices) {
-                    if (!mRaiseAnis!![i].update(delta)) {
-                        mRaiseAnis!!.removeAt(i)
-                        if (mRaiseAnis!!.isEmpty()) return false
-                    }
-                }
-                return true
-            }
+        mRaiseAnis?.let {
+            it.removeAll { !it.update(delta) }
+            return !it.isEmpty()
         }
-
         return false
     }
 
     override fun drawRaiseAnimation(canvas: Canvas) {
         if (isSingleTarget) {
-            if (mRaiseAni != null) {
-                mRaiseAni!!.draw(canvas)
-            }
+            mRaiseAni?.draw(canvas)
         } else {
             if (mRaiseAnis != null) {
-                for (ani in mRaiseAnis!!) {
+                for (ani in mRaiseAnis) {
                     ani.draw(canvas)
                 }
             }

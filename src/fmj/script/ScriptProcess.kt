@@ -24,6 +24,7 @@ import graphics.Paint
 import graphics.Rect
 import graphics.RectF
 import java.System
+import java.gbkString
 import java.random
 
 
@@ -81,11 +82,11 @@ class ScriptProcess private constructor() {
     private val cmd_music = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_music");
             return start + 4
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
+            println("cmd_music not implemented")
             return OperateNop.nop
         }
     }
@@ -93,25 +94,18 @@ class ScriptProcess private constructor() {
     private val cmd_loadmap = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_loadmap");
             return start + 8
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : OperateDrawOnce() {
-                internal var type: Int = 0
-                internal var index: Int = 0
-                internal var x: Int = 0
-                internal var y: Int = 0
-
-                init {
-                    type = code[start].toInt() and 0xFF or (code[start + 1].toInt() shl 8 and 0xFF00)
-                    index = code[start + 2].toInt() and 0xFF or (code[start + 3].toInt() shl 8 and 0xFF00)
-                    x = code[start + 4].toInt() and 0xFF or (code[start + 5].toInt() shl 8 and 0xFF00)
-                    y = code[start + 6].toInt() and 0xFF or (code[start + 7].toInt() shl 8 and 0xFF00)
-                }
+                internal val type = code[start].toInt() and 0xFF or (code[start + 1].toInt() shl 8 and 0xFF00)
+                internal val index = code[start + 2].toInt() and 0xFF or (code[start + 3].toInt() shl 8 and 0xFF00)
+                internal val x = code[start + 4].toInt() and 0xFF or (code[start + 5].toInt() shl 8 and 0xFF00)
+                internal var y = code[start + 6].toInt() and 0xFF or (code[start + 7].toInt() shl 8 and 0xFF00)
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_loadmap type=$type index=$index x=$x y=$y")
                     mScreenMainGame!!.loadMap(type, index, x, y)
                     return true
                 }
@@ -133,9 +127,11 @@ class ScriptProcess private constructor() {
             return object : OperateDrawOnce() {
 
                 override fun process(): Boolean {
-                    mScreenMainGame!!.createActor(get2ByteInt(code, start),
-                            get2ByteInt(code, start + 2),
-                            get2ByteInt(code, start + 4))
+                    val actor = get2ByteInt(code, start)
+                    val x = get2ByteInt(code, start + 2)
+                    val y = get2ByteInt(code, start + 4)
+                    cmdPrint("cmd_createactor $actor at ($x, $y)")
+                    mScreenMainGame!!.createActor(actor, x, y)
                     return true
                 }
 
@@ -147,15 +143,15 @@ class ScriptProcess private constructor() {
     }
 
     private val cmd_deletenpc = object : Command {
-
         override fun getNextPos(code: ByteArray, start: Int): Int {
             return start + 2
         }
-
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : OperateAdapter() {
                 override fun process(): Boolean {
-                    mScreenMainGame!!.deleteNpc(get2ByteInt(code, start))
+                    val npc = get2ByteInt(code, start)
+                    cmdPrint("cmd_deletenpc $npc")
+                    mScreenMainGame!!.deleteNpc(npc)
                     return false
                 }
             }
@@ -172,8 +168,8 @@ class ScriptProcess private constructor() {
             return object : Operate() {
                 internal var time: Long = 400
                 internal lateinit var npc: NPC
-                internal var dstX = get2ByteInt(code, start + 2)
-                internal var dstY = get2ByteInt(code, start + 4)
+                internal val dstX = get2ByteInt(code, start + 2)
+                internal val dstY = get2ByteInt(code, start + 4)
 
                 override fun update(delta: Long): Boolean {
                     time += delta
@@ -193,6 +189,7 @@ class ScriptProcess private constructor() {
 
                 override fun process(): Boolean {
                     npc = mScreenMainGame!!.getNPC(get2ByteInt(code, start))
+                    cmdPrint("cmd_move ${npc.name} to ($dstX, $dstY)")
                     return true
                 }
 
@@ -215,6 +212,7 @@ class ScriptProcess private constructor() {
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : OperateAdapter() {
                 override fun process(): Boolean {
+                    cmdPrint("cmd_callback")
                     mScreenMainGame!!.exitScript()
                     return false
                 }
@@ -231,7 +229,9 @@ class ScriptProcess private constructor() {
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : OperateAdapter() {
                 override fun process(): Boolean {
-                    mScreenMainGame!!.gotoAddress(get2ByteInt(code, start))
+                    val toAddr = get2ByteInt(code, start)
+                    mScreenMainGame!!.gotoAddress(toAddr)
+                    cmdPrint("cmd_goto from $start to $toAddr")
                     return false
                 }
             }
@@ -247,8 +247,12 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
-                    if (ScriptResources.globalEvents[get2ByteInt(code, start)]) {
-                        mScreenMainGame!!.gotoAddress(get2ByteInt(code, start + 2))
+                    val va = get2ByteInt(code, start)
+                    val addr = get2ByteInt(code, start + 2)
+                    val value = ScriptResources.globalEvents[va]
+                    cmdPrint("cmd_if $va=($value) goto $addr")
+                    if (value) {
+                        mScreenMainGame!!.gotoAddress(addr)
                     }
                     return false
                 }
@@ -265,7 +269,11 @@ class ScriptProcess private constructor() {
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : OperateAdapter() {
                 override fun process(): Boolean {
-                    ScriptResources.variables[get2ByteInt(code, start)] = get2ByteInt(code, start + 2)
+                    val id = get2ByteInt(code, start)
+                    val value = get2ByteInt(code, start + 2)
+
+                    cmdPrint("cmd_set $id = $value")
+                    ScriptResources.variables[id] = value
                     return false
                 }
             }
@@ -318,6 +326,7 @@ class ScriptProcess private constructor() {
                 }
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_say ${text.gbkString()}")
                     iOfText = 0
                     iOfNext = 0
                     return true
@@ -369,7 +378,6 @@ class ScriptProcess private constructor() {
     private val cmd_startchapter = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_startchapter");
             return start + 4
         }
 
@@ -384,6 +392,7 @@ class ScriptProcess private constructor() {
                 }
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_startchapter $type $index")
                     mScreenMainGame!!.startChapter(type, index)
                     return false
                 }
@@ -401,7 +410,10 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
-                    mScreenMainGame!!.setMapScreenPos(get2ByteInt(code, start), get2ByteInt(code, start + 2))
+                    val x = get2ByteInt(code, start)
+                    val y = get2ByteInt(code, start + 2)
+                    cmdPrint("cmd_screens ($x,$y)")
+                    mScreenMainGame!!.setMapScreenPos(x, y)
                     return false
                 }
             }
@@ -418,6 +430,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_gameover")
                     delegate.changeScreen(ScreenViewType.SCREEN_MENU)
                     return false
                 }
@@ -435,8 +448,13 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
-                    if (ScriptResources.variables[get2ByteInt(code, start)] == get2ByteInt(code, start + 2)) {
-                        mScreenMainGame!!.gotoAddress(get2ByteInt(code, start + 4))
+                    val id = get2ByteInt(code, start)
+                    val other = get2ByteInt(code, start + 2)
+                    val value = ScriptResources.variables[id]
+                    val addr = get2ByteInt(code, start + 4)
+                    cmdPrint("cmd_ifcmp $id(=$value) vs $other goto $addr")
+                    if (value == other) {
+                        mScreenMainGame!!.gotoAddress(addr)
                     }
                     return false
                 }
@@ -453,6 +471,7 @@ class ScriptProcess private constructor() {
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : OperateAdapter() {
                 override fun process(): Boolean {
+                    cmdPrint("cmd_add")
                     ScriptResources.variables[get2ByteInt(code, start)] += get2ByteInt(code, start + 2)
                     return false
                 }
@@ -463,7 +482,6 @@ class ScriptProcess private constructor() {
     private val cmd_sub = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_sub");
             return start + 4
         }
 
@@ -471,6 +489,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_sub")
                     ScriptResources.variables[get2ByteInt(code, start)] -= get2ByteInt(code, start + 2)
                     return false
                 }
@@ -488,7 +507,6 @@ class ScriptProcess private constructor() {
         override fun getOperate(code: ByteArray, start: Int): Operate {
             // TODO
             throw NotImplementedError("cmd_setcontrolid")
-//            return OperateNop.nop
         }
     }
 
@@ -502,7 +520,9 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
-                    ScriptResources.setEvent(get2ByteInt(code, start))
+                    val event = get2ByteInt(code, start)
+                    cmdPrint("cmd_setevent $event")
+                    ScriptResources.setEvent(event)
                     return false
                 }
             }
@@ -512,7 +532,6 @@ class ScriptProcess private constructor() {
     private val cmd_clrevent = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_clrevent");
             return start + 2
         }
 
@@ -520,7 +539,9 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
-                    ScriptResources.clearEvent(get2ByteInt(code, start))
+                    val event = get2ByteInt(code, start)
+                    cmdPrint("cmd_clrevent $event")
+                    ScriptResources.clearEvent(event)
                     return false
                 }
             }
@@ -533,7 +554,6 @@ class ScriptProcess private constructor() {
     private val cmd_buy = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_buy");
             var i = 0
             while (code[start + i].toInt() != 0) ++i
             return start + i + 1
@@ -547,7 +567,6 @@ class ScriptProcess private constructor() {
     private val cmd_facetoface = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_facetoface");
             return start + 4
         }
 
@@ -561,6 +580,7 @@ class ScriptProcess private constructor() {
                 }
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_facetoface")
                     val c1 = getCharacter(get2ByteInt(code, start))
                     val c2 = getCharacter(get2ByteInt(code, start + 2))
                     val p1 = c1!!.posInMap
@@ -589,7 +609,6 @@ class ScriptProcess private constructor() {
     private val cmd_movie = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_movie");
             return start + 10
         }
 
@@ -619,6 +638,7 @@ class ScriptProcess private constructor() {
                 }
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_movie")
                     movie = DatLib.getRes(DatLib.ResType.SRS, type, index) as ResSrs
                     movie.setIteratorNum(5)
                     movie.startAni()
@@ -648,7 +668,6 @@ class ScriptProcess private constructor() {
     private val cmd_choice = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_choice");
             var i = 0
             while (code[start + i].toInt() != 0) ++i
             ++i
@@ -670,8 +689,8 @@ class ScriptProcess private constructor() {
                 private var mLastDownKey = -1
 
                 init {
-                    var w = 0
-                    var tmp: ByteArray? = null
+                    val w: Int
+                    val tmp: ByteArray?
                     if (choice1.size > choice2.size) {
                         w = choice1.size * 8 - 8 + 6
                         tmp = ByteArray(choice1.size)
@@ -697,6 +716,7 @@ class ScriptProcess private constructor() {
                 }
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_choice")
                     curChoice = 0
                     hasSelect = false
                     return true
@@ -746,7 +766,6 @@ class ScriptProcess private constructor() {
     private val cmd_createbox = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_createbox");
             return start + 8
         }
 
@@ -754,10 +773,12 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
-                    mScreenMainGame!!.createBox(get2ByteInt(code, start),
-                            get2ByteInt(code, start + 2),
-                            get2ByteInt(code, start + 4),
-                            get2ByteInt(code, start + 6))
+                    val id = get2ByteInt(code, start)
+                    val boxId = get2ByteInt(code, start + 2)
+                    val x = get2ByteInt(code, start + 4)
+                    val y = get2ByteInt(code, start + 6)
+                    val box = mScreenMainGame!!.createBox(id, boxId, x, y)
+                    cmdPrint("cmd_createbox ${box.name} at ($x,$y)")
                     return false
                 }
             }
@@ -767,7 +788,6 @@ class ScriptProcess private constructor() {
     private val cmd_deletebox = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_deletebox");
             return start + 2
         }
 
@@ -775,6 +795,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_deletebox")
                     mScreenMainGame!!.deleteBox(get2ByteInt(code, start))
                     return false
                 }
@@ -785,7 +806,6 @@ class ScriptProcess private constructor() {
     private val cmd_gaingoods = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_gaingoods");
             return start + 4
         }
 
@@ -799,6 +819,7 @@ class ScriptProcess private constructor() {
                 internal var downKey: Int = 0
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_gaingoods ${goods.name}")
                     goods.goodsNum = 1
                     Player.sGoodsList.addGoods(goods.type, goods.index)
                     time = 0
@@ -833,7 +854,6 @@ class ScriptProcess private constructor() {
     private val cmd_initfight = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_initfight");
             return start + 22
         }
 
@@ -841,6 +861,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_initfight")
                     val arr = IntArray(8)
                     for (i in 0..7) {
                         arr[i] = get2ByteInt(code, start + i * 2)
@@ -855,16 +876,14 @@ class ScriptProcess private constructor() {
     }
 
     private val cmd_fightenable = object : Command {
-
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_fightenable");
             return start
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : OperateAdapter() {
-
                 override fun process(): Boolean {
+                    cmdPrint("cmd_fightenable")
                     Combat.Companion.FightEnable()
                     return false
                 }
@@ -875,14 +894,13 @@ class ScriptProcess private constructor() {
     private val cmd_fightdisenable = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_fightdisenable");
             return start
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : OperateAdapter() {
-
                 override fun process(): Boolean {
+                    cmdPrint("cmd_fightdisable")
                     Combat.Companion.FightDisable()
                     return false
                 }
@@ -893,7 +911,6 @@ class ScriptProcess private constructor() {
     private val cmd_createnpc = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_createnpc");
             return start + 8
         }
 
@@ -901,10 +918,11 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
-                    mScreenMainGame!!.createNpc(get2ByteInt(code, start),
+                    val npc = mScreenMainGame!!.createNpc(get2ByteInt(code, start),
                             get2ByteInt(code, start + 2),
                             get2ByteInt(code, start + 4),
                             get2ByteInt(code, start + 6))
+                    cmdPrint("cmd_createnpc ${npc.name} at ${npc.posInMap}")
                     return false
                 }
             }
@@ -914,13 +932,13 @@ class ScriptProcess private constructor() {
     private val cmd_enterfight = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_enterfight");
             return start + 30
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : OperateAdapter() {
                 override fun process(): Boolean {
+                    cmdPrint("cmd_enterfight")
                     //					mScreenMainGame.gotoAddress(get2ByteInt(code, start + 28)); // win the fight
                     val monstersType = intArrayOf(get2ByteInt(code, start + 2), get2ByteInt(code, start + 4), get2ByteInt(code, start + 6))
                     val scr = intArrayOf(get2ByteInt(code, start + 8), get2ByteInt(code, start + 10), get2ByteInt(code, start + 12))
@@ -938,16 +956,14 @@ class ScriptProcess private constructor() {
     }
 
     private val cmd_deleteactor = object : Command {
-
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_deleteactor");
             return start + 2
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : OperateAdapter() {
-
                 override fun process(): Boolean {
+                    cmdPrint("cmd_deleteactor")
                     mScreenMainGame!!.deleteActor(get2ByteInt(code, start))
                     return false
                 }
@@ -958,7 +974,6 @@ class ScriptProcess private constructor() {
     private val cmd_gainmoney = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_gainmoney");
             return start + 4
         }
 
@@ -966,6 +981,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_gainmoney")
                     Player.sMoney += get4BytesInt(code, start)
                     return false
                 }
@@ -976,7 +992,6 @@ class ScriptProcess private constructor() {
     private val cmd_usemoney = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_usemoney");
             return start + 4
         }
 
@@ -984,6 +999,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_usemoney")
                     Player.sMoney -= get4BytesInt(code, start)
                     return false
                 }
@@ -994,7 +1010,6 @@ class ScriptProcess private constructor() {
     private val cmd_setmoney = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_setmoney");
             return start + 4
         }
 
@@ -1003,6 +1018,7 @@ class ScriptProcess private constructor() {
 
                 override fun process(): Boolean {
                     Player.sMoney = get4BytesInt(code, start)
+                    cmdPrint("cmd_setmoney ${Player.sMoney}")
                     return false
                 }
             }
@@ -1012,7 +1028,6 @@ class ScriptProcess private constructor() {
     private val cmd_learnmagic = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_learnmagic");
             return start + 6
         }
 
@@ -1028,6 +1043,7 @@ class ScriptProcess private constructor() {
                 }
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_learmagic")
                     isAnyKeyDown = false
                     timeCnt = 0
                     return true
@@ -1050,7 +1066,6 @@ class ScriptProcess private constructor() {
     private val cmd_sale = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_sale");
             return start
         }
 
@@ -1062,7 +1077,6 @@ class ScriptProcess private constructor() {
     private val cmd_npcmovemod = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_npcmovemod");
             return start + 4
         }
 
@@ -1070,6 +1084,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_npcmovemod")
                     mScreenMainGame!!.getNPC(get2ByteInt(code, start))
                             .state =
                             Character.State.fromInt(get2ByteInt(code, start + 2))
@@ -1082,7 +1097,6 @@ class ScriptProcess private constructor() {
     private val cmd_message = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_message");
             var i = 0
             while (code[start + i].toInt() != 0) ++i
             return start + i + 1
@@ -1095,6 +1109,7 @@ class ScriptProcess private constructor() {
                 internal var isAnyKeyDown: Boolean = false
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_message ${msg.gbkString()}")
                     downKey = -1
                     isAnyKeyDown = false
                     return true
@@ -1124,7 +1139,6 @@ class ScriptProcess private constructor() {
     private val cmd_deletegoods = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_deletegoods");
             return start + 6
         }
 
@@ -1132,6 +1146,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_deletegoods")
                     val r = Player.sGoodsList.deleteGoods(get2ByteInt(code, start),
                             get2ByteInt(code, start + 2))
                     if (!r) {
@@ -1146,7 +1161,6 @@ class ScriptProcess private constructor() {
     private val cmd_resumeactorhp = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_resumeactorhp");
             return start + 4
         }
 
@@ -1154,6 +1168,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_resumeactorhp")
                     val p = mScreenMainGame!!.getPlayer(get2ByteInt(code, start))
                     if (p != null) {
                         p.hp = p.maxHP * get2ByteInt(code, start + 2) / 100
@@ -1167,7 +1182,6 @@ class ScriptProcess private constructor() {
     private val cmd_actorlayerup = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_actorlayerup");
             return start + 4
         }
 
@@ -1181,6 +1195,7 @@ class ScriptProcess private constructor() {
                 }
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_actorlayerup TODO")
                     return true
                 }
 
@@ -1203,7 +1218,6 @@ class ScriptProcess private constructor() {
     private val cmd_boxopen = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_boxopen");
             return start + 2
         }
 
@@ -1211,6 +1225,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_boxopen")
                     val box = mScreenMainGame!!.getNPC(get2ByteInt(code, start))
                     box.step = 1
                     return false
@@ -1222,7 +1237,6 @@ class ScriptProcess private constructor() {
     private val cmd_delallnpc = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_delallnpc");
             return start
         }
 
@@ -1230,6 +1244,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_delallnpc")
                     mScreenMainGame!!.deleteAllNpc()
                     return false
                 }
@@ -1240,7 +1255,6 @@ class ScriptProcess private constructor() {
     private val cmd_npcstep = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_npcstep");
             return start + 6
         }
 
@@ -1259,14 +1273,15 @@ class ScriptProcess private constructor() {
 
                 override fun process(): Boolean {
                     time = 0
-                    var d = Direction.South
-                    when (faceto) {
+                    val d = when (faceto) {
                     // 与资源文件里的不一样
-                        0 -> d = Direction.North
-                        1 -> d = Direction.East
-                        2 -> d = Direction.South
-                        3 -> d = Direction.West
+                        0 -> Direction.North
+                        1 -> Direction.East
+                        2 -> Direction.South
+                        3 -> Direction.West
+                        else -> Direction.South
                     }
+                    cmdPrint("cmd_npcstep $id $d step=$step")
                     if (id == 0) {
                         val p = mScreenMainGame!!.player!!
                         p.direction = d
@@ -1299,7 +1314,6 @@ class ScriptProcess private constructor() {
     private val cmd_setscenename = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_setscenename");
             var i = 0
             while (code[start + i].toInt() != 0) ++i
             return start + i + 1
@@ -1309,7 +1323,9 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
-                    mScreenMainGame!!.sceneName = ResBase.getString(code, start)
+                    val name = ResBase.getString(code, start)
+                    cmdPrint("cmd_setscenname $name")
+                    mScreenMainGame!!.sceneName = name
                     return false
                 }
             }
@@ -1319,7 +1335,6 @@ class ScriptProcess private constructor() {
     private val cmd_showscenename = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_showscenename");
             return start
         }
 
@@ -1339,6 +1354,7 @@ class ScriptProcess private constructor() {
                 }
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_showscenename")
                     text = mScreenMainGame!!.sceneName
                     return true
                 }
@@ -1360,7 +1376,6 @@ class ScriptProcess private constructor() {
     private val cmd_showscreen = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_showscreen");
             return start
         }
 
@@ -1368,6 +1383,7 @@ class ScriptProcess private constructor() {
             return object : OperateDrawOnce() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_showscreen")
                     return true
                 }
 
@@ -1381,7 +1397,6 @@ class ScriptProcess private constructor() {
     private val cmd_usegoods = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_usegoods");
             return start + 6
         }
 
@@ -1389,6 +1404,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_usegoods")
                     val b = Player.sGoodsList.deleteGoods(get2ByteInt(code, start),
                             get2ByteInt(code, start + 2))
                     if (!b) {
@@ -1404,12 +1420,11 @@ class ScriptProcess private constructor() {
     private val cmd_attribtest = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_attribtest");
             return start + 10
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            return OperateNop.nop
+            throw NotImplementedError("cmd_attribtest")
         }
     }
 
@@ -1417,12 +1432,11 @@ class ScriptProcess private constructor() {
     private val cmd_attribset = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_attribset");
             return start + 6
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            return OperateNop.nop
+            throw NotImplementedError("cmd_attribset")
         }
     }
 
@@ -1430,19 +1444,17 @@ class ScriptProcess private constructor() {
     private val cmd_attribadd = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_attribadd");
             return start + 6
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            return OperateNop.nop
+            throw NotImplementedError("cmd_attribadd")
         }
     }
 
     private val cmd_showgut = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_showgut");
             var i = 4
             while (code[start + i].toInt() != 0) ++i
             return start + i + 1
@@ -1459,10 +1471,10 @@ class ScriptProcess private constructor() {
                 internal var step = 1
                 internal var curY: Int = 0
                 internal var rect: Rect
+                private val top = code[start].toInt() and 0xFF or (code[start + 1].toInt() shl 8 and 0xFF00)
+                private val btm = code[start + 2].toInt() and 0xFF or (code[start + 3].toInt() shl 8 and 0xFF00)
 
                 init {
-                    val top = code[start].toInt() and 0xFF or (code[start + 1].toInt() shl 8 and 0xFF00)
-                    val btm = code[start + 2].toInt() and 0xFF or (code[start + 3].toInt() shl 8 and 0xFF00)
                     imgTop = if (top > 0)
                         DatLib.getRes(DatLib.ResType.PIC, 5, top) as ResImage
                     else null
@@ -1477,6 +1489,7 @@ class ScriptProcess private constructor() {
                 }
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_showgut topimg = $top, btmimg = $btm")
                     goon = true
                     interval = 50
                     timeCnt = 0
@@ -1524,7 +1537,6 @@ class ScriptProcess private constructor() {
     private val cmd_usegoodsnum = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_usegoodsnum");
             return start + 8
         }
 
@@ -1532,6 +1544,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_usegoodsnum")
                     val b = Player.sGoodsList.useGoodsNum(get2ByteInt(code, start),
                             get2ByteInt(code, start + 2), get2ByteInt(code, start + 4))
                     if (!b) {
@@ -1546,7 +1559,6 @@ class ScriptProcess private constructor() {
     private val cmd_randrade = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_randrade");
             return start + 4
         }
 
@@ -1554,6 +1566,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_randrade")
                     if ((random() * 1000).toInt() <= get2ByteInt(code, start)) {
                         mScreenMainGame!!.gotoAddress(get2ByteInt(code, start + 2))
                     }
@@ -1567,21 +1580,19 @@ class ScriptProcess private constructor() {
     private val cmd_menu = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_menu");
             var i = 2
             while (code[start + i].toInt() != 0) ++i
             return start + i + 1
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            return OperateNop.nop
+            throw NotImplementedError("cmd_menu")
         }
     }
 
     private val cmd_testmoney = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_testmoney");
             return start + 6
         }
 
@@ -1589,6 +1600,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_testmoney")
                     if (Player.sMoney < get4BytesInt(code, start)) {
                         mScreenMainGame!!.gotoAddress(get2ByteInt(code, start + 4))
                     }
@@ -1602,26 +1614,24 @@ class ScriptProcess private constructor() {
     private val cmd_callchapter = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_callchapter");
             return start + 4
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            return OperateNop.nop
+            throw NotImplementedError("cmd_callchapter")
         }
     }
 
     private val cmd_discmp = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_discmp");
             return start + 8
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
             return object : OperateAdapter() {
-
                 override fun process(): Boolean {
+                    cmdPrint("cmd_discmp")
                     val `var` = ScriptResources.variables[get2ByteInt(code, start)]
                     val num = get2ByteInt(code, start + 2)
                     if (`var` < num) {
@@ -1638,12 +1648,11 @@ class ScriptProcess private constructor() {
     private val cmd_return = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_return");
             return start
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            return OperateNop.nop
+            throw NotImplementedError("cmd_return")
         }
     }
 
@@ -1651,14 +1660,13 @@ class ScriptProcess private constructor() {
     private val cmd_timemsg = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_timemsg");
             var i = 2
             while (code[start + i].toInt() != 0) ++i
             return start + i + 1
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            return OperateNop.nop
+            throw NotImplementedError("cmd_timemsg")
         }
     }
 
@@ -1666,12 +1674,11 @@ class ScriptProcess private constructor() {
     private val cmd_disablesave = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_disablesave");
             return start
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            return OperateNop.nop
+            throw NotImplementedError("cmd_disablesave")
         }
     }
 
@@ -1679,12 +1686,11 @@ class ScriptProcess private constructor() {
     private val cmd_enablesave = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_enablesave");
             return start
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            return OperateNop.nop
+            throw NotImplementedError("cmd_enablesave")
         }
     }
 
@@ -1692,12 +1698,11 @@ class ScriptProcess private constructor() {
     private val cmd_gamesave = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_gamesave");
             return start
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            return OperateNop.nop
+            throw NotImplementedError("cmd_gamesave")
         }
     }
 
@@ -1705,43 +1710,39 @@ class ScriptProcess private constructor() {
     private val cmd_seteventtimer = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_seteventtimer");
             return start + 4
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            return OperateNop.nop
+            throw NotImplementedError("cmd_seteventtimer")
         }
     }
 
     private val cmd_enableshowpos = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_enableshowpos");
             return start
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            return OperateNop.nop //TODO
+            throw NotImplementedError("cmd_enableshowpos")
         }
     }
 
     private val cmd_disableshowpos = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_disableshowpos");
             return start
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            return OperateNop.nop//TODO
+            throw NotImplementedError("cmd_disableshowpos")
         }
     }
 
     private val cmd_setto = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_setto");
             return start + 4
         }
 
@@ -1749,6 +1750,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_setto")
                     ScriptResources.variables[get2ByteInt(code, start + 2)] = ScriptResources.variables[get2ByteInt(code, start)]
                     return false
                 }
@@ -1759,7 +1761,6 @@ class ScriptProcess private constructor() {
     private val cmd_testgoodsnum = object : Command {
 
         override fun getNextPos(code: ByteArray, start: Int): Int {
-            //			System.out.println("cmd_testgoodsum");
             return start + 10
         }
 
@@ -1767,6 +1768,7 @@ class ScriptProcess private constructor() {
             return object : OperateAdapter() {
 
                 override fun process(): Boolean {
+                    cmdPrint("cmd_testgoodsnum")
                     val goodsnum = Player.sGoodsList.getGoodsNum(get2ByteInt(code, start),
                             get2ByteInt(code, start + 2))
                     val num = get2ByteInt(code, start + 4)
@@ -1867,9 +1869,9 @@ class ScriptProcess private constructor() {
         mScreenMainGame = screenMainGame
     }
 
-    fun loadScript(resGut: ResGut) {
-        mScript = resGut
-    }
+//    fun loadScript(resGut: ResGut) {
+//        mScript = resGut
+//    }
 
     fun loadScript(type: Int, index: Int): Boolean {
         mScript = DatLib.getRes(DatLib.ResType.GUT, type, index) as ResGut
@@ -1915,6 +1917,11 @@ class ScriptProcess private constructor() {
             System.arraycopy(data, start, rlt, 0, i)
 
             return rlt
+        }
+        var cmdDebug: Boolean = true
+        fun cmdPrint(msg: String) {
+            if (cmdDebug)
+                println(msg)
         }
     }
 }

@@ -140,7 +140,6 @@ class ScreenMainGame : BaseScreen() {
 //    }
 
     fun startChapter(type: Int, index: Int) {
-        println("ScreenMainGame.startChapter $type $index")
         mScriptSys.loadScript(type, index)
         mScriptExecutor = mScriptSys.scriptExecutor
         //		update(0);
@@ -409,11 +408,12 @@ class ScreenMainGame : BaseScreen() {
      * @param x
      * @param y
      */
-    fun createNpc(id: Int, npc: Int, x: Int, y: Int) {
-        val npcobj = DatLib.getRes(DatLib.ResType.ARS, 2, npc) as NPC?
-        npcobj!!.setPosInMap(x, y)
+    fun createNpc(id: Int, npc: Int, x: Int, y: Int): NPC {
+        val npcobj = DatLib.getRes(DatLib.ResType.ARS, 2, npc) as NPC
+        npcobj.setPosInMap(x, y)
         npcobj.setICanWalk(mCanWalk)
         mNPCObj[id] = npcobj
+        return npcobj
     }
 
     fun deleteNpc(id: Int) {
@@ -459,10 +459,11 @@ class ScreenMainGame : BaseScreen() {
      * 建一个宝箱，宝箱号码boxindex(角色图片，type为4)，
      * 位置为（x，y），id为操作号（与NPC共用)
      */
-    fun createBox(id: Int, boxIndex: Int, x: Int, y: Int) {
-        val box = DatLib.getRes(DatLib.ResType.ARS, 4, boxIndex) as SceneObj?
-        box!!.setPosInMap(x, y)
+    fun createBox(id: Int, boxIndex: Int, x: Int, y: Int): SceneObj {
+        val box = DatLib.getRes(DatLib.ResType.ARS, 4, boxIndex) as SceneObj
+        box.setPosInMap(x, y)
         mNPCObj[id] = box
+        return box
     }
 
     fun deleteBox(id: Int) {

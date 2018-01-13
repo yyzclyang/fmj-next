@@ -18,6 +18,7 @@ class OperateBuy(internal var data: ByteArray, internal var start: Int) : Operat
     private val mBuyScreen = BuyGoodsScreen()
 
     override fun process(): Boolean {
+        ScriptProcess.cmdPrint("cmd_buy")
         goodsList.clear()
         var i = start
         while (data[i].toInt() != 0) {

@@ -579,6 +579,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
     companion object {
 
         private var sIsEnable: Boolean = false
+        private var globalDisableFighting: Boolean = false
         private var sIsFighting: Boolean = false
 
         private var sInstance: Combat? = null
@@ -722,7 +723,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
          * @return `true`新战斗 `false`不开始战斗
          */
         fun StartNewRandomCombat(): Boolean {
-            if (!sIsEnable || sInstance == null || sRandom.nextInt(COMBAT_PROBABILITY) != 0) {
+            if (globalDisableFighting || !sIsEnable || sInstance == null || sRandom.nextInt(COMBAT_PROBABILITY) != 0) {
                 sIsFighting = false
                 return false
             }

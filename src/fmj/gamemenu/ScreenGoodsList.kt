@@ -136,7 +136,7 @@ class ScreenGoodsList(private val goodsList: List<BaseGoods>, private val itemSe
             bmp
         }
 
-        private var displayRect = Rect(44, 61, 156, 94)
+        private val displayRect = Rect(44, 61, 156, 94)
 
         private val itemNumberPerPage = 4 // 界面上显示的条目数
     }

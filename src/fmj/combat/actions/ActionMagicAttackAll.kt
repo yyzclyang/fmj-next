@@ -25,9 +25,9 @@ class ActionMagicAttackAll(attacker: FightingCharacter,
         mAni = magic.magicAni
         mAni!!.startAni()
         mAni!!.setIteratorNum(2)
-        magic.use(mAttacker!!, mTargets!!)
-        mRaiseAnis!!.add(RaiseAnimation(10, 10, 10, 0))
-        mRaiseAnis!!.add(RaiseAnimation(30, 10, 20, 0/*FightingCharacter.BUFF_MASK_DU*/))
+        magic.use(mAttacker!!, mTargets)
+        mRaiseAnis.add(RaiseAnimation(10, 10, 10, 0))
+        mRaiseAnis.add(RaiseAnimation(30, 10, 20, 0/*FightingCharacter.BUFF_MASK_DU*/))
     }
 
     override fun update(delta: Long): Boolean {
@@ -50,24 +50,24 @@ class ActionMagicAttackAll(attacker: FightingCharacter,
                 } else {
                     mAttacker!!.fightingSprite!!.move(-2, -2)
                 }
-                if (mTargets!![0] is Player) {
-                    for (fc in mTargets!!) {
+                if (mTargets[0] is Player) {
+                    for (fc in mTargets) {
                         fc.fightingSprite!!.currentFrame = 10
                     }
                 } else {
-                    for (fc in mTargets!!) {
+                    for (fc in mTargets) {
                         fc.fightingSprite!!.move(2, 2)
                     }
                 }
             }
 
             STATE_AFT -> if (!updateRaiseAnimation(delta)) {
-                if (mTargets!![0] is Player) {
-                    for (fc in mTargets!!) {
+                if (mTargets[0] is Player) {
+                    for (fc in mTargets) {
                         (fc as Player).setFrameByState()
                     }
                 } else {
-                    for (fc in mTargets!!) {
+                    for (fc in mTargets) {
                         fc.fightingSprite!!.move(-2, -2)
                     }
                 }

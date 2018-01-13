@@ -25,15 +25,15 @@ class ActionPhysicalAttackAll(attacker: FightingCharacter,
         oy = mAttacker!!.combatY
         dx = (44.0f - mAttacker!!.combatX) / TOTAL_FRAME
         dy = (14.0f - mAttacker!!.combatY) / TOTAL_FRAME
-        for (i in 0 until mTargets!!.size) {
-            val fc = mTargets!![i]
+        for (i in 0 until mTargets.size) {
+            val fc = mTargets[i]
             damage = mAttacker!!.attack - fc.defend
             if (damage <= 0) {
                 damage = 1
             }
             damage += (random() * 3).toInt()
             fc.hp = fc.hp - damage
-            mRaiseAnis!!.add(RaiseAnimation(mTargets!![i].combatX, mTargets!![i].combatY, -damage, 0))
+            mRaiseAnis.add(RaiseAnimation(mTargets[i].combatX, mTargets[i].combatY, -damage, 0))
         }
     }
 

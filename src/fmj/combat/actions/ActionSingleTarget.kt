@@ -25,13 +25,11 @@ abstract class ActionSingleTarget(attacker: FightingCharacter,
     }
 
     override fun updateRaiseAnimation(delta: Long): Boolean {
-        return mRaiseAni != null && mRaiseAni!!.update(delta)
+        return mRaiseAni?.update(delta) ?: false
     }
 
     override fun drawRaiseAnimation(canvas: Canvas) {
-        if (mRaiseAni != null) {
-            mRaiseAni!!.draw(canvas)
-        }
+        mRaiseAni?.draw(canvas)
     }
 
     override fun targetIsMonster(): Boolean {

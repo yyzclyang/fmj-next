@@ -26,8 +26,8 @@ class ActionThrowItemAll(attacker: FightingCharacter,
         mAni!!.startAni()
         mAni!!.setIteratorNum(2)
         // TODO effect it
-        mRaiseAnis!!.add(RaiseAnimation(10, 20, 10, 0))
-        mRaiseAnis!!.add(RaiseAnimation(30, 10, 10, 0))
+        mRaiseAnis.add(RaiseAnimation(10, 20, 10, 0))
+        mRaiseAnis.add(RaiseAnimation(30, 10, 10, 0))
     }
 
     override fun update(delta: Long): Boolean {
@@ -51,11 +51,11 @@ class ActionThrowItemAll(attacker: FightingCharacter,
                     mAttacker!!.fightingSprite!!.move(-2, -2)
                 }
                 if (!targetIsMonster()) {
-                    for (fc in mTargets!!) {
+                    for (fc in mTargets) {
                         fc.fightingSprite!!.currentFrame = 10
                     }
                 } else {
-                    for (fc in mTargets!!) {
+                    for (fc in mTargets) {
                         fc.fightingSprite!!.move(2, 2)
                     }
                 }
@@ -63,11 +63,11 @@ class ActionThrowItemAll(attacker: FightingCharacter,
 
             STATE_AFT -> if (!updateRaiseAnimation(delta)) {
                 if (targetIsMonster()) {
-                    for (fc in mTargets!!) {
+                    for (fc in mTargets) {
                         fc.fightingSprite!!.move(-2, -2)
                     }
                 } else {
-                    for (fc in mTargets!!) {
+                    for (fc in mTargets) {
                         (fc as Player).setFrameByState()
                     }
                 }

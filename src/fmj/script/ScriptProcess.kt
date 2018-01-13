@@ -1783,6 +1783,30 @@ class ScriptProcess private constructor() {
         }
     }
 
+    private val cmd_setarmstoss = object : Command {
+
+        override fun getNextPos(code: ByteArray, start: Int): Int {
+            return start + 2
+        }
+
+        override fun getOperate(code: ByteArray, start: Int): Operate {
+//            val enable = get2ByteInt(code, start)
+            throw NotImplementedError("cmd_setarmstoss")
+        }
+    }
+
+    private val cmd_setfightmiss = object : Command {
+
+        override fun getNextPos(code: ByteArray, start: Int): Int {
+            return start + 2
+        }
+
+        override fun getOperate(code: ByteArray, start: Int): Operate {
+//            val enable = get2ByteInt(code, start)
+            throw NotImplementedError("cmd_setfightmiss")
+        }
+    }
+
     init {
         mCmds = arrayOf(
                 cmd_music,
@@ -1862,7 +1886,9 @@ class ScriptProcess private constructor() {
                 cmd_enableshowpos,
                 cmd_disableshowpos,
                 cmd_setto,
-                cmd_testgoodsnum)
+                cmd_testgoodsnum,
+                cmd_setfightmiss,// TODO: 和 cmd_setarmstoss 那个在前面?
+                cmd_setarmstoss)
     }
 
     fun setScreenMainGame(screenMainGame: ScreenMainGame) {

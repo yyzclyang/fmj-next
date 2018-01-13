@@ -645,7 +645,10 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
         }
 
         fun SetDelegate(delegate: ScreenDelegate) {
-            sInstance?.delegate = delegate
+            sInstance?.let {
+                it.delegate = delegate
+                it.mCombatUI.delegate = delegate
+            }
         }
 
         fun write(out: ObjectOutput) {

@@ -12,6 +12,10 @@ import java.Stack
 class ScreenStack: ScreenDelegate {
     private val mScreenStack = Stack.create<BaseScreen>()
 
+    fun clear() {
+        mScreenStack.clear()
+    }
+
     override fun keyDown(key: Int) {
         mScreenStack.peek()!!.onKeyDown(key)
     }

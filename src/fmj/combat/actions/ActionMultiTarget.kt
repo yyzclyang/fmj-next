@@ -9,18 +9,13 @@ import graphics.Canvas
 open class ActionMultiTarget(attacker: FightingCharacter,
                              targets: List<FightingCharacter>) : Action() {
 
-    protected var mTargets: MutableList<FightingCharacter>? = null
+    protected val mTargets: MutableList<FightingCharacter> = mutableListOf()
 
-    protected var mRaiseAnis: MutableList<RaiseAnimation>? = null
+    protected val mRaiseAnis: MutableList<RaiseAnimation> = mutableListOf()
 
     override val isTargetAlive: Boolean
         get() {
-            for (fc in mTargets!!) {
-                if (fc.isAlive) {
-                    return true
-                }
-            }
-            return false
+            return mTargets.any { it.isAlive }
         }
 
     override val isSingleTarget: Boolean
@@ -28,42 +23,23 @@ open class ActionMultiTarget(attacker: FightingCharacter,
 
     init {
         mAttacker = attacker
-        mTargets = mutableListOf()
-        mTargets!!.addAll(targets)
-        mRaiseAnis = mutableListOf()
+        mTargets.addAll(targets)
     }
 
     override fun postExecute() {
-        if (mTargets != null) {
-            for (fc in mTargets!!) {
-                fc.isVisiable = fc.isAlive
-            }
+        for (fc in mTargets) {
+            fc.isVisiable = fc.isAlive
         }
     }
 
     override fun updateRaiseAnimation(delta: Long): Boolean {
-        if (mRaiseAnis != null) { // 全体
-            if (mRaiseAnis!!.size == 0) {
-                return false
-            } else {
-                for (i in mRaiseAnis!!.indices) {
-                    if (!mRaiseAnis!![i].update(delta)) {
-                        mRaiseAnis!!.removeAt(i)
-                        if (mRaiseAnis!!.isEmpty()) return false
-                    }
-                }
-                return true
-            }
-        }
-
-        return false
+        mRaiseAnis.removeAll { !it.update(delta) }
+        return !mRaiseAnis.isEmpty()
     }
 
     override fun drawRaiseAnimation(canvas: Canvas) {
-        if (mRaiseAnis != null) {
-            for (ani in mRaiseAnis!!) {
-                ani.draw(canvas)
-            }
+        for (ani in mRaiseAnis) {
+            ani.draw(canvas)
         }
     }
 
@@ -73,7 +49,7 @@ open class ActionMultiTarget(attacker: FightingCharacter,
     }
 
     override fun targetIsMonster(): Boolean {
-        return mTargets!![0] is Monster
+        return mTargets[0] is Monster
     }
 
 }

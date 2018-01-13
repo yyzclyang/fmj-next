@@ -33,16 +33,19 @@ class ScreenStack: ScreenDelegate {
                 }
         mScreenStack.clear()
         mScreenStack.push(tmp)
+        tmp.willAppear()
         tmp.delegate = this
     }
 
     override fun pushScreen(scr: BaseScreen) {
         mScreenStack.push(scr)
+        scr.willAppear()
         scr.delegate = this
     }
 
     override fun popScreen() {
         mScreenStack.pop()
+        mScreenStack.peek()?.willAppear()
     }
 
     override fun getCurScreen(): BaseScreen = mScreenStack.peek()!!

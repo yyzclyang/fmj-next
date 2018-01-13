@@ -31,4 +31,5 @@ abstract class BaseScreen {
     abstract fun onKeyDown(key: Int)
 
     abstract fun onKeyUp(key: Int)
+    open fun willAppear() {}
 }

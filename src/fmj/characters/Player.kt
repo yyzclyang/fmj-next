@@ -205,7 +205,7 @@ class Player : FightingCharacter(), Coder {
         if (page == 0) {
             TextRender.drawText(canvas, "等级   $level", 41, 4)
             TextRender.drawText(canvas, "生命   $hp/$maxHP", 41, 23)
-            TextRender.drawText(canvas, "真气   $hp/$maxMP", 41, 41)
+            TextRender.drawText(canvas, "真气   $mp/$maxMP", 41, 41)
             TextRender.drawText(canvas, "攻击力 $attack", 41, 59)
             TextRender.drawText(canvas, "防御力 $defend", 41, 77)
         } else if (page == 1) {

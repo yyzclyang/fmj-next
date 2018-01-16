@@ -65,8 +65,11 @@ object TextRender {
      * -1,出错
      */
     fun drawText(canvas: Canvas, text: String, r: Rect, y: Int): Int {
+        return drawText(canvas, text.gbkBytes(), r, y)
+    }
+
+    fun drawText(canvas: Canvas, buf: ByteArray, r: Rect, y: Int): Int {
         var tmpY = y
-        val buf = text.gbkBytes()
 
         var i = 0
         // 比r.top高的不画

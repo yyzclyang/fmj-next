@@ -24,6 +24,7 @@ import graphics.Paint
 import graphics.Rect
 import graphics.RectF
 import java.System
+import java.gbkBytes
 import java.gbkString
 import java.random
 
@@ -1464,7 +1465,7 @@ class ScriptProcess private constructor() {
             return object : Operate() {
                 internal val imgTop: ResImage?
                 internal val imgBottom: ResImage?
-                internal var text: String
+                internal var text: ByteArray
                 internal var goon = true
                 internal var interval: Long = 50
                 internal var timeCnt: Long = 0
@@ -1481,7 +1482,7 @@ class ScriptProcess private constructor() {
                     imgBottom = if (btm > 0)
                         DatLib.getRes(DatLib.ResType.PIC, 5, btm) as ResImage
                     else null
-                    text = ResBase.Companion.getString(code, start + 4)
+                    text = ResBase.Companion.getString(code, start + 4).gbkBytes()
                     curY = if (imgBottom != null) 96 - imgBottom.height else 96
                     rect = Rect(0,
                             imgTop?.height ?: 0,

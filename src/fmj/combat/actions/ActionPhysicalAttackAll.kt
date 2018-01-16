@@ -27,6 +27,9 @@ class ActionPhysicalAttackAll(attacker: FightingCharacter,
         dy = (14.0f - mAttacker!!.combatY) / TOTAL_FRAME
         for (i in 0 until mTargets.size) {
             val fc = mTargets[i]
+            if (!fc.isAlive) {
+                continue
+            }
             damage = mAttacker!!.attack - fc.defend
             if (damage <= 0) {
                 damage = 1

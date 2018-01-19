@@ -776,5 +776,9 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
                 Point(64 + 12, 52 + 18),
                 Point(96 + 12, 48 + 18),
                 Point(128 + 12, 40 + 18))
+
+        fun ForceWin() {
+            sInstance!!.mMonsterList.forEach { it.hp = 0 }
+        }
     }
 }

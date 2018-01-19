@@ -44,8 +44,8 @@ class ActionCoopMagic : Action {
     private val coopMagic: MagicAttack?
         get() {
             val firstPlayer = mActors[0]
-            val dc = firstPlayer.equipmentsArray[0] as GoodsDecorations
-            return dc.coopMagic
+            val dc = firstPlayer.equipmentsArray[0] as GoodsDecorations?
+            return dc?.coopMagic
         }
 
     override val priority: Int

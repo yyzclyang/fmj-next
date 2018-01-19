@@ -50,7 +50,8 @@ class Player : FightingCharacter(), Coder {
     override fun setData(buf: ByteArray, offset: Int) {
         type = buf[offset].toInt() and 0xFF
         index = buf[offset + 1].toInt() and 0xFF
-        mImgHead = DatLib.getRes(DatLib.ResType.PIC, 1, index) as ResImage?
+        if (index > 0)
+            mImgHead = DatLib.getRes(DatLib.ResType.PIC, 1, index) as ResImage?
         setWalkingSprite(WalkingSprite(type, buf[offset + 0x16].toInt() and 0xFF))
         fightingSprite = FightingSprite(DatLib.ResType.PIC, index)
         direction = Direction.fromInt(buf[offset + 2].toInt() and 0xFF)
@@ -242,7 +243,8 @@ class Player : FightingCharacter(), Coder {
     override fun decode(coder: ObjectInput) {
         type = coder.readInt()
         index = coder.readInt()
-        mImgHead = DatLib.getRes(DatLib.ResType.PIC, 1, index) as ResImage?
+        if (index > 0)
+            mImgHead = DatLib.getRes(DatLib.ResType.PIC, 1, index) as ResImage?
         levelupChain = DatLib.getRes(DatLib.ResType.MLR, 2, index) as ResLevelupChain
         setWalkingSprite(WalkingSprite(type, coder.readInt()))
         fightingSprite = FightingSprite(DatLib.ResType.PIC, index)

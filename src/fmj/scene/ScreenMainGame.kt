@@ -376,7 +376,7 @@ class ScreenMainGame : BaseScreen() {
      * @param y
      */
     fun createActor(actorId: Int, x: Int, y: Int) {
-        player = DatLib.getRes(DatLib.ResType.ARS, 1, actorId) as Player?
+        player = DatLib.getRes(DatLib.ResType.ARS, 1, actorId) as Player
         player!!.setPosOnScreen(x, y, mMapScreenPos)
         sPlayerList.add(player!!)
         player = sPlayerList[0]

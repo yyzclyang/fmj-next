@@ -100,7 +100,8 @@
     };
 
     global.sysSetInterval = function(interval, callback) {
-        return setInterval(callback, interval);
+        fmj.updateInterval = setInterval(callback, interval);
+        return fmj.updateInterval;
     };
 
     global.sysDrawScreen = function(buffer, wid, hgt) {
@@ -123,4 +124,11 @@
 
     global.fmj = {rom: {}};
 })(this);
+
+
+window.onerror = function(msg, url, line, col, error) {
+    clearInterval(fmj.updateInterval);
+    alert(msg + " at " + line);
+    return false;
+};
 

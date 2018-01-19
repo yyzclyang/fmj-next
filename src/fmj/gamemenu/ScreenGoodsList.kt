@@ -49,6 +49,11 @@ class ScreenGoodsList(private val goodsList: List<BaseGoods>, private val itemSe
     }
 
     override fun willAppear() {
+        if (goodsList.isEmpty()) {
+            curItemIndex = 0
+        } else if (curItemIndex >= goodsList.size) {
+            curItemIndex = goodsList.size - 1
+        }
         resetDescription()
     }
 

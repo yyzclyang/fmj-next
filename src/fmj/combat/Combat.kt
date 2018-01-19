@@ -387,7 +387,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
 
             Combat.CombatState.Win -> {
                 mIsWin = true
-                if (mCombatSuccess!!.update(delta)) {
+                if (mCombatSuccess?.update(delta) ?: true) {
                     mCombatState = CombatState.Exit
                 }
             }
@@ -426,7 +426,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
             mActionExecutor.draw(canvas)
         } else if (mCombatState == CombatState.Win) {
             //			TextRender.drawText(canvas, "Win", 20, 40);
-            mCombatSuccess!!.draw(canvas)
+            mCombatSuccess?.draw(canvas)
         } else if (mCombatState == CombatState.Loss && sIsRandomFight) {
             //			TextRender.drawText(canvas, "Loss", 20, 40);
             mFlyPeach.draw(canvas, 0, 0)
@@ -439,7 +439,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
                 mCombatUI.onKeyDown(key)
             }
         } else if (mCombatState == CombatState.Win) {
-            mCombatSuccess!!.onKeyDown(key)
+            mCombatSuccess?.onKeyDown(key)
         }
     }
 
@@ -449,7 +449,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
                 mCombatUI.onKeyUp(key)
             }
         } else if (mCombatState == CombatState.Win) {
-            mCombatSuccess!!.onKeyUp(key)
+            mCombatSuccess?.onKeyUp(key)
         }
 
         if (mIsAutoAttack && key == Global.KEY_CANCEL) { // 退出“围攻”模式
@@ -778,7 +778,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
                 Point(128 + 12, 40 + 18))
 
         fun ForceWin() {
-            sInstance!!.mMonsterList.forEach { it.hp = 0 }
+            sInstance?.mCombatState = CombatState.Win
         }
     }
 }

@@ -132,3 +132,29 @@ window.onerror = function(msg, url, line, col, error) {
     return false;
 };
 
+function enableDebug() {
+    var core = window['fmj.core'].fmj
+    sysAddKeyDownListener(function(){
+        switch(event.keyCode) {
+            case 70: { // f
+                core.combat.Combat.Companion.ForceWin();
+                console.log("Forced win");
+                break;
+            }
+            case 68: { // d
+                core.combat.Combat.Companion.globalDisableFighting_0 = true;
+                console.log("disabled random fight");
+                break;
+            }
+            case 69: { // e
+                core.combat.Combat.Companion.globalDisableFighting_0 = false;
+                console.log("enabled random fight");
+                break;
+            }
+        }
+    });
+
+    window.events = core.script.ScriptResources.globalEvents;
+    window.core = core;
+}
+

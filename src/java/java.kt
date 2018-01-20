@@ -97,7 +97,7 @@ fun ByteArray.getCString(from: Int = 0): ByteArray {
     return if (ind == -1) {
         src
     } else {
-        src.slice(0..ind).toByteArray()
+        src.slice(0 until ind).toByteArray()
     }
 }
 

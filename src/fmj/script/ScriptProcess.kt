@@ -709,7 +709,7 @@ class ScriptProcess private constructor() {
                         tmp[tmp.size - 1] = 0
                         choice1 = tmp
                     }
-                    bg = delegate.getFrameBitmap(w, 16 * 2 + 6)
+                    bg = Util.getFrameBitmap(w, 16 * 2 + 6)
                     bgx = (160 - bg.width) / 2
                     bgy = (96 - bg.height) / 2
                 }
@@ -1447,7 +1447,33 @@ class ScriptProcess private constructor() {
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            throw NotImplementedError("cmd_attribadd")
+            val actor = get2ByteInt(code, start)
+            val type = get2ByteInt(code, start+2)
+            val value = get2ByteInt(code, start+4)
+
+            return object : OperateAdapter() {
+                override fun process(): Boolean {
+                    val player = mScreenMainGame?.getPlayer(actor) ?: return false
+
+                    // 0-级别，1-攻击力，2-防御力，3-身法，4-生命，5-真气当前值，6-当前经验值
+                    // 7-灵力，8-幸运，9-攻击的异常回合数，10-生命上限，11-真气上限
+                    when (type) {
+                        0 -> player.setLevel(player.level + value)
+                        1 -> player.attack += value
+                        2 -> player.defend += value
+                        3 -> player.speed += value
+                        4 -> player.hp += value
+                        5 -> player.mp += value
+                        6 -> player.currentExp += value
+                        7 -> player.lingli += value
+                        8 -> player.luck += value
+                        9 -> throw NotImplementedError("attribadd 9")
+                        10 -> player.maxHP += value
+                        11 -> player.maxMP += value
+                    }
+                    return false
+                }
+            }
         }
     }
 

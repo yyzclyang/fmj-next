@@ -80,19 +80,6 @@ class ScreenStack: ScreenDelegate {
         })
     }
 
-    override fun getFrameBitmap(w: Int, h: Int): Bitmap {
-        // 先创建Bitmap
-        val bmp = Bitmap.createBitmap(w, h)
-        val tmpC = Canvas(bmp)
-        tmpC.drawColor(Global.COLOR_WHITE)
-
-        val paint = Paint()
-        paint.color = Global.COLOR_BLACK
-        paint.style = Paint.Style.STROKE
-        tmpC.drawRect(1, 1, w - 2, h - 2, paint)
-        return bmp
-    }
-
     fun draw(canvas: Canvas) {
         // TODO: optimize: redraw dirty layers only
         for (scr in mScreenStack) {

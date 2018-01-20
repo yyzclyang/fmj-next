@@ -6,6 +6,7 @@ import fmj.gamemenu.ScreenGoodsList
 import fmj.gamemenu.ScreenGoodsList.Mode
 import fmj.goods.BaseGoods
 import fmj.graphics.TextRender
+import fmj.graphics.Util
 import fmj.lib.DatLib
 import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
@@ -66,7 +67,7 @@ class OperateBuy(internal var data: ByteArray, internal var start: Int) : Operat
         private var buyCnt: Int = 0
         private var money: Int = 0
         private val bmpBg by lazy {
-            delegate.getFrameBitmap(136, 55)
+            Util.getFrameBitmap(136, 55)
         }
 
         override val isPopup: Boolean

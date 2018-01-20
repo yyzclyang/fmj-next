@@ -2,7 +2,9 @@ package fmj.gamemenu
 
 import fmj.Global
 import fmj.graphics.TextRender
+import fmj.graphics.Util
 import fmj.views.BaseScreen
+import graphics.Bitmap
 import graphics.Canvas
 import java.gbkBytes
 
@@ -13,17 +15,21 @@ class ScreenCommonMenu(items: Array<String>, private val callback: (Int) -> Unit
     private val paddedItems: List<ByteArray>
     private val top: Int
     private val left: Int
+    private val bg: Bitmap
+    private val padx = 3
+    private val pady = 3
     init {
         val byteItems = items.map { it.gbkBytes() }
-        val lineCount = items.map { byteItems.size }.max() ?: 2
-        val width = 16 * lineCount
+        val colCount = byteItems.map { it.size }.max() ?: 2
+        val width = 8 * colCount
         val height = 16 * items.size
+        bg = Util.getFrameBitmap(width+padx*2, height+pady*2)
         left = (Global.SCREEN_WIDTH - width) / 2
         top = (Global.SCREEN_HEIGHT - height) / 2
 
         paddedItems = byteItems.map {
             val s = it.toMutableList()
-            while (s.size < lineCount) s.add(' '.toByte())
+            while (s.size < colCount) s.add(' '.toByte())
             s.toByteArray()
         }
     }
@@ -52,6 +58,7 @@ class ScreenCommonMenu(items: Array<String>, private val callback: (Int) -> Unit
     }
 
     override fun draw(canvas: Canvas) {
+        canvas.drawBitmap(bg, left-padx, top-pady)
         for (i in paddedItems.indices) {
             if (i != curSel) {
                 TextRender.drawText(canvas, paddedItems[i], left, top + 16 * i)

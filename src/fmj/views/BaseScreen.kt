@@ -11,7 +11,6 @@ interface ScreenDelegate {
     fun changeScreen(scr: ScreenViewType)
     fun getCurScreen(): BaseScreen
     fun showMessage(msg:String, delay:Long)
-    fun getFrameBitmap(w: Int, h: Int): Bitmap
     fun keyDown(key: Int)
     fun keyUp(key: Int)
 }

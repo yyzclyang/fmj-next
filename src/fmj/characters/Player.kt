@@ -13,6 +13,7 @@ import graphics.Canvas
 import java.Coder
 import java.ObjectInput
 import java.ObjectOutput
+import kotlin.math.min
 
 
 class Player : FightingCharacter(), Coder {
@@ -305,6 +306,10 @@ class Player : FightingCharacter(), Coder {
                 out.writeInt(0)
             }
         }
+    }
+
+    fun setLevel(level: Int) {
+        this.level = min(level, levelupChain.maxLevel)
     }
 
     companion object {

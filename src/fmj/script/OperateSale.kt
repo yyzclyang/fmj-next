@@ -7,6 +7,7 @@ import fmj.gamemenu.ScreenGoodsList.Mode
 import fmj.goods.BaseGoods
 import fmj.goods.GoodsDrama
 import fmj.graphics.TextRender
+import fmj.graphics.Util
 import fmj.views.BaseScreen
 import fmj.views.ScreenStack
 
@@ -50,7 +51,7 @@ class OperateSale : Operate(), ScreenGoodsList.OnItemSelectedListener {
         private var money: Int = 0
 
         private val bmpBg by lazy {
-            delegate.getFrameBitmap(136, 55)
+            Util.getFrameBitmap(136, 55)
         }
 
         override val isPopup: Boolean

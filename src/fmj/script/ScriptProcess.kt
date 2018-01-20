@@ -18,6 +18,7 @@ import fmj.lib.ResImage
 import fmj.lib.ResSrs
 import fmj.scene.ScreenMainGame
 import fmj.views.ScreenDelegate
+import fmj.views.ScreenSaveLoadGame
 
 import graphics.Bitmap
 import graphics.Canvas
@@ -1850,7 +1851,23 @@ class ScriptProcess private constructor() {
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            throw NotImplementedError("cmd_gamesave")
+            return object : OperateAdapter() {
+                private var end = false
+                override fun process(): Boolean {
+                    cmdPrint("cmd_gamesave")
+                    val view = ScreenSaveLoadGame(ScreenSaveLoadGame.Operate.SAVE)
+                    view.callback = {
+                        end = true
+                    }
+                    delagete.pushScreen(view)
+                    end = false
+                    return true
+                }
+
+                override fun update(delta: Long): Boolean {
+                    return !end
+                }
+            }
         }
     }
 

@@ -24,6 +24,8 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
 
     private val mImgBg: ResImage    // 背景图片
 
+    var callback: (() -> Unit)? = null
+
     enum class Operate {
         SAVE, // 保存进度
         LOAD    // 读取进度
@@ -114,6 +116,7 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
                     delegate.popScreen()
                     delegate.popScreen()
                     delegate.popScreen()
+                    callback?.invoke()
                 } else { // 询问是否覆盖存档
                     delegate.pushScreen(ScreenMessageBox("覆盖原进度?",
                             object : ScreenMessageBox.OnOKClickListener {
@@ -122,6 +125,7 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
                                     delegate.popScreen()
                                     delegate.popScreen()
                                     delegate.popScreen()
+                                    callback?.invoke()
                                 }
                             }))
                 }

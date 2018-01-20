@@ -46,4 +46,13 @@ class ResMagicChain : ResBase() {
     fun getMagic(index: Int): BaseMagic { // TODO fix null
         return mMagics!![index]
     }
+
+    companion object {
+        val empty by lazy {
+            val rv = ResMagicChain()
+            rv.magicSum = 0
+            rv.mMagics = arrayOf()
+            rv
+        }
+    }
 }

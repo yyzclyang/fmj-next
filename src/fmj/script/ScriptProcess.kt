@@ -1572,12 +1572,8 @@ class ScriptProcess private constructor() {
                 private val btm = code[start + 2].toInt() and 0xFF or (code[start + 3].toInt() shl 8 and 0xFF00)
 
                 init {
-                    imgTop = if (top > 0)
-                        DatLib.getRes(DatLib.ResType.PIC, 5, top) as ResImage
-                    else null
-                    imgBottom = if (btm > 0)
-                        DatLib.getRes(DatLib.ResType.PIC, 5, btm) as ResImage
-                    else null
+                    imgTop = DatLib.getPic(5, top, true)
+                    imgBottom = DatLib.getPic(5, btm, true)
                     text = ResBase.Companion.getString(code, start + 4).gbkBytes()
                     curY = if (imgBottom != null) 96 - imgBottom.height else 96
                     rect = Rect(0,

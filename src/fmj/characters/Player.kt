@@ -58,7 +58,8 @@ class Player : FightingCharacter(), Coder {
         direction = Direction.fromInt(buf[offset + 2].toInt() and 0xFF)
         step = buf[offset + 3].toInt() and 0xff
         setPosInMap(buf[offset + 5].toInt() and 0xFF, buf[offset + 6].toInt() and 0xFF)
-        magicChain = DatLib.getRes(DatLib.ResType.MLR, 1, buf[offset + 0x17].toInt() and 0xff) as ResMagicChain
+        val magicChainId = buf[offset + 0x17].toInt() and 0xff
+        magicChain = DatLib.getMlr(1, magicChainId, true)
         magicChain.learnNum = buf[offset + 9].toInt() and 0xff
         name = getString(buf, offset + 0x0a)
         level = buf[offset + 0x20].toInt() and 0xff

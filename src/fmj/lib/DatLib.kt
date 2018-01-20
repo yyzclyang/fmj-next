@@ -66,7 +66,7 @@ class DatLib(buffer: ByteArray) {
      * 资源索引号
      * @return 资源对象，不存在则返回`null`
      */
-    fun getRes(resType: ResType, type: Int, index: Int): ResBase? {
+    fun getRes(resType: ResType, type: Int, index: Int, allowNull: Boolean = false): ResBase? {
         val offset = getDataOffset(resType, type, index)
         val res = (if (offset != -1) {
             val res: ResBase? =
@@ -111,6 +111,7 @@ class DatLib(buffer: ByteArray) {
             // 资源不存在
             null
         })
+        if (allowNull) return res
         return res ?: throw Error("res not found:resType=$resType,type=$type,index=$index")
     }
 
@@ -200,8 +201,16 @@ class DatLib(buffer: ByteArray) {
             DatLib(File.contentsOf("DAT.LIB"))
         }
 
-        fun getRes(resType: ResType, type: Int, index: Int): ResBase? {
-            return instance.getRes(resType, type, index)
+        fun getRes(resType: ResType, type: Int, index: Int, allowNull: Boolean = false): ResBase? {
+            return instance.getRes(resType, type, index, allowNull)
+        }
+
+        fun getPic(type: Int, index: Int, allowNull: Boolean = false): ResImage? {
+            return getRes(ResType.PIC, type, index, allowNull) as ResImage?
+        }
+
+        fun getMlr(type: Int, index: Int, allowNull: Boolean = false): ResMagicChain {
+            return getRes(ResType.MLR, type, index, allowNull) as ResMagicChain? ?: ResMagicChain.empty
         }
     }
 }

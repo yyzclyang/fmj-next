@@ -91,7 +91,9 @@ class ScreenGameMainMenu : BaseScreen() {
                 delegate.popScreen()
             } else if (key == Global.KEY_ENTER) {
                 delegate.popScreen()
-                delegate.pushScreen(getScreenMagic(index))
+                getScreenMagic(index)?.let {
+                    delegate.pushScreen(it)
+                }
             }
         }
     }
@@ -153,8 +155,12 @@ class ScreenGameMainMenu : BaseScreen() {
      * @param id 0 1 2
      * @return
      */
-    private fun getScreenMagic(id: Int): ScreenMagic {
-        return ScreenMagic(ScreenMainGame.instance.playerList[id].magicChain,
+    private fun getScreenMagic(id: Int): ScreenMagic? {
+        val magicChain = ScreenMainGame.instance.playerList[id].magicChain
+
+        if (magicChain.learnNum == 0) return null
+
+        return ScreenMagic(magicChain,
                 object : ScreenMagic.OnItemSelectedListener {
                     override fun onItemSelected(magic: BaseMagic) {
                         if (magic is MagicRestore) {

@@ -7,6 +7,7 @@ import fmj.characters.Direction
 import fmj.characters.NPC
 import fmj.characters.Player
 import fmj.combat.Combat
+import fmj.gamemenu.ScreenCommonMenu
 import fmj.goods.BaseGoods
 import fmj.graphics.TextRender
 import fmj.graphics.Util
@@ -23,10 +24,7 @@ import graphics.Canvas
 import graphics.Paint
 import graphics.Rect
 import graphics.RectF
-import java.System
-import java.gbkBytes
-import java.gbkString
-import java.random
+import java.*
 
 
 class ScriptProcess private constructor() {
@@ -1587,7 +1585,47 @@ class ScriptProcess private constructor() {
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            throw NotImplementedError("cmd_menu")
+            return object : OperateAdapter() {
+                var finished = false
+                val rvAddr = get2ByteInt(code, start)
+
+                val items by lazy {
+                    val stringItems = code.getCString(start+2).gbkString().split(' ')
+                    println(stringItems)
+                    stringItems.toTypedArray()
+                }
+
+                val menu = ScreenCommonMenu(items) {
+                    ScriptResources.variables[rvAddr] = it
+                    finished = true
+                }
+
+                override fun process(): Boolean {
+                    cmdPrint("cmd_menu")
+                    menu.reset()
+                    finished = false
+                    delagete.pushScreen(menu)
+                    return true
+                }
+
+                override fun draw(canvas: Canvas) {
+                    menu.draw(canvas)
+                }
+
+                override fun onKeyDown(key: Int) {
+                    menu.onKeyDown(key)
+                }
+
+                override fun onKeyUp(key: Int) {
+                    menu.onKeyUp(key)
+                }
+
+                override fun update(delta: Long): Boolean {
+                    if (finished) return false
+                    menu.update(delta)
+                    return true
+                }
+            }
         }
     }
 
@@ -1792,7 +1830,8 @@ class ScriptProcess private constructor() {
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
 //            val enable = get2ByteInt(code, start)
-            throw NotImplementedError("cmd_setarmstoss")
+//            throw NotImplementedError("cmd_setarmstoss")
+            return OperateNop.nop
         }
     }
 
@@ -1804,7 +1843,8 @@ class ScriptProcess private constructor() {
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
 //            val enable = get2ByteInt(code, start)
-            throw NotImplementedError("cmd_setfightmiss")
+//            throw NotImplementedError("cmd_setfightmiss")
+            return OperateNop.nop
         }
     }
 

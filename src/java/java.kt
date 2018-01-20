@@ -91,6 +91,16 @@ fun ByteArray.gbkString(): String {
     return sysGbkDecode(this.toTypedArray())
 }
 
+fun ByteArray.getCString(from: Int = 0): ByteArray {
+    val src = if (from == 0) this else this.sliceArray(from until this.size)
+    val ind = src.indexOf(0)
+    return if (ind == -1) {
+        src
+    } else {
+        src.slice(0..ind).toByteArray()
+    }
+}
+
 fun String.gbkBytes(): ByteArray {
     return sysGbkEncode(this).toByteArray()
 }

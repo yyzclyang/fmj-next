@@ -1890,7 +1890,8 @@ class ScriptProcess private constructor() {
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            throw NotImplementedError("cmd_enableshowpos")
+            return OperateNop.nop
+//            throw NotImplementedError("cmd_enableshowpos")
         }
     }
 
@@ -1901,7 +1902,8 @@ class ScriptProcess private constructor() {
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            throw NotImplementedError("cmd_disableshowpos")
+            return OperateNop.nop
+//            throw NotImplementedError("cmd_disableshowpos")
         }
     }
 

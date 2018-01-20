@@ -26,6 +26,8 @@ object Global {
     val KEY_PAGEDOWN = 6
     val KEY_ENTER = 7
     val KEY_CANCEL = 8
+
+    var disableSave = false // TODO: write to save
 }
 
 enum class ScreenViewType {

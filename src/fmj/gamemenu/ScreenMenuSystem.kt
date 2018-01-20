@@ -95,7 +95,12 @@ class ScreenMenuSystem : BaseScreen() {
             when (index) {
                 0 -> delegate.pushScreen(ScreenSaveLoadGame(Operate.LOAD))
 
-                1 -> delegate.pushScreen(ScreenSaveLoadGame(Operate.SAVE))
+                1 -> {
+                    if (Global.disableSave)
+                        delegate.showMessage("当前不能存档")
+                    else
+                        delegate.pushScreen(ScreenSaveLoadGame(Operate.SAVE))
+                }
 
                 2 -> {
                 }

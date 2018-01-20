@@ -1814,7 +1814,13 @@ class ScriptProcess private constructor() {
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            throw NotImplementedError("cmd_disablesave")
+            return object : OperateAdapter() {
+                override fun process(): Boolean {
+                    cmdPrint("cmd_disablesave")
+                    Global.disableSave = true
+                    return false
+                }
+            }
         }
     }
 
@@ -1826,7 +1832,13 @@ class ScriptProcess private constructor() {
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            throw NotImplementedError("cmd_enablesave")
+            return object : OperateAdapter() {
+                override fun process(): Boolean {
+                    cmdPrint("cmd_enablesave")
+                    Global.disableSave = false
+                    return false
+                }
+            }
         }
     }
 

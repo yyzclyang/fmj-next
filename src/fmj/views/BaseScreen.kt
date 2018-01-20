@@ -13,6 +13,10 @@ interface ScreenDelegate {
     fun showMessage(msg:String, delay:Long)
     fun keyDown(key: Int)
     fun keyUp(key: Int)
+
+    fun showMessage(msg:String) {
+        showMessage(msg, 1000)
+    }
 }
 
 abstract class BaseScreen {

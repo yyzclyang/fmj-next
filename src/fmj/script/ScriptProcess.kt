@@ -1423,7 +1423,50 @@ class ScriptProcess private constructor() {
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            throw NotImplementedError("cmd_attribtest")
+            val actor = get2ByteInt(code, start)
+            val type = get2ByteInt(code, start+2)
+            val value = get2ByteInt(code, start+4)
+            val addr1 = get2ByteInt(code, start+6)
+            val addr2 = get2ByteInt(code, start+8)
+
+            return object : OperateAdapter() {
+                override fun process(): Boolean {
+                    cmdPrint("cmd_attribtest $actor $type $value")
+                    val player = mScreenMainGame?.getPlayer(actor) ?: return false
+                    // 0-级别，1-攻击力，2-防御力，3-身法，4-生命，5-真气当前值，6-当前经验值
+                    // 7-灵力，8-幸运，9-攻击的异常回合数，10-对特殊状态的免疫，11-普通攻击可能产生异常状态
+                    // 12-合体法术，13-每回合变化生命，14-每回合变化真气，15-头戴，16-身穿
+                    // 17-肩披，18-护腕，19-手持，20-脚蹬，21-佩戴1，22-佩戴2，23-生命上限，24-真气上限
+                    val currentValue = when (type) {
+                            0 -> player.level
+                            1 -> player.attack
+                            2 -> player.defend
+                            3 -> player.speed
+                            4 -> player.hp
+                            5 -> player.mp
+                            6 -> player.currentExp
+                            7 -> player.lingli
+                            8 -> player.luck
+                            // * 0装饰 1装饰 2护腕 3脚蹬 4手持 5身穿 6肩披 7头戴
+                            15 -> player.equipmentsArray[7]?.index ?: 0
+                            16 -> player.equipmentsArray[5]?.index ?: 0
+                            17 -> player.equipmentsArray[6]?.index ?: 0
+                            18 -> player.equipmentsArray[2]?.index ?: 0
+                            19 -> player.equipmentsArray[4]?.index ?: 0
+                            20 -> player.equipmentsArray[3]?.index ?: 0
+                            21 -> player.equipmentsArray[0]?.index ?: 0
+                            22 -> player.equipmentsArray[1]?.index ?: 0
+                            23 -> player.maxHP
+                            24 -> player.maxMP
+                            else -> throw NotImplementedError("ATTRIBTEST $type")
+                        }
+                    when {
+                        currentValue < value -> mScreenMainGame!!.gotoAddress(addr1)
+                        currentValue > value -> mScreenMainGame!!.gotoAddress(addr2)
+                    }
+                    return false
+                }
+            }
         }
     }
 
@@ -1435,7 +1478,34 @@ class ScriptProcess private constructor() {
         }
 
         override fun getOperate(code: ByteArray, start: Int): Operate {
-            throw NotImplementedError("cmd_attribset")
+            val actor = get2ByteInt(code, start)
+            val type = get2ByteInt(code, start+2)
+            val value = get2ByteInt(code, start+4)
+
+            return object : OperateAdapter() {
+                override fun process(): Boolean {
+                    cmdPrint("cmd_attribset $actor $type $value")
+                    val player = mScreenMainGame?.getPlayer(actor) ?: return false
+                    // 0-级别，1-攻击力，2-防御力，3-身法，4-生命，5-真气当前值，6-当前经验值
+                    // 7-灵力，8-幸运，9-攻击的异常回合数，10-对特殊状态的免疫，11-普通攻击可能产生异常状态
+                    // 12-合体法术，13-每回合变化生命，14-每回合变化真气，15-生命上限，16-真气上限
+                    when (type) {
+                        0 -> player.setLevel(value)
+                        1 -> player.attack = value
+                        2 -> player.defend = value
+                        3 -> player.speed = value
+                        4 -> player.hp = value
+                        5 -> player.mp = value
+                        6 -> player.currentExp = value
+                        7 -> player.lingli = value
+                        8 -> player.luck = value
+                        15 -> player.maxHP = value
+                        16 -> player.maxMP = value
+                        else -> throw NotImplementedError("ATTRIBSET $type")
+                    }
+                    return false
+                }
+            }
         }
     }
 
@@ -1453,6 +1523,7 @@ class ScriptProcess private constructor() {
 
             return object : OperateAdapter() {
                 override fun process(): Boolean {
+                    cmdPrint("cmd_attribadd $actor $type $value")
                     val player = mScreenMainGame?.getPlayer(actor) ?: return false
 
                     // 0-级别，1-攻击力，2-防御力，3-身法，4-生命，5-真气当前值，6-当前经验值
@@ -1467,9 +1538,9 @@ class ScriptProcess private constructor() {
                         6 -> player.currentExp += value
                         7 -> player.lingli += value
                         8 -> player.luck += value
-                        9 -> throw NotImplementedError("attribadd 9")
                         10 -> player.maxHP += value
                         11 -> player.maxMP += value
+                        else -> throw NotImplementedError("ATTRIBADD $type")
                     }
                     return false
                 }

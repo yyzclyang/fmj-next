@@ -156,11 +156,11 @@ class ScreenGameMainMenu : BaseScreen() {
      * @return
      */
     private fun getScreenMagic(id: Int): ScreenMagic? {
-        val magicChain = ScreenMainGame.instance.playerList[id].magicChain
+        val magics = ScreenMainGame.instance.playerList[id].getAllMagics()
 
-        if (magicChain.learnNum == 0) return null
+        if (magics.isEmpty()) return null
 
-        return ScreenMagic(magicChain,
+        return ScreenMagic(magics,
                 object : ScreenMagic.OnItemSelectedListener {
                     override fun onItemSelected(magic: BaseMagic) {
                         if (magic is MagicRestore) {

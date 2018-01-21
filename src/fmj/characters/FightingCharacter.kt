@@ -1,5 +1,6 @@
 package fmj.characters
 
+import fmj.magic.BaseMagic
 import fmj.magic.ResMagicChain
 
 abstract class FightingCharacter : Character() {
@@ -26,7 +27,7 @@ abstract class FightingCharacter : Character() {
     /**
      * 魔法链
      */
-    lateinit var magicChain: ResMagicChain
+    var magicChain: ResMagicChain? = null
 
     /**
      * 等级
@@ -305,6 +306,11 @@ abstract class FightingCharacter : Character() {
 
     fun delAtbuff(mask: Int) {
         mAtbuff = mAtbuff and mask.inv()
+    }
+
+    fun getAllMagics(): Collection<BaseMagic> {
+        // TODO: 其它自学magic
+        return magicChain?.getAllLearntMagics() ?: listOf()
     }
 
     companion object {

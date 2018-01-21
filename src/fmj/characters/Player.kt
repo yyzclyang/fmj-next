@@ -6,7 +6,6 @@ import fmj.graphics.TextRender
 import fmj.graphics.Util
 import fmj.lib.DatLib
 import fmj.lib.ResImage
-import fmj.magic.ResMagicChain
 
 import graphics.Canvas
 
@@ -49,6 +48,7 @@ class Player : FightingCharacter(), Coder {
     }
 
     override fun setData(buf: ByteArray, offset: Int) {
+        // TODO: buff and 自学magic
         type = buf[offset].toInt() and 0xFF
         index = buf[offset + 1].toInt() and 0xFF
         if (index > 0)
@@ -60,7 +60,7 @@ class Player : FightingCharacter(), Coder {
         setPosInMap(buf[offset + 5].toInt() and 0xFF, buf[offset + 6].toInt() and 0xFF)
         val magicChainId = buf[offset + 0x17].toInt() and 0xff
         magicChain = DatLib.getMlr(1, magicChainId, true)
-        magicChain.learnNum = buf[offset + 9].toInt() and 0xff
+        magicChain?.learnNum = buf[offset + 9].toInt() and 0xff
         name = getString(buf, offset + 0x0a)
         level = buf[offset + 0x20].toInt() and 0xff
         maxHP = get2BytesInt(buf, offset + 0x26)
@@ -187,7 +187,7 @@ class Player : FightingCharacter(), Coder {
 
     /**
      * type型装备位置是否已经有装备
-     * @param type 装备类型号 [GoodsEquipment.getType]
+     * @param type 装备类型号
      * @return 是否有空
      */
     fun hasSpace(type: Int): Boolean {
@@ -253,8 +253,8 @@ class Player : FightingCharacter(), Coder {
         direction = Direction.fromInt(coder.readInt())
         step = coder.readInt()
         setPosInMap(coder.readInt(), coder.readInt())
-        magicChain = DatLib.getRes(DatLib.ResType.MLR, 1, coder.readInt()) as ResMagicChain
-        magicChain.learnNum = coder.readInt()
+        magicChain = DatLib.getMlr(1, coder.readInt())
+        magicChain?.learnNum = coder.readInt()
         name = coder.readString()
         level = coder.readInt()
         maxHP = coder.readInt()
@@ -284,8 +284,10 @@ class Player : FightingCharacter(), Coder {
         out.writeInt(step)
         out.writeInt(posInMap.x)
         out.writeInt(posInMap.y)
-        out.writeInt(magicChain.index)
-        out.writeInt(magicChain.learnNum)
+        out.writeInt(magicChain?.index ?: 0)
+        magicChain?.let {
+            out.writeInt(it.learnNum)
+        }
         out.writeString(name)
         out.writeInt(level)
         out.writeInt(maxHP)

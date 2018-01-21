@@ -209,8 +209,8 @@ class DatLib(buffer: ByteArray) {
             return getRes(ResType.PIC, type, index, allowNull) as ResImage?
         }
 
-        fun getMlr(type: Int, index: Int, allowNull: Boolean = false): ResMagicChain {
-            return getRes(ResType.MLR, type, index, allowNull) as ResMagicChain? ?: ResMagicChain.empty
+        fun getMlr(type: Int, index: Int, allowNull: Boolean = false): ResMagicChain? {
+            return getRes(ResType.MLR, type, index, allowNull) as ResMagicChain?
         }
     }
 }

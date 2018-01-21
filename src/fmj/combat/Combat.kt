@@ -332,7 +332,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
                                 p.mp = p.maxMP
                                 p.attack = p.attack + c.getAttack(cl + 1) - c.getAttack(cl)
                                 p.defend = p.defend + c.getDefend(cl + 1) - c.getDefend(cl)
-                                p.magicChain.learnNum = c.getLearnMagicNum(cl + 1)
+                                p.magicChain?.learnNum = c.getLearnMagicNum(cl + 1)
                                 p.speed = p.speed + c.getSpeed(cl + 1) - c.getSpeed(cl)
                                 p.lingli = p.lingli + c.getLingli(cl + 1) - c.getLingli(cl)
                                 p.luck = p.luck + c.getLuck(cl + 1) - c.getLuck(cl)

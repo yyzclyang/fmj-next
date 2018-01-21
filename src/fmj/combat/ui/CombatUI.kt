@@ -216,41 +216,47 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                     }
 
                     2//魔法技能
-                    -> delegate.pushScreen(ScreenMagic(mPlayerList[mCurPlayerIndex].magicChain,
-                            object : ScreenMagic.OnItemSelectedListener {
+                    -> run {
+                        val magics = mPlayerList[mCurPlayerIndex].getAllMagics()
+                        if (magics.isEmpty()) {
+                            return@run
+                        }
+                        delegate.pushScreen(ScreenMagic(magics,
+                                object : ScreenMagic.OnItemSelectedListener {
 
-                                override fun onItemSelected(magic: BaseMagic) {
-                                    delegate.popScreen() // 弹出魔法选择界面
-                                    if (magic is MagicAttack || magic is MagicSpecial) { // 选一个敌人
-                                        if (magic.isForAll) {
-                                            onActionSelected(ActionMagicAttackAll(mPlayerList[mCurPlayerIndex],
-                                                    mMonsterList, magic as MagicAttack))
-                                        } else { // 选一个敌人
-                                            delegate.pushScreen(MenuCharacterSelect(mMonsterIndicator, sMonsterIndicatorPos,
-                                                    mMonsterList, object : OnCharacterSelectedListener {
+                                    override fun onItemSelected(magic: BaseMagic) {
+                                        delegate.popScreen() // 弹出魔法选择界面
+                                        if (magic is MagicAttack || magic is MagicSpecial) { // 选一个敌人
+                                            if (magic.isForAll) {
+                                                onActionSelected(ActionMagicAttackAll(mPlayerList[mCurPlayerIndex],
+                                                        mMonsterList, magic as MagicAttack))
+                                            } else { // 选一个敌人
+                                                delegate.pushScreen(MenuCharacterSelect(mMonsterIndicator, sMonsterIndicatorPos,
+                                                        mMonsterList, object : OnCharacterSelectedListener {
 
-                                                override fun onCharacterSelected(fc: FightingCharacter) {
-                                                    onActionSelected(ActionMagicAttackOne(mPlayerList[mCurPlayerIndex], fc, magic))
-                                                }
-                                            }, true))
-                                        }
-                                    } else { // 选队友或自己
-                                        if (magic.isForAll) {
-                                            onActionSelected(ActionMagicHelpAll(mPlayerList[mCurPlayerIndex],
-                                                    mPlayerList, magic))
-                                        } else { // 选一个Player
-                                            delegate.pushScreen(MenuCharacterSelect(mTargetIndicator, sPlayerIndicatorPos,
-                                                    mPlayerList, object : OnCharacterSelectedListener {
+                                                    override fun onCharacterSelected(fc: FightingCharacter) {
+                                                        onActionSelected(ActionMagicAttackOne(mPlayerList[mCurPlayerIndex], fc, magic))
+                                                    }
+                                                }, true))
+                                            }
+                                        } else { // 选队友或自己
+                                            if (magic.isForAll) {
+                                                onActionSelected(ActionMagicHelpAll(mPlayerList[mCurPlayerIndex],
+                                                        mPlayerList, magic))
+                                            } else { // 选一个Player
+                                                delegate.pushScreen(MenuCharacterSelect(mTargetIndicator, sPlayerIndicatorPos,
+                                                        mPlayerList, object : OnCharacterSelectedListener {
 
-                                                override fun onCharacterSelected(fc: FightingCharacter) {
-                                                    onActionSelected(ActionMagicHelpOne(mPlayerList[mCurPlayerIndex],
-                                                            fc, magic))
-                                                }
-                                            }, false))
+                                                    override fun onCharacterSelected(fc: FightingCharacter) {
+                                                        onActionSelected(ActionMagicHelpOne(mPlayerList[mCurPlayerIndex],
+                                                                fc, magic))
+                                                    }
+                                                }, false))
+                                            }
                                         }
                                     }
-                                }
-                            }))
+                                }))
+                    }
 
                     3//杂项
                     -> delegate.pushScreen(MenuMisc())

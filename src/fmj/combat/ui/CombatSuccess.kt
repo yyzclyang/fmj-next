@@ -35,9 +35,13 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
         for (p in lvuplist) {
             mLvupList.add(MsgScreen(p.name + "修行提升"))
             mLvupList.add(LevelupScreen(p))
-            if (p.levelupChain.getLearnMagicNum(p.level) > p.levelupChain.getLearnMagicNum(p.level - 1)) {
-                mLvupList.add(LearnMagicScreen(p.name,
-                        p.magicChain.getMagic(p.levelupChain.getLearnMagicNum(p.level) - 1).magicName))
+            val magicChain = p.magicChain
+            if (magicChain != null) {
+                val newNum = p.levelupChain.getLearnMagicNum(p.level)
+                val oldNum = p.levelupChain.getLearnMagicNum(p.level - 1)
+                (oldNum until newNum).mapTo(mLvupList) {
+                    LearnMagicScreen(p.name, magicChain.getMagic(it - 1).magicName)
+                }
             }
         }
     }

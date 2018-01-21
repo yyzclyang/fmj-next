@@ -2,7 +2,6 @@ package fmj.characters
 
 import fmj.goods.BaseGoods
 import fmj.lib.DatLib
-import fmj.magic.ResMagicChain
 
 class Monster : FightingCharacter() {
 
@@ -42,12 +41,8 @@ class Monster : FightingCharacter() {
         index = buf[offset + 1].toInt() and 0xff
         val magicIndex = buf[offset + 0x2f].toInt() and 0xff
 
-        magicChain = if (magicIndex > 0)
-            DatLib.getRes(DatLib.ResType.MLR, 1, magicIndex) as ResMagicChain
-        else
-            ResMagicChain()
-
-        magicChain.learnNum = buf[offset + 2].toInt() and 0xff
+        magicChain = DatLib.getMlr(1, magicIndex)
+        magicChain?.learnNum = buf[offset + 2].toInt() and 0xff
         addBuff(buf[offset + 3].toInt() and 0xff)
         mAtbuff = buf[offset + 4].toInt() and 0xff
         mLastRound = buf[offset + 0x17].toInt() and 0xff

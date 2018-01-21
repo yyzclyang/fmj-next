@@ -13,10 +13,9 @@ class ResMagicChain : ResBase() {
      * 得到魔法总数
      * @return
      */
-    var magicSum: Int = 0
-        private set // 魔法数量
+    private var magicSum: Int = 0
 
-    private var mMagics: Array<BaseMagic>? = null
+    private var mMagics: List<BaseMagic> = listOf()
 
     /**
      * 返回已经学会的魔法数量
@@ -30,29 +29,17 @@ class ResMagicChain : ResBase() {
         magicSum = buf[offset + 2].toInt() and 0xff
 
         var index = offset + 3
-        mMagics = Array(magicSum) {
+        mMagics = List(magicSum) {
             DatLib.getRes(DatLib.ResType.MRS,
                     buf[index++].toInt(), buf[index++].toInt()) as BaseMagic
         }
     }
 
-    /**
-     * 学会魔法数量加一
-     */
-    fun learnNextMagic() {
-        ++learnNum
+    fun getMagic(index: Int): BaseMagic {
+        return mMagics[index]
     }
 
-    fun getMagic(index: Int): BaseMagic { // TODO fix null
-        return mMagics!![index]
-    }
-
-    companion object {
-        val empty by lazy {
-            val rv = ResMagicChain()
-            rv.magicSum = 0
-            rv.mMagics = arrayOf()
-            rv
-        }
+    fun getAllLearntMagics(): Collection<BaseMagic> {
+        return mMagics.slice(0 until learnNum)
     }
 }

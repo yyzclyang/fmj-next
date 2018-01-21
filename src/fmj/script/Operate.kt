@@ -3,7 +3,20 @@ package fmj.script
 import fmj.views.ScreenDelegate
 import graphics.Canvas
 
+abstract class Command {
+    /**
+     * 处理一条指令
+     *
+     * @return `Operate`继续执行
+     *
+     *
+     * `null`指令执行完毕
+     */
+    abstract fun run(delegate: ScreenDelegate): Operate?
+}
+
 abstract class Operate {
+    // TODO: fix typo
     lateinit var delagete: ScreenDelegate
 
     /**
@@ -12,17 +25,6 @@ abstract class Operate {
      */
     val isPopup: Boolean
         get() = false
-
-    /**
-     * 处理一条指令
-     *
-     * @return `true`继续执行 [.update] [.draw]
-     *
-     *
-     * `false`指令执行完毕
-     */
-    abstract fun process(): Boolean
-
     /**
      *
      * @param delta
@@ -37,16 +39,11 @@ abstract class Operate {
     abstract fun onKeyUp(key: Int)
 }
 
-class OperateNop: Operate() {
-    override fun process() = false
-
-    override fun update(delta: Long) = true
-
-    override fun draw(canvas: Canvas) {}
-
-    override fun onKeyDown(key: Int) {}
-
-    override fun onKeyUp(key: Int) {}
+// TODO: rename
+class OperateNop: Command() {
+    override fun run(delegate: ScreenDelegate): Operate? {
+        return null
+    }
 
     companion object {
         val nop = OperateNop()

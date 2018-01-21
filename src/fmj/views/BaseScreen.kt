@@ -1,6 +1,7 @@
 package fmj.views
 
 import fmj.ScreenViewType
+import fmj.scene.ScreenMainGame
 
 import graphics.Canvas
 import graphics.Bitmap
@@ -13,6 +14,9 @@ interface ScreenDelegate {
     fun showMessage(msg:String, delay:Long)
     fun keyDown(key: Int)
     fun keyUp(key: Int)
+
+    // TODO: rename
+    val mainScreen: ScreenMainGame
 
     fun showMessage(msg:String) {
         showMessage(msg, 1000)

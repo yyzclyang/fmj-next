@@ -14,17 +14,7 @@ import fmj.views.ScreenStack
 import graphics.Canvas
 
 class OperateSale : Operate(), ScreenGoodsList.OnItemSelectedListener {
-
     private val mSaleScreen = SaleGoodsScreen()
-
-    override fun process(): Boolean {
-        ScriptProcess.cmdPrint("cmd_sale")
-        val list = mutableListOf<BaseGoods>()
-        list.addAll(Player.sGoodsList.goodsList)
-        list.addAll(Player.sGoodsList.equipList)
-        delagete.pushScreen(ScreenGoodsList(list, this, Mode.Sale))
-        return true
-    }
 
     override fun update(delta: Long): Boolean {
         return false

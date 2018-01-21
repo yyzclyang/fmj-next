@@ -1,5 +1,6 @@
 package fmj.script
 
+import fmj.views.ScreenDelegate
 import graphics.Canvas
 
 class ScriptExecutor
@@ -9,14 +10,14 @@ class ScriptExecutor
  * @param eventIndex eventIndex[i]等于触发事件i+1时，要执行的Operate在list中的序号
  * @param map 地址偏移-序号
  */
-(private val mOperateList: ArrayList<Operate>,
+(private val mOperateList: ArrayList<Command>,
  /**
   * mEventIndex[i]等于触发事件i+1时，要执行的Operate在list中的序号，
   * -1表示不存在
   */
  private val mEventIndex: IntArray,
  /**
-  * address offset --- operate's index of mOperateList
+  * address offset --- curOp's index of mOperateList
   */
  private val mMapAddrOffsetIndex: HashMap<Int, Int>,
  /**
@@ -32,11 +33,10 @@ class ScriptExecutor
     /**
      * 当前是否正在执行 update() draw()
      */
-    private var mIsExeUpdateDraw: Boolean = false
+    private var curOp: Operate? = null
 
     init {
         mCurExeOperateIndex = 0
-        mIsExeUpdateDraw = false
     }
 
     /**
@@ -51,7 +51,7 @@ class ScriptExecutor
         val index = mEventIndex[eventId - 1]
         if (index != -1) {
             mCurExeOperateIndex = index
-            mIsExeUpdateDraw = false
+            curOp = null
             return true
         }
         return false
@@ -59,20 +59,20 @@ class ScriptExecutor
 
     fun gotoAddress(address: Int) {
         mCurExeOperateIndex = mMapAddrOffsetIndex[address - mHeaderCnt]!!
-        if (mIsExeUpdateDraw) { // 不在Operate.process()中调用的gotoAddress
-            mIsExeUpdateDraw = false
+        if (curOp != null) { // 不在Operate.process()中调用的gotoAddress
+            curOp = null
             --mCurExeOperateIndex
         } else { // 在Operate.process()中调用的gotoAddress
             goonExecute = false // mark 下次调用process再执行
         }
     }
 
-    fun process() {
-        if (!mIsExeUpdateDraw) {
+    fun process(delegate: ScreenDelegate) {
+        if (curOp == null) {
             while (mCurExeOperateIndex < mOperateList.size && goonExecute) {
-                val oper = mOperateList[mCurExeOperateIndex]
-                if (oper.process()) { // 执行 update draw
-                    mIsExeUpdateDraw = true
+                val cmd = mOperateList[mCurExeOperateIndex]
+                curOp = cmd.run(delegate)
+                if (curOp != null) { // 执行 update draw
                     return
                 }
                 if (!goonExecute) {
@@ -86,32 +86,24 @@ class ScriptExecutor
     }
 
     fun update(delta: Long) {
-        if (mIsExeUpdateDraw) {
-            if (!mOperateList[mCurExeOperateIndex].update(delta)) { // 退出当前操作
-                mIsExeUpdateDraw = false
+        curOp?.update(delta)?.let {
+            if (!it) { // 退出当前操作
+                curOp = null
                 ++mCurExeOperateIndex
             }
         }
     }
 
     fun draw(canvas: Canvas) {
-        if (mIsExeUpdateDraw) {
-            mOperateList[mCurExeOperateIndex].draw(canvas)
-        } else {
-            //			mOperateList.get(mLastIndex).draw(canvas);
-        }
+        curOp?.draw(canvas)
     }
 
     fun keyDown(key: Int) {
-        if (mIsExeUpdateDraw) {
-            mOperateList[mCurExeOperateIndex].onKeyDown(key)
-        }
+        curOp?.onKeyDown(key)
     }
 
     fun keyUp(key: Int) {
-        if (mIsExeUpdateDraw) {
-            mOperateList[mCurExeOperateIndex].onKeyUp(key)
-        }
+        curOp?.onKeyUp(key)
     }
 
     companion object {

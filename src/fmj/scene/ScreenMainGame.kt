@@ -154,7 +154,7 @@ class ScreenMainGame : BaseScreen() {
 
     override fun update(delta: Long) {
         if (mRunScript && mScriptExecutor != null) {
-            mScriptExecutor!!.process()
+            mScriptExecutor!!.process(delegate)
             mScriptExecutor!!.update(delta)
         } else if (Combat.IsActive()) { // TODO fix this test
             Combat.Update(delta)

@@ -1,13 +1,11 @@
 package fmj
 
-import fmj.graphics.TextRender
 import fmj.script.ScriptProcess
 import fmj.views.ScreenAnimation
 import fmj.views.ScreenStack
 
 import graphics.Canvas
 import graphics.Bitmap
-import graphics.Color
 import java.*
 
 class GameView {

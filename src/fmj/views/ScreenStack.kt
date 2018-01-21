@@ -1,15 +1,15 @@
 package fmj.views
 
-import fmj.Global
 import fmj.ScreenViewType
 import fmj.graphics.Util
 import fmj.scene.ScreenMainGame
-import graphics.Bitmap
 import graphics.Canvas
-import graphics.Paint
 import java.Stack
 
 class ScreenStack: ScreenDelegate {
+    override val mainScreen: ScreenMainGame
+        get() = ScreenMainGame.instance
+
     private val mScreenStack = Stack.create<BaseScreen>()
 
     fun clear() {

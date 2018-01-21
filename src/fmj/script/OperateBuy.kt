@@ -10,18 +10,19 @@ import fmj.graphics.Util
 import fmj.lib.DatLib
 import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
+import fmj.views.ScreenDelegate
 
 import graphics.Canvas
 
-class OperateBuy(internal var data: ByteArray, internal var start: Int) : Operate(), ScreenGoodsList.OnItemSelectedListener {
-    private val goodsList: MutableList<BaseGoods> = mutableListOf()
+class OperateBuy(data: ByteArray, delegate: ScreenDelegate) : Operate(), ScreenGoodsList.OnItemSelectedListener {
+
+    private val goodsList: MutableList<BaseGoods> =  mutableListOf()
 
     private val mBuyScreen = BuyGoodsScreen()
 
-    override fun process(): Boolean {
-        ScriptProcess.cmdPrint("cmd_buy")
-        goodsList.clear()
-        var i = start
+    init {
+        this.delagete = delegate
+        var i = 0
         while (data[i].toInt() != 0) {
             var g = Player.sGoodsList.getGoods(
                     data[i + 1].toInt() and 0xff,
@@ -37,8 +38,11 @@ class OperateBuy(internal var data: ByteArray, internal var start: Int) : Operat
             goodsList.add(g)
             i += 2
         }
+        run()
+    }
+
+    private fun run() {
         delagete.pushScreen(ScreenGoodsList(goodsList, this, Mode.Buy))
-        return true
     }
 
     override fun update(delta: Long): Boolean {

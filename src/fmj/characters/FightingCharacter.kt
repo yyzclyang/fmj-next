@@ -2,6 +2,7 @@ package fmj.characters
 
 import fmj.magic.BaseMagic
 import fmj.magic.ResMagicChain
+import kotlin.math.min
 
 abstract class FightingCharacter : Character() {
 
@@ -36,29 +37,17 @@ abstract class FightingCharacter : Character() {
 
     var maxHP: Int = 0
         set(maxHP) {
-            var maxHP = maxHP
-            if (maxHP > 999) {
-                maxHP = 999
-            }
-            field = maxHP
+            field = min(999, maxHP)
         }
 
     var maxMP: Int = 0
         set(maxMP) {
-            var maxMP = maxMP
-            if (maxMP > 999) {
-                maxMP = 999
-            }
-            field = maxMP
+            field = min(999, maxMP)
         }
 
     var hp: Int = 0
         set(hp) {
-            var hp = hp
-            if (hp > maxHP) {
-                hp = maxHP
-            }
-            field = hp
+            field = min(maxHP, hp)
         }
 
     val isAlive: Boolean
@@ -68,67 +57,43 @@ abstract class FightingCharacter : Character() {
 
     var mp: Int = 0
         set(mp) {
-            var mp = mp
-            if (mp > maxMP) {
-                mp = maxMP
-            }
-            field = mp
+            field = min(maxMP, mp)
         }
 
     var attack: Int = 0
         set(at) {
-            var at = at
-            if (at > 999) {
-                at = 999
-            }
-            field = at
+            field = min(999, at)
         } // 攻击
 
     var defend: Int = 0
         set(d) {
-            var d = d
-            if (d > 999) {
-                d = 999
-            }
-            field = d
+            field = min(999, d)
         } // 防御
 
     var speed: Int = 0
         set(s) {
-            var s = s
-            if (s > 99) {
-                s = 99
-            }
-            field = s
+            field = min(99, s)
         } // 身法
 
     var lingli: Int = 0
         set(l) {
-            var l = l
-            if (l > 99) {
-                l = 99
-            }
-            field = l
+            field = min(99, l)
         } // 灵力
 
     var luck: Int = 0
         set(l) {
-            var l = l
-            if (l > 99) {
-                l = 99
-            }
-            field = l
+            field = min(99, l)
         } // 幸运
 
     /** 免疫毒乱封眠，不同装备可能具有相同的免疫效果，叠加之 */
-    protected var mBuff = IntArray(4)
-    protected var mBuffRound = IntArray(4)
+    private var mBuff = IntArray(4)
+    private var mBuffRound = IntArray(4)
     /** 身中毒乱封眠 */
-    protected var mDebuff: Int = 0
-    protected var mDebuffRound = IntArray(4)
+    private var mDebuff: Int = 0
+    private var mDebuffRound = IntArray(4)
     /** 普通攻击产生(全体)毒乱封眠，对于主角，只有武器具有该效果 */
     protected var mAtbuff: Int = 0
-    protected var mAtbuffRound = IntArray(4)
+    private var mAtbuffRound = IntArray(4)
 
     /** 设置中心坐标 */
     fun setCombatPos(x: Int, y: Int) {
@@ -327,8 +292,3 @@ abstract class FightingCharacter : Character() {
     }
 
 }
-/**
- * 增加角色能够免疫的状态
- * @see {@link .hasBuff
- * @param mask
- */

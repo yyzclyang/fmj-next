@@ -3,7 +3,11 @@ package fmj.script
 import fmj.views.ScreenDelegate
 import graphics.Canvas
 
-abstract class Command {
+interface Command {
+    /**
+     * 指令长度
+     */
+    val len: Int
     /**
      * 处理一条指令
      *
@@ -12,7 +16,7 @@ abstract class Command {
      *
      * `null`指令执行完毕
      */
-    abstract fun run(delegate: ScreenDelegate): Operate?
+    fun run(delegate: ScreenDelegate): Operate?
 }
 
 abstract class Operate {
@@ -37,16 +41,5 @@ abstract class Operate {
     abstract fun onKeyDown(key: Int)
 
     abstract fun onKeyUp(key: Int)
-}
-
-// TODO: rename
-class OperateNop: Command() {
-    override fun run(delegate: ScreenDelegate): Operate? {
-        return null
-    }
-
-    companion object {
-        val nop = OperateNop()
-    }
 }
 

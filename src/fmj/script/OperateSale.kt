@@ -9,12 +9,12 @@ import fmj.goods.GoodsDrama
 import fmj.graphics.TextRender
 import fmj.graphics.Util
 import fmj.views.BaseScreen
-import fmj.views.ScreenStack
+import fmj.views.ScreenDelegate
 
 import graphics.Canvas
 
-class OperateSale : Operate(), ScreenGoodsList.OnItemSelectedListener {
-    private val mSaleScreen = SaleGoodsScreen()
+class OperateSale(private val game: ScreenDelegate) : Operate, ScreenGoodsList.OnItemSelectedListener {
+    private val saleScreen = SaleGoodsScreen()
 
     override fun update(delta: Long): Boolean {
         return false
@@ -28,10 +28,10 @@ class OperateSale : Operate(), ScreenGoodsList.OnItemSelectedListener {
 
     override fun onItemSelected(goods: BaseGoods) {
         if (goods is GoodsDrama) {
-            delagete.showMessage("任务物品!", 1000)
+            game.showMessage("任务物品!", 1000)
         } else {
-            mSaleScreen.init(goods)
-            delagete.pushScreen(mSaleScreen)
+            saleScreen.init(goods)
+            game.pushScreen(saleScreen)
         }
     }
 

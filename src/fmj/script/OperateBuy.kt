@@ -14,14 +14,12 @@ import fmj.views.ScreenDelegate
 
 import graphics.Canvas
 
-class OperateBuy(data: ByteArray, delegate: ScreenDelegate) : Operate(), ScreenGoodsList.OnItemSelectedListener {
-
+class OperateBuy(data: ByteArray, delegate: ScreenDelegate) : Operate, ScreenGoodsList.OnItemSelectedListener {
     private val goodsList: MutableList<BaseGoods> =  mutableListOf()
-
     private val mBuyScreen = BuyGoodsScreen()
+    private val delegate = delegate
 
     init {
-        this.delagete = delegate
         var i = 0
         while (data[i].toInt() != 0) {
             var g = Player.sGoodsList.getGoods(
@@ -42,7 +40,7 @@ class OperateBuy(data: ByteArray, delegate: ScreenDelegate) : Operate(), ScreenG
     }
 
     private fun run() {
-        delagete.pushScreen(ScreenGoodsList(goodsList, this, Mode.Buy))
+        delegate.pushScreen(ScreenGoodsList(goodsList, this, Mode.Buy))
     }
 
     override fun update(delta: Long): Boolean {
@@ -59,10 +57,10 @@ class OperateBuy(data: ByteArray, delegate: ScreenDelegate) : Operate(), ScreenG
 
     override fun onItemSelected(goods: BaseGoods) {
         if (Player.sMoney < goods.buyPrice) {
-            delagete.showMessage("金钱不足!", 1000)
+            delegate.showMessage("金钱不足!", 1000)
         } else {
             mBuyScreen.init(goods)
-            delagete.pushScreen(mBuyScreen)
+            delegate.pushScreen(mBuyScreen)
         }
     }
 

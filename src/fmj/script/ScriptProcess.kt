@@ -149,7 +149,7 @@ class ScriptProcess private constructor() {
                 val npc = delegate.mainScreen.getNPC(npcId)
                 cmdPrint("cmd_move ${npc.name} to ($dstX, $dstY)")
 
-                object : Operate() {
+                object : Operate {
                     private var time: Long = 400
 
                     override fun update(delta: Long): Boolean {
@@ -244,7 +244,7 @@ class ScriptProcess private constructor() {
                 cmdPrint("cmd_say ${text.gbkString()}")
                 iOfText = 0
                 iOfNext = 0
-                object: Operate() {
+                object: Operate {
                     override fun update(delta: Long): Boolean {
                         if (isAnyKeyDown) {
                             if (iOfNext >= text.size - 1) { // 最后一位是0
@@ -448,7 +448,7 @@ class ScriptProcess private constructor() {
                 val movie = DatLib.getRes(DatLib.ResType.SRS, type, index) as ResSrs? ?: return@makeCommand null
                 movie.setIteratorNum(5)
                 movie.startAni()
-                object : Operate() {
+                object : Operate {
                     internal var downKey = 0
                     internal var isAnyKeyPressed = false
 
@@ -514,7 +514,7 @@ class ScriptProcess private constructor() {
 
             makeCommand(addrOffset+2) {
                 cmdPrint("cmd_choice")
-                object : Operate() {
+                object : Operate {
                     private var curChoice = 0
                     private var hasSelect = false
 
@@ -591,7 +591,7 @@ class ScriptProcess private constructor() {
                 cmdPrint("cmd_gaingoods ${goods.name}")
                 goods.goodsNum = 1
                 Player.sGoodsList.addGoods(goods.type, goods.index)
-                object : Operate() {
+                object : Operate {
                     internal var time: Long = 0
                     internal var isAnyKeyPressed = false
                     internal var downKey = 0
@@ -720,7 +720,7 @@ class ScriptProcess private constructor() {
             makeCommand(6) {
                 cmdPrint("cmd_learmagic")
 
-                object : Operate() {
+                object : Operate {
 
                     internal var isAnyKeyDown: Boolean = false
                     internal var timeCnt: Long = 0
@@ -748,7 +748,7 @@ class ScriptProcess private constructor() {
             makeCommand(0) {
                 ScriptProcess.cmdPrint("cmd_sale")
 
-                val op = OperateSale()
+                val op = OperateSale(delegate)
                 val list = mutableListOf<BaseGoods>()
                 list.addAll(Player.sGoodsList.goodsList)
                 list.addAll(Player.sGoodsList.equipList)
@@ -772,7 +772,7 @@ class ScriptProcess private constructor() {
             makeCommand(msg.size) {
                 cmdPrint("cmd_message ${msg.gbkString()}")
 
-                object : Operate() {
+                object : Operate {
                     internal var downKey: Int = 0
                     internal var isAnyKeyDown: Boolean = false
 
@@ -831,7 +831,7 @@ class ScriptProcess private constructor() {
             makeCommand(4) {
                 cmdPrint("cmd_actorlayerup TODO")
 
-                object : Operate() { // TODO
+                object : Operate { // TODO
 
                     internal var exit = false
 
@@ -907,7 +907,7 @@ class ScriptProcess private constructor() {
                     }
                 }
 
-                object : Operate() {
+                object : Operate {
                     internal var time: Long = 0
 
                     override fun update(delta: Long): Boolean {
@@ -943,7 +943,7 @@ class ScriptProcess private constructor() {
                 var time: Long = 0
                 var isAnyKeyDown = false
 
-                object : Operate() {
+                object : Operate {
                     override fun update(delta: Long): Boolean {
                         time += delta
                         if (time > 100 && isAnyKeyDown) {
@@ -1110,7 +1110,7 @@ class ScriptProcess private constructor() {
                 var curY = if (imgBottom != null) 96 - imgBottom.height else 96
                 val rect = Rect(0, imgTop?.height ?: 0, 160, curY)
 
-                object : Operate() {
+                object : Operate {
                     override fun update(delta: Long): Boolean {
                         if (!goon) return false
                         timeCnt += delta
@@ -1191,7 +1191,7 @@ class ScriptProcess private constructor() {
                     }
 
                     init {
-                        delagete.pushScreen(menu)
+                        delegate.pushScreen(menu)
                     }
 
                     override fun draw(canvas: Canvas) {

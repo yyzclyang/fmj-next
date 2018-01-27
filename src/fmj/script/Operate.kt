@@ -19,27 +19,18 @@ interface Command {
     fun run(delegate: ScreenDelegate): Operate?
 }
 
-abstract class Operate {
-    // TODO: fix typo
-    lateinit var delagete: ScreenDelegate
-
-    /**
-     *
-     * @return 是否全屏
-     */
-    val isPopup: Boolean
-        get() = false
+interface Operate {
     /**
      *
      * @param delta
      * @return `false`退出当前操作
      */
-    abstract fun update(delta: Long): Boolean
+    fun update(delta: Long): Boolean
 
-    abstract fun draw(canvas: Canvas)
+    fun draw(canvas: Canvas)
 
-    abstract fun onKeyDown(key: Int)
+    fun onKeyDown(key: Int)
 
-    abstract fun onKeyUp(key: Int)
+    fun onKeyUp(key: Int)
 }
 

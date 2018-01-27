@@ -2,7 +2,7 @@ package fmj.script
 
 import graphics.Canvas
 
-abstract class OperateDrawOnce : Operate() {
+abstract class OperateDrawOnce : Operate {
     private var drawCnt = 0
 
     abstract fun drawOnce(canvas: Canvas)

@@ -2,7 +2,7 @@ package fmj.script
 
 import graphics.Canvas
 
-abstract class OperateAdapter : Operate() {
+abstract class OperateAdapter : Operate {
 
     override fun update(delta: Long): Boolean {
         return false

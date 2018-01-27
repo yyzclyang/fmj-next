@@ -10,14 +10,14 @@ class ScriptExecutor
  * @param eventIndex eventIndex[i]等于触发事件i+1时，要执行的Operate在list中的序号
  * @param map 地址偏移-序号
  */
-(private val mOperateList: ArrayList<Command>,
+(private val commands: ArrayList<Command>,
  /**
   * mEventIndex[i]等于触发事件i+1时，要执行的Operate在list中的序号，
   * -1表示不存在
   */
  private val mEventIndex: IntArray,
  /**
-  * address offset --- curOp's index of mOperateList
+  * address offset --- curOp's index of commands
   */
  private val mMapAddrOffsetIndex: HashMap<Int, Int>,
  /**
@@ -69,8 +69,8 @@ class ScriptExecutor
 
     fun process(delegate: ScreenDelegate) {
         if (curOp == null) {
-            while (mCurExeOperateIndex < mOperateList.size && goonExecute) {
-                val cmd = mOperateList[mCurExeOperateIndex]
+            while (mCurExeOperateIndex < commands.size && goonExecute) {
+                val cmd = commands[mCurExeOperateIndex]
                 curOp = cmd.run(delegate)
                 if (curOp != null) { // 执行 update draw
                     return

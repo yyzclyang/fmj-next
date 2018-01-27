@@ -11,7 +11,7 @@ class ScreenActorState(override val parent: GameNode) : BaseScreen {
 
     private var mPage = 0
 
-    private val mPlayerList = ScreenMainGame.instance.playerList
+    private val mPlayerList = game.playerList
 
     private var mCurPlayer = 0
 

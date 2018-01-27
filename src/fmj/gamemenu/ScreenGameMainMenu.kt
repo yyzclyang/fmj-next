@@ -7,7 +7,6 @@ import fmj.graphics.Util
 import fmj.magic.BaseMagic
 import fmj.magic.MagicRestore
 import fmj.magic.ScreenMagic
-import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
 import fmj.views.GameNode
 
@@ -28,13 +27,13 @@ class ScreenGameMainMenu(override val parent: GameNode): BaseScreen {
         get() = true
 
     private var screenSelectActor: BaseScreen = object : BaseScreen {
-        override val parent = this
+        override val parent = this@ScreenGameMainMenu
 
         private var index = 0
 
         private val mFrameRect = Rect(
                39, 29,
-               125, 67 - 32 + ScreenMainGame.instance.playerList.size * 16)
+               125, 67 - 32 + game.playerList.size * 16)
 
         private val bmpFrame = Util.getFrameBitmap(mFrameRect.width(), mFrameRect.height())
 
@@ -46,7 +45,7 @@ class ScreenGameMainMenu(override val parent: GameNode): BaseScreen {
             get() = true
 
         init {
-            val list = ScreenMainGame.instance.playerList
+            val list = game.playerList
             mSum = list.size
             mNames = list.map { it.name }.toTypedArray()
         }
@@ -128,7 +127,7 @@ class ScreenGameMainMenu(override val parent: GameNode): BaseScreen {
             val screen =
                     when (mSelIndex) {
                         0 -> ScreenMenuProperties(this)
-                        1 -> if (ScreenMainGame.instance.playerList.size > 1)
+                        1 -> if (game.playerList.size > 1)
                             screenSelectActor
                         else
                             getScreenMagic(0)
@@ -150,7 +149,7 @@ class ScreenGameMainMenu(override val parent: GameNode): BaseScreen {
      * @return
      */
     private fun getScreenMagic(id: Int): ScreenMagic? {
-        val magics = ScreenMainGame.instance.playerList[id].getAllMagics()
+        val magics = game.playerList[id].getAllMagics()
 
         if (magics.isEmpty()) return null
 
@@ -159,7 +158,7 @@ class ScreenGameMainMenu(override val parent: GameNode): BaseScreen {
                     override fun onItemSelected(magic: BaseMagic) {
                         if (magic is MagicRestore) {
                             pushScreen(ScreenUseMagic(this@ScreenGameMainMenu, magic,
-                                    ScreenMainGame.instance.playerList[id]))
+                                    game.playerList[id]))
                         } else {
                             showMessage("此处无法使用!", 1000)
                         }

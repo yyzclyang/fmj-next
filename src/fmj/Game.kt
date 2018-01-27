@@ -1,41 +1,58 @@
 package fmj
 
+import fmj.scene.ScreenMainGame
 import fmj.script.ScriptProcess
-import fmj.views.Control
-import fmj.views.ScreenAnimation
-import fmj.views.ScreenStack
+import fmj.views.*
 
 import graphics.Canvas
 import graphics.Bitmap
 import java.*
 
-class Game: Control {
-    override val parent get() = screen
-    internal val canvas = Canvas(Bitmap(Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT))
-    private val delta = 40
-    private val scriptProcess = ScriptProcess(this)
-    private val screen = ScreenStack(scriptProcess)
+class MainGame: Game {
+    private  val delta = 40
+    private  val canvas = Canvas(Bitmap(Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT))
+    private  val screenStack = ScreenStack(this)
+
+    override val scriptProcess = ScriptProcess(this)
+    override val mainScreen = ScreenMainGame(this, scriptProcess)
+    override val parent get() = screenStack
+    override val game: Game
+        get() = this
 
     fun start() {
         listenUIEvents()
         val scr = ScreenAnimation(this, 247)
-        screen.pushScreen(scr)
+        screenStack.pushScreen(scr)
     }
 
     fun draw() {
-        screen.draw(canvas)
+        screenStack.draw(canvas)
     }
 
     fun update(delta: Long) {
-        screen.update(delta)
+        screenStack.update(delta)
     }
 
     private fun keyDown(key: Int) {
-        screen.keyDown(key)
+        screenStack.keyDown(key)
     }
 
     private fun keyUp(key: Int) {
-        screen.keyUp(key)
+        screenStack.keyUp(key)
+    }
+
+    override fun changeScreen(screenType: ScreenViewType) {
+        val scr: BaseScreen =
+                when (screenType) {
+                    ScreenViewType.SCREEN_DEV_LOGO -> ScreenAnimation(this, 247)
+                    ScreenViewType.SCREEN_GAME_LOGO -> ScreenAnimation(this, 248)
+                    ScreenViewType.SCREEN_MENU -> ScreenMenu(this)
+                    ScreenViewType.SCREEN_MAIN_GAME -> mainScreen
+                    ScreenViewType.SCREEN_GAME_FAIL -> ScreenAnimation(this, 249)
+                    ScreenViewType.SCREEN_SAVE_GAME -> ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.SAVE)
+                    ScreenViewType.SCREEN_LOAD_GAME -> ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.LOAD)
+                }
+        screenStack.changeScreen(scr)
     }
 
     private fun listenUIEvents() {
@@ -55,5 +72,5 @@ class Game: Control {
 }
 
 fun main(args: Array<String>) {
-    Game().start()
+    MainGame().start()
 }

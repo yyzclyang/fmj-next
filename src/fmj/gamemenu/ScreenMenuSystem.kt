@@ -106,7 +106,7 @@ class ScreenMenuSystem(override val parent: GameNode) : BaseScreen {
                 2 -> {
                 }
 
-                3 -> changeScreen(ScreenViewType.SCREEN_MENU)
+                3 -> game.changeScreen(ScreenViewType.SCREEN_MENU)
             }
         }
     }

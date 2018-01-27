@@ -7,10 +7,8 @@ import fmj.goods.BaseGoods
 import fmj.goods.GoodsEquipment
 import fmj.graphics.TextRender
 import fmj.graphics.Util
-import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
 import fmj.views.GameNode
-import fmj.views.ScreenStack
 
 import graphics.Canvas
 import graphics.Point
@@ -38,7 +36,7 @@ class ScreenActorWearing(override val parent: GameNode): BaseScreen {
     private val mStackLastToDraw = Stack.create<Int>() // 保存上次描述所画位置
 
     init {
-        mEquipments = ScreenMainGame.sPlayerList[0].equipmentsArray
+        mEquipments = game.playerList[0].equipmentsArray
         mActorIndex = 0
         mPos = arrayOf(// w 25
                 Point(4, 3),
@@ -71,7 +69,7 @@ class ScreenActorWearing(override val parent: GameNode): BaseScreen {
 
         // 画人物头像、姓名
         if (mActorIndex >= 0) {
-            val p = ScreenMainGame.sPlayerList.get(mActorIndex)
+            val p = game.playerList[mActorIndex]
             p.drawHead(canvas, 44, 12)
             TextRender.drawText(canvas, p.name, 30, 40)
         }
@@ -100,13 +98,13 @@ class ScreenActorWearing(override val parent: GameNode): BaseScreen {
         } else if (key == Global.KEY_UP && mCurItem > 0) {
             --mCurItem
             resetDesc()
-        } else if (key == Global.KEY_RIGHT && mActorIndex < ScreenMainGame.sPlayerList.size - 1) {
+        } else if (key == Global.KEY_RIGHT && mActorIndex < game.playerList.size - 1) {
             ++mActorIndex
-            mEquipments = ScreenMainGame.sPlayerList.get(mActorIndex).equipmentsArray
+            mEquipments = game.playerList[mActorIndex].equipmentsArray
             resetDesc()
         } else if (key == Global.KEY_LEFT && mActorIndex > 0) {
             --mActorIndex
-            mEquipments = ScreenMainGame.sPlayerList.get(mActorIndex).equipmentsArray
+            mEquipments = game.playerList[mActorIndex].equipmentsArray
             resetDesc()
         } else if (showingDesc) {
             if (key == Global.KEY_PAGEDOWN) {
@@ -135,7 +133,7 @@ class ScreenActorWearing(override val parent: GameNode): BaseScreen {
                 pushScreen(ScreenGoodsList(this, getTheEquipList(Player.sEquipTypes[mCurItem]),
                         object : ScreenGoodsList.OnItemSelectedListener {
                             override fun onItemSelected(goods: BaseGoods) {
-                                val actor = ScreenMainGame.sPlayerList[mActorIndex]
+                                val actor = game.playerList[mActorIndex]
                                 if (goods.canPlayerUse(actor.index)) {
                                     popScreen()
                                     pushScreen(ScreenChgEquipment(this@ScreenActorWearing, actor, goods as GoodsEquipment))

@@ -2,7 +2,6 @@ package fmj.views
 
 import fmj.Global
 import fmj.ScreenViewType
-import fmj.combat.Combat
 import fmj.graphics.TextRender
 import fmj.lib.DatLib
 import fmj.lib.ResImage
@@ -109,7 +108,7 @@ class ScreenSaveLoadGame(override val parent: GameNode, private val mOperate: Op
                 }
                 loadGame(file)
                 SaveLoadGame.startNewGame = false
-                changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
+                game.changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
             } else { // 保存存档
                 if (!file.exists()) {
                     file.createNewFile()
@@ -136,14 +135,14 @@ class ScreenSaveLoadGame(override val parent: GameNode, private val mOperate: Op
 
     private fun loadGame(file: File) {
         val ioIn = objectInputOf(file)
-        SaveLoadGame.read(this, ioIn)
+        SaveLoadGame.read(game, ioIn)
         ScriptResources.read(ioIn)
         ioIn.close()
     }
 
     fun saveGame(file: File) {
         val o = objectOutputOf(file)
-        SaveLoadGame.write(o)
+        SaveLoadGame.write(game, o)
         ScriptResources.write(o)
         o.close()
     }

@@ -3,7 +3,6 @@ package fmj.views
 import fmj.Global
 import fmj.ScreenViewType
 import fmj.lib.DatLib
-import fmj.lib.ResImage
 import fmj.lib.ResSrs
 import fmj.scene.SaveLoadGame
 import graphics.Canvas
@@ -49,7 +48,7 @@ class ScreenMenu(override val parent: GameNode): BaseScreen {
         if (key == Global.KEY_ENTER) {
             if (mCurSelect == 0) { // 新游戏
                 SaveLoadGame.startNewGame = true
-                changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
+                game.changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
             } else if (mCurSelect == 1) { // 读取进度
                 pushScreen(
                         ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.LOAD))

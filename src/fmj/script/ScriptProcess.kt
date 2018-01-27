@@ -14,7 +14,6 @@ import fmj.graphics.Util
 import fmj.lib.DatLib
 import fmj.lib.ResGut
 import fmj.lib.ResSrs
-import fmj.scene.ScreenMainGame
 import fmj.views.Control
 import fmj.views.GameNode
 import fmj.views.ScreenSaveLoadGame
@@ -38,8 +37,6 @@ class ScriptProcess(override val parent: GameNode): Control {
     private var mScript: ResGut? = null
 
     private val mCmds: Array<CommandMaker?>
-
-    private var mScreenMainGame: ScreenMainGame? = null
 
     // offsetAddr----index of operate
     // 未使用的事件，存在于前40个中
@@ -97,11 +94,11 @@ class ScriptProcess(override val parent: GameNode): Control {
             return makeCommand(8) {
                 cmdPrint("cmd_loadmap type=$type index=$index x=$x y=$y")
 
-                mainScreen.loadMap(type, index, x, y)
+                game.mainScreen.loadMap(type, index, x, y)
 
                 object: OperateDrawOnce() {
                     override fun drawOnce(canvas: Canvas) {
-                        mainScreen.drawScene(canvas)
+                        game.mainScreen.drawScene(canvas)
                     }
 
                 }
@@ -116,11 +113,11 @@ class ScriptProcess(override val parent: GameNode): Control {
             return makeCommand(6) {
                 cmdPrint("cmd_createactor $actor at ($x, $y)")
 
-                mainScreen.createActor(actor, x, y)
+                game.mainScreen.createActor(actor, x, y)
 
                 object: OperateDrawOnce() {
                     override fun drawOnce(canvas: Canvas) {
-                        mainScreen.drawScene(canvas)
+                        game.mainScreen.drawScene(canvas)
                     }
                 }
             }
@@ -130,7 +127,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             val npc = get2ByteInt(code, start)
             return makeCommand(2) {
                 cmdPrint("cmd_deletenpc $npc")
-                mainScreen.deleteNpc(npc)
+                game.mainScreen.deleteNpc(npc)
                 null
             }
         }
@@ -141,7 +138,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             val dstY = get2ByteInt(code, start + 4)
 
             return makeCommand(6) {
-                val npc = mainScreen.getNPC(npcId)
+                val npc = game.mainScreen.getNPC(npcId)
                 cmdPrint("cmd_move ${npc.name} to ($dstX, $dstY)")
 
                 object : Operate {
@@ -168,7 +165,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                     override fun onKeyDown(key: Int) {}
 
                     override fun draw(canvas: Canvas) {
-                        mainScreen.drawScene(canvas)
+                        game.mainScreen.drawScene(canvas)
                     }
                 }
             }
@@ -177,7 +174,7 @@ class ScriptProcess(override val parent: GameNode): Control {
         fun cmd_callback(code: ByteArray, start: Int): Command {
             return makeCommand(0) {
                 cmdPrint("cmd_callback")
-                mainScreen.exitScript()
+                game.mainScreen.exitScript()
                 null
             }
         }
@@ -188,7 +185,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             return makeCommand(2) {
                 cmdPrint("cmd_goto from $start to $address")
                 // TODO: 无需通过mainscreen
-                mainScreen.gotoAddress(address)
+                game.mainScreen.gotoAddress(address)
                 null
             }
         }
@@ -201,7 +198,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                 val value = ScriptResources.globalEvents[va]
                 cmdPrint("cmd_if $va(=$value) goto $address")
                 if (value) {
-                    mainScreen.gotoAddress(address)
+                    game.mainScreen.gotoAddress(address)
                 }
                 null
             }
@@ -258,7 +255,7 @@ class ScriptProcess(override val parent: GameNode): Control {
 
                     override fun draw(canvas: Canvas) {
                         if (!Combat.Companion.IsActive()) {
-                            mScreenMainGame!!.drawScene(canvas)
+                            game.mainScreen.drawScene(canvas)
                         }
                         if (headImg == null) { // 没头像
                             // 画矩形
@@ -300,7 +297,7 @@ class ScriptProcess(override val parent: GameNode): Control {
 
             return makeCommand(4) {
                 cmdPrint("cmd_startchapter $type $index")
-                mainScreen.startChapter(type, index)
+                game.mainScreen.startChapter(type, index)
                 null
             }
         }
@@ -311,7 +308,7 @@ class ScriptProcess(override val parent: GameNode): Control {
 
             return makeCommand(4) {
                 cmdPrint("cmd_screens ($x,$y)")
-                mainScreen.setMapScreenPos(x, y)
+                game.mainScreen.setMapScreenPos(x, y)
                 null
             }
         }
@@ -319,7 +316,7 @@ class ScriptProcess(override val parent: GameNode): Control {
         fun cmd_gameover(code: ByteArray, start: Int): Command {
             return makeCommand(0) {
                 cmdPrint("cmd_gameover")
-                changeScreen(ScreenViewType.SCREEN_MENU)
+                game.changeScreen(ScreenViewType.SCREEN_MENU)
                 null
             }
         }
@@ -333,7 +330,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                 val value = ScriptResources.variables[id]
                 cmdPrint("cmd_ifcmp $id(=$value) vs $other goto $addr")
                 if (value == other) {
-                    mainScreen.gotoAddress(addr)
+                    game.mainScreen.gotoAddress(addr)
                 }
                 null
             }
@@ -401,8 +398,8 @@ class ScriptProcess(override val parent: GameNode): Control {
 
             fun getCharacter(id: Int): Character {
                 return if (id == 0) {
-                    mScreenMainGame!!.player!!
-                } else mScreenMainGame!!.getNPC(id)
+                    game.mainScreen.player!!
+                } else game.mainScreen.getNPC(id)
             }
             return makeCommand(4) {
                 cmdPrint("cmd_facetoface")
@@ -424,7 +421,7 @@ class ScriptProcess(override val parent: GameNode): Control {
 
                 object : OperateDrawOnce() {
                     override fun drawOnce(canvas: Canvas) {
-                        mScreenMainGame!!.drawScene(canvas)
+                        game.mainScreen.drawScene(canvas)
                     }
                 }
             }
@@ -463,7 +460,7 @@ class ScriptProcess(override val parent: GameNode): Control {
 
                     override fun draw(canvas: Canvas) {
                         if (ctl == 2 || ctl == 3) {
-                            mScreenMainGame!!.drawScene(canvas)
+                            game.mainScreen.drawScene(canvas)
                         }
                         movie.draw(canvas, x, y)
                     }
@@ -516,7 +513,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                     override fun update(delta: Long): Boolean {
                         if (hasSelect) {
                             if (curChoice == 1) {
-                                mScreenMainGame!!.gotoAddress(address)
+                                game.gotoAddress(address)
                             }
                             return false
                         }
@@ -540,7 +537,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                     }
 
                     override fun draw(canvas: Canvas) {
-                        mScreenMainGame!!.drawScene(canvas)
+                        game.mainScreen.drawScene(canvas)
                         canvas.drawBitmap(bg, bgx, bgy)
                         if (curChoice == 0) {
                             TextRender.drawSelText(canvas, choice1, bgx + 3, bgy + 3)
@@ -560,7 +557,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             val x = get2ByteInt(code, start + 4)
             val y = get2ByteInt(code, start + 6)
             return makeCommand(8) {
-                val box = mScreenMainGame!!.createBox(id, boxId, x, y)
+                val box = game.mainScreen.createBox(id, boxId, x, y)
                 cmdPrint("cmd_createbox ${box.name} at ($x,$y)")
                 null
             }
@@ -569,7 +566,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             val boxid = get2ByteInt(code, start)
             return makeCommand(2) {
                 cmdPrint("cmd_deletebox")
-                mScreenMainGame!!.deleteBox(boxid)
+                game.mainScreen.deleteBox(boxid)
                 null
             }
         }
@@ -648,7 +645,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             val x = get2ByteInt(code, start + 4)
             val y = get2ByteInt(code, start + 6)
             return makeCommand(8) {
-                val npc = mScreenMainGame!!.createNpc(id, resId, x, y)
+                val npc = game.mainScreen.createNpc(id, resId, x, y)
                 cmdPrint("cmd_createnpc ${npc.name} at ${npc.posInMap}")
                 null
             }
@@ -665,7 +662,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                 val lossto = get2ByteInt(code, start + 26)
                 val winto = get2ByteInt(code, start + 28)
                 Combat.EnterFight(this, get2ByteInt(code, start), monstersType, scr, evtRnds, evts, lossto, winto)
-                mScreenMainGame!!.exitScript()
+                game.exitScript()
                 null
             }
         }
@@ -674,7 +671,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             val id = get2ByteInt(code, start)
             return makeCommand(2) {
                 cmdPrint("cmd_deleteactor")
-                mScreenMainGame!!.deleteActor(id)
+                game.mainScreen.deleteActor(id)
                 null
             }
         }
@@ -753,7 +750,7 @@ class ScriptProcess(override val parent: GameNode): Control {
 
             return makeCommand(4) {
                 cmdPrint("cmd_npcmovemod")
-                mScreenMainGame!!.getNPC(id) .state = Character.State.fromInt(state)
+                game.mainScreen.getNPC(id) .state = Character.State.fromInt(state)
                 null
             }
         }
@@ -797,7 +794,7 @@ class ScriptProcess(override val parent: GameNode): Control {
 
                 val r = Player.sGoodsList.deleteGoods(type, index)
                 if (!r) {
-                    mScreenMainGame!!.gotoAddress(address)
+                    game.gotoAddress(address)
                 }
                 null
             }
@@ -809,7 +806,7 @@ class ScriptProcess(override val parent: GameNode): Control {
 
             return makeCommand(4) {
                 cmdPrint("cmd_resumeactorhp")
-                val p = mScreenMainGame!!.getPlayer(id)
+                val p = game.mainScreen.getPlayer(id)
                 if (p != null) {
                     p.hp = p.maxHP * value / 100
                 }
@@ -851,7 +848,7 @@ class ScriptProcess(override val parent: GameNode): Control {
 
             return makeCommand(2) {
                 cmdPrint("cmd_boxopen")
-                val box = mScreenMainGame!!.getNPC(id)
+                val box = game.mainScreen.getNPC(id)
                 box.step = 1
                 null
             }
@@ -860,7 +857,7 @@ class ScriptProcess(override val parent: GameNode): Control {
         fun cmd_delallnpc(code: ByteArray, start: Int): Command {
             return makeCommand(0) {
                 cmdPrint("cmd_delallnpc")
-                mScreenMainGame!!.deleteAllNpc()
+                game.mainScreen.deleteAllNpc()
                 null
             }
         }
@@ -882,15 +879,15 @@ class ScriptProcess(override val parent: GameNode): Control {
                 cmdPrint("cmd_npcstep $id $d step=$step")
                 val interval: Long
                 if (id == 0) {
-                    val p = mScreenMainGame!!.player!!
+                    val p = game.mainScreen.player!!
                     p.direction = d
                     p.step = step
                     interval = 300
                 } else {
-                    val npc = mScreenMainGame!!.getNPC(id)
+                    val npc = game.mainScreen.getNPC(id)
                     npc.direction = d
                     npc.step = step
-                    interval = if (mScreenMainGame!!.isNpcVisible(npc)) {
+                    interval = if (game.mainScreen.isNpcVisible(npc)) {
                         300
                     } else {
                         0
@@ -910,7 +907,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                     override fun onKeyDown(key: Int) {}
 
                     override fun draw(canvas: Canvas) {
-                        mScreenMainGame!!.drawScene(canvas)
+                        game.mainScreen.drawScene(canvas)
                     }
                 }
 
@@ -921,7 +918,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             val name = bytes.gbkString()
             return makeCommand(bytes.size) {
                 cmdPrint("cmd_setscenname $name")
-                mScreenMainGame!!.sceneName = name
+                game.mainScreen.sceneName = name
                 null
             }
         }
@@ -929,7 +926,7 @@ class ScriptProcess(override val parent: GameNode): Control {
         fun cmd_showscenename(code: ByteArray, start: Int): Command {
             return makeCommand(0) {
                 cmdPrint("cmd_showscenename")
-                val text = mScreenMainGame!!.sceneName
+                val text = game.mainScreen.sceneName
                 var time: Long = 0
                 var isAnyKeyDown = false
 
@@ -950,7 +947,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                     }
 
                     override fun draw(canvas: Canvas) {
-                        mScreenMainGame!!.drawScene(canvas)
+                        game.mainScreen.drawScene(canvas)
                         Util.showInformation(canvas, text)
                     }
                 }
@@ -961,7 +958,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                 cmdPrint("cmd_showscreen")
                 object : OperateDrawOnce() {
                     override fun drawOnce(canvas: Canvas) {
-                        mScreenMainGame!!.drawScene(canvas)
+                        game.mainScreen.drawScene(canvas)
                     }
                 }
             }
@@ -976,7 +973,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                 cmdPrint("cmd_usegoods")
                 val b = Player.sGoodsList.deleteGoods(type, index)
                 if (!b) {
-                    mScreenMainGame!!.gotoAddress(address)
+                    game.mainScreen.gotoAddress(address)
                 }
                 null
             }
@@ -990,7 +987,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             val addr2 = get2ByteInt(code, start+8)
             return makeCommand(10) {
                 cmdPrint("cmd_attribtest $actor $type $value")
-                val player = mScreenMainGame?.getPlayer(actor) ?: return@makeCommand null
+                val player = game.mainScreen.getPlayer(actor) ?: return@makeCommand null
                 // 0-级别，1-攻击力，2-防御力，3-身法，4-生命，5-真气当前值，6-当前经验值
                 // 7-灵力，8-幸运，9-攻击的异常回合数，10-对特殊状态的免疫，11-普通攻击可能产生异常状态
                 // 12-合体法术，13-每回合变化生命，14-每回合变化真气，15-头戴，16-身穿
@@ -1019,8 +1016,8 @@ class ScriptProcess(override val parent: GameNode): Control {
                     else -> throw NotImplementedError("ATTRIBTEST $type")
                 }
                 when {
-                    currentValue < value -> mScreenMainGame!!.gotoAddress(addr1)
-                    currentValue > value -> mScreenMainGame!!.gotoAddress(addr2)
+                    currentValue < value -> game.gotoAddress(addr1)
+                    currentValue > value -> game.gotoAddress(addr2)
                 }
                 null
             }
@@ -1032,7 +1029,7 @@ class ScriptProcess(override val parent: GameNode): Control {
 
             return makeCommand(6) {
                 cmdPrint("cmd_attribset $actor $type $value")
-                val player = mScreenMainGame?.getPlayer(actor) ?: return@makeCommand null
+                val player = game.mainScreen.getPlayer(actor) ?: return@makeCommand null
                 // 0-级别，1-攻击力，2-防御力，3-身法，4-生命，5-真气当前值，6-当前经验值
                 // 7-灵力，8-幸运，9-攻击的异常回合数，10-对特殊状态的免疫，11-普通攻击可能产生异常状态
                 // 12-合体法术，13-每回合变化生命，14-每回合变化真气，15-生命上限，16-真气上限
@@ -1061,7 +1058,7 @@ class ScriptProcess(override val parent: GameNode): Control {
 
             return makeCommand(6) {
                 cmdPrint("cmd_attribadd $actor $type $value")
-                val player = mScreenMainGame?.getPlayer(actor) ?: return@makeCommand null
+                val player = game.mainScreen.getPlayer(actor) ?: return@makeCommand null
 
                 // 0-级别，1-攻击力，2-防御力，3-身法，4-生命，5-真气当前值，6-当前经验值
                 // 7-灵力，8-幸运，9-攻击的异常回合数，10-生命上限，11-真气上限
@@ -1143,7 +1140,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                 val b = Player.sGoodsList.useGoodsNum(get2ByteInt(code, start),
                         get2ByteInt(code, start + 2), get2ByteInt(code, start + 4))
                 if (!b) {
-                    mScreenMainGame!!.gotoAddress(get2ByteInt(code, start + 6))
+                    game.gotoAddress(get2ByteInt(code, start + 6))
                 }
                 null
             }
@@ -1153,7 +1150,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             return makeCommand(4) {
                 cmdPrint("cmd_randrade")
                 if ((random() * 1000).toInt() <= get2ByteInt(code, start)) {
-                    mScreenMainGame!!.gotoAddress(get2ByteInt(code, start + 2))
+                    game.gotoAddress(get2ByteInt(code, start + 2))
                 }
                 null
             }
@@ -1207,7 +1204,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             return makeCommand(6) {
                 cmdPrint("cmd_testmoney")
                 if (Player.sMoney < money) {
-                    mScreenMainGame!!.gotoAddress(address)
+                    game.gotoAddress(address)
                 }
                 null
             }
@@ -1225,9 +1222,9 @@ class ScriptProcess(override val parent: GameNode): Control {
                 val `var` = ScriptResources.variables[get2ByteInt(code, start)]
                 val num = get2ByteInt(code, start + 2)
                 if (`var` < num) {
-                    mScreenMainGame!!.gotoAddress(get2ByteInt(code, start + 4))
+                    game.gotoAddress(get2ByteInt(code, start + 4))
                 } else if (`var` > num) {
-                    mScreenMainGame!!.gotoAddress(get2ByteInt(code, start + 6))
+                    game.gotoAddress(get2ByteInt(code, start + 6))
                 }
                 null
             }
@@ -1318,9 +1315,9 @@ class ScriptProcess(override val parent: GameNode): Control {
                         get2ByteInt(code, start + 2))
                 val num = get2ByteInt(code, start + 4)
                 if (goodsnum == num) {
-                    mScreenMainGame!!.gotoAddress(get2ByteInt(code, start + 6))
+                    game.gotoAddress(get2ByteInt(code, start + 6))
                 } else if (goodsnum > num) {
-                    mScreenMainGame!!.gotoAddress(get2ByteInt(code, start + 8))
+                    game.gotoAddress(get2ByteInt(code, start + 8))
                 }
                 null
             }
@@ -1422,9 +1419,6 @@ class ScriptProcess(override val parent: GameNode): Control {
                 ::cmd_testgoodsnum,
                 ::cmd_setfightmiss,// TODO: 和 ::cmd_setarmstoss 那个在前面?
                 ::cmd_setarmstoss)
-    }
-    fun setScreenMainGame(screenMainGame: ScreenMainGame) {
-        mScreenMainGame = screenMainGame
     }
 
 //    fun loadScript(resGut: ResGut) {

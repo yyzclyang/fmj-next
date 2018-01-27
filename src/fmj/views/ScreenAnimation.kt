@@ -22,11 +22,11 @@ class ScreenAnimation(override val parent: GameNode, private val index: Int) : B
         if (!mResSrs.update(delta)) {
             when (index) {
                 247 -> // 转到游戏动画
-                    changeScreen(ScreenViewType.SCREEN_GAME_LOGO)
+                    game.changeScreen(ScreenViewType.SCREEN_GAME_LOGO)
                 248 -> // 转到游戏菜单
-                    changeScreen(ScreenViewType.SCREEN_MENU)
+                    game.changeScreen(ScreenViewType.SCREEN_MENU)
                 249 -> //
-                    changeScreen(ScreenViewType.SCREEN_MENU)
+                    game.changeScreen(ScreenViewType.SCREEN_MENU)
             }
         }
     }
@@ -38,7 +38,7 @@ class ScreenAnimation(override val parent: GameNode, private val index: Int) : B
 
     override fun onKeyDown(key: Int) {
         if (key == Global.KEY_CANCEL && (index == 247 || index == 248)) {
-            changeScreen(ScreenViewType.SCREEN_MENU)
+            game.changeScreen(ScreenViewType.SCREEN_MENU)
         }
     }
 

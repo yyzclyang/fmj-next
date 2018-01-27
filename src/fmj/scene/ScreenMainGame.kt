@@ -21,14 +21,17 @@ import graphics.Point
 
 class ScreenMainGame(
         override val parent: GameNode,
-        val scriptSys: ScriptProcess): BaseScreen {
-    var player: Player? = null
+        private val scriptProcess: ScriptProcess): BaseScreen {
 
+    var player: Player? = null
     var currentMap: ResMap? = null
         private set
+
     private val mMapScreenPos = Point() // 屏幕左上角对应地图的位置
 
     private var mScriptExecutor: ScriptExecutor? = null
+
+    private var sPlayerList = mutableListOf<Player>()
 
     var sceneName = ""
         set(name) {
@@ -76,7 +79,7 @@ class ScreenMainGame(
 //            return arr
         }
 
-    val playerList: List<Player>
+    val playerList: MutableList<Player>
         get() = sPlayerList
 
     /**
@@ -94,10 +97,6 @@ class ScreenMainGame(
     }
 
     init {
-        instance = this
-
-        this.scriptSys.setScreenMainGame(this)
-
         if (SaveLoadGame.startNewGame) { // 开始新游戏
             Combat.FightDisable()
             ScriptResources.initGlobalVar()
@@ -123,8 +122,8 @@ class ScreenMainGame(
                 createActor(1, 4, 3)
                 //Log.e("error", "存档读取出错");
             }
-            this.scriptSys.loadScript(SaveLoadGame.ScriptType, SaveLoadGame.ScriptIndex)
-            mScriptExecutor = this.scriptSys.scriptExecutor
+            this.scriptProcess.loadScript(SaveLoadGame.ScriptType, SaveLoadGame.ScriptIndex)
+            mScriptExecutor = this.scriptProcess.scriptExecutor
             ScriptExecutor.goonExecute = true
             mRunScript = false
         }
@@ -141,8 +140,8 @@ class ScreenMainGame(
 //    }
 
     fun startChapter(type: Int, index: Int) {
-        scriptSys.loadScript(type, index)
-        mScriptExecutor = scriptSys.scriptExecutor
+        scriptProcess.loadScript(type, index)
+        mScriptExecutor = scriptProcess.scriptExecutor
         //		update(0);
         ScriptExecutor.goonExecute = false
         for (i in 1..40) {
@@ -469,12 +468,5 @@ class ScreenMainGame(
 
     fun deleteBox(id: Int) {
         mNPCObj[id] = NPC.empty
-    }
-
-    companion object {
-
-        lateinit var instance: ScreenMainGame
-
-        var sPlayerList = mutableListOf<Player>()
     }
 }

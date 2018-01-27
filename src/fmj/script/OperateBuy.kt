@@ -49,7 +49,7 @@ class OperateBuy(override val parent: GameNode, data: ByteArray)
     }
 
     override fun draw(canvas: Canvas) {
-        ScreenMainGame.instance.drawScene(canvas)
+        game.mainScreen.drawScene(canvas)
     }
 
     override fun onKeyDown(key: Int) {}

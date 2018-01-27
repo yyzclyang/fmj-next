@@ -2,40 +2,31 @@ package fmj.views
 
 import fmj.ScreenViewType
 import fmj.scene.ScreenMainGame
+import fmj.script.ScriptProcess
 
 import graphics.Canvas
 
 interface GameNode {
+    val parent: GameNode
+    val game: Game
+        get() = parent.game
+
     fun popScreen()
     fun pushScreen(scr: BaseScreen)
-    fun changeScreen(scr: ScreenViewType)
     fun getCurScreen(): BaseScreen
     fun showMessage(msg:String, delay:Long)
-
-    // TODO: rename
-    val mainScreen: ScreenMainGame
-
     fun showMessage(msg:String) {
         showMessage(msg, 1000)
     }
 }
 
 interface Control: GameNode {
-    val parent: GameNode
-
-    override val mainScreen
-        get() = parent.mainScreen
-
     override fun popScreen() {
         parent.popScreen()
     }
 
     override fun pushScreen(scr: BaseScreen) {
         parent.pushScreen(scr)
-    }
-
-    override fun changeScreen(scr: ScreenViewType) {
-        parent.changeScreen(scr)
     }
 
     override fun getCurScreen(): BaseScreen {
@@ -46,6 +37,25 @@ interface Control: GameNode {
         parent.showMessage(msg, delay)
     }
 }
+
+interface Game: Control {
+    fun changeScreen(screenType: ScreenViewType)
+    // TODO: rename
+    val mainScreen: ScreenMainGame
+    val scriptProcess: ScriptProcess
+    val playerList get() = mainScreen.playerList
+    fun triggerEvent(eventId: Int) {
+        mainScreen.triggerEvent(eventId)
+    }
+    fun gotoAddress(addr: Int) {
+        mainScreen.gotoAddress(addr)
+    }
+    fun exitScript() {
+        mainScreen.exitScript()
+    }
+}
+
+
 
 interface BaseScreen: Control {
     val isPopup: Boolean

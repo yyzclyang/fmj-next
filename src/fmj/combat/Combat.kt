@@ -17,6 +17,7 @@ import fmj.goods.GoodsManage
 import fmj.lib.DatLib
 import fmj.lib.ResImage
 import fmj.lib.ResSrs
+import fmj.main
 import fmj.scene.ScreenMainGame
 import fmj.script.ScriptExecutor
 import fmj.views.BaseScreen
@@ -190,7 +191,7 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
         mCombatState = CombatState.SelectAction
 
         mCurSelActionPlayerIndex = 0
-        mPlayerList = ScreenMainGame.sPlayerList
+        mPlayerList = game.playerList
 
         mCombatUI.reset()
         mCombatUI.setCurrentPlayerIndex(0)
@@ -240,14 +241,14 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
 
     private fun exitCurrentCombat() {
         if (!sIsRandomFight) {
-            ScreenMainGame.instance.gotoAddress(if (mIsWin) mWinAddr else mLossAddr)
+            game.gotoAddress(if (mIsWin) mWinAddr else mLossAddr)
             ScriptExecutor.goonExecute = true
             sIsRandomFight = true
             sInstance = sInstanceBk
             sInstanceBk = null
         } else {
             if (!mIsWin) { // 死了，游戏结束
-                changeScreen(ScreenViewType.SCREEN_MENU)
+                game.changeScreen(ScreenViewType.SCREEN_MENU)
             }
         }
 
@@ -293,7 +294,7 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
                     mHasEventExed = true
                     for (i in mEventRound!!.indices) {
                         if (mRoundCnt == mEventRound!![i] && mEventNum!![i] != 0) {
-                            ScreenMainGame.instance.triggerEvent(mEventNum!![i])
+                            game.triggerEvent(mEventNum!![i])
                         }
                     }
                 }

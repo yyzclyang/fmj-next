@@ -4,7 +4,7 @@ import fmj.characters.NPC
 import fmj.characters.Player
 import fmj.characters.SceneObj
 import fmj.combat.Combat
-import fmj.views.GameNode
+import fmj.views.Game
 import java.ObjectInput
 import java.ObjectOutput
 import java.readArray
@@ -42,12 +42,12 @@ object SaveLoadGame {
 
     var NpcObjs: Array<NPC> = arrayOf()
 
-    fun write(out: ObjectOutput) {
+    fun write(game: Game, out: ObjectOutput) {
         out.writeString(SceneName)
-        val actorNum = ScreenMainGame.sPlayerList.size
+        val actorNum = game.playerList.size
         out.writeInt(actorNum)
         for (i in 0 until actorNum) {
-            out.writeInt(ScreenMainGame.sPlayerList[i].index)
+            out.writeInt(game.playerList[i].index)
         }
         out.writeInt(MapType)
         out.writeInt(MapIndex)
@@ -56,9 +56,9 @@ object SaveLoadGame {
         out.writeInt(ScriptType)
         out.writeInt(ScriptIndex)
 
-        out.writeInt(ScreenMainGame.sPlayerList.size)
-        for (i in 0 until ScreenMainGame.sPlayerList.size) {
-            ScreenMainGame.sPlayerList[i].encode(out)
+        out.writeInt(game.playerList.size)
+        for (i in 0 until game.playerList.size) {
+            game.playerList[i].encode(out)
         }
         out.writeInt(Player.sMoney)
         Player.sGoodsList.write(out)
@@ -79,7 +79,7 @@ object SaveLoadGame {
         Combat.write(out)
     }
 
-    fun read(parent: GameNode, coder: ObjectInput) {
+    fun read(game: Game, coder: ObjectInput) {
         SceneName = coder.readString()
         var actorNum = coder.readInt()
         while (actorNum-- > 0) coder.readInt()
@@ -91,11 +91,11 @@ object SaveLoadGame {
         ScriptIndex = coder.readInt()
 
         val size = coder.readInt()
-        ScreenMainGame.sPlayerList.clear()
+        game.playerList.clear()
         for (i in 0 until size) {
             val p = Player()
             p.decode(coder)
-            ScreenMainGame.sPlayerList.add(p)
+            game.playerList.add(p)
         }
         Player.sMoney = coder.readInt()
         Player.sGoodsList.read(coder)
@@ -114,6 +114,6 @@ object SaveLoadGame {
             npc
         }
 
-        Combat.read(parent, coder)
+        Combat.read(game, coder)
     }
 }

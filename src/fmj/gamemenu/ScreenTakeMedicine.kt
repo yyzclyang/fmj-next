@@ -23,8 +23,8 @@ class ScreenTakeMedicine(override val parent: GameNode, private val mMedicine: B
 
     override fun draw(canvas: Canvas) {
         canvas.drawColor(Global.COLOR_WHITE)
-        ScreenMainGame.sPlayerList[mActorIndex].drawState(canvas, mStatePageIndex)
-        ScreenMainGame.sPlayerList[mActorIndex].drawHead(canvas, 5, 60)
+        game.playerList[mActorIndex].drawState(canvas, mStatePageIndex)
+        game.playerList[mActorIndex].drawHead(canvas, 5, 60)
         if (mMedicine.goodsNum > 0) {
             mMedicine.draw(canvas, 5, 10)
             TextRender.drawText(canvas, "" + mMedicine.goodsNum, 13, 35)
@@ -38,7 +38,7 @@ class ScreenTakeMedicine(override val parent: GameNode, private val mMedicine: B
             mStatePageIndex = 0
         } else if (key == Global.KEY_LEFT && mActorIndex > 0) {
             --mActorIndex
-        } else if (key == Global.KEY_RIGHT && mActorIndex < ScreenMainGame.sPlayerList.size - 1) {
+        } else if (key == Global.KEY_RIGHT && mActorIndex < game.playerList.size - 1) {
             ++mActorIndex
         }
     }
@@ -49,11 +49,11 @@ class ScreenTakeMedicine(override val parent: GameNode, private val mMedicine: B
         } else if (key == Global.KEY_ENTER) {
             if (mMedicine.goodsNum > 0) {
                 if (mMedicine.type == 9 && (mMedicine as GoodsMedicine).effectAll()) { // 普通药物，判断是否全体
-                    for (i in ScreenMainGame.sPlayerList.indices.reversed()) {
-                        (mMedicine as IEatMedicine).eat(ScreenMainGame.sPlayerList[i])
+                    for (i in game.playerList.indices.reversed()) {
+                        (mMedicine as IEatMedicine).eat(game.playerList[i])
                     }
                 } else { // 仙药、灵药 不具有全体效果
-                    (mMedicine as IEatMedicine).eat(ScreenMainGame.sPlayerList[mActorIndex])
+                    (mMedicine as IEatMedicine).eat(game.playerList[mActorIndex])
                 }
             } else {
                 popScreen()

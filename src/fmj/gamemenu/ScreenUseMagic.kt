@@ -23,13 +23,13 @@ class ScreenUseMagic(override val parent: GameNode,
     override fun draw(canvas: Canvas) {
         canvas.drawColor(Global.COLOR_WHITE)
         TextRender.drawText(canvas, mMagic.magicName, 0, sNameRect)
-        val actor = ScreenMainGame.sPlayerList[mCurActor]
+        val actor = game.playerList[mCurActor]
         actor.drawState(canvas, mCurPage)
         actor.drawHead(canvas, 5, 60)
     }
 
     override fun onKeyDown(key: Int) {
-        if (key == Global.KEY_RIGHT && mCurActor < ScreenMainGame.sPlayerList.size - 1) {
+        if (key == Global.KEY_RIGHT && mCurActor < game.playerList.size - 1) {
             ++mCurActor
         } else if (key == Global.KEY_LEFT && mCurActor > 0) {
             --mCurActor
@@ -42,7 +42,7 @@ class ScreenUseMagic(override val parent: GameNode,
         if (key == Global.KEY_CANCEL) {
             popScreen()
         } else if (key == Global.KEY_ENTER) {
-            mMagic.use(mScr, ScreenMainGame.sPlayerList[mCurActor])
+            mMagic.use(mScr, game.playerList[mCurActor])
             popScreen()
         }
     }

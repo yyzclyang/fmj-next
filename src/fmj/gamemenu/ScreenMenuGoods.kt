@@ -76,7 +76,7 @@ class ScreenMenuGoods(override val parent: GameNode): BaseScreen, OnItemSelected
             13 // 土遁
             -> {
                 // TODO 迷宫中的用法，调用脚本
-                ScreenMainGame.instance.triggerEvent(255)
+                game.triggerEvent(255)
                 while (getCurScreen() !is ScreenMainGame) {
                     popScreen()
                 }
@@ -95,8 +95,7 @@ class ScreenMenuGoods(override val parent: GameNode): BaseScreen, OnItemSelected
     }
 
     private fun equipSelected(goods: BaseGoods) {
-        val list = ScreenMainGame.sPlayerList
-                .filter { goods.canPlayerUse(it.index) }
+        val list = game.playerList.filter { goods.canPlayerUse(it.index) }
         if (list.isEmpty()) { // 没人能装备
             showMessage("不能装备!", 1000)
         } else if (list.size == 1) { // 一个人能装备
@@ -107,7 +106,7 @@ class ScreenMenuGoods(override val parent: GameNode): BaseScreen, OnItemSelected
             }
         } else { // 多人可装备
             pushScreen(object : BaseScreen {
-                override val parent = this
+                override val parent = this@ScreenMenuGoods
                 internal var bg = Util.getFrameBitmap(16 * 5 + 6, 6 + 16 * list.size)
                 internal var curSel = 0
                 internal var itemsText: Array<ByteArray> = Array(list.size) { ByteArray(11) }

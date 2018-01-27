@@ -23,7 +23,7 @@ class ActionMagicHelpOne(attacker: FightingCharacter,
     override fun preproccess() {
         // TODO 记下伤害值、异常状态
         mAni = magic.magicAni!!
-        mAni.startAni()
+        mAni.start()
         mAni.setIteratorNum(2)
         mAnix = mTarget.combatX
         mAniy = mTarget.combatY

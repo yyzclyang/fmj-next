@@ -122,14 +122,14 @@ object Util {
      * @return 画出的num宽度(像素)
      */
     fun drawSmallNum(canvas: Canvas, num: Int, x: Int, y: Int): Int {
-        var num = num
-        var x = x
-        if (num < 0) num = -num
-        val digits = num.toString()
+        var tmpNum = num
+        var tmpX = x
+        if (tmpNum < 0) tmpNum = -tmpNum
+        val digits = tmpNum.toString()
 
         for (i in digits.indices) {
-            imgSmallNum.draw(canvas, digits[i] - '0' + 1, x, y)
-            x += imgSmallNum.width + 1
+            imgSmallNum.draw(canvas, digits[i] - '0' + 1, tmpX, y)
+            tmpX += imgSmallNum.width + 1
         }
 
         return digits.length * imgSmallNum.width

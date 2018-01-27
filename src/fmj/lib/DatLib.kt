@@ -212,5 +212,9 @@ class DatLib(buffer: ByteArray) {
         fun getMlr(type: Int, index: Int, allowNull: Boolean = false): ResMagicChain? {
             return getRes(ResType.MLR, type, index, allowNull) as ResMagicChain?
         }
+
+        fun getACP(type: Int, index: Int, allowNull: Boolean = false): ResImage? {
+            return getRes(ResType.ACP, type, index, allowNull) as ResImage?
+        }
     }
 }

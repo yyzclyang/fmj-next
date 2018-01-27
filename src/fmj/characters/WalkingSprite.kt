@@ -2,31 +2,23 @@ package fmj.characters
 
 import fmj.Global
 import fmj.lib.DatLib
-import fmj.lib.ResImage
 
 import graphics.Canvas
 
 class WalkingSprite(type: Int, id: Int) {
-    private val mResImage: ResImage
-    private var mOffset = 1 // 面向
-    private var mI = 0 // 脚步
+    private val resImage = DatLib.getACP(type, id)!!
+    private var offset = 1 // 面向
 
     val id: Int
-        get() = mResImage.index
+        get() = resImage.index
 
-    var step: Int
-        get() = mI
+    var step: Int = 0
         set(step) {
-            mI = step % 4
+            field = step % 4
         }
 
-    init {
-        mResImage = DatLib.instance!!.getRes(DatLib.ResType.ACP,
-                type, id) as ResImage
-    }
-
     fun setDirection(d: Direction) {
-        mOffset = when (d) {
+        offset = when (d) {
             Direction.North -> 1
             Direction.East -> 4
             Direction.South -> 7
@@ -40,16 +32,16 @@ class WalkingSprite(type: Int, id: Int) {
     }
 
     fun walk() {
-        ++mI
-        mI %= 4
+        ++this.step
+        this.step %= 4
     }
 
     fun draw(canvas: Canvas, x: Int, y: Int) {
-        var y = y
-        y = y + 16 - mResImage.height
-        if (x + mResImage.width > 0 && x < 160 - 16 &&
-                y + mResImage.height > 0 && y < 96) {
-            mResImage.draw(canvas, mOffset + OFFSET[mI], x + Global.MAP_LEFT_OFFSET, y)
+        var tmpY = y
+        tmpY = tmpY + 16 - resImage.height
+        if (x + resImage.width > 0 && x < 160 - 16 &&
+                tmpY + resImage.height > 0 && tmpY < 96) {
+            resImage.draw(canvas, offset + OFFSET[this.step], x + Global.MAP_LEFT_OFFSET, tmpY)
         }
     }
 

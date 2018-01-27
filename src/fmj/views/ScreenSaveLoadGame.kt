@@ -53,14 +53,15 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
     }
 
     private fun format(s: String): String {
-        var s = s
-        while (s.gbkBytes().size < mEmpty.gbkBytes().size) s += " "
-        return s
+        var tmp = s
+        while (tmp.gbkBytes().size < mEmpty.gbkBytes().size)
+            tmp += " "
+        return tmp
     }
 
     private fun getSceneNameAndHeads(f: File, heads: ArrayList<ResImage>): String {
         val file = objectInputOf(f)
-        var name =  file.readString()
+        val name =  file.readString()
         val actorNum =  file.readInt()
         for (i in 0 until actorNum) {
             heads.add(DatLib.getRes(DatLib.ResType.PIC, 1,  file.readInt()) as ResImage)
@@ -133,7 +134,7 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
         }
     }
 
-    fun loadGame(file: File) {
+    private fun loadGame(file: File) {
         val ioIn = objectInputOf(file)
         SaveLoadGame.read(ioIn)
         Combat.SetDelegate(delegate)

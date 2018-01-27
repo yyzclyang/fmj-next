@@ -88,7 +88,7 @@ class ScriptProcess private constructor() {
         }
 
     init {
-        val cmd_music = makeInstruct { _, start ->
+        val cmd_music = makeInstruct { _, _ ->
             println("cmd_music not implemented")
             makeCommand(4) { null }
         }
@@ -179,7 +179,7 @@ class ScriptProcess private constructor() {
             }
         }
 
-        val cmd_callback = makeInstruct { _, start ->
+        val cmd_callback = makeInstruct { _, _ ->
             makeCommand(0) {
                 cmdPrint("cmd_callback")
                 delegate.mainScreen.exitScript()
@@ -227,8 +227,6 @@ class ScriptProcess private constructor() {
             val picNum = get2ByteInt(code, start)
             val text = getStringBytes(code, start + 2)
             val headImg = DatLib.getPic(1, picNum, allowNull = true)
-            var iOfText = 0
-            var iOfNext = 0
             var isAnyKeyDown = false
             val rWithPic = RectF(9f, 50f, 151f, 96 - 0.5f) // 有图边框
             val rWithTextT = Rect(44, 58, 145, 75) // 上
@@ -242,8 +240,8 @@ class ScriptProcess private constructor() {
 
             makeCommand(2 + text.size) {
                 cmdPrint("cmd_say ${text.gbkString()}")
-                iOfText = 0
-                iOfNext = 0
+                var iOfText = 0
+                var iOfNext = 0
                 object: Operate {
                     override fun update(delta: Long): Boolean {
                         if (isAnyKeyDown) {
@@ -323,7 +321,7 @@ class ScriptProcess private constructor() {
             }
         }
 
-        val cmd_gameover = makeInstruct { _, start ->
+        val cmd_gameover = makeInstruct { _, _ ->
             makeCommand(0) {
                 cmdPrint("cmd_gameover")
                 delegate.changeScreen(ScreenViewType.SCREEN_MENU)
@@ -447,7 +445,7 @@ class ScriptProcess private constructor() {
                 cmdPrint("cmd_movie")
                 val movie = DatLib.getRes(DatLib.ResType.SRS, type, index) as ResSrs? ?: return@makeCommand null
                 movie.setIteratorNum(5)
-                movie.startAni()
+                movie.start()
                 object : Operate {
                     internal var downKey = 0
                     internal var isAnyKeyPressed = false
@@ -635,7 +633,7 @@ class ScriptProcess private constructor() {
             }
         }
 
-        val cmd_fightenable = makeInstruct { code, start ->
+        val cmd_fightenable = makeInstruct { _, _ ->
             makeCommand(0) {
                 cmdPrint("cmd_fightenable")
                 Combat.Companion.FightEnable()
@@ -643,7 +641,7 @@ class ScriptProcess private constructor() {
             }
         }
 
-        val cmd_fightdisenable = makeInstruct { code, start ->
+        val cmd_fightdisenable = makeInstruct { _, _ ->
             makeCommand(0) {
                 cmdPrint("cmd_fightdisable")
                 Combat.Companion.FightDisable()

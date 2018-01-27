@@ -23,7 +23,7 @@ class ActionMagicAttackAll(attacker: FightingCharacter,
         ox = mAttacker!!.combatX
         oy = mAttacker!!.combatY
         mAni = magic.magicAni
-        mAni!!.startAni()
+        mAni!!.start()
         mAni!!.setIteratorNum(2)
         magic.use(mAttacker!!, mTargets)
         mRaiseAnis.add(RaiseAnimation(10, 10, 10, 0))

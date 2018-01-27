@@ -23,7 +23,7 @@ class ActionThrowItemAll(attacker: FightingCharacter,
         ox = mAttacker!!.combatX
         oy = mAttacker!!.combatY
         mAni = hiddenWeapon.ani
-        mAni!!.startAni()
+        mAni!!.start()
         mAni!!.setIteratorNum(2)
         // TODO effect it
         mRaiseAnis.add(RaiseAnimation(10, 20, 10, 0))

@@ -234,7 +234,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
             setOriginalMonsterPos() // 重置位置
         }
 
-        mFlyPeach.startAni()
+        mFlyPeach.start()
         mFlyPeach.setIteratorNum(5)
     }
 

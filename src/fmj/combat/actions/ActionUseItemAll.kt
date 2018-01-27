@@ -22,10 +22,10 @@ class ActionUseItemAll(attacker: FightingCharacter,
         ox = mAttacker!!.combatX
         oy = mAttacker!!.combatY
         //		mAni = magic.getMagicAni(); TODO null fix
-        mAni!!.startAni()
+        mAni!!.start()
         mAni!!.setIteratorNum(2)
-        mRaiseAnis!!.add(RaiseAnimation(10, 20, 10, 0))
-        mRaiseAnis!!.add(RaiseAnimation(30, 10, 10, 0))
+        mRaiseAnis.add(RaiseAnimation(10, 20, 10, 0))
+        mRaiseAnis.add(RaiseAnimation(30, 10, 10, 0))
     }
 
     override fun update(delta: Long): Boolean {

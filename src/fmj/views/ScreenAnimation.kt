@@ -15,7 +15,7 @@ class ScreenAnimation(private val index: Int) : BaseScreen() {
         }
         mResSrs = DatLib.getRes(DatLib.ResType.SRS, 1, index) as ResSrs
         mResSrs.setIteratorNum(4)
-        mResSrs.startAni()
+        mResSrs.start()
     }
 
     override fun update(delta: Long) {

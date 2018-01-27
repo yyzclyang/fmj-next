@@ -25,7 +25,7 @@ class ActionThrowItemOne(attacker: FightingCharacter, target: FightingCharacter,
         ox = mAttacker!!.combatX
         oy = mAttacker!!.combatY
         mAni = hiddenWeapon.ani
-        mAni!!.startAni()
+        mAni!!.start()
         mAni!!.setIteratorNum(2)
         // TODO effect it
         mAniX = mTarget.combatX

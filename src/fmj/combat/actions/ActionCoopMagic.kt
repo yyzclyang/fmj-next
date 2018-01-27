@@ -107,7 +107,7 @@ class ActionCoopMagic : Action {
         } else {
             magic!!.magicAni!!
         }
-        mAni.startAni()
+        mAni.start()
     }
 
     override fun update(delta: Long): Boolean {

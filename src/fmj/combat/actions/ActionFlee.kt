@@ -56,7 +56,7 @@ class ActionFlee
 
     override fun postExecute() {
         if (fleeSucceed && runAfterFlee != null) {
-            runAfterFlee!!.run()
+            runAfterFlee.run()
         } else {
             player.setCombatPos(ox, oy)
         }

@@ -27,7 +27,7 @@ class ActionMagicAttackOne(attacker: FightingCharacter, target: FightingCharacte
         ox = mAttacker!!.combatX
         oy = mAttacker!!.combatY
         mAni = magic.magicAni
-        mAni!!.startAni()
+        mAni!!.start()
         mAni!!.setIteratorNum(2)
         val ohp = mTarget.hp
         if (magic is MagicAttack) {

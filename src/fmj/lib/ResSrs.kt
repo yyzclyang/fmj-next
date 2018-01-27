@@ -69,7 +69,7 @@ class ResSrs : ResBase() {
     /**
      * 开始特效动画
      */
-    fun startAni() {
+    fun start() {
         mShowList.clear()
         mShowList.add(Key(0))
     }

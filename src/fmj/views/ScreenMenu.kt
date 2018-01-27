@@ -22,15 +22,15 @@ class ScreenMenu : BaseScreen() {
         mSrsSelector = arrayOf(
                 DatLib.getRes(DatLib.ResType.SRS, 1, 250) as ResSrs,
                 DatLib.getRes(DatLib.ResType.SRS, 1, 251) as ResSrs)
-        mSrsSelector[0].startAni()
-        mSrsSelector[1].startAni()
+        mSrsSelector[0].start()
+        mSrsSelector[1].start()
         mLeft = (160 - mImgMenu.width) / 2
         mTop = (96 - mImgMenu.height) / 2
     }
 
     override fun update(delta: Long) {
         if (!mSrsSelector[mCurSelect].update(delta)) {
-            mSrsSelector[mCurSelect].startAni()
+            mSrsSelector[mCurSelect].start()
         }
     }
 

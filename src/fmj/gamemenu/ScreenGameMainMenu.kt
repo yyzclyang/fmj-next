@@ -51,22 +51,16 @@ class ScreenGameMainMenu : BaseScreen() {
             mNames = list.map { it.name }.toTypedArray()
         }
 
-        private fun format(s: String): String {
-            var s = s
-            while (s.gbkBytes().size < 10) s += " "
-            return s
-        }
-
         override fun update(delta: Long) {}
 
         override fun draw(canvas: Canvas) {
             canvas.drawBitmap(this.bmpFrame, this.mFrameRect.left, this.mFrameRect.top)
             for (i in 0 until mSum) {
                 if (i == index) {
-                    TextRender.drawSelText(canvas, mNames!![i], this.mFrameRect.left + 3,
+                    TextRender.drawSelText(canvas, mNames[i], this.mFrameRect.left + 3,
                             this.mFrameRect.top + 3 + 16 * i)
                 } else {
-                    TextRender.drawText(canvas, mNames!![i], this.mFrameRect.left + 3,
+                    TextRender.drawText(canvas, mNames[i], this.mFrameRect.left + 3,
                             this.mFrameRect.top + 3 + 16 * i)
                 }
             }

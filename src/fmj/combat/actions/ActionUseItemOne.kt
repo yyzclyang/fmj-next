@@ -33,7 +33,7 @@ class ActionUseItemOne(attacker: FightingCharacter, target: FightingCharacter, i
         } else {
             mAni = DatLib.Companion.getRes(DatLib.ResType.SRS, 2, 1) as ResSrs
         }
-        mAni.startAni()
+        mAni.start()
         mAni.setIteratorNum(2)
         mAnix = mTarget.combatX
         mAniy = mTarget.combatY

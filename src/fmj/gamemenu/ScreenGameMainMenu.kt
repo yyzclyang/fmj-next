@@ -9,14 +9,13 @@ import fmj.magic.MagicRestore
 import fmj.magic.ScreenMagic
 import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
-import fmj.views.ScreenStack
+import fmj.views.GameNode
 
 import graphics.Canvas
 import graphics.Rect
 import java.gbkBytes
 
-class ScreenGameMainMenu : BaseScreen() {
-
+class ScreenGameMainMenu(override val parent: GameNode): BaseScreen {
     private val bmpFrame1 = Util.getFrameBitmap(93, 16 + 6)
     private val bmpFrame2 = Util.getFrameBitmap(32 + 6, 64 + 6)
     private val menuItemsRect: Rect
@@ -28,7 +27,8 @@ class ScreenGameMainMenu : BaseScreen() {
     override val isPopup: Boolean
         get() = true
 
-    internal var screenSelectActor: BaseScreen = object : BaseScreen() {
+    private var screenSelectActor: BaseScreen = object : BaseScreen {
+        override val parent = this
 
         private var index = 0
 
@@ -82,11 +82,11 @@ class ScreenGameMainMenu : BaseScreen() {
 
         override fun onKeyUp(key: Int) {
             if (key == Global.KEY_CANCEL) {
-                delegate.popScreen()
+                popScreen()
             } else if (key == Global.KEY_ENTER) {
-                delegate.popScreen()
+                popScreen()
                 getScreenMagic(index)?.let {
-                    delegate.pushScreen(it)
+                    pushScreen(it)
                 }
             }
         }
@@ -127,20 +127,20 @@ class ScreenGameMainMenu : BaseScreen() {
         if (key == Global.KEY_ENTER) {
             val screen =
                     when (mSelIndex) {
-                        0 -> ScreenMenuProperties()
+                        0 -> ScreenMenuProperties(this)
                         1 -> if (ScreenMainGame.instance.playerList.size > 1)
                             screenSelectActor
                         else
                             getScreenMagic(0)
-                        2 -> ScreenMenuGoods()
-                        3 -> ScreenMenuSystem()
+                        2 -> ScreenMenuGoods(this)
+                        3 -> ScreenMenuSystem(this)
                         else -> null
                     }
             if (screen != null) {
-                delegate.pushScreen(screen)
+                pushScreen(screen)
             }
         } else if (key == Global.KEY_CANCEL) {
-            delegate.popScreen()
+            popScreen()
         }
     }
 
@@ -154,14 +154,14 @@ class ScreenGameMainMenu : BaseScreen() {
 
         if (magics.isEmpty()) return null
 
-        return ScreenMagic(magics,
+        return ScreenMagic(this, magics,
                 object : ScreenMagic.OnItemSelectedListener {
                     override fun onItemSelected(magic: BaseMagic) {
                         if (magic is MagicRestore) {
-                            delegate.pushScreen(ScreenUseMagic(magic,
+                            pushScreen(ScreenUseMagic(this@ScreenGameMainMenu, magic,
                                     ScreenMainGame.instance.playerList[id]))
                         } else {
-                            msgDelegate.showMessage("此处无法使用!", 1000)
+                            showMessage("此处无法使用!", 1000)
                         }
                     }
                 })

@@ -5,6 +5,7 @@ import fmj.characters.Player
 import fmj.goods.GoodsEquipment
 import fmj.graphics.Util
 import fmj.views.BaseScreen
+import fmj.views.GameNode
 import graphics.Canvas
 
 class ScreenChgEquipment
@@ -13,7 +14,8 @@ class ScreenChgEquipment
  * @param actorList 可装备选择的物品的角色链表
  * @param goods 选择的物品
  */
-(private val mActor: Player, goods: GoodsEquipment) : BaseScreen() {
+(override val parent: GameNode,
+ private val mActor: Player, goods: GoodsEquipment) : BaseScreen {
 
     private var mGoods: Array<GoodsEquipment>
     private var mSelIndex: Int = 0
@@ -67,7 +69,7 @@ class ScreenChgEquipment
             if (mGoods.size > 1) {
                 mActor.putOn(mGoods[0])
             }
-            delegate.popScreen()
+            popScreen()
         } else if (key == Global.KEY_ENTER) {
             if (mSelIndex == mGoods.size - 1) { // 换了新装备
                 // 物品链中删除该装备
@@ -78,7 +80,7 @@ class ScreenChgEquipment
                     Player.sGoodsList.addGoods(mGoods[0].type, mGoods[0].index)
                 }
             }
-            delegate.popScreen()
+            popScreen()
         }
     }
 }

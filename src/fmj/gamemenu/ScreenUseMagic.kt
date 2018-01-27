@@ -6,11 +6,14 @@ import fmj.graphics.TextRender
 import fmj.magic.MagicRestore
 import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
+import fmj.views.GameNode
 
 import graphics.Canvas
 import graphics.Rect
 
-class ScreenUseMagic(private val mMagic: MagicRestore, private var mScr: Player) : BaseScreen() {
+class ScreenUseMagic(override val parent: GameNode,
+                     private val mMagic: MagicRestore,
+                     private var mScr: Player) : BaseScreen {
 
     private var mCurPage = 0
     private var mCurActor = 0
@@ -37,10 +40,10 @@ class ScreenUseMagic(private val mMagic: MagicRestore, private var mScr: Player)
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate.popScreen()
+            popScreen()
         } else if (key == Global.KEY_ENTER) {
             mMagic.use(mScr, ScreenMainGame.sPlayerList[mCurActor])
-            delegate.popScreen()
+            popScreen()
         }
     }
 

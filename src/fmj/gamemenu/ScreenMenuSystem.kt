@@ -5,6 +5,7 @@ import fmj.ScreenViewType
 import fmj.graphics.TextRender
 import fmj.graphics.Util
 import fmj.views.BaseScreen
+import fmj.views.GameNode
 import fmj.views.ScreenSaveLoadGame
 import fmj.views.ScreenSaveLoadGame.Operate
 
@@ -12,7 +13,7 @@ import graphics.Bitmap
 import graphics.Canvas
 import graphics.Paint
 
-class ScreenMenuSystem : BaseScreen() {
+class ScreenMenuSystem(override val parent: GameNode) : BaseScreen {
 
     private var first = 0
     private var index = 0
@@ -90,22 +91,22 @@ class ScreenMenuSystem : BaseScreen() {
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate.popScreen()
+            popScreen()
         } else if (key == Global.KEY_ENTER) {
             when (index) {
-                0 -> delegate.pushScreen(ScreenSaveLoadGame(Operate.LOAD))
+                0 -> pushScreen(ScreenSaveLoadGame(this, Operate.LOAD))
 
                 1 -> {
                     if (Global.disableSave)
-                        delegate.showMessage("当前不能存档")
+                        showMessage("当前不能存档")
                     else
-                        delegate.pushScreen(ScreenSaveLoadGame(Operate.SAVE))
+                        pushScreen(ScreenSaveLoadGame(this, Operate.SAVE))
                 }
 
                 2 -> {
                 }
 
-                3 -> delegate.changeScreen(ScreenViewType.SCREEN_MENU)
+                3 -> changeScreen(ScreenViewType.SCREEN_MENU)
             }
         }
     }

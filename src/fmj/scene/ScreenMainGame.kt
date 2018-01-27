@@ -14,18 +14,20 @@ import fmj.script.ScriptExecutor
 import fmj.script.ScriptProcess
 import fmj.script.ScriptResources
 import fmj.views.BaseScreen
+import fmj.views.GameNode
 
 import graphics.Canvas
 import graphics.Point
 
-class ScreenMainGame : BaseScreen() {
+class ScreenMainGame(
+        override val parent: GameNode,
+        val scriptSys: ScriptProcess): BaseScreen {
     var player: Player? = null
 
     var currentMap: ResMap? = null
         private set
     private val mMapScreenPos = Point() // 屏幕左上角对应地图的位置
 
-    private val mScriptSys: ScriptProcess
     private var mScriptExecutor: ScriptExecutor? = null
 
     var sceneName = ""
@@ -94,8 +96,7 @@ class ScreenMainGame : BaseScreen() {
     init {
         instance = this
 
-        mScriptSys = ScriptProcess.instance
-        mScriptSys.setScreenMainGame(this)
+        this.scriptSys.setScreenMainGame(this)
 
         if (SaveLoadGame.startNewGame) { // 开始新游戏
             Combat.FightDisable()
@@ -122,8 +123,8 @@ class ScreenMainGame : BaseScreen() {
                 createActor(1, 4, 3)
                 //Log.e("error", "存档读取出错");
             }
-            mScriptSys.loadScript(SaveLoadGame.ScriptType, SaveLoadGame.ScriptIndex)
-            mScriptExecutor = mScriptSys.scriptExecutor
+            this.scriptSys.loadScript(SaveLoadGame.ScriptType, SaveLoadGame.ScriptIndex)
+            mScriptExecutor = this.scriptSys.scriptExecutor
             ScriptExecutor.goonExecute = true
             mRunScript = false
         }
@@ -140,8 +141,8 @@ class ScreenMainGame : BaseScreen() {
 //    }
 
     fun startChapter(type: Int, index: Int) {
-        mScriptSys.loadScript(type, index)
-        mScriptExecutor = mScriptSys.scriptExecutor
+        scriptSys.loadScript(type, index)
+        mScriptExecutor = scriptSys.scriptExecutor
         //		update(0);
         ScriptExecutor.goonExecute = false
         for (i in 1..40) {
@@ -154,7 +155,7 @@ class ScreenMainGame : BaseScreen() {
 
     override fun update(delta: Long) {
         if (mRunScript && mScriptExecutor != null) {
-            mScriptExecutor!!.process(delegate)
+            mScriptExecutor!!.process()
             mScriptExecutor!!.update(delta)
         } else if (Combat.IsActive()) { // TODO fix this test
             Combat.Update(delta)
@@ -228,7 +229,7 @@ class ScreenMainGame : BaseScreen() {
             Combat.KeyUp(key)
             return
         } else if (key == Global.KEY_CANCEL) {
-            delegate.pushScreen(ScreenGameMainMenu())
+            pushScreen(ScreenGameMainMenu(this))
         }
     }
 

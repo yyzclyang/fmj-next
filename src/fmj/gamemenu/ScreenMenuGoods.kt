@@ -10,14 +10,14 @@ import fmj.graphics.TextRender
 import fmj.graphics.Util
 import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
-import fmj.views.ScreenStack
+import fmj.views.GameNode
 
 import graphics.Canvas
 
 import java.gbkBytes
 import java.System
 
-class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
+class ScreenMenuGoods(override val parent: GameNode): BaseScreen, OnItemSelectedListener {
 
     private val mFrameBmp = Util.getFrameBitmap(77 - 39 + 1, 77 - 39 + 1)
     private val strs = arrayOf("使用", "装备")
@@ -47,13 +47,15 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate.popScreen()
+            popScreen()
         } else if (key == Global.KEY_ENTER) {
-            delegate.popScreen()
-            delegate.pushScreen(ScreenGoodsList(if (mSelId == 0)
-                Player.sGoodsList.goodsList
-            else
-                Player.sGoodsList.equipList, this, Mode.Use))
+            popScreen()
+            pushScreen(ScreenGoodsList(this,
+                    if (mSelId == 0)
+                        Player.sGoodsList.goodsList
+                    else
+                        Player.sGoodsList.equipList, this, Mode.Use)
+            )
         }
     }
 
@@ -69,26 +71,26 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
         when (goods.type) {
             8 // 暗器
                 , 12 // 兴奋剂
-            -> msgDelegate.showMessage("战斗中才能使用!", 1000)
+            -> showMessage("战斗中才能使用!", 1000)
 
             13 // 土遁
             -> {
                 // TODO 迷宫中的用法，调用脚本
                 ScreenMainGame.instance.triggerEvent(255)
-                while (delegate.getCurScreen() !is ScreenMainGame) {
-                    delegate.popScreen()
+                while (getCurScreen() !is ScreenMainGame) {
+                    popScreen()
                 }
             }
 
             14 // 剧情类
             ->
                 // TODO 剧情类物品用法
-                msgDelegate.showMessage("当前无法使用!", 1000)
+                showMessage("当前无法使用!", 1000)
 
             9 // 药物
                 , 10 // 灵药
                 , 11 // 仙药
-            -> delegate.pushScreen(ScreenTakeMedicine(goods))
+            -> pushScreen(ScreenTakeMedicine(this, goods))
         }
     }
 
@@ -96,15 +98,16 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
         val list = ScreenMainGame.sPlayerList
                 .filter { goods.canPlayerUse(it.index) }
         if (list.isEmpty()) { // 没人能装备
-            msgDelegate.showMessage("不能装备!", 1000)
+            showMessage("不能装备!", 1000)
         } else if (list.size == 1) { // 一个人能装备
             if (list[0].hasEquipt(goods.type, goods.index)) {
-                msgDelegate.showMessage("已装备!", 1000)
+                showMessage("已装备!", 1000)
             } else {
-                delegate.pushScreen(ScreenChgEquipment(list[0], goods as GoodsEquipment))
+                pushScreen(ScreenChgEquipment(this, list[0], goods as GoodsEquipment))
             }
         } else { // 多人可装备
-            delegate.pushScreen(object : BaseScreen() {
+            pushScreen(object : BaseScreen {
+                override val parent = this
                 internal var bg = Util.getFrameBitmap(16 * 5 + 6, 6 + 16 * list.size)
                 internal var curSel = 0
                 internal var itemsText: Array<ByteArray> = Array(list.size) { ByteArray(11) }
@@ -127,13 +130,13 @@ class ScreenMenuGoods : BaseScreen(), OnItemSelectedListener {
                 override fun onKeyUp(key: Int) {
                     if (key == Global.KEY_ENTER) {
                         if (list[curSel].hasEquipt(goods.type, goods.index)) {
-                            msgDelegate.showMessage("已装备!", 1000)
+                            showMessage("已装备!", 1000)
                         } else {
-                            delegate.popScreen()
-                            delegate.pushScreen(ScreenChgEquipment(list[curSel], goods as GoodsEquipment))
+                            popScreen()
+                            pushScreen(ScreenChgEquipment(this, list[curSel], goods as GoodsEquipment))
                         }
                     } else if (key == Global.KEY_CANCEL) {
-                        delegate.popScreen()
+                        popScreen()
                     }
                 }
 

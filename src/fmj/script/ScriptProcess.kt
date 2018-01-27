@@ -15,7 +15,8 @@ import fmj.lib.DatLib
 import fmj.lib.ResGut
 import fmj.lib.ResSrs
 import fmj.scene.ScreenMainGame
-import fmj.views.ScreenDelegate
+import fmj.views.Control
+import fmj.views.GameNode
 import fmj.views.ScreenSaveLoadGame
 import graphics.*
 
@@ -30,15 +31,13 @@ private fun makeInstruct(it: CommandMaker): CommandMaker {
 inline fun makeCommand(len: Int, crossinline run: () -> Operate?): Command {
     return object: Command {
         override val len = len
-        override fun run(delegate: ScreenDelegate): Operate? {
-            // TODO: need delegate?
+        override fun run(): Operate? {
             return run()
         }
     }
 }
 
-class ScriptProcess private constructor() {
-    lateinit var delegate: ScreenDelegate
+class ScriptProcess(override val parent: GameNode): Control {
 
     private var mScript: ResGut? = null
 
@@ -102,11 +101,11 @@ class ScriptProcess private constructor() {
             makeCommand(8) {
                 cmdPrint("cmd_loadmap type=$type index=$index x=$x y=$y")
 
-                delegate.mainScreen.loadMap(type, index, x, y)
+                mainScreen.loadMap(type, index, x, y)
 
                 object: OperateDrawOnce() {
                     override fun drawOnce(canvas: Canvas) {
-                        delegate.mainScreen.drawScene(canvas)
+                        mainScreen.drawScene(canvas)
                     }
 
                 }
@@ -121,11 +120,11 @@ class ScriptProcess private constructor() {
             makeCommand(6) {
                 cmdPrint("cmd_createactor $actor at ($x, $y)")
 
-                delegate.mainScreen.createActor(actor, x, y)
+                mainScreen.createActor(actor, x, y)
 
                 object: OperateDrawOnce() {
                     override fun drawOnce(canvas: Canvas) {
-                        delegate.mainScreen.drawScene(canvas)
+                        mainScreen.drawScene(canvas)
                     }
                 }
             }
@@ -135,7 +134,7 @@ class ScriptProcess private constructor() {
             val npc = get2ByteInt(code, start)
             makeCommand(2) {
                 cmdPrint("cmd_deletenpc $npc")
-                delegate.mainScreen.deleteNpc(npc)
+                mainScreen.deleteNpc(npc)
                 null
             }
         }
@@ -146,7 +145,7 @@ class ScriptProcess private constructor() {
             val dstY = get2ByteInt(code, start + 4)
 
             makeCommand(6) {
-                val npc = delegate.mainScreen.getNPC(npcId)
+                val npc = mainScreen.getNPC(npcId)
                 cmdPrint("cmd_move ${npc.name} to ($dstX, $dstY)")
 
                 object : Operate {
@@ -173,7 +172,7 @@ class ScriptProcess private constructor() {
                     override fun onKeyDown(key: Int) {}
 
                     override fun draw(canvas: Canvas) {
-                        delegate.mainScreen.drawScene(canvas)
+                        mainScreen.drawScene(canvas)
                     }
                 }
             }
@@ -182,7 +181,7 @@ class ScriptProcess private constructor() {
         val cmd_callback = makeInstruct { _, _ ->
             makeCommand(0) {
                 cmdPrint("cmd_callback")
-                delegate.mainScreen.exitScript()
+                mainScreen.exitScript()
                 null
             }
         }
@@ -193,7 +192,7 @@ class ScriptProcess private constructor() {
             makeCommand(2) {
                 cmdPrint("cmd_goto from $start to $address")
                 // TODO: 无需通过mainscreen
-                delegate.mainScreen.gotoAddress(address)
+                mainScreen.gotoAddress(address)
                 null
             }
         }
@@ -206,7 +205,7 @@ class ScriptProcess private constructor() {
                 val value = ScriptResources.globalEvents[va]
                 cmdPrint("cmd_if $va(=$value) goto $address")
                 if (value) {
-                    delegate.mainScreen.gotoAddress(address)
+                    mainScreen.gotoAddress(address)
                 }
                 null
             }
@@ -305,7 +304,7 @@ class ScriptProcess private constructor() {
 
             makeCommand(4) {
                 cmdPrint("cmd_startchapter $type $index")
-                delegate.mainScreen.startChapter(type, index)
+                mainScreen.startChapter(type, index)
                 null
             }
         }
@@ -316,7 +315,7 @@ class ScriptProcess private constructor() {
 
             makeCommand(4) {
                 cmdPrint("cmd_screens ($x,$y)")
-                delegate.mainScreen.setMapScreenPos(x, y)
+                mainScreen.setMapScreenPos(x, y)
                 null
             }
         }
@@ -324,7 +323,7 @@ class ScriptProcess private constructor() {
         val cmd_gameover = makeInstruct { _, _ ->
             makeCommand(0) {
                 cmdPrint("cmd_gameover")
-                delegate.changeScreen(ScreenViewType.SCREEN_MENU)
+                changeScreen(ScreenViewType.SCREEN_MENU)
                 null
             }
         }
@@ -338,7 +337,7 @@ class ScriptProcess private constructor() {
                 val value = ScriptResources.variables[id]
                 cmdPrint("cmd_ifcmp $id(=$value) vs $other goto $addr")
                 if (value == other) {
-                    delegate.mainScreen.gotoAddress(addr)
+                    mainScreen.gotoAddress(addr)
                 }
                 null
             }
@@ -396,7 +395,7 @@ class ScriptProcess private constructor() {
 
             makeCommand(bytes.size) {
                 cmdPrint("cmd_buy")
-                OperateBuy(bytes, delegate)
+                OperateBuy(this, bytes)
             }
         }
 
@@ -626,9 +625,7 @@ class ScriptProcess private constructor() {
             }
             makeCommand(22) {
                 cmdPrint("cmd_initfight")
-                Combat.InitFight(arr, scrb,
-                        scrl, scrr)
-                Combat.SetDelegate(delegate)
+                Combat.InitFight(this, arr, scrb, scrl, scrr)
                 null
             }
         }
@@ -671,8 +668,7 @@ class ScriptProcess private constructor() {
                 val evts = intArrayOf(get2ByteInt(code, start + 20), get2ByteInt(code, start + 22), get2ByteInt(code, start + 24))
                 val lossto = get2ByteInt(code, start + 26)
                 val winto = get2ByteInt(code, start + 28)
-                Combat.EnterFight(get2ByteInt(code, start), monstersType, scr, evtRnds, evts, lossto, winto)
-                Combat.SetDelegate(delegate)
+                Combat.EnterFight(this, get2ByteInt(code, start), monstersType, scr, evtRnds, evts, lossto, winto)
                 mScreenMainGame!!.exitScript()
                 null
             }
@@ -746,11 +742,11 @@ class ScriptProcess private constructor() {
             makeCommand(0) {
                 ScriptProcess.cmdPrint("cmd_sale")
 
-                val op = OperateSale(delegate)
+                val op = OperateSale(this)
                 val list = mutableListOf<BaseGoods>()
                 list.addAll(Player.sGoodsList.goodsList)
                 list.addAll(Player.sGoodsList.equipList)
-                delegate.pushScreen(ScreenGoodsList(list, op, ScreenGoodsList.Mode.Sale))
+                pushScreen(ScreenGoodsList(this, list, op, ScreenGoodsList.Mode.Sale))
                 op
             }
         }
@@ -1173,25 +1169,21 @@ class ScriptProcess private constructor() {
             val stringItems = bytes.gbkString().split(' ')
             makeCommand(bytes.size + 3) {
                 cmdPrint("cmd_menu")
+                var finished = false
+                val rvAddr = get2ByteInt(code, start)
+
+                val items by lazy {
+                    println(stringItems)
+                    stringItems.toTypedArray()
+                }
+
+                val menu = ScreenCommonMenu(this, items) {
+                    ScriptResources.variables[rvAddr] = it
+                    finished = true
+                }
+                pushScreen(menu)
 
                 object : OperateAdapter() {
-                    var finished = false
-                    val rvAddr = get2ByteInt(code, start)
-
-                    val items by lazy {
-                        println(stringItems)
-                        stringItems.toTypedArray()
-                    }
-
-                    val menu = ScreenCommonMenu(items) {
-                        ScriptResources.variables[rvAddr] = it
-                        finished = true
-                    }
-
-                    init {
-                        delegate.pushScreen(menu)
-                    }
-
                     override fun draw(canvas: Canvas) {
                         menu.draw(canvas)
                     }
@@ -1280,12 +1272,12 @@ class ScriptProcess private constructor() {
                 var end = false
 
                 cmdPrint("cmd_gamesave")
-                val view = ScreenSaveLoadGame(ScreenSaveLoadGame.Operate.SAVE)
+                val view = ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.SAVE)
                 view.callback = {
                     end = true
                 }
 
-                delegate.pushScreen(view)
+                pushScreen(view)
 
                 object : OperateAdapter() {
                     override fun update(delta: Long): Boolean {
@@ -1449,9 +1441,6 @@ class ScriptProcess private constructor() {
     }
 
     companion object {
-        val instance: ScriptProcess by lazy {
-            ScriptProcess()
-        }
 
         fun get2ByteInt(data: ByteArray, start: Int): Int {
             return data[start].toInt() and 0xFF or (data[start + 1].toInt() shl 8 and 0xFF00)

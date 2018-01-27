@@ -4,12 +4,13 @@ import fmj.Global
 import fmj.graphics.TextRender
 import fmj.graphics.Util
 import fmj.views.BaseScreen
+import fmj.views.GameNode
 import graphics.Bitmap
 import graphics.Canvas
 import java.gbkBytes
 
 
-class ScreenCommonMenu(items: Array<String>, private val callback: (Int) -> Unit): BaseScreen() {
+class ScreenCommonMenu(override val parent: GameNode, items: Array<String>, private val callback: (Int) -> Unit): BaseScreen {
     // TODO: 滚动
     private var curSel = 0
     private val paddedItems: List<ByteArray>
@@ -41,10 +42,10 @@ class ScreenCommonMenu(items: Array<String>, private val callback: (Int) -> Unit
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_ENTER) {
-            delegate.popScreen()
+            popScreen()
             callback(curSel+1)
         } else if (key == Global.KEY_CANCEL) {
-            delegate.popScreen()
+            popScreen()
             callback(0)
         }
     }

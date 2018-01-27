@@ -4,6 +4,7 @@ import fmj.characters.NPC
 import fmj.characters.Player
 import fmj.characters.SceneObj
 import fmj.combat.Combat
+import fmj.views.GameNode
 import java.ObjectInput
 import java.ObjectOutput
 import java.readArray
@@ -78,7 +79,7 @@ object SaveLoadGame {
         Combat.write(out)
     }
 
-    fun read(coder: ObjectInput) {
+    fun read(parent: GameNode, coder: ObjectInput) {
         SceneName = coder.readString()
         var actorNum = coder.readInt()
         while (actorNum-- > 0) coder.readInt()
@@ -113,6 +114,6 @@ object SaveLoadGame {
             npc
         }
 
-        Combat.read(coder)
+        Combat.read(parent, coder)
     }
 }

@@ -8,6 +8,7 @@ import fmj.graphics.Util
 import fmj.lib.DatLib
 import fmj.lib.ResImage
 import fmj.views.BaseScreen
+import fmj.views.GameNode
 
 import graphics.Bitmap
 import graphics.Canvas
@@ -15,7 +16,7 @@ import graphics.Paint
 import graphics.Paint.Style
 import java.gbkBytes
 
-class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<BaseGoods>, lvuplist: List<Player>) {
+class CombatSuccess(private val parent: GameNode, exp: Int, money: Int, private val mGoodsList: MutableList<BaseGoods>, lvuplist: List<Player>) {
 
     private val mMsgList: MutableList<BaseScreen> = mutableListOf()
 
@@ -27,20 +28,20 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
 
     init {
         val e = exp.toString()
-        mMsgList.add(MsgScreen(18, "获得经验     ".substring(0, 9 - e.length) + e))
+        mMsgList.add(MsgScreen(parent, 18, "获得经验     ".substring(0, 9 - e.length) + e))
         val m = money.toString()
-        mMsgList.add(MsgScreen(46, "战斗获得        ".substring(0, 10 - m.length) + m + "钱"))
+        mMsgList.add(MsgScreen(parent, 46, "战斗获得        ".substring(0, 10 - m.length) + m + "钱"))
 
         mLvupList = mutableListOf()
         for (p in lvuplist) {
-            mLvupList.add(MsgScreen(p.name + "修行提升"))
-            mLvupList.add(LevelupScreen(p))
+            mLvupList.add(MsgScreen(parent,p.name + "修行提升"))
+            mLvupList.add(LevelupScreen(parent, p))
             val magicChain = p.magicChain
             if (magicChain != null) {
                 val newNum = p.levelupChain.getLearnMagicNum(p.level)
                 val oldNum = p.levelupChain.getLearnMagicNum(p.level - 1)
                 (oldNum until newNum).mapTo(mLvupList) {
-                    LearnMagicScreen(p.name, magicChain.getMagic(it - 1).magicName)
+                    LearnMagicScreen(parent, p.name, magicChain.getMagic(it - 1).magicName)
                 }
             }
         }
@@ -64,7 +65,7 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
                 }
             } else {
                 val g = mGoodsList.removeAt(0)
-                mMsgList.add(MsgScreen("得到 ${g.name} x${g.goodsNum}"))
+                mMsgList.add(MsgScreen(parent,"得到 ${g.name} x${g.goodsNum}"))
             }
         }
         return false
@@ -86,13 +87,13 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
      * 显示战斗胜利后玩家获得的东西
      * @author Chen
      */
-    private inner class MsgScreen(private val mY: Int, _msg: String) : BaseScreen() {
+    private inner class MsgScreen(override val parent: GameNode, private val mY: Int, _msg: String) : BaseScreen {
 
         private val mMsg: Bitmap
 
         private val mX: Int
 
-        constructor(msg: String) : this((96 - 24) / 2, msg)
+        constructor(parent: GameNode, msg: String) : this(parent,(96 - 24) / 2, msg)
 
         init {
             val msg = _msg.gbkBytes()
@@ -124,7 +125,7 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
 
     }
 
-    private inner class LevelupScreen(p: Player) : BaseScreen() {
+    private inner class LevelupScreen(override val parent: GameNode, p: Player) : BaseScreen {
 
         private val mInfo: Bitmap
 
@@ -169,7 +170,7 @@ class CombatSuccess(exp: Int, money: Int, private val mGoodsList: MutableList<Ba
 
     }
 
-    private inner class LearnMagicScreen(playerName: String, magicName: String) : BaseScreen() {
+    private inner class LearnMagicScreen(override val parent: GameNode, playerName: String, magicName: String) : BaseScreen {
 
         private val mInfo: Bitmap = (DatLib.getRes(DatLib.ResType.PIC, 2, 10) as ResImage).getBitmap(0)!!
 

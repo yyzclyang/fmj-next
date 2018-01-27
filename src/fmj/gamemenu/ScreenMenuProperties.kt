@@ -4,10 +4,11 @@ import fmj.Global
 import fmj.graphics.TextRender
 import fmj.graphics.Util
 import fmj.views.BaseScreen
+import fmj.views.GameNode
 
 import graphics.Canvas
 
-class ScreenMenuProperties : BaseScreen() {
+class ScreenMenuProperties(override val parent: GameNode) : BaseScreen {
 
     private val mFrameBmp = Util.getFrameBitmap(77 - 39 + 1, 54 - 16 + 1)
     private val strs = arrayOf("状态", "穿戴")
@@ -37,13 +38,13 @@ class ScreenMenuProperties : BaseScreen() {
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate.popScreen()
+            popScreen()
         } else if (key == Global.KEY_ENTER) {
-            delegate.popScreen()
+            popScreen()
             if (mSelId == 0) {
-                delegate.pushScreen(ScreenActorState())
+                pushScreen(ScreenActorState(this))
             } else {
-                delegate.pushScreen(ScreenActorWearing())
+                pushScreen(ScreenActorWearing(this))
             }
         }
     }

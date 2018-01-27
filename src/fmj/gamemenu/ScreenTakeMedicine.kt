@@ -7,10 +7,11 @@ import fmj.goods.IEatMedicine
 import fmj.graphics.TextRender
 import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
+import fmj.views.GameNode
 
 import graphics.Canvas
 
-class ScreenTakeMedicine(private val mMedicine: BaseGoods) : BaseScreen() {
+class ScreenTakeMedicine(override val parent: GameNode, private val mMedicine: BaseGoods) : BaseScreen {
 
     private var mStatePageIndex = 0 // 人物属性页，共两页
 
@@ -44,7 +45,7 @@ class ScreenTakeMedicine(private val mMedicine: BaseGoods) : BaseScreen() {
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate.popScreen()
+            popScreen()
         } else if (key == Global.KEY_ENTER) {
             if (mMedicine.goodsNum > 0) {
                 if (mMedicine.type == 9 && (mMedicine as GoodsMedicine).effectAll()) { // 普通药物，判断是否全体
@@ -55,7 +56,7 @@ class ScreenTakeMedicine(private val mMedicine: BaseGoods) : BaseScreen() {
                     (mMedicine as IEatMedicine).eat(ScreenMainGame.sPlayerList[mActorIndex])
                 }
             } else {
-                delegate.popScreen()
+                popScreen()
             }
         }
     }

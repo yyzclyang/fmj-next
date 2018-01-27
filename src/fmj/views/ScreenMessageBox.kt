@@ -7,7 +7,9 @@ import graphics.Paint
 import graphics.Canvas
 import graphics.Paint.Style
 
-class ScreenMessageBox(msg: String?, private val mOnOkClickListener: OnOKClickListener?) : BaseScreen() {
+class ScreenMessageBox(
+        override val parent: GameNode, msg: String?,
+        private val mOnOkClickListener: OnOKClickListener?): BaseScreen {
 
     private var index = 0
 
@@ -58,7 +60,7 @@ class ScreenMessageBox(msg: String?, private val mOnOkClickListener: OnOKClickLi
     }
 
     private fun exit() {
-        delegate.popScreen()
+        popScreen()
     }
 
     companion object {

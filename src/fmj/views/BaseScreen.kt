@@ -4,16 +4,13 @@ import fmj.ScreenViewType
 import fmj.scene.ScreenMainGame
 
 import graphics.Canvas
-import graphics.Bitmap
 
-interface ScreenDelegate {
+interface GameNode {
     fun popScreen()
     fun pushScreen(scr: BaseScreen)
     fun changeScreen(scr: ScreenViewType)
     fun getCurScreen(): BaseScreen
     fun showMessage(msg:String, delay:Long)
-    fun keyDown(key: Int)
-    fun keyUp(key: Int)
 
     // TODO: rename
     val mainScreen: ScreenMainGame
@@ -23,20 +20,43 @@ interface ScreenDelegate {
     }
 }
 
-abstract class BaseScreen {
-    lateinit var delegate: ScreenDelegate
-    val msgDelegate
-        get() = delegate
+interface Control: GameNode {
+    val parent: GameNode
 
-    open val isPopup: Boolean
+    override val mainScreen
+        get() = parent.mainScreen
+
+    override fun popScreen() {
+        parent.popScreen()
+    }
+
+    override fun pushScreen(scr: BaseScreen) {
+        parent.pushScreen(scr)
+    }
+
+    override fun changeScreen(scr: ScreenViewType) {
+        parent.changeScreen(scr)
+    }
+
+    override fun getCurScreen(): BaseScreen {
+        return parent.getCurScreen()
+    }
+
+    override fun showMessage(msg:String, delay:Long) {
+        parent.showMessage(msg, delay)
+    }
+}
+
+interface BaseScreen: Control {
+    val isPopup: Boolean
         get() = false
 
-    abstract fun update(delta: Long)
+    fun update(delta: Long)
 
-    abstract fun draw(canvas: Canvas)
+    fun draw(canvas: Canvas)
 
-    abstract fun onKeyDown(key: Int)
+    fun onKeyDown(key: Int)
 
-    abstract fun onKeyUp(key: Int)
-    open fun willAppear() {}
+    fun onKeyUp(key: Int)
+    fun willAppear() {}
 }

@@ -12,7 +12,7 @@ import fmj.script.ScriptResources
 import graphics.Canvas
 import java.*
 
-class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
+class ScreenSaveLoadGame(override val parent: GameNode, private val mOperate: Operate) : BaseScreen {
 
     private val mTextPos = arrayOf(intArrayOf(68, 28), intArrayOf(68, 51), intArrayOf(68, 74))
     private var index = 0
@@ -100,7 +100,7 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate.popScreen()
+            popScreen()
         } else if (key == Global.KEY_ENTER) {
             val file = File("sav/" + mFileNames[index])
             if (mOperate == Operate.LOAD) { // 加载存档
@@ -109,23 +109,23 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
                 }
                 loadGame(file)
                 SaveLoadGame.startNewGame = false
-                delegate.changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
+                changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
             } else { // 保存存档
                 if (!file.exists()) {
                     file.createNewFile()
                     saveGame(file)
-                    delegate.popScreen()
-                    delegate.popScreen()
-                    delegate.popScreen()
+                    popScreen()
+                    popScreen()
+                    popScreen()
                     callback?.invoke()
                 } else { // 询问是否覆盖存档
-                    delegate.pushScreen(ScreenMessageBox("覆盖原进度?",
+                    pushScreen(ScreenMessageBox(this, "覆盖原进度?",
                             object : ScreenMessageBox.OnOKClickListener {
                                 override fun onOKClick() {
                                     saveGame(file)
-                                    delegate.popScreen()
-                                    delegate.popScreen()
-                                    delegate.popScreen()
+                                    popScreen()
+                                    popScreen()
+                                    popScreen()
                                     callback?.invoke()
                                 }
                             }))
@@ -136,8 +136,7 @@ class ScreenSaveLoadGame(private val mOperate: Operate) : BaseScreen() {
 
     private fun loadGame(file: File) {
         val ioIn = objectInputOf(file)
-        SaveLoadGame.read(ioIn)
-        Combat.SetDelegate(delegate)
+        SaveLoadGame.read(this, ioIn)
         ScriptResources.read(ioIn)
         ioIn.close()
     }

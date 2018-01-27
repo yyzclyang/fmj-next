@@ -33,6 +33,7 @@ import fmj.magic.MagicAttack
 import fmj.magic.MagicSpecial
 import fmj.magic.ScreenMagic
 import fmj.views.BaseScreen
+import fmj.views.GameNode
 import fmj.views.ScreenStack
 
 import graphics.Canvas
@@ -42,9 +43,9 @@ import graphics.Rect
 import java.System
 import java.gbkBytes
 
-class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: Int) : BaseScreen() {
+class CombatUI(override val parent: GameNode, private val mCallBack: CallBack?, private var mCurPlayerIndex: Int): BaseScreen {
 
-    private val mScreenStack = ScreenStack()
+    private val mScreenStack = ScreenStack(parent.mainScreen.scriptSys)
 
     private var mPlayerList: List<Player> = listOf()
     private var mMonsterList: List<Monster> = listOf()
@@ -87,7 +88,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
     }
 
     init {
-        mScreenStack.pushScreen(MainMenu())
+        mScreenStack.pushScreen(MainMenu(this))
 
         var tmpImg = DatLib.getRes(DatLib.ResType.PIC, 2, 4) as ResImage
         mPlayerIndicator = FrameAnimation(tmpImg, 1, 2)
@@ -114,7 +115,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
 
     fun reset() {
         mScreenStack.clear()
-        mScreenStack.pushScreen(MainMenu())
+        mScreenStack.pushScreen(MainMenu(this))
     }
 
     fun setPlayerList(list: List<Player>) {
@@ -146,7 +147,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
 
 
     /** 显示主菜单、角色信息 */
-    private inner class MainMenu : BaseScreen() {
+    private inner class MainMenu(override val parent: GameNode) : BaseScreen {
 
         /** 1↑、2←、3↓、4→ */
         private val mMenuIcon = DatLib.getRes(DatLib.ResType.PIC, 2, 1) as ResImage
@@ -206,7 +207,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                         }
 
                         // 攻击单个敌人
-                        delegate.pushScreen(MenuCharacterSelect(mMonsterIndicator, sMonsterIndicatorPos,
+                        pushScreen(MenuCharacterSelect(this, mMonsterIndicator, sMonsterIndicatorPos,
                                 mMonsterList, object : OnCharacterSelectedListener {
 
                             override fun onCharacterSelected(fc: FightingCharacter) {
@@ -221,17 +222,17 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                         if (magics.isEmpty()) {
                             return@run
                         }
-                        delegate.pushScreen(ScreenMagic(magics,
+                        pushScreen(ScreenMagic(this, magics,
                                 object : ScreenMagic.OnItemSelectedListener {
 
                                     override fun onItemSelected(magic: BaseMagic) {
-                                        delegate.popScreen() // 弹出魔法选择界面
+                                        popScreen() // 弹出魔法选择界面
                                         if (magic is MagicAttack || magic is MagicSpecial) { // 选一个敌人
                                             if (magic.isForAll) {
                                                 onActionSelected(ActionMagicAttackAll(mPlayerList[mCurPlayerIndex],
                                                         mMonsterList, magic as MagicAttack))
                                             } else { // 选一个敌人
-                                                delegate.pushScreen(MenuCharacterSelect(mMonsterIndicator, sMonsterIndicatorPos,
+                                                pushScreen(MenuCharacterSelect(this@MainMenu, mMonsterIndicator, sMonsterIndicatorPos,
                                                         mMonsterList, object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
@@ -244,7 +245,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                                                 onActionSelected(ActionMagicHelpAll(mPlayerList[mCurPlayerIndex],
                                                         mPlayerList, magic))
                                             } else { // 选一个Player
-                                                delegate.pushScreen(MenuCharacterSelect(mTargetIndicator, sPlayerIndicatorPos,
+                                                pushScreen(MenuCharacterSelect(this@MainMenu, mTargetIndicator, sPlayerIndicatorPos,
                                                         mPlayerList, object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
@@ -259,10 +260,10 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                     }
 
                     3//杂项
-                    -> delegate.pushScreen(MenuMisc())
+                    -> pushScreen(MenuMisc(this))
 
                     4//合击
-                    -> delegate.pushScreen(MenuCharacterSelect(mMonsterIndicator, sMonsterIndicatorPos,
+                    -> pushScreen(MenuCharacterSelect(this, mMonsterIndicator, sMonsterIndicatorPos,
                             mMonsterList, object : OnCharacterSelectedListener {
 
                         override fun onCharacterSelected(fc: FightingCharacter) {
@@ -290,9 +291,12 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
 
     /** 角色标识，用于标记当前选择的角色 */
     private inner class MenuCharacterSelect
-    (private val mIndicator: FrameAnimation, private val mIndicatorPos: Array<Point>,
+    (override val parent: GameNode,
+     private val mIndicator: FrameAnimation,
+     private val mIndicatorPos: Array<Point>,
      private val mList: List<FightingCharacter>,
-     private val mOnCharacterSelectedListener: OnCharacterSelectedListener?, private val mIgnoreDead: Boolean) : BaseScreen() {
+     private val mOnCharacterSelectedListener: OnCharacterSelectedListener?,
+     private val mIgnoreDead: Boolean) : BaseScreen {
 
         private var mCurSel: Int = 0
 
@@ -345,9 +349,9 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
 
         override fun onKeyUp(key: Int) {
             if (key == Global.KEY_CANCEL) {
-                delegate.popScreen()
+                popScreen()
             } else if (key == Global.KEY_ENTER) {
-                delegate.popScreen()
+                popScreen()
                 mOnCharacterSelectedListener?.onCharacterSelected(mList[mCurSel])
             }
         }
@@ -355,7 +359,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
     }
 
     /** 围攻、道具、防御、逃跑、状态 */
-    private inner class MenuMisc : BaseScreen() {
+    private inner class MenuMisc(override val parent: GameNode) : BaseScreen {
 
         private val mBg = Util.getFrameBitmap(2 * 16 + 6, 5 * 16 + 6)
 
@@ -391,7 +395,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                     0//围攻
                     -> mCallBack?.onAutoAttack()
                     1//道具
-                    -> delegate.pushScreen(MenuGoods())
+                    -> pushScreen(MenuGoods(this))
                     2//防御
                     -> {
                         val p = mPlayerList[mCurPlayerIndex]
@@ -402,17 +406,17 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                     -> mCallBack?.onFlee()
                     4//状态
                     -> {
-                        delegate.popScreen()
-                        delegate.pushScreen(MenuState())
+                        popScreen()
+                        pushScreen(MenuState(this))
                     }
                 }
             } else if (key == Global.KEY_CANCEL) {
-                delegate.popScreen()
+                popScreen()
             }
         }
 
         /** 战斗中，显示玩家异常状态 */
-        private inner class MenuState : BaseScreen() {
+        private inner class MenuState(override val parent: GameNode) : BaseScreen {
 
             private val mBg = DatLib.getRes(DatLib.ResType.PIC, 2, 11) as ResImage
 
@@ -470,8 +474,8 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
 
             override fun onKeyUp(key: Int) {
                 if (key == Global.KEY_CANCEL) {
-                    delegate.popScreen()
-                    delegate.pushScreen(MenuMisc())
+                    popScreen()
+                    pushScreen(MenuMisc(this))
                 }
             }
 
@@ -479,7 +483,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
     }
 
     /** 道具子菜单，装备、投掷、使用 */
-    private inner class MenuGoods : BaseScreen() {
+    private inner class MenuGoods(override val parent: GameNode) : BaseScreen {
 
         private val mBg = Util.getFrameBitmap(16 * 2 + 6, 16 * 3 + 6)
 
@@ -531,10 +535,10 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
 
         override fun onKeyUp(key: Int) {
             if (key == Global.KEY_ENTER) {
-                delegate.popScreen()
+                popScreen()
                 when (mSelIndex) {
                     0// 装备
-                    -> delegate.pushScreen(ScreenGoodsList(Player.sGoodsList.equipList,
+                    -> pushScreen(ScreenGoodsList(this, Player.sGoodsList.equipList,
                             object : ScreenGoodsList.OnItemSelectedListener {
                                 override fun onItemSelected(goods: BaseGoods) {
                                     equipSelected(goods)
@@ -542,17 +546,17 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                             }, Mode.Use))
 
                     1// 投掷
-                    -> delegate.pushScreen(ScreenGoodsList(throwableGoodsList,
+                    -> pushScreen(ScreenGoodsList(this, throwableGoodsList,
                             object : ScreenGoodsList.OnItemSelectedListener {
 
                                 override fun onItemSelected(goods: BaseGoods) {
-                                    delegate.popScreen() // pop goods list
-                                    delegate.popScreen() // pop misc menu
+                                    popScreen() // pop goods list
+                                    popScreen() // pop misc menu
                                     if (goods.effectAll()) {
                                         // 投掷伤害全体敌人
                                         onActionSelected(ActionThrowItemAll(mPlayerList[mCurPlayerIndex], mMonsterList, goods as GoodsHiddenWeapon))
                                     } else { // 选一个敌人
-                                        delegate.pushScreen(MenuCharacterSelect(mMonsterIndicator, sMonsterIndicatorPos, mMonsterList,
+                                        pushScreen(MenuCharacterSelect(this@CombatUI, mMonsterIndicator, sMonsterIndicatorPos, mMonsterList,
                                                 object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
@@ -566,17 +570,17 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                             }, Mode.Use))
 
                     2// 使用
-                    -> delegate.pushScreen(ScreenGoodsList(useableGoodsList,
+                    -> pushScreen(ScreenGoodsList(this, useableGoodsList,
                             object : ScreenGoodsList.OnItemSelectedListener {
 
                                 override fun onItemSelected(goods: BaseGoods) {
-                                    delegate.popScreen() // pop goods list
-                                    delegate.popScreen() // pop misc menu
+                                    popScreen() // pop goods list
+                                    popScreen() // pop misc menu
                                     if (goods.effectAll()) {
                                         onActionSelected(ActionUseItemAll(mPlayerList[mCurPlayerIndex],
                                                 mMonsterList, goods))
                                     } else { // 选一个角色治疗
-                                        delegate.pushScreen(MenuCharacterSelect(mTargetIndicator, sPlayerIndicatorPos, mPlayerList,
+                                        pushScreen(MenuCharacterSelect(this@MenuGoods, mTargetIndicator, sPlayerIndicatorPos, mPlayerList,
                                                 object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
@@ -589,7 +593,7 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                             }, Mode.Use))
                 }
             } else if (key == Global.KEY_CANCEL) {
-                delegate.popScreen()
+                popScreen()
             }
         }
 
@@ -599,15 +603,16 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                 goods.canPlayerUse(it.index)
             }
             if (list.size == 0) { // 没人能装备
-                msgDelegate.showMessage("不能装备!", 1000)
+                showMessage("不能装备!", 1000)
             } else if (list.size == 1) { // 一个人能装备
                 if (list[0].hasEquipt(goods.type, goods.index)) {
-                    msgDelegate.showMessage("已装备!", 1000)
+                    showMessage("已装备!", 1000)
                 } else {
-                    delegate.pushScreen(ScreenChgEquipment(list[0], goods as GoodsEquipment))
+                    pushScreen(ScreenChgEquipment(this, list[0], goods as GoodsEquipment))
                 }
             } else { // 多人可装备
-                delegate.pushScreen(object : BaseScreen() {
+                pushScreen(object : BaseScreen {
+                    override val parent = this@MenuGoods
                     internal var bg = Util.getFrameBitmap(16 * 5 + 6, 6 + 16 * list.size)
                     internal var curSel = 0
                     internal var itemsText = Array(list.size) { ByteArray(11) }
@@ -627,13 +632,13 @@ class CombatUI(private val mCallBack: CallBack?, private var mCurPlayerIndex: In
                     override fun onKeyUp(key: Int) {
                         if (key == Global.KEY_ENTER) {
                             if (list[curSel].hasEquipt(goods.type, goods.index)) {
-                                msgDelegate.showMessage("已装备!", 1000)
+                                showMessage("已装备!", 1000)
                             } else {
-                                delegate.popScreen()
-                                delegate.pushScreen(ScreenChgEquipment(list[curSel], goods as GoodsEquipment))
+                                popScreen()
+                                pushScreen(ScreenChgEquipment(this, list[curSel], goods as GoodsEquipment))
                             }
                         } else if (key == Global.KEY_CANCEL) {
-                            delegate.popScreen()
+                            popScreen()
                         }
                     }
 

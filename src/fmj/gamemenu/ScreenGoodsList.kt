@@ -6,6 +6,7 @@ import fmj.goods.BaseGoods
 import fmj.graphics.TextRender
 import fmj.graphics.Util
 import fmj.views.BaseScreen
+import fmj.views.GameNode
 
 import graphics.Bitmap
 import graphics.Canvas
@@ -14,7 +15,11 @@ import graphics.Rect
 import java.Stack
 import java.gbkBytes
 
-class ScreenGoodsList(private val goodsList: List<BaseGoods>, private val itemSelectedListener: OnItemSelectedListener, private val mode: Mode) : BaseScreen() {
+class ScreenGoodsList(
+        override val parent: GameNode,
+        private val goodsList: List<BaseGoods>,
+        private val itemSelectedListener: OnItemSelectedListener,
+        private val mode: Mode): BaseScreen {
 
     private var description = "".gbkBytes()
 
@@ -59,7 +64,7 @@ class ScreenGoodsList(private val goodsList: List<BaseGoods>, private val itemSe
 
     override fun update(delta: Long) {
         if (goodsList.isEmpty()) {
-            delegate.popScreen()
+            popScreen()
         }
     }
 
@@ -124,7 +129,7 @@ class ScreenGoodsList(private val goodsList: List<BaseGoods>, private val itemSe
         if (key == Global.KEY_ENTER && lastDownKey == Global.KEY_ENTER) {
             itemSelectedListener.onItemSelected(goodsList[curItemIndex])
         } else if (key == Global.KEY_CANCEL) {
-            delegate.popScreen()
+            popScreen()
         }
     }
 

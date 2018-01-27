@@ -9,12 +9,13 @@ import fmj.goods.GoodsDrama
 import fmj.graphics.TextRender
 import fmj.graphics.Util
 import fmj.views.BaseScreen
-import fmj.views.ScreenDelegate
+import fmj.views.Control
+import fmj.views.GameNode
 
 import graphics.Canvas
 
-class OperateSale(private val game: ScreenDelegate) : Operate, ScreenGoodsList.OnItemSelectedListener {
-    private val saleScreen = SaleGoodsScreen()
+class OperateSale(override val parent: GameNode): Control, Operate, ScreenGoodsList.OnItemSelectedListener {
+    private val saleScreen = SaleGoodsScreen(this)
 
     override fun update(delta: Long): Boolean {
         return false
@@ -28,14 +29,14 @@ class OperateSale(private val game: ScreenDelegate) : Operate, ScreenGoodsList.O
 
     override fun onItemSelected(goods: BaseGoods) {
         if (goods is GoodsDrama) {
-            game.showMessage("任务物品!", 1000)
+            showMessage("任务物品!", 1000)
         } else {
             saleScreen.init(goods)
-            game.pushScreen(saleScreen)
+            pushScreen(saleScreen)
         }
     }
 
-    private inner class SaleGoodsScreen : BaseScreen() {
+    private inner class SaleGoodsScreen(override val parent: GameNode) : BaseScreen {
         private var goods: BaseGoods? = null
         private var saleCnt: Int = 0
         private var money: Int = 0
@@ -69,15 +70,15 @@ class OperateSale(private val game: ScreenDelegate) : Operate, ScreenGoodsList.O
                 if (saleCnt > 0) {
                     Player.sGoodsList.useGoodsNum(goods!!.type, goods!!.index, saleCnt)
                 }
-                delegate.popScreen()
+                popScreen()
                 // 重创物品选择界面，防止数量0还显示
-                delegate.popScreen()
+                popScreen()
                 val list = mutableListOf<BaseGoods>()
                 list.addAll(Player.sGoodsList.goodsList)
                 list.addAll(Player.sGoodsList.equipList)
-                delegate.pushScreen(ScreenGoodsList(list, this@OperateSale, Mode.Sale))
+                pushScreen(ScreenGoodsList(this, list, this@OperateSale, Mode.Sale))
             } else if (key == Global.KEY_CANCEL) {
-                delegate.popScreen()
+                popScreen()
             }
         }
 

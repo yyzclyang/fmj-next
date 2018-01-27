@@ -1,21 +1,20 @@
 package fmj.script
 
-import fmj.views.ScreenDelegate
 import graphics.Canvas
 
 class ScriptExecutor
 /**
  *
- * @param list 一个脚本文件对应的操作表
+ * @param commands 一个脚本文件对应的操作表
  * @param eventIndex eventIndex[i]等于触发事件i+1时，要执行的Operate在list中的序号
  * @param map 地址偏移-序号
  */
 (private val commands: ArrayList<Command>,
  /**
-  * mEventIndex[i]等于触发事件i+1时，要执行的Operate在list中的序号，
+  * eventIndex[i]等于触发事件i+1时，要执行的Operate在list中的序号，
   * -1表示不存在
   */
- private val mEventIndex: IntArray,
+ private val eventIndex: IntArray,
  /**
   * address offset --- curOp's index of commands
   */
@@ -44,11 +43,11 @@ class ScriptExecutor
      * @param eventId 是否成功触发
      */
     fun triggerEvent(eventId: Int): Boolean {
-        if (eventId > mEventIndex.size) {
+        if (eventId > eventIndex.size) {
             return false
         }
 
-        val index = mEventIndex[eventId - 1]
+        val index = eventIndex[eventId - 1]
         if (index != -1) {
             mCurExeOperateIndex = index
             curOp = null
@@ -67,11 +66,11 @@ class ScriptExecutor
         }
     }
 
-    fun process(delegate: ScreenDelegate) {
+    fun process() {
         if (curOp == null) {
             while (mCurExeOperateIndex < commands.size && goonExecute) {
                 val cmd = commands[mCurExeOperateIndex]
-                curOp = cmd.run(delegate)
+                curOp = cmd.run()
                 if (curOp != null) { // 执行 update draw
                     return
                 }

@@ -1,6 +1,7 @@
 package fmj
 
 import fmj.script.ScriptProcess
+import fmj.views.Control
 import fmj.views.ScreenAnimation
 import fmj.views.ScreenStack
 
@@ -8,15 +9,16 @@ import graphics.Canvas
 import graphics.Bitmap
 import java.*
 
-class GameView {
-    private val screen = ScreenStack()
+class Game: Control {
+    override val parent get() = screen
     internal val canvas = Canvas(Bitmap(Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT))
     private val delta = 40
+    private val scriptProcess = ScriptProcess(this)
+    private val screen = ScreenStack(scriptProcess)
 
     fun start() {
-        ScriptProcess.instance.delegate = screen
         listenUIEvents()
-        val scr = ScreenAnimation(247)
+        val scr = ScreenAnimation(this, 247)
         screen.pushScreen(scr)
     }
 
@@ -53,5 +55,5 @@ class GameView {
 }
 
 fun main(args: Array<String>) {
-    GameView().start()
+    Game().start()
 }

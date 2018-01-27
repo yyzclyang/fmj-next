@@ -8,20 +8,18 @@ import fmj.lib.ResSrs
 import fmj.scene.SaveLoadGame
 import graphics.Canvas
 
-class ScreenMenu : BaseScreen() {
-    private val mImgMenu: ResImage
+class ScreenMenu(override val parent: GameNode): BaseScreen {
+    private val mImgMenu = DatLib.getPic(2, 14)!!
     private val mLeft: Int
     private val mTop: Int
-    private val mSrsSelector: Array<ResSrs> // TODO
+    private val mSrsSelector = arrayOf(
+            DatLib.getRes(DatLib.ResType.SRS, 1, 250) as ResSrs,
+            DatLib.getRes(DatLib.ResType.SRS, 1, 251) as ResSrs)
     private var mCurSelect = 0
 
     private var isCancelKeyDown = false
 
     init {
-        mImgMenu = DatLib.getRes(DatLib.ResType.PIC, 2, 14) as ResImage
-        mSrsSelector = arrayOf(
-                DatLib.getRes(DatLib.ResType.SRS, 1, 250) as ResSrs,
-                DatLib.getRes(DatLib.ResType.SRS, 1, 251) as ResSrs)
         mSrsSelector[0].start()
         mSrsSelector[1].start()
         mLeft = (160 - mImgMenu.width) / 2
@@ -51,10 +49,10 @@ class ScreenMenu : BaseScreen() {
         if (key == Global.KEY_ENTER) {
             if (mCurSelect == 0) { // 新游戏
                 SaveLoadGame.startNewGame = true
-                delegate.changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
+                changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
             } else if (mCurSelect == 1) { // 读取进度
-                delegate.pushScreen(
-                        ScreenSaveLoadGame(ScreenSaveLoadGame.Operate.LOAD))
+                pushScreen(
+                        ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.LOAD))
             }
         } else if (key == Global.KEY_CANCEL && isCancelKeyDown) {
             // TODO: 退出游戏

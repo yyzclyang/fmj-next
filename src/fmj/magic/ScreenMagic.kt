@@ -3,6 +3,7 @@ package fmj.magic
 import fmj.Global
 import fmj.graphics.TextRender
 import fmj.views.BaseScreen
+import fmj.views.GameNode
 
 
 import graphics.Bitmap
@@ -14,7 +15,9 @@ import graphics.Rect
 import java.Stack
 import java.gbkBytes
 
-class ScreenMagic(magics: Collection<BaseMagic>, private val mOnItemSelectedListener: OnItemSelectedListener) : BaseScreen() {
+class ScreenMagic(override val parent: GameNode,
+                  magics: Collection<BaseMagic>,
+                  private val mOnItemSelectedListener: OnItemSelectedListener) : BaseScreen {
     private val magics = magics.toTypedArray()
 
     private var mFirstItemIndex = 0 // 界面上显示的第一个魔法的序号
@@ -128,7 +131,7 @@ class ScreenMagic(magics: Collection<BaseMagic>, private val mOnItemSelectedList
         if (key == Global.KEY_ENTER) { // 回调接口
             mOnItemSelectedListener.onItemSelected(magics[mCurItemIndex])
         } else if (key == Global.KEY_CANCEL) {
-            delegate.popScreen()
+            popScreen()
         }
     }
 

@@ -1,14 +1,13 @@
 package fmj.gamemenu
 
 import graphics.Canvas
-import fmj.GameView
 import fmj.Global
-import fmj.characters.Player
 import fmj.graphics.Util
 import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
+import fmj.views.GameNode
 
-class ScreenActorState : BaseScreen() {
+class ScreenActorState(override val parent: GameNode) : BaseScreen {
 
     private var mPage = 0
 
@@ -51,7 +50,7 @@ class ScreenActorState : BaseScreen() {
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
-            delegate.popScreen()
+            popScreen()
         }
     }
 }

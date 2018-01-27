@@ -1,6 +1,5 @@
 package fmj.script
 
-import fmj.views.ScreenDelegate
 import graphics.Canvas
 
 interface Command {
@@ -16,7 +15,7 @@ interface Command {
      *
      * `null`指令执行完毕
      */
-    fun run(delegate: ScreenDelegate): Operate?
+    fun run(): Operate?
 }
 
 interface Operate {

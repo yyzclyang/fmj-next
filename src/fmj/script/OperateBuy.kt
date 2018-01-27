@@ -10,14 +10,15 @@ import fmj.graphics.Util
 import fmj.lib.DatLib
 import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
-import fmj.views.ScreenDelegate
+import fmj.views.Control
+import fmj.views.GameNode
 
 import graphics.Canvas
 
-class OperateBuy(data: ByteArray, delegate: ScreenDelegate) : Operate, ScreenGoodsList.OnItemSelectedListener {
+class OperateBuy(override val parent: GameNode, data: ByteArray)
+    : Control, Operate, ScreenGoodsList.OnItemSelectedListener {
     private val goodsList: MutableList<BaseGoods> =  mutableListOf()
-    private val mBuyScreen = BuyGoodsScreen()
-    private val delegate = delegate
+    private val mBuyScreen = BuyGoodsScreen(this)
 
     init {
         var i = 0
@@ -40,7 +41,7 @@ class OperateBuy(data: ByteArray, delegate: ScreenDelegate) : Operate, ScreenGoo
     }
 
     private fun run() {
-        delegate.pushScreen(ScreenGoodsList(goodsList, this, Mode.Buy))
+        pushScreen(ScreenGoodsList(this, goodsList, this, Mode.Buy))
     }
 
     override fun update(delta: Long): Boolean {
@@ -57,14 +58,14 @@ class OperateBuy(data: ByteArray, delegate: ScreenDelegate) : Operate, ScreenGoo
 
     override fun onItemSelected(goods: BaseGoods) {
         if (Player.sMoney < goods.buyPrice) {
-            delegate.showMessage("金钱不足!", 1000)
+            showMessage("金钱不足!", 1000)
         } else {
             mBuyScreen.init(goods)
-            delegate.pushScreen(mBuyScreen)
+            pushScreen(mBuyScreen)
         }
     }
 
-    private class BuyGoodsScreen : BaseScreen() {
+    private class BuyGoodsScreen(override val parent: GameNode): BaseScreen {
         private var goods: BaseGoods? = null
         private var buyCnt: Int = 0
         private var money: Int = 0
@@ -97,10 +98,10 @@ class OperateBuy(data: ByteArray, delegate: ScreenDelegate) : Operate, ScreenGoo
                 if (buyCnt == goods!!.goodsNum && buyCnt > 0) {
                     Player.sGoodsList.addGoods(goods!!.type, goods!!.index, buyCnt)
                 }
-                delegate.popScreen()
+                popScreen()
             } else if (key == Global.KEY_CANCEL) {
                 goods!!.addGoodsNum(-buyCnt)
-                delegate.popScreen()
+                popScreen()
             }
         }
 
@@ -111,7 +112,7 @@ class OperateBuy(data: ByteArray, delegate: ScreenDelegate) : Operate, ScreenGoo
                     goods!!.addGoodsNum(1)
                     money -= goods!!.buyPrice
                 } else {
-                    delegate.showMessage("金钱不足!", 1000)
+                    showMessage("金钱不足!", 1000)
                 }
             } else if (key == Global.KEY_DOWN && buyCnt > 0) {
                 --buyCnt

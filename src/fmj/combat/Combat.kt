@@ -20,7 +20,7 @@ import fmj.lib.ResSrs
 import fmj.scene.ScreenMainGame
 import fmj.script.ScriptExecutor
 import fmj.views.BaseScreen
-import fmj.views.ScreenDelegate
+import fmj.views.GameNode
 
 import graphics.Bitmap
 import graphics.Canvas
@@ -32,7 +32,7 @@ import java.ObjectInput
 import java.ObjectOutput
 import java.Random
 
-class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
+class Combat private constructor(override val parent: GameNode) : BaseScreen, CombatUI.CallBack {
 
     private var mScrb: Int = 0
     private var mScrl: Int = 0
@@ -50,7 +50,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
     private val mActionExecutor = ActionExecutor(mActionQueue, this)
 
     /** 战斗的UI */
-    private val mCombatUI = CombatUI(this, 0)
+    private val mCombatUI = CombatUI(this, this, 0)
 
     /** 随机战斗中，可能出现的敌人类型 */
     private var mMonsterType: IntArray? = null
@@ -247,7 +247,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
             sInstanceBk = null
         } else {
             if (!mIsWin) { // 死了，游戏结束
-                delegate.changeScreen(ScreenViewType.SCREEN_MENU)
+                changeScreen(ScreenViewType.SCREEN_MENU)
             }
         }
 
@@ -367,7 +367,7 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
                     }
                     gl.addAll(gm.goodsList)
                     gl.addAll(gm.equipList)
-                    mCombatSuccess = CombatSuccess(mWinExp, mWinMoney, gl, lvuplist) // 显示玩家的收获
+                    mCombatSuccess = CombatSuccess(this, mWinExp, mWinMoney, gl, lvuplist) // 显示玩家的收获
                 } else { // 还有怪物存活
                     if (isAnyPlayerAlive) { // 有玩家角色没挂，继续打怪
                         ++mRoundCnt
@@ -615,12 +615,12 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
          * @param scrl 左下角图
          * @param scrr 右上角图
          */
-        fun InitFight(monstersType: IntArray, scrb: Int, scrl: Int, scrr: Int) {
+        fun InitFight(parent: GameNode, monstersType: IntArray, scrb: Int, scrl: Int, scrr: Int) {
             sIsEnable = true
             sIsRandomFight = true
             sIsFighting = false
 
-            sInstance = Combat()
+            sInstance = Combat(parent)
             sInstanceBk = null
 
             var cnt = 0
@@ -645,13 +645,6 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
             sInstance!!.createBackgroundBitmap(scrb, scrl, scrr)
         }
 
-        fun SetDelegate(delegate: ScreenDelegate) {
-            sInstance?.let {
-                it.delegate = delegate
-                it.mCombatUI.delegate = delegate
-            }
-        }
-
         fun write(out: ObjectOutput) {
             out.writeBoolean(IsActive())
             if (IsActive()) {
@@ -662,14 +655,14 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
             }
         }
 
-        fun read(coder: ObjectInput) {
+        fun read(parent: GameNode, coder: ObjectInput) {
             sIsEnable = coder.readBoolean()
             if (sIsEnable) {
                 val monsterType = coder.readIntArray()
                 val scrb = coder.readInt()
                 val scrl = coder.readInt()
                 val scrr = coder.readInt()
-                InitFight(monsterType, scrb, scrl, scrr)
+                InitFight(parent, monsterType, scrb, scrl, scrr)
             }
         }
 
@@ -683,11 +676,11 @@ class Combat private constructor() : BaseScreen(), CombatUI.CallBack {
          * @param lossto 战斗失败跳转的地址
          * @param winto 战斗成功跳转的地址
          */
-        fun EnterFight(roundMax: Int, monstersType: IntArray, scr: IntArray, evtRnds: IntArray, evts: IntArray, lossto: Int, winto: Int) {
+        fun EnterFight(parent: GameNode, roundMax: Int, monstersType: IntArray, scr: IntArray, evtRnds: IntArray, evts: IntArray, lossto: Int, winto: Int) {
             sIsRandomFight = false
 
             sInstanceBk = sInstance // 保存当前随机战斗的引用
-            sInstance = Combat()
+            sInstance = Combat(parent)
 
             sInstance!!.mMonsterList = mutableListOf<Monster>()
             monstersType.indices

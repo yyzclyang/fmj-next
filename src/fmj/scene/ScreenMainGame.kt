@@ -10,8 +10,8 @@ import fmj.gamemenu.ScreenGameMainMenu
 import fmj.graphics.Util
 import fmj.lib.DatLib
 import fmj.lib.ResMap
-import fmj.script.ScriptExecutor
 import fmj.script.ScriptProcess
+import fmj.script.ScriptVM
 import fmj.script.ScriptResources
 import fmj.views.BaseScreen
 import fmj.views.GameNode
@@ -21,7 +21,7 @@ import graphics.Point
 
 class ScreenMainGame(
         override val parent: GameNode,
-        private val scriptProcess: ScriptProcess): BaseScreen {
+        private val vm: ScriptVM): BaseScreen {
 
     var player: Player? = null
     var currentMap: ResMap? = null
@@ -29,7 +29,7 @@ class ScreenMainGame(
 
     private val mMapScreenPos = Point() // 屏幕左上角对应地图的位置
 
-    private var mScriptExecutor: ScriptExecutor? = null
+    val scriptProcess: ScriptProcess
 
     private var sPlayerList = mutableListOf<Player>()
 
@@ -105,8 +105,7 @@ class ScreenMainGame(
             sPlayerList.clear()
             Player.sGoodsList.clear()
             Player.sMoney = 0
-            startChapter(1, 1)
-            ScriptExecutor.goonExecute = true
+            scriptProcess = startChapter(1, 1)
             mRunScript = true
         } else { // 再续前缘
             loadMap(SaveLoadGame.MapType, SaveLoadGame.MapIndex,
@@ -119,43 +118,33 @@ class ScreenMainGame(
             if (sPlayerList.size > 0) {
                 player = sPlayerList[0]
             } else {
-                createActor(1, 4, 3)
-                //Log.e("error", "存档读取出错");
+                throw Error("存档读取出错")
             }
-            this.scriptProcess.loadScript(SaveLoadGame.ScriptType, SaveLoadGame.ScriptIndex)
-            mScriptExecutor = this.scriptProcess.scriptExecutor
-            ScriptExecutor.goonExecute = true
+            scriptProcess = vm.loadScript(SaveLoadGame.ScriptType, SaveLoadGame.ScriptIndex)
             mRunScript = false
         }
-        //		Player.sMoney = 999999;
     }
 
     fun exitScript() {
         mRunScript = false
-        ScriptExecutor.goonExecute = false
+        scriptProcess.goonExecute = false
     }
 
-//    fun runScript() {
-//        mRunScript = true
-//    }
-
-    fun startChapter(type: Int, index: Int) {
-        scriptProcess.loadScript(type, index)
-        mScriptExecutor = scriptProcess.scriptExecutor
-        //		update(0);
-        ScriptExecutor.goonExecute = false
+    fun startChapter(type: Int, index: Int): ScriptProcess {
+        val process = vm.loadScript(type, index)
         for (i in 1..40) {
             mNPCObj[i] = NPC.empty
         }
         ScriptResources.initLocalVar()
         SaveLoadGame.ScriptType = type
         SaveLoadGame.ScriptIndex = index
+        return process
     }
 
     override fun update(delta: Long) {
-        if (mRunScript && mScriptExecutor != null) {
-            mScriptExecutor!!.process()
-            mScriptExecutor!!.update(delta)
+        if (mRunScript) {
+            scriptProcess.process()
+            scriptProcess.update(delta)
         } else if (Combat.IsActive()) { // TODO fix this test
             Combat.Update(delta)
         } else {
@@ -166,11 +155,11 @@ class ScreenMainGame(
     }
 
     override fun draw(canvas: Canvas) {
-        if (mRunScript && mScriptExecutor != null) {
+        if (mRunScript) {
             if (Combat.IsActive()) {
                 Combat.Draw(canvas)
             }
-            mScriptExecutor!!.draw(canvas)
+            scriptProcess.draw(canvas)
         } else if (Combat.IsActive()) {
             Combat.Draw(canvas)
             return
@@ -205,8 +194,8 @@ class ScreenMainGame(
     }
 
     override fun onKeyDown(key: Int) {
-        if (mRunScript && mScriptExecutor != null) {
-            mScriptExecutor!!.keyDown(key)
+        if (mRunScript) {
+            scriptProcess.keyDown(key)
         } else if (Combat.IsActive()) {
             Combat.KeyDown(key)
             return
@@ -222,8 +211,8 @@ class ScreenMainGame(
     }
 
     override fun onKeyUp(key: Int) {
-        if (mRunScript && mScriptExecutor != null) {
-            mScriptExecutor!!.keyUp(key)
+        if (mRunScript) {
+            scriptProcess.keyUp(key)
         } else if (Combat.IsActive()) {
             Combat.KeyUp(key)
             return
@@ -233,14 +222,12 @@ class ScreenMainGame(
     }
 
     fun gotoAddress(address: Int) {
-        mScriptExecutor!!.gotoAddress(address)
+        scriptProcess.gotoAddress(address)
         mRunScript = true
     }
 
     fun triggerEvent(eventId: Int) {
-        if (mScriptExecutor != null) {
-            mRunScript = mScriptExecutor!!.triggerEvent(eventId)
-        }
+        mRunScript = scriptProcess.triggerEvent(eventId)
     }
 
     /**
@@ -260,7 +247,7 @@ class ScreenMainGame(
         // NPC事件
         val npcId = getNpcIdFromPosInMap(x, y)
         if (npcId != 0) {
-            mRunScript = mScriptExecutor!!.triggerEvent(npcId)
+            mRunScript = scriptProcess.triggerEvent(npcId)
             return
         } else if (triggerMapEvent(x, y)) {// 地图切换
         }
@@ -273,10 +260,10 @@ class ScreenMainGame(
      * @param y
      */
     private fun triggerMapEvent(x: Int, y: Int): Boolean {
-        if (currentMap != null && mScriptExecutor != null) {
+        if (currentMap != null) {
             val id = currentMap!!.getEventNum(x, y)
             if (id != 0) {
-                mScriptExecutor!!.triggerEvent(id + 40)
+                scriptProcess.triggerEvent(id + 40)
                 mRunScript = true
                 return true
             }

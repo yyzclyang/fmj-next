@@ -8,7 +8,6 @@ import fmj.goods.BaseGoods
 import fmj.graphics.TextRender
 import fmj.graphics.Util
 import fmj.lib.DatLib
-import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
 import fmj.views.Control
 import fmj.views.GameNode
@@ -49,7 +48,7 @@ class OperateBuy(override val parent: GameNode, data: ByteArray)
     }
 
     override fun draw(canvas: Canvas) {
-        game.mainScreen.drawScene(canvas)
+        game.mainScene.drawScene(canvas)
     }
 
     override fun onKeyDown(key: Int) {}

@@ -2,7 +2,7 @@ package fmj.views
 
 import fmj.ScreenViewType
 import fmj.scene.ScreenMainGame
-import fmj.script.ScriptProcess
+import fmj.script.ScriptVM
 
 import graphics.Canvas
 
@@ -41,17 +41,20 @@ interface Control: GameNode {
 interface Game: Control {
     fun changeScreen(screenType: ScreenViewType)
     // TODO: rename
-    val mainScreen: ScreenMainGame
-    val scriptProcess: ScriptProcess
-    val playerList get() = mainScreen.playerList
+    val mainScene: ScreenMainGame
+    val vm: ScriptVM
+    val playerList get() = mainScene.playerList
+
     fun triggerEvent(eventId: Int) {
-        mainScreen.triggerEvent(eventId)
+        mainScene.triggerEvent(eventId)
     }
-    fun gotoAddress(addr: Int) {
-        mainScreen.gotoAddress(addr)
+
+    fun gotoAddress(address: Int) {
+        mainScene.gotoAddress(address)
     }
+
     fun exitScript() {
-        mainScreen.exitScript()
+        mainScene.exitScript()
     }
 }
 

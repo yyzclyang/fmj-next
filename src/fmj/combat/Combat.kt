@@ -17,9 +17,6 @@ import fmj.goods.GoodsManage
 import fmj.lib.DatLib
 import fmj.lib.ResImage
 import fmj.lib.ResSrs
-import fmj.main
-import fmj.scene.ScreenMainGame
-import fmj.script.ScriptExecutor
 import fmj.views.BaseScreen
 import fmj.views.GameNode
 
@@ -242,7 +239,7 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
     private fun exitCurrentCombat() {
         if (!sIsRandomFight) {
             game.gotoAddress(if (mIsWin) mWinAddr else mLossAddr)
-            ScriptExecutor.goonExecute = true
+            game.mainScene.scriptProcess.goonExecute = true
             sIsRandomFight = true
             sInstance = sInstanceBk
             sInstanceBk = null

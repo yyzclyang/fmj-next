@@ -1,7 +1,7 @@
 package fmj
 
 import fmj.scene.ScreenMainGame
-import fmj.script.ScriptProcess
+import fmj.script.ScriptVM
 import fmj.views.*
 
 import graphics.Canvas
@@ -13,8 +13,8 @@ class MainGame: Game {
     private  val canvas = Canvas(Bitmap(Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT))
     private  val screenStack = ScreenStack(this)
 
-    override val scriptProcess = ScriptProcess(this)
-    override val mainScreen = ScreenMainGame(this, scriptProcess)
+    override val vm = ScriptVM(this)
+    override val mainScene = ScreenMainGame(this, vm)
     override val parent get() = screenStack
     override val game: Game
         get() = this
@@ -47,7 +47,7 @@ class MainGame: Game {
                     ScreenViewType.SCREEN_DEV_LOGO -> ScreenAnimation(this, 247)
                     ScreenViewType.SCREEN_GAME_LOGO -> ScreenAnimation(this, 248)
                     ScreenViewType.SCREEN_MENU -> ScreenMenu(this)
-                    ScreenViewType.SCREEN_MAIN_GAME -> mainScreen
+                    ScreenViewType.SCREEN_MAIN_GAME -> mainScene
                     ScreenViewType.SCREEN_GAME_FAIL -> ScreenAnimation(this, 249)
                     ScreenViewType.SCREEN_SAVE_GAME -> ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.SAVE)
                     ScreenViewType.SCREEN_LOAD_GAME -> ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.LOAD)

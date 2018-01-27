@@ -47,7 +47,7 @@ class CombatUI(override val parent: GameNode,
                private val mCallBack: CallBack?,
                private var mCurPlayerIndex: Int): BaseScreen {
 
-    private val mScreenStack = ScreenStack(game.scriptProcess)
+    private val mScreenStack = ScreenStack(game.vm)
 
     private var mPlayerList: List<Player> = listOf()
     private var mMonsterList: List<Monster> = listOf()

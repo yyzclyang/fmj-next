@@ -32,7 +32,7 @@ class ResGut : ResBase() {
      *
      * @return 场景事件
      */
-    var sceneEvent: IntArray? = null
+    lateinit var sceneEvent: IntArray
         private set
 
     /**
@@ -42,7 +42,7 @@ class ResGut : ResBase() {
      *
      * @return 脚本，格式为 指令号+数据
      */
-    var scriptData: ByteArray? = null
+    lateinit var scriptData: ByteArray
         private set
 
     override fun setData(buf: ByteArray, offset: Int) {

@@ -24,10 +24,6 @@ import java.*
 
 typealias CommandMaker = (code: ByteArray, start: Int) -> Command
 
-private fun makeInstruct(it: CommandMaker): CommandMaker {
-    return it
-}
-
 inline fun makeCommand(len: Int, crossinline run: () -> Operate?): Command {
     return object: Command {
         override val len = len
@@ -87,18 +83,18 @@ class ScriptProcess(override val parent: GameNode): Control {
         }
 
     init {
-        val cmd_music = makeInstruct { _, _ ->
+        fun cmd_music(code: ByteArray, start: Int): Command {
             println("cmd_music not implemented")
-            makeCommand(4) { null }
+            return makeCommand(4) { null }
         }
 
-        val cmd_loadmap = makeInstruct { code, start ->
+        fun cmd_loadmap(code: ByteArray, start: Int): Command {
             val type = code[start].toInt() and 0xFF or (code[start + 1].toInt() shl 8 and 0xFF00)
             val index = code[start + 2].toInt() and 0xFF or (code[start + 3].toInt() shl 8 and 0xFF00)
             val x = code[start + 4].toInt() and 0xFF or (code[start + 5].toInt() shl 8 and 0xFF00)
             val y = code[start + 6].toInt() and 0xFF or (code[start + 7].toInt() shl 8 and 0xFF00)
 
-            makeCommand(8) {
+            return makeCommand(8) {
                 cmdPrint("cmd_loadmap type=$type index=$index x=$x y=$y")
 
                 mainScreen.loadMap(type, index, x, y)
@@ -112,12 +108,12 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_createactor = makeInstruct { code, start ->
+        fun cmd_createactor(code: ByteArray, start: Int): Command {
             val actor = get2ByteInt(code, start)
             val x = get2ByteInt(code, start + 2)
             val y = get2ByteInt(code, start + 4)
 
-            makeCommand(6) {
+            return makeCommand(6) {
                 cmdPrint("cmd_createactor $actor at ($x, $y)")
 
                 mainScreen.createActor(actor, x, y)
@@ -130,21 +126,21 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_deletenpc = makeInstruct { code, start ->
+        fun cmd_deletenpc(code: ByteArray, start: Int): Command {
             val npc = get2ByteInt(code, start)
-            makeCommand(2) {
+            return makeCommand(2) {
                 cmdPrint("cmd_deletenpc $npc")
                 mainScreen.deleteNpc(npc)
                 null
             }
         }
 
-        val cmd_move = makeInstruct { code, start ->
+        fun cmd_move(code: ByteArray, start: Int): Command {
             val npcId = get2ByteInt(code, start)
             val dstX = get2ByteInt(code, start + 2)
             val dstY = get2ByteInt(code, start + 4)
 
-            makeCommand(6) {
+            return makeCommand(6) {
                 val npc = mainScreen.getNPC(npcId)
                 cmdPrint("cmd_move ${npc.name} to ($dstX, $dstY)")
 
@@ -178,18 +174,18 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_callback = makeInstruct { _, _ ->
-            makeCommand(0) {
+        fun cmd_callback(code: ByteArray, start: Int): Command {
+            return makeCommand(0) {
                 cmdPrint("cmd_callback")
                 mainScreen.exitScript()
                 null
             }
         }
 
-        val cmd_goto = makeInstruct { code, start ->
+        fun cmd_goto(code: ByteArray, start: Int): Command {
             val address = get2ByteInt(code, start)
 
-            makeCommand(2) {
+            return makeCommand(2) {
                 cmdPrint("cmd_goto from $start to $address")
                 // TODO: 无需通过mainscreen
                 mainScreen.gotoAddress(address)
@@ -197,11 +193,11 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_if = makeInstruct { code, start ->
+        fun cmd_if(code: ByteArray, start: Int): Command {
             val va = get2ByteInt(code, start)
             val address = get2ByteInt(code, start + 2)
 
-            makeCommand(4) {
+            return makeCommand(4) {
                 val value = ScriptResources.globalEvents[va]
                 cmdPrint("cmd_if $va(=$value) goto $address")
                 if (value) {
@@ -211,18 +207,18 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_set = makeInstruct { code, start ->
+        fun cmd_set(code: ByteArray, start: Int): Command {
             val id = get2ByteInt(code, start)
             val value = get2ByteInt(code, start + 2)
 
-            makeCommand(4) {
+            return makeCommand(4) {
                 cmdPrint("cmd_set $id = $value")
                 ScriptResources.variables[id] = value
                 null
             }
         }
 
-        val cmd_say = makeInstruct { code, start ->
+        fun cmd_say(code: ByteArray, start: Int): Command {
             val picNum = get2ByteInt(code, start)
             val text = getStringBytes(code, start + 2)
             val headImg = DatLib.getPic(1, picNum, allowNull = true)
@@ -237,7 +233,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             paint.color = Global.COLOR_BLACK
             paint.style = Paint.Style.FILL_AND_STROKE
 
-            makeCommand(2 + text.size) {
+            return makeCommand(2 + text.size) {
                 cmdPrint("cmd_say ${text.gbkString()}")
                 var iOfText = 0
                 var iOfNext = 0
@@ -298,42 +294,42 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_startchapter = makeInstruct { code, start ->
+        fun cmd_startchapter(code: ByteArray, start: Int): Command {
             val type = code[start].toInt() and 0xFF or (code[start + 1].toInt() shl 8 and 0xFF)
             val index = code[start + 2].toInt() and 0xFF or (code[start + 3].toInt() shl 8 and 0xFF)
 
-            makeCommand(4) {
+            return makeCommand(4) {
                 cmdPrint("cmd_startchapter $type $index")
                 mainScreen.startChapter(type, index)
                 null
             }
         }
 
-        val cmd_screens = makeInstruct { code, start ->
+        fun cmd_screens(code: ByteArray, start: Int): Command {
             val x = get2ByteInt(code, start)
             val y = get2ByteInt(code, start + 2)
 
-            makeCommand(4) {
+            return makeCommand(4) {
                 cmdPrint("cmd_screens ($x,$y)")
                 mainScreen.setMapScreenPos(x, y)
                 null
             }
         }
 
-        val cmd_gameover = makeInstruct { _, _ ->
-            makeCommand(0) {
+        fun cmd_gameover(code: ByteArray, start: Int): Command {
+            return makeCommand(0) {
                 cmdPrint("cmd_gameover")
                 changeScreen(ScreenViewType.SCREEN_MENU)
                 null
             }
         }
 
-        val cmd_ifcmp = makeInstruct { code, start ->
+        fun cmd_ifcmp(code: ByteArray, start: Int): Command {
             val id = get2ByteInt(code, start)
             val other = get2ByteInt(code, start + 2)
             val addr = get2ByteInt(code, start + 4)
 
-            makeCommand(6) {
+            return makeCommand(6) {
                 val value = ScriptResources.variables[id]
                 cmdPrint("cmd_ifcmp $id(=$value) vs $other goto $addr")
                 if (value == other) {
@@ -343,63 +339,63 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_add = makeInstruct { code, start ->
+        fun cmd_add(code: ByteArray, start: Int): Command {
             val va = get2ByteInt(code, start)
             val value = get2ByteInt(code, start + 2)
 
-            makeCommand(4) {
+            return makeCommand(4) {
                 cmdPrint("cmd_add")
                 ScriptResources.variables[va] += value
                 null
             }
         }
 
-        val cmd_sub = makeInstruct { code, start ->
+        fun cmd_sub(code: ByteArray, start: Int): Command {
             val va = get2ByteInt(code, start)
             val value = get2ByteInt(code, start + 2)
 
-            makeCommand(4) {
+            return makeCommand(4) {
                 cmdPrint("cmd_sub")
                 ScriptResources.variables[va] -= value
                 null
             }
         }
 
-        val cmd_setcontrolid = makeInstruct { code, start ->
+        fun cmd_setcontrolid(code: ByteArray, start: Int): Command {
             // start + 2
             throw NotImplementedError("cmd_setcontrolid")
         }
 
-        val cmd_setevent = makeInstruct { code, start ->
+        fun cmd_setevent(code: ByteArray, start: Int): Command {
             val event = get2ByteInt(code, start)
 
-            makeCommand(2) {
+            return makeCommand(2) {
                 cmdPrint("cmd_setevent $event")
                 ScriptResources.setEvent(event)
                 null
             }
         }
 
-        val cmd_clrevent = makeInstruct { code, start ->
+        fun cmd_clrevent(code: ByteArray, start: Int): Command {
             val event = get2ByteInt(code, start)
 
-            makeCommand(2) {
+            return makeCommand(2) {
                 cmdPrint("cmd_clrevent $event")
                 ScriptResources.clearEvent(event)
                 null
             }
         }
 
-        val cmd_buy = makeInstruct { code, start ->
+        fun cmd_buy(code: ByteArray, start: Int): Command {
             val bytes = getStringBytes(code, start)
 
-            makeCommand(bytes.size) {
+            return makeCommand(bytes.size) {
                 cmdPrint("cmd_buy")
                 OperateBuy(this, bytes)
             }
         }
 
-        val cmd_facetoface = makeInstruct { code, start ->
+        fun cmd_facetoface(code: ByteArray, start: Int): Command {
             val id0 = get2ByteInt(code, start)
             val id1 = get2ByteInt(code, start + 2)
 
@@ -408,7 +404,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                     mScreenMainGame!!.player!!
                 } else mScreenMainGame!!.getNPC(id)
             }
-            makeCommand(4) {
+            return makeCommand(4) {
                 cmdPrint("cmd_facetoface")
                 val c1 = getCharacter(id0)
                 val c2 = getCharacter(id1)
@@ -433,14 +429,14 @@ class ScriptProcess(override val parent: GameNode): Control {
                 }
             }
         }
-        val cmd_movie = makeInstruct { code, start ->
+        fun cmd_movie(code: ByteArray, start: Int): Command {
             val type = get2ByteInt(code, start)
             val index = get2ByteInt(code, start + 2)
             val x = get2ByteInt(code, start + 4)
             val y = get2ByteInt(code, start + 6)
             val ctl = get2ByteInt(code, start + 8)
 
-            makeCommand(10) {
+            return makeCommand(10) {
                 cmdPrint("cmd_movie")
                 val movie = DatLib.getRes(DatLib.ResType.SRS, type, index) as ResSrs? ?: return@makeCommand null
                 movie.setIteratorNum(5)
@@ -474,7 +470,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                 }
             }
         }
-        val cmd_choice = makeInstruct { code, start ->
+        fun cmd_choice(code: ByteArray, start: Int): Command {
             var choice1: ByteArray = getStringBytes(code, start)
             var choice2: ByteArray = getStringBytes(code, start + choice1.size)
             val addrOffset = choice1.size + choice2.size
@@ -509,7 +505,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             bgx = (160 - bg.width) / 2
             bgy = (96 - bg.height) / 2
 
-            makeCommand(addrOffset+2) {
+            return makeCommand(addrOffset+2) {
                 cmdPrint("cmd_choice")
                 object : Operate {
                     private var curChoice = 0
@@ -558,33 +554,33 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_createbox = makeInstruct { code, start ->
+        fun cmd_createbox(code: ByteArray, start: Int): Command {
             val id = get2ByteInt(code, start)
             val boxId = get2ByteInt(code, start + 2)
             val x = get2ByteInt(code, start + 4)
             val y = get2ByteInt(code, start + 6)
-            makeCommand(8) {
+            return makeCommand(8) {
                 val box = mScreenMainGame!!.createBox(id, boxId, x, y)
                 cmdPrint("cmd_createbox ${box.name} at ($x,$y)")
                 null
             }
         }
-        val cmd_deletebox = makeInstruct { code, start ->
+        fun cmd_deletebox(code: ByteArray, start: Int): Command {
             val boxid = get2ByteInt(code, start)
-            makeCommand(2) {
+            return makeCommand(2) {
                 cmdPrint("cmd_deletebox")
                 mScreenMainGame!!.deleteBox(boxid)
                 null
             }
         }
 
-        val cmd_gaingoods = makeInstruct { code, start ->
+        fun cmd_gaingoods(code: ByteArray, start: Int): Command {
             val goods = DatLib.getRes(DatLib.ResType.GRS,
                     get2ByteInt(code, start), get2ByteInt(code, start + 2)) as BaseGoods
 
             val msg = "获得:" + goods.name
 
-            makeCommand(4) {
+            return makeCommand(4) {
                 cmdPrint("cmd_gaingoods ${goods.name}")
                 goods.goodsNum = 1
                 Player.sGoodsList.addGoods(goods.type, goods.index)
@@ -615,7 +611,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_initfight = makeInstruct { code, start ->
+        fun cmd_initfight(code: ByteArray, start: Int): Command {
             val scrb = get2ByteInt(code, start + 16)
             val scrl = get2ByteInt(code, start + 18)
             val scrr = get2ByteInt(code, start + 20)
@@ -623,43 +619,43 @@ class ScriptProcess(override val parent: GameNode): Control {
             for (i in 0..7) {
                 arr[i] = get2ByteInt(code, start + i * 2)
             }
-            makeCommand(22) {
+            return makeCommand(22) {
                 cmdPrint("cmd_initfight")
                 Combat.InitFight(this, arr, scrb, scrl, scrr)
                 null
             }
         }
 
-        val cmd_fightenable = makeInstruct { _, _ ->
-            makeCommand(0) {
+        fun cmd_fightenable(code: ByteArray, start: Int): Command {
+            return makeCommand(0) {
                 cmdPrint("cmd_fightenable")
                 Combat.Companion.FightEnable()
                 null
             }
         }
 
-        val cmd_fightdisenable = makeInstruct { _, _ ->
-            makeCommand(0) {
+        fun cmd_fightdisenable(code: ByteArray, start: Int): Command {
+            return makeCommand(0) {
                 cmdPrint("cmd_fightdisable")
                 Combat.Companion.FightDisable()
                 null
             }
         }
 
-        val cmd_createnpc = makeInstruct { code, start ->
+        fun cmd_createnpc(code: ByteArray, start: Int): Command {
             val id = get2ByteInt(code, start)
             val resId = get2ByteInt(code, start + 2)
             val x = get2ByteInt(code, start + 4)
             val y = get2ByteInt(code, start + 6)
-            makeCommand(8) {
+            return makeCommand(8) {
                 val npc = mScreenMainGame!!.createNpc(id, resId, x, y)
                 cmdPrint("cmd_createnpc ${npc.name} at ${npc.posInMap}")
                 null
             }
         }
 
-        val cmd_enterfight = makeInstruct { code, start ->
-            makeCommand(30) {
+        fun cmd_enterfight(code: ByteArray, start: Int): Command {
+            return makeCommand(30) {
                 cmdPrint("cmd_enterfight")
                 //					mScreenMainGame.gotoAddress(get2ByteInt(code, start + 28)); // win the fight
                 val monstersType = intArrayOf(get2ByteInt(code, start + 2), get2ByteInt(code, start + 4), get2ByteInt(code, start + 6))
@@ -674,44 +670,44 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_deleteactor = makeInstruct { code, start ->
+        fun cmd_deleteactor(code: ByteArray, start: Int): Command {
             val id = get2ByteInt(code, start)
-            makeCommand(2) {
+            return makeCommand(2) {
                 cmdPrint("cmd_deleteactor")
                 mScreenMainGame!!.deleteActor(id)
                 null
             }
         }
 
-        val cmd_gainmoney = makeInstruct { code, start ->
+        fun cmd_gainmoney(code: ByteArray, start: Int): Command {
             val value = get4BytesInt(code, start)
-            makeCommand(4) {
+            return makeCommand(4) {
                 cmdPrint("cmd_gainmoney")
                 Player.sMoney += value
                 null
             }
         }
 
-        val cmd_usemoney = makeInstruct { code, start ->
+        fun cmd_usemoney(code: ByteArray, start: Int): Command {
             val value = get4BytesInt(code, start)
-            makeCommand(4) {
+            return makeCommand(4) {
                 cmdPrint("cmd_usemoney")
                 Player.sMoney -= value
                 null
             }
         }
 
-        val cmd_setmoney = makeInstruct { code, start ->
+        fun cmd_setmoney(code: ByteArray, start: Int): Command {
             val money = get4BytesInt(code, start)
-            makeCommand(4) {
+            return makeCommand(4) {
                 Player.sMoney = money
                 cmdPrint("cmd_setmoney ${money}")
                 null
             }
         }
 
-        val cmd_learnmagic = makeInstruct { code, start ->
-            makeCommand(6) {
+        fun cmd_learnmagic(code: ByteArray, start: Int): Command {
+            return makeCommand(6) {
                 cmdPrint("cmd_learmagic")
 
                 object : Operate {
@@ -738,8 +734,8 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_sale = makeInstruct { code, start ->
-            makeCommand(0) {
+        fun cmd_sale(code: ByteArray, start: Int): Command {
+            return makeCommand(0) {
                 ScriptProcess.cmdPrint("cmd_sale")
 
                 val op = OperateSale(this)
@@ -751,19 +747,19 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_npcmovemod = makeInstruct { code, start ->
+        fun cmd_npcmovemod(code: ByteArray, start: Int): Command {
             val id = get2ByteInt(code, start)
             val state = get2ByteInt(code, start + 2)
 
-            makeCommand(4) {
+            return makeCommand(4) {
                 cmdPrint("cmd_npcmovemod")
                 mScreenMainGame!!.getNPC(id) .state = Character.State.fromInt(state)
                 null
             }
         }
-        val cmd_message = makeInstruct { code, start ->
+        fun cmd_message(code: ByteArray, start: Int): Command {
             val msg = getStringBytes(code, start)
-            makeCommand(msg.size) {
+            return makeCommand(msg.size) {
                 cmdPrint("cmd_message ${msg.gbkString()}")
 
                 object : Operate {
@@ -791,12 +787,12 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_deletegoods = makeInstruct { code, start ->
+        fun cmd_deletegoods(code: ByteArray, start: Int): Command {
             val type = get2ByteInt(code, start)
             val index = get2ByteInt(code, start + 2)
             val address = get2ByteInt(code, start + 2)
 
-            makeCommand(6) {
+            return makeCommand(6) {
                 cmdPrint("cmd_deletegoods")
 
                 val r = Player.sGoodsList.deleteGoods(type, index)
@@ -807,11 +803,11 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_resumeactorhp = makeInstruct { code, start ->
+        fun cmd_resumeactorhp(code: ByteArray, start: Int): Command {
             val id = get2ByteInt(code, start)
             val value = get2ByteInt(code, start + 2)
 
-            makeCommand(4) {
+            return makeCommand(4) {
                 cmdPrint("cmd_resumeactorhp")
                 val p = mScreenMainGame!!.getPlayer(id)
                 if (p != null) {
@@ -821,8 +817,8 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_actorlayerup = makeInstruct { code, start ->
-            makeCommand(4) {
+        fun cmd_actorlayerup(code: ByteArray, start: Int): Command {
+            return makeCommand(4) {
                 cmdPrint("cmd_actorlayerup TODO")
 
                 object : Operate { // TODO
@@ -850,10 +846,10 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_boxopen = makeInstruct { code, start ->
+        fun cmd_boxopen(code: ByteArray, start: Int): Command {
             val id = get2ByteInt(code, start)
 
-            makeCommand(2) {
+            return makeCommand(2) {
                 cmdPrint("cmd_boxopen")
                 val box = mScreenMainGame!!.getNPC(id)
                 box.step = 1
@@ -861,15 +857,15 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_delallnpc = makeInstruct { code, start ->
-            makeCommand(0) {
+        fun cmd_delallnpc(code: ByteArray, start: Int): Command {
+            return makeCommand(0) {
                 cmdPrint("cmd_delallnpc")
                 mScreenMainGame!!.deleteAllNpc()
                 null
             }
         }
 
-        val cmd_npcstep = makeInstruct { code, start ->
+        fun cmd_npcstep(code: ByteArray, start: Int): Command {
             val id = get2ByteInt(code, start) // 0为主角
             val faceto = get2ByteInt(code, start + 2)
             val step = get2ByteInt(code, start + 4)
@@ -882,7 +878,7 @@ class ScriptProcess(override val parent: GameNode): Control {
                 else -> Direction.South
             }
 
-            makeCommand(6) {
+            return makeCommand(6) {
                 cmdPrint("cmd_npcstep $id $d step=$step")
                 val interval: Long
                 if (id == 0) {
@@ -920,18 +916,18 @@ class ScriptProcess(override val parent: GameNode): Control {
 
             }
         }
-        val cmd_setscenename = makeInstruct { code, start ->
+        fun cmd_setscenename(code: ByteArray, start: Int): Command {
             val bytes = getStringBytes(code, start)
             val name = bytes.gbkString()
-            makeCommand(bytes.size) {
+            return makeCommand(bytes.size) {
                 cmdPrint("cmd_setscenname $name")
                 mScreenMainGame!!.sceneName = name
                 null
             }
         }
 
-        val cmd_showscenename = makeInstruct { code, start ->
-            makeCommand(0) {
+        fun cmd_showscenename(code: ByteArray, start: Int): Command {
+            return makeCommand(0) {
                 cmdPrint("cmd_showscenename")
                 val text = mScreenMainGame!!.sceneName
                 var time: Long = 0
@@ -960,8 +956,8 @@ class ScriptProcess(override val parent: GameNode): Control {
                 }
             }
         }
-        val cmd_showscreen = makeInstruct { code, start ->
-            makeCommand(0) {
+        fun cmd_showscreen(code: ByteArray, start: Int): Command {
+            return makeCommand(0) {
                 cmdPrint("cmd_showscreen")
                 object : OperateDrawOnce() {
                     override fun drawOnce(canvas: Canvas) {
@@ -971,12 +967,12 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_usegoods = makeInstruct { code, start ->
+        fun cmd_usegoods(code: ByteArray, start: Int): Command {
             val type = get2ByteInt(code, start)
             val index = get2ByteInt(code, start + 2)
             val address = get2ByteInt(code, start + 4)
 
-            makeCommand(6) {
+            return makeCommand(6) {
                 cmdPrint("cmd_usegoods")
                 val b = Player.sGoodsList.deleteGoods(type, index)
                 if (!b) {
@@ -986,13 +982,13 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_attribtest = makeInstruct { code, start ->
+        fun cmd_attribtest(code: ByteArray, start: Int): Command {
             val actor = get2ByteInt(code, start)
             val type = get2ByteInt(code, start+2)
             val value = get2ByteInt(code, start+4)
             val addr1 = get2ByteInt(code, start+6)
             val addr2 = get2ByteInt(code, start+8)
-            makeCommand(10) {
+            return makeCommand(10) {
                 cmdPrint("cmd_attribtest $actor $type $value")
                 val player = mScreenMainGame?.getPlayer(actor) ?: return@makeCommand null
                 // 0-级别，1-攻击力，2-防御力，3-身法，4-生命，5-真气当前值，6-当前经验值
@@ -1029,12 +1025,12 @@ class ScriptProcess(override val parent: GameNode): Control {
                 null
             }
         }
-        val cmd_attribset = makeInstruct { code, start ->
+        fun cmd_attribset(code: ByteArray, start: Int): Command {
             val actor = get2ByteInt(code, start)
             val type = get2ByteInt(code, start+2)
             val value = get2ByteInt(code, start+4)
 
-            makeCommand(6) {
+            return makeCommand(6) {
                 cmdPrint("cmd_attribset $actor $type $value")
                 val player = mScreenMainGame?.getPlayer(actor) ?: return@makeCommand null
                 // 0-级别，1-攻击力，2-防御力，3-身法，4-生命，5-真气当前值，6-当前经验值
@@ -1058,12 +1054,12 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_attribadd = makeInstruct { code, start ->
+        fun cmd_attribadd(code: ByteArray, start: Int): Command {
             val actor = get2ByteInt(code, start)
             val type = get2ByteInt(code, start+2)
             val value = get2ByteInt(code, start+4)
 
-            makeCommand(6) {
+            return makeCommand(6) {
                 cmdPrint("cmd_attribadd $actor $type $value")
                 val player = mScreenMainGame?.getPlayer(actor) ?: return@makeCommand null
 
@@ -1087,7 +1083,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_showgut = makeInstruct { code, start ->
+        fun cmd_showgut(code: ByteArray, start: Int): Command {
             val bytes = getStringBytes(code, start+4)
             val text = bytes.gbkString()
             val top = code[start].toInt() and 0xFF or (code[start + 1].toInt() shl 8 and 0xFF00)
@@ -1095,7 +1091,7 @@ class ScriptProcess(override val parent: GameNode): Control {
             val imgTop = DatLib.getPic(5, top, true)
             val imgBottom = DatLib.getPic(5, btm, true)
 
-            makeCommand(bytes.size+4) {
+            return makeCommand(bytes.size+4) {
                 cmdPrint("cmd_showgut topimg = $top, btmimg = $btm")
                 var goon = true
                 var interval: Long = 50
@@ -1141,8 +1137,8 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_usegoodsnum = makeInstruct { code, start ->
-            makeCommand(8) {
+        fun cmd_usegoodsnum(code: ByteArray, start: Int): Command {
+            return makeCommand(8) {
                 cmdPrint("cmd_usegoodsnum")
                 val b = Player.sGoodsList.useGoodsNum(get2ByteInt(code, start),
                         get2ByteInt(code, start + 2), get2ByteInt(code, start + 4))
@@ -1153,8 +1149,8 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_randrade = makeInstruct { code, start ->
-            makeCommand(4) {
+        fun cmd_randrade(code: ByteArray, start: Int): Command {
+            return makeCommand(4) {
                 cmdPrint("cmd_randrade")
                 if ((random() * 1000).toInt() <= get2ByteInt(code, start)) {
                     mScreenMainGame!!.gotoAddress(get2ByteInt(code, start + 2))
@@ -1163,11 +1159,11 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_menu = makeInstruct { code, start ->
+        fun cmd_menu(code: ByteArray, start: Int): Command {
             val i = start + 2
             val bytes = code.getCString(i)
             val stringItems = bytes.gbkString().split(' ')
-            makeCommand(bytes.size + 3) {
+            return makeCommand(bytes.size + 3) {
                 cmdPrint("cmd_menu")
                 var finished = false
                 val rvAddr = get2ByteInt(code, start)
@@ -1205,10 +1201,10 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_testmoney = makeInstruct { code, start ->
+        fun cmd_testmoney(code: ByteArray, start: Int): Command {
             val money = get4BytesInt(code, start)
             val address = get2ByteInt(code, start + 4)
-            makeCommand(6) {
+            return makeCommand(6) {
                 cmdPrint("cmd_testmoney")
                 if (Player.sMoney < money) {
                     mScreenMainGame!!.gotoAddress(address)
@@ -1217,14 +1213,14 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_callchapter = makeInstruct { code, start ->
-            makeCommand(4) {
+        fun cmd_callchapter(code: ByteArray, start: Int): Command {
+            return makeCommand(4) {
                 throw NotImplementedError("cmd_callchapter")
             }
         }
 
-        val cmd_discmp = makeInstruct { code, start ->
-            makeCommand(8) {
+        fun cmd_discmp(code: ByteArray, start: Int): Command {
+            return makeCommand(8) {
                 cmdPrint("cmd_discmp")
                 val `var` = ScriptResources.variables[get2ByteInt(code, start)]
                 val num = get2ByteInt(code, start + 2)
@@ -1237,12 +1233,12 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_return = makeInstruct { code, start ->
+        fun cmd_return(code: ByteArray, start: Int): Command {
 //            return start
             throw NotImplementedError("cmd_return")
         }
 
-        val cmd_timemsg = makeInstruct { code, start ->
+        fun cmd_timemsg(code: ByteArray, start: Int): Command {
 //            override fun getNextPos(code: ByteArray, start: Int): Int {
 //                var i = 2
 //                while (code[start + i].toInt() != 0) ++i
@@ -1251,24 +1247,24 @@ class ScriptProcess(override val parent: GameNode): Control {
             throw NotImplementedError("cmd_return")
         }
 
-        val cmd_disablesave = makeInstruct { code, start ->
-            makeCommand(0) {
+        fun cmd_disablesave(code: ByteArray, start: Int): Command {
+            return makeCommand(0) {
                 cmdPrint("cmd_disablesave")
                 Global.disableSave = true
                 null
             }
         }
 
-        val cmd_enablesave = makeInstruct { code, start ->
-            makeCommand(0) {
+        fun cmd_enablesave(code: ByteArray, start: Int): Command {
+            return makeCommand(0) {
                 cmdPrint("cmd_enablesave")
                 Global.disableSave = false
                 null
             }
         }
 
-        val cmd_gamesave = makeInstruct { code, start ->
-            makeCommand(0) {
+        fun cmd_gamesave(code: ByteArray, start: Int): Command {
+            return makeCommand(0) {
                 var end = false
 
                 cmdPrint("cmd_gamesave")
@@ -1287,36 +1283,36 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_seteventtimer = makeInstruct { code, start ->
-            makeCommand(4) {
+        fun cmd_seteventtimer(code: ByteArray, start: Int): Command {
+            return makeCommand(4) {
                 throw NotImplementedError("cmd_seteventtimer")
             }
         }
 
-        val cmd_enableshowpos = makeInstruct { code, start ->
-            makeCommand(0) {
+        fun cmd_enableshowpos(code: ByteArray, start: Int): Command {
+            return makeCommand(0) {
                 // TODO
                 null
             }
         }
 
-        val cmd_disableshowpos = makeInstruct { code, start ->
-            makeCommand(0) {
+        fun cmd_disableshowpos(code: ByteArray, start: Int): Command {
+            return makeCommand(0) {
                 // TODO
                 null
             }
         }
 
-        val cmd_setto = makeInstruct { code, start ->
-            makeCommand(4) {
+        fun cmd_setto(code: ByteArray, start: Int): Command {
+            return makeCommand(4) {
                 cmdPrint("cmd_setto")
                 ScriptResources.variables[get2ByteInt(code, start + 2)] = ScriptResources.variables[get2ByteInt(code, start)]
                 null
             }
         }
 
-        val cmd_testgoodsnum = makeInstruct { code, start ->
-            makeCommand(10) {
+        fun cmd_testgoodsnum(code: ByteArray, start: Int): Command {
+            return makeCommand(10) {
                 cmdPrint("cmd_testgoodsnum")
                 val goodsnum = Player.sGoodsList.getGoodsNum(get2ByteInt(code, start),
                         get2ByteInt(code, start + 2))
@@ -1330,102 +1326,102 @@ class ScriptProcess(override val parent: GameNode): Control {
             }
         }
 
-        val cmd_setfightmiss = makeInstruct { code, start ->
+        fun cmd_setfightmiss(code: ByteArray, start: Int): Command {
             val enable = get2ByteInt(code, start)
-            makeCommand(2) {
+            return makeCommand(2) {
                 // TODO
                 null
             }
         }
 
-        val cmd_setarmstoss = makeInstruct { code, start ->
-            makeCommand(2) {
+        fun cmd_setarmstoss(code: ByteArray, start: Int): Command {
+            return makeCommand(2) {
                 // TODO
                 null
             }
         }
 
         mCmds = arrayOf(
-                cmd_music,//0
-                cmd_loadmap,
-                cmd_createactor,
-                cmd_deletenpc,
+                ::cmd_music,//0
+                ::cmd_loadmap,
+                ::cmd_createactor,
+                ::cmd_deletenpc,
                 null,
                 null,//5
-                cmd_move,
+                ::cmd_move,
                 null,
                 null,
-                cmd_callback,
-                cmd_goto,//10
-                cmd_if,
-                cmd_set,
-                cmd_say,
-                cmd_startchapter,
+                ::cmd_callback,
+                ::cmd_goto,//10
+                ::cmd_if,
+                ::cmd_set,
+                ::cmd_say,
+                ::cmd_startchapter,
                 null,//15
-                cmd_screens,
+                ::cmd_screens,
                 null,
                 null,
                 null,
-                cmd_gameover,//20
-                cmd_ifcmp,
-                cmd_add,
-                cmd_sub,
-                cmd_setcontrolid,
+                ::cmd_gameover,//20
+                ::cmd_ifcmp,
+                ::cmd_add,
+                ::cmd_sub,
+                ::cmd_setcontrolid,
                 null,//25
-                cmd_setevent,
-                cmd_clrevent,
-                cmd_buy,
-                cmd_facetoface,
-                cmd_movie,//30
-                cmd_choice,
-                cmd_createbox,
-                cmd_deletebox,
-                cmd_gaingoods,
-                cmd_initfight,//35
-                cmd_fightenable,
-                cmd_fightdisenable,
-                cmd_createnpc,
-                cmd_enterfight,
-                cmd_deleteactor,//40
-                cmd_gainmoney,
-                cmd_usemoney,
-                cmd_setmoney,
-                cmd_learnmagic,
-                cmd_sale,//45
-                cmd_npcmovemod,
-                cmd_message,
-                cmd_deletegoods,
-                cmd_resumeactorhp,
-                cmd_actorlayerup,//50
-                cmd_boxopen,
-                cmd_delallnpc,
-                cmd_npcstep,
-                cmd_setscenename,
-                cmd_showscenename,//55
-                cmd_showscreen,
-                cmd_usegoods,
-                cmd_attribtest,
-                cmd_attribset,
-                cmd_attribadd,//60
-                cmd_showgut,
-                cmd_usegoodsnum,
-                cmd_randrade,
-                cmd_menu,
-                cmd_testmoney,//65
-                cmd_callchapter,
-                cmd_discmp,
-                cmd_return,
-                cmd_timemsg,
-                cmd_disablesave,//70
-                cmd_enablesave,
-                cmd_gamesave,
-                cmd_seteventtimer,
-                cmd_enableshowpos,
-                cmd_disableshowpos,//75
-                cmd_setto,
-                cmd_testgoodsnum,
-                cmd_setfightmiss,// TODO: 和 cmd_setarmstoss 那个在前面?
-                cmd_setarmstoss)
+                ::cmd_setevent,
+                ::cmd_clrevent,
+                ::cmd_buy,
+                ::cmd_facetoface,
+                ::cmd_movie,//30
+                ::cmd_choice,
+                ::cmd_createbox,
+                ::cmd_deletebox,
+                ::cmd_gaingoods,
+                ::cmd_initfight,//35
+                ::cmd_fightenable,
+                ::cmd_fightdisenable,
+                ::cmd_createnpc,
+                ::cmd_enterfight,
+                ::cmd_deleteactor,//40
+                ::cmd_gainmoney,
+                ::cmd_usemoney,
+                ::cmd_setmoney,
+                ::cmd_learnmagic,
+                ::cmd_sale,//45
+                ::cmd_npcmovemod,
+                ::cmd_message,
+                ::cmd_deletegoods,
+                ::cmd_resumeactorhp,
+                ::cmd_actorlayerup,//50
+                ::cmd_boxopen,
+                ::cmd_delallnpc,
+                ::cmd_npcstep,
+                ::cmd_setscenename,
+                ::cmd_showscenename,//55
+                ::cmd_showscreen,
+                ::cmd_usegoods,
+                ::cmd_attribtest,
+                ::cmd_attribset,
+                ::cmd_attribadd,//60
+                ::cmd_showgut,
+                ::cmd_usegoodsnum,
+                ::cmd_randrade,
+                ::cmd_menu,
+                ::cmd_testmoney,//65
+                ::cmd_callchapter,
+                ::cmd_discmp,
+                ::cmd_return,
+                ::cmd_timemsg,
+                ::cmd_disablesave,//70
+                ::cmd_enablesave,
+                ::cmd_gamesave,
+                ::cmd_seteventtimer,
+                ::cmd_enableshowpos,
+                ::cmd_disableshowpos,//75
+                ::cmd_setto,
+                ::cmd_testgoodsnum,
+                ::cmd_setfightmiss,// TODO: 和 ::cmd_setarmstoss 那个在前面?
+                ::cmd_setarmstoss)
     }
     fun setScreenMainGame(screenMainGame: ScreenMainGame) {
         mScreenMainGame = screenMainGame

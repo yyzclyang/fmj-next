@@ -11,7 +11,6 @@ object Global {
     var fgColor = Color.BLACK
     var bgColor = Color.WHITE
 
-    val Scale = 3//游戏放大缩小倍数
     val SCREEN_WIDTH = 160
     val SCREEN_HEIGHT = 96
 
@@ -27,7 +26,7 @@ object Global {
     val KEY_ENTER = 7
     val KEY_CANCEL = 8
 
-    var disableSave = false // TODO: write to save
+    var disableSave = false
 }
 
 enum class ScreenViewType {

@@ -141,7 +141,7 @@ class ScriptVM(override val parent: GameNode): Control {
             return makeCommand(2) {
                 cmdPrint("cmd_goto from $start to $address")
                 // TODO: 无需通过mainscreen
-                game.mainScene.gotoAddress(address)
+                game.gotoAddress(address)
                 null
             }
         }
@@ -154,7 +154,7 @@ class ScriptVM(override val parent: GameNode): Control {
                 val value = ScriptResources.globalEvents[va]
                 cmdPrint("cmd_if $va(=$value) goto $address")
                 if (value) {
-                    game.mainScene.gotoAddress(address)
+                    game.gotoAddress(address)
                 }
                 null
             }
@@ -286,7 +286,7 @@ class ScriptVM(override val parent: GameNode): Control {
                 val value = ScriptResources.variables[id]
                 cmdPrint("cmd_ifcmp $id(=$value) vs $other goto $addr")
                 if (value == other) {
-                    game.mainScene.gotoAddress(addr)
+                    game.gotoAddress(addr)
                 }
                 null
             }
@@ -929,7 +929,7 @@ class ScriptVM(override val parent: GameNode): Control {
                 cmdPrint("cmd_usegoods")
                 val b = Player.sGoodsList.deleteGoods(type, index)
                 if (!b) {
-                    game.mainScene.gotoAddress(address)
+                    game.gotoAddress(address)
                 }
                 null
             }

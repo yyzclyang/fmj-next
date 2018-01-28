@@ -40,11 +40,6 @@ class ScreenMainGame(
         }
 
     /**
-     * 当前是否在执行脚本
-     */
-    private var mRunScript = true
-
-    /**
      * 按y值从大到小排序，确保正确的遮挡关系
      * @return
      */
@@ -106,7 +101,7 @@ class ScreenMainGame(
             Player.sGoodsList.clear()
             Player.sMoney = 0
             scriptProcess = doStartChapter(1, 1)
-            mRunScript = true
+            scriptProcess.start()
         } else { // 再续前缘
             loadMap(SaveLoadGame.MapType, SaveLoadGame.MapIndex,
                     SaveLoadGame.MapScreenX, SaveLoadGame.MapScreenY)
@@ -122,13 +117,11 @@ class ScreenMainGame(
             }
             scriptProcess = vm.loadScript(SaveLoadGame.ScriptType, SaveLoadGame.ScriptIndex)
             scriptProcess.goonExecute = true
-            mRunScript = false
         }
     }
 
     fun exitScript() {
-        mRunScript = false
-        scriptProcess.goonExecute = false
+        scriptProcess.stop()
     }
 
     private fun doStartChapter(type: Int, index: Int): ScriptProcess {
@@ -143,13 +136,13 @@ class ScreenMainGame(
     }
 
     fun startChapter(type: Int, index: Int) {
-        scriptProcess.goonExecute = false
+        scriptProcess.stop()
         scriptProcess = doStartChapter(type, index)
-        mRunScript = true
+        scriptProcess.start()
     }
 
     override fun update(delta: Long) {
-        if (mRunScript) {
+        if (scriptProcess.running) {
             scriptProcess.process()
             scriptProcess.update(delta)
         } else if (Combat.IsActive()) { // TODO fix this test
@@ -161,7 +154,7 @@ class ScreenMainGame(
     }
 
     override fun draw(canvas: Canvas) {
-        if (mRunScript) {
+        if (scriptProcess.running) {
             if (Combat.IsActive()) {
                 Combat.Draw(canvas)
             }
@@ -200,7 +193,7 @@ class ScreenMainGame(
     }
 
     override fun onKeyDown(key: Int) {
-        if (mRunScript) {
+        if (scriptProcess.running) {
             scriptProcess.keyDown(key)
         } else if (Combat.IsActive()) {
             Combat.KeyDown(key)
@@ -217,7 +210,7 @@ class ScreenMainGame(
     }
 
     override fun onKeyUp(key: Int) {
-        if (mRunScript) {
+        if (scriptProcess.running) {
             scriptProcess.keyUp(key)
         } else if (Combat.IsActive()) {
             Combat.KeyUp(key)
@@ -229,11 +222,10 @@ class ScreenMainGame(
 
     fun gotoAddress(address: Int) {
         scriptProcess.gotoAddress(address)
-        mRunScript = true
     }
 
     fun triggerEvent(eventId: Int) {
-        mRunScript = scriptProcess.triggerEvent(eventId)
+        scriptProcess.triggerEvent(eventId)
     }
 
     /**
@@ -253,7 +245,7 @@ class ScreenMainGame(
         // NPC事件
         val npcId = getNpcIdFromPosInMap(x, y)
         if (npcId != 0) {
-            mRunScript = scriptProcess.triggerEvent(npcId)
+            scriptProcess.triggerEvent(npcId)
             return
         } else if (triggerMapEvent(x, y)) {// 地图切换
         }
@@ -270,7 +262,6 @@ class ScreenMainGame(
             val id = currentMap!!.getEventNum(x, y)
             if (id != 0) {
                 scriptProcess.triggerEvent(id + 40)
-                mRunScript = true
                 return true
             }
         }

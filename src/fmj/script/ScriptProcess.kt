@@ -34,12 +34,26 @@ class ScriptProcess
      */
     private var curOp: Operate? = null
 
+    var running = false
+        private set
+
+    fun start(goon: Boolean = true) {
+        running = true
+        goonExecute = true
+    }
+
+    fun stop() {
+        running = false
+        goonExecute = false
+    }
+
     /**
      * 触发地图事件,场景切换，NPC对话，开宝箱等
      * @param eventId 是否成功触发
      */
     fun triggerEvent(eventId: Int): Boolean {
         if (eventId > eventIndex.size) {
+            stop()
             return false
         }
 
@@ -47,9 +61,10 @@ class ScriptProcess
         if (index != -1) {
             mCurExeOperateIndex = index
             curOp = null
-            goonExecute = true
+            start()
             return true
         }
+        stop()
         return false
     }
 
@@ -59,8 +74,10 @@ class ScriptProcess
             curOp = null
             --mCurExeOperateIndex
         } else { // 在Operate.process()中调用的gotoAddress
+            // loong TODO: why?
             goonExecute = false // mark 下次调用process再执行
         }
+        running = true
     }
 
     fun process() {

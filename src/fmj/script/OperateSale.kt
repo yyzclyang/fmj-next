@@ -15,8 +15,6 @@ import fmj.views.GameNode
 import graphics.Canvas
 
 class OperateSale(override val parent: GameNode): Control, Operate, ScreenGoodsList.OnItemSelectedListener {
-    private val saleScreen = SaleGoodsScreen(this)
-
     override fun update(delta: Long): Boolean {
         return false
     }
@@ -31,15 +29,14 @@ class OperateSale(override val parent: GameNode): Control, Operate, ScreenGoodsL
         if (goods is GoodsDrama) {
             showMessage("任务物品!", 1000)
         } else {
-            saleScreen.init(goods)
-            pushScreen(saleScreen)
+            pushScreen(SaleGoodsScreen(this, goods))
         }
     }
 
-    private inner class SaleGoodsScreen(override val parent: GameNode) : BaseScreen {
-        private var goods: BaseGoods? = null
+    private inner class SaleGoodsScreen(override val parent: GameNode,
+                                        private var goods: BaseGoods) : BaseScreen {
         private var saleCnt: Int = 0
-        private var money: Int = 0
+        private var money: Int = Player.sMoney
 
         private val bmpBg by lazy {
             Util.getFrameBitmap(136, 55)
@@ -48,19 +45,13 @@ class OperateSale(override val parent: GameNode): Control, Operate, ScreenGoodsL
         override val isPopup: Boolean
             get() = true
 
-        fun init(goods: BaseGoods) {
-            this.goods = goods
-            saleCnt = 0
-            money = Player.sMoney
-        }
-
         override fun update(delta: Long) {}
 
         override fun draw(canvas: Canvas) {
             canvas.drawBitmap(bmpBg, 12, 21)
             TextRender.drawText(canvas, "金钱：" + money, 15, 24)
-            TextRender.drawText(canvas, goods!!.name, 15, 40)
-            TextRender.drawText(canvas, ": " + (goods!!.goodsNum - saleCnt), 93, 40)
+            TextRender.drawText(canvas, goods.name, 15, 40)
+            TextRender.drawText(canvas, ": " + (goods.goodsNum - saleCnt), 93, 40)
             TextRender.drawText(canvas, "卖出个数　：" + saleCnt, 15, 56)
         }
 
@@ -68,7 +59,7 @@ class OperateSale(override val parent: GameNode): Control, Operate, ScreenGoodsL
             if (key == Global.KEY_ENTER) {
                 Player.sMoney = money
                 if (saleCnt > 0) {
-                    Player.sGoodsList.useGoodsNum(goods!!.type, goods!!.index, saleCnt)
+                    Player.sGoodsList.useGoodsNum(goods.type, goods.index, saleCnt)
                 }
                 popScreen()
                 // 重创物品选择界面，防止数量0还显示
@@ -85,10 +76,10 @@ class OperateSale(override val parent: GameNode): Control, Operate, ScreenGoodsL
         override fun onKeyDown(key: Int) {
             if (key == Global.KEY_UP && saleCnt > 0) {
                 --saleCnt
-                money -= goods!!.sellPrice
-            } else if (key == Global.KEY_DOWN && goods!!.goodsNum > saleCnt) {
+                money -= goods.sellPrice
+            } else if (key == Global.KEY_DOWN && goods.goodsNum > saleCnt) {
                 ++saleCnt
-                money += goods!!.sellPrice
+                money += goods.sellPrice
                 if (money > 99999) {
                     money = 99999
                 }

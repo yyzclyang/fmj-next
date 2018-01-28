@@ -1377,7 +1377,7 @@ class ScriptVM(override val parent: GameNode): Control {
                 ::cmd_setarmstoss)
     }
 
-    fun compileGut(gut: ResGut): ScriptProcess {
+    private fun loadGut(gut: ResGut): ScriptProcess {
         val code = gut.scriptData
         var pointer = 0
 
@@ -1414,9 +1414,7 @@ class ScriptVM(override val parent: GameNode): Control {
 
     fun loadScript(type: Int, index: Int): ScriptProcess {
         val gut = DatLib.getRes(DatLib.ResType.GUT, type, index) as ResGut
-        val process = compileGut(gut)
-        process.goonExecute = true
-        return process
+        return loadGut(gut)
     }
 
     companion object {

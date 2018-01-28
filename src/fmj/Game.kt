@@ -14,7 +14,7 @@ class MainGame: Game {
     private  val screenStack = ScreenStack(this)
 
     override val vm = ScriptVM(this)
-    override val mainScene = ScreenMainGame(this, vm)
+    override var mainScene = ScreenMainGame(this, vm)
     override val parent get() = screenStack
     override val game: Game
         get() = this
@@ -47,7 +47,10 @@ class MainGame: Game {
                     ScreenViewType.SCREEN_DEV_LOGO -> ScreenAnimation(this, 247)
                     ScreenViewType.SCREEN_GAME_LOGO -> ScreenAnimation(this, 248)
                     ScreenViewType.SCREEN_MENU -> ScreenMenu(this)
-                    ScreenViewType.SCREEN_MAIN_GAME -> mainScene
+                    ScreenViewType.SCREEN_MAIN_GAME -> {
+                        mainScene = ScreenMainGame(this, vm)
+                        mainScene
+                    }
                     ScreenViewType.SCREEN_GAME_FAIL -> ScreenAnimation(this, 249)
                     ScreenViewType.SCREEN_SAVE_GAME -> ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.SAVE)
                     ScreenViewType.SCREEN_LOAD_GAME -> ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.LOAD)

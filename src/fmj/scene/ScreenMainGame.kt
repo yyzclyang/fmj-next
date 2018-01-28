@@ -29,7 +29,7 @@ class ScreenMainGame(
 
     private val mMapScreenPos = Point() // 屏幕左上角对应地图的位置
 
-    val scriptProcess: ScriptProcess
+    var scriptProcess: ScriptProcess
 
     private var sPlayerList = mutableListOf<Player>()
 
@@ -105,7 +105,7 @@ class ScreenMainGame(
             sPlayerList.clear()
             Player.sGoodsList.clear()
             Player.sMoney = 0
-            scriptProcess = startChapter(1, 1)
+            scriptProcess = doStartChapter(1, 1)
             mRunScript = true
         } else { // 再续前缘
             loadMap(SaveLoadGame.MapType, SaveLoadGame.MapIndex,
@@ -121,6 +121,7 @@ class ScreenMainGame(
                 throw Error("存档读取出错")
             }
             scriptProcess = vm.loadScript(SaveLoadGame.ScriptType, SaveLoadGame.ScriptIndex)
+            scriptProcess.goonExecute = true
             mRunScript = false
         }
     }
@@ -130,7 +131,7 @@ class ScreenMainGame(
         scriptProcess.goonExecute = false
     }
 
-    fun startChapter(type: Int, index: Int): ScriptProcess {
+    private fun doStartChapter(type: Int, index: Int): ScriptProcess {
         val process = vm.loadScript(type, index)
         for (i in 1..40) {
             mNPCObj[i] = NPC.empty
@@ -141,6 +142,12 @@ class ScreenMainGame(
         return process
     }
 
+    fun startChapter(type: Int, index: Int) {
+        scriptProcess.goonExecute = false
+        scriptProcess = doStartChapter(type, index)
+        mRunScript = true
+    }
+
     override fun update(delta: Long) {
         if (mRunScript) {
             scriptProcess.process()
@@ -148,9 +155,8 @@ class ScreenMainGame(
         } else if (Combat.IsActive()) { // TODO fix this test
             Combat.Update(delta)
         } else {
-            (1..40)
-                    .filterNot { mNPCObj[it].isEmpty }
-                    .forEach { mNPCObj[it].update(delta) }
+            mNPCObj.filterNot { it.isEmpty }
+                   .forEach { it.update(delta) }
         }
     }
 

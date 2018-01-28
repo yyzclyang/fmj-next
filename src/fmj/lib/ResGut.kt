@@ -53,12 +53,12 @@ class ResGut : ResBase() {
         mNumSceneEvent = buf[offset + 0x1a].toInt() and 0xFF
         sceneEvent = IntArray(mNumSceneEvent)
         for (i in 0 until mNumSceneEvent) {
-            sceneEvent!![i] = buf[offset + (i shl 1) + 0x1c].toInt() and 0xFF shl 8 or (buf[offset + (i shl 1) + 0x1b].toInt() and 0xFF)
+            sceneEvent[i] = buf[offset + (i shl 1) + 0x1c].toInt() and 0xFF shl 8 or (buf[offset + (i shl 1) + 0x1b].toInt() and 0xFF)
         }
         val len = mLength - mNumSceneEvent * 2 - 3
         scriptData = ByteArray(len)
         System.arraycopy(buf, offset + 0x1b + mNumSceneEvent * 2,
-                scriptData!!, 0, len)
+                scriptData, 0, len)
     }
 
 }

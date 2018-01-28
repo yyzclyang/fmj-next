@@ -34,10 +34,6 @@ class ScriptProcess
      */
     private var curOp: Operate? = null
 
-    init {
-        mCurExeOperateIndex = 0
-    }
-
     /**
      * 触发地图事件,场景切换，NPC对话，开宝箱等
      * @param eventId 是否成功触发
@@ -51,6 +47,7 @@ class ScriptProcess
         if (index != -1) {
             mCurExeOperateIndex = index
             curOp = null
+            goonExecute = true
             return true
         }
         return false

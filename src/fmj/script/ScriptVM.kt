@@ -662,6 +662,13 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_learnmagic(code: ByteArray, start: Int): Command {
             return makeCommand(6) {
                 cmdPrint("cmd_learmagic")
+                val actorId = get2ByteInt(code, start)
+                val type = get2ByteInt(code, start + 2)
+                val index = get2ByteInt(code, start + 4)
+                val magic = DatLib.getMrs(type, index)
+                val player = game.mainScene.getPlayer(actorId)
+                player?.learnMagic(magic)
+                val playerName = player?.name ?: "E"
 
                 object : Operate {
 
@@ -677,11 +684,11 @@ class ScriptVM(override val parent: GameNode): Control {
 
                     override fun onKeyDown(key: Int) {}
 
-                    override fun draw(canvas: Canvas) { // TODO fix the test
-                        TextRender.drawText(canvas, "学会了魔法:", 0, 0)
-                        TextRender.drawText(canvas, "actorId:" + get2ByteInt(code, start)
-                                + "t" + get2ByteInt(code, start + 2)
-                                + "i" + get2ByteInt(code, start + 4), 0, 16)
+                    override fun draw(canvas: Canvas) {
+                        // TODO: better UI
+                        TextRender.drawText(canvas, playerName, 0, 0)
+                        TextRender.drawText(canvas, "学会了魔法:", 0, 16)
+                        TextRender.drawText(canvas, magic.magicName, 0, 16*2)
                     }
                 }
             }

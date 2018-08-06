@@ -6,6 +6,7 @@ import fmj.graphics.TextRender
 import fmj.graphics.Util
 import fmj.lib.DatLib
 import fmj.lib.ResImage
+import fmj.magic.BaseMagic
 
 import graphics.Canvas
 
@@ -28,6 +29,8 @@ class Player : FightingCharacter(), Coder {
      * 0装饰 1装饰 2护腕 3脚蹬 4手持 5身穿 6肩披 7头戴
      */
     val equipmentsArray = arrayOfNulls<GoodsEquipment>(8)
+
+    var privateLearntMagics = arrayListOf<BaseMagic>()
 
     fun drawHead(canvas: Canvas, x: Int, y: Int) {
         if (mImgHead != null) {
@@ -274,6 +277,13 @@ class Player : FightingCharacter(), Coder {
                 equipmentsArray[i] = DatLib.getRes(DatLib.ResType.GRS, type, index) as GoodsEquipment?
             }
         }
+        val size = coder.readInt()
+        for (i in 0..size) {
+            val type = coder.readInt()
+            val index = coder.readInt()
+            val magic = DatLib.getMrs(type, index)
+            privateLearntMagics.add(magic)
+        }
     }
 
     override fun encode(out: ObjectOutput) {
@@ -309,10 +319,23 @@ class Player : FightingCharacter(), Coder {
                 out.writeInt(0)
             }
         }
+        out.writeInt(privateLearntMagics.size)
+        privateLearntMagics.forEach {
+            out.writeInt(it.type)
+            out.writeInt(it.index)
+        }
     }
 
     fun setLevel(level: Int) {
         this.level = min(level, levelupChain.maxLevel)
+    }
+
+    override fun getAllMagics(): Collection<BaseMagic> {
+        return privateLearntMagics + super.getAllMagics()
+    }
+
+    fun learnMagic(magic: BaseMagic) {
+        privateLearntMagics.add(magic)
     }
 
     companion object {

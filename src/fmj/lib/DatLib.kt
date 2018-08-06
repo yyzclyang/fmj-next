@@ -16,12 +16,7 @@ import fmj.goods.GoodsMedicineLife
 import fmj.goods.GoodsStimulant
 import fmj.goods.GoodsTudun
 import fmj.goods.GoodsWeapon
-import fmj.magic.MagicAttack
-import fmj.magic.MagicAuxiliary
-import fmj.magic.MagicEnhance
-import fmj.magic.MagicRestore
-import fmj.magic.MagicSpecial
-import fmj.magic.ResMagicChain
+import fmj.magic.*
 import java.File
 
 
@@ -215,6 +210,14 @@ class DatLib(buffer: ByteArray) {
 
         fun getACP(type: Int, index: Int, allowNull: Boolean = false): ResImage? {
             return getRes(ResType.ACP, type, index, allowNull) as ResImage?
+        }
+
+        fun getMrsOrNull(type: Int, index: Int): BaseMagic? {
+            return getRes(ResType.MRS, type, index, true) as BaseMagic?
+        }
+
+        fun getMrs(type: Int, index: Int): BaseMagic {
+            return getRes(ResType.MRS, type, index, false) as BaseMagic
         }
     }
 }

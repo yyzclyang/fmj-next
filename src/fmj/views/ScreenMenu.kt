@@ -55,7 +55,7 @@ class ScreenMenu(override val parent: GameNode): BaseScreen {
                         ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.LOAD))
             }
         } else if (key == Global.KEY_CANCEL && isCancelKeyDown) {
-t             sysExit()
+            sysExit()
         }
     }
 

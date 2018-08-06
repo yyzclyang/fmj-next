@@ -273,8 +273,7 @@ abstract class FightingCharacter : Character() {
         mAtbuff = mAtbuff and mask.inv()
     }
 
-    fun getAllMagics(): Collection<BaseMagic> {
-        // TODO: 其它自学magic
+    open fun getAllMagics(): Collection<BaseMagic> {
         return magicChain?.getAllLearntMagics() ?: listOf()
     }
 

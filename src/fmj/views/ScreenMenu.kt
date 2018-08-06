@@ -6,6 +6,7 @@ import fmj.lib.DatLib
 import fmj.lib.ResSrs
 import fmj.scene.SaveLoadGame
 import graphics.Canvas
+import java.sysExit
 
 class ScreenMenu(override val parent: GameNode): BaseScreen {
     private val mImgMenu = DatLib.getPic(2, 14)!!
@@ -54,8 +55,7 @@ class ScreenMenu(override val parent: GameNode): BaseScreen {
                         ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.LOAD))
             }
         } else if (key == Global.KEY_CANCEL && isCancelKeyDown) {
-            // TODO: 退出游戏
-            println("退出游戏")
+t             sysExit()
         }
     }
 

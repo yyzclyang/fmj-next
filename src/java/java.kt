@@ -357,3 +357,4 @@ external fun sysAddKeyDownListener(callback:(keyCode: Int) -> Unit)
 external fun sysAddKeyUpListener(callback:(keyCode: Int) -> Unit)
 external fun sysSetInterval(interval: Int, callback:() -> Unit): Int
 external fun sysDrawScreen(buffer: Array<Color>, width: Int, height: Int)
+external fun sysExit()

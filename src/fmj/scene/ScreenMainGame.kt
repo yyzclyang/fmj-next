@@ -31,8 +31,6 @@ class ScreenMainGame(
 
     var scriptProcess: ScriptProcess
 
-    private var sPlayerList = mutableListOf<Player>()
-
     var sceneName = ""
         set(name) {
             field = name
@@ -73,9 +71,8 @@ class ScreenMainGame(
 //            }
 //            return arr
         }
-
     val playerList: MutableList<Player>
-        get() = sPlayerList
+        get() = game.playerList
 
     /**
      * id--NPC或场景对象 (1-40)
@@ -97,7 +94,7 @@ class ScreenMainGame(
             ScriptResources.initGlobalVar()
             ScriptResources.initGlobalEvents()
             SaveLoadGame.NpcObjs = mNPCObj
-            sPlayerList.clear()
+            playerList.clear()
             Player.sGoodsList.clear()
             Player.sMoney = 0
             scriptProcess = doStartChapter(1, 1)
@@ -109,9 +106,8 @@ class ScreenMainGame(
 
             mNPCObj.filterNot { it.isEmpty }
                     .forEach { it.setICanWalk(mCanWalk) }
-
-            if (sPlayerList.size > 0) {
-                player = sPlayerList[0]
+            if (playerList.size > 0) {
+                player = playerList[0]
             } else {
                 throw Error("存档读取出错")
             }
@@ -360,29 +356,29 @@ class ScreenMainGame(
      * @param y
      */
     fun createActor(actorId: Int, x: Int, y: Int) {
-        player = DatLib.getRes(DatLib.ResType.ARS, 1, actorId) as Player
-        player!!.setPosOnScreen(x, y, mMapScreenPos)
-        sPlayerList.add(player!!)
-        player = sPlayerList[0]
+        val p = DatLib.getRes(DatLib.ResType.ARS, 1, actorId) as Player
+        playerList.add(p)
+        p.setPosOnScreen(x, y, mMapScreenPos)
+        player = playerList[0]
     }
 
     fun deleteActor(actorId: Int) {
-        for (i in 0 until sPlayerList.size) {
-            if (sPlayerList[i].index == actorId) {
-                sPlayerList.removeAt(i)
+        for (i in 0 until playerList.size) {
+            if (playerList[i].index == actorId) {
+                playerList.removeAt(i)
                 break
             }
         }
 
-        player = if (sPlayerList.isEmpty()) {
+        player = if (playerList.isEmpty()) {
             null
         } else {
-            sPlayerList[0]
+            playerList[0]
         }
     }
 
     fun getPlayer(actorId: Int): Player? {
-        return sPlayerList.firstOrNull { it.index == actorId }
+        return playerList.firstOrNull { it.index == actorId }
     }
 
     /**

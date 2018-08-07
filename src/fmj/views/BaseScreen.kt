@@ -1,6 +1,7 @@
 package fmj.views
 
 import fmj.ScreenViewType
+import fmj.characters.Player
 import fmj.scene.ScreenMainGame
 import fmj.script.ScriptVM
 
@@ -40,10 +41,9 @@ interface Control: GameNode {
 
 interface Game: Control {
     fun changeScreen(screenType: ScreenViewType)
-    // TODO: rename
     val mainScene: ScreenMainGame
     val vm: ScriptVM
-    val playerList get() = mainScene.playerList
+    val playerList: MutableList<Player>
 
     fun triggerEvent(eventId: Int) {
         mainScene.triggerEvent(eventId)

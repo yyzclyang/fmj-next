@@ -278,7 +278,8 @@ class Player : FightingCharacter(), Coder {
             }
         }
         val size = coder.readInt()
-        for (i in 0..size) {
+        for (i in 0 until size) {
+            println("decode magic: $i")
             val type = coder.readInt()
             val index = coder.readInt()
             val magic = DatLib.getMrs(type, index)

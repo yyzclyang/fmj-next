@@ -1,5 +1,6 @@
 package fmj
 
+import fmj.characters.Player
 import fmj.scene.ScreenMainGame
 import fmj.script.ScriptVM
 import fmj.views.*
@@ -14,10 +15,14 @@ class MainGame: Game {
     private  val screenStack = ScreenStack(this)
 
     override val vm = ScriptVM(this)
-    override var mainScene = ScreenMainGame(this, vm)
     override val parent get() = screenStack
-    override val game: Game
-        get() = this
+    override val game = this
+    override var mainScene: ScreenMainGame
+    override val playerList = arrayListOf<Player>()
+
+    constructor() {
+        mainScene = ScreenMainGame(this, vm)
+    }
 
     fun start() {
         listenUIEvents()

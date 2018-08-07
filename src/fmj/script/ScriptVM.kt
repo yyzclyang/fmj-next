@@ -1178,9 +1178,9 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_callchapter(code: ByteArray, start: Int): Command {
-            return makeCommand(4) {
-                throw NotImplementedError("cmd_callchapter")
-            }
+            throw NotImplementedError("cmd_callchapter")
+//            return makeCommand(4) {
+//            }
         }
 
         fun cmd_discmp(code: ByteArray, start: Int): Command {
@@ -1248,9 +1248,9 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_seteventtimer(code: ByteArray, start: Int): Command {
-            return makeCommand(4) {
-                throw NotImplementedError("cmd_seteventtimer")
-            }
+            throw NotImplementedError("cmd_seteventtimer")
+//            return makeCommand(4) {
+//            }
         }
 
         fun cmd_enableshowpos(code: ByteArray, start: Int): Command {

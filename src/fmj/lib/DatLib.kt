@@ -17,6 +17,7 @@ import fmj.goods.GoodsStimulant
 import fmj.goods.GoodsTudun
 import fmj.goods.GoodsWeapon
 import fmj.magic.*
+import fmj.script.ScriptVM
 import java.File
 
 
@@ -32,8 +33,19 @@ class DatLib(buffer: ByteArray) {
      */
     private val mDataOffset = HashMap<Int, Int>(2048)
 
+    data class Res(val type: Int, val index: Int)
+    private val guts = arrayListOf<Res>()
+
     init {
         getAllResOffset()
+    }
+
+    fun tryCompileScripts(vm: ScriptVM) {
+        println("Trying to compile all guts")
+        guts.forEach {
+            vm.loadScript(it.type, it.index)
+        }
+        println("All guts compile OK")
     }
 
     private fun getAllResOffset() {
@@ -41,13 +53,18 @@ class DatLib(buffer: ByteArray) {
         var j = 0x2000
 
         while (i < mBuffer.size && mBuffer[i].toInt() != -1) {
-            val key = getKey(mBuffer[i++].toInt(), mBuffer[i++].toInt(),
-                    mBuffer[i++].toInt() and 0xFF)
+            val resType = mBuffer[i++].toInt()
+            val type = mBuffer[i++].toInt()
+            val index = mBuffer[i++].toInt() and 0xFF
+            val key = getKey(resType, type, index)
             val block = mBuffer[j++].toInt() and 0xFF
             val low = mBuffer[j++].toInt() and 0xFF
             val high = mBuffer[j++].toInt() and 0xFF
             val value = block * 0x4000 or (high shl 8 or low)
             mDataOffset.put(key, value)
+            if (resType == 1) {
+                guts.add(Res(type, index))
+            }
         }
     }
 

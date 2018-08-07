@@ -41,7 +41,7 @@ class Monster : FightingCharacter() {
         index = buf[offset + 1].toInt() and 0xff
         val magicIndex = buf[offset + 0x2f].toInt() and 0xff
 
-        magicChain = DatLib.getMlr(1, magicIndex)
+        magicChain = DatLib.getMlr(1, magicIndex, true)
         magicChain?.learnNum = buf[offset + 2].toInt() and 0xff
         addBuff(buf[offset + 3].toInt() and 0xff)
         mAtbuff = buf[offset + 4].toInt() and 0xff

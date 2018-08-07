@@ -670,6 +670,22 @@ class CombatUI(override val parent: GameNode,
         } // end of equipSelected
     }
 
+    override fun popScreen() {
+        mScreenStack.popScreen()
+    }
+
+    override fun pushScreen(scr: BaseScreen) {
+        mScreenStack.pushScreen(scr)
+    }
+
+    override fun getCurScreen(): BaseScreen {
+        return mScreenStack.getCurScreen()
+    }
+
+    override fun showMessage(msg:String, delay:Long) {
+        mScreenStack.showMessage(msg, delay)
+    }
+
     companion object {
         private val sPlayerIndicatorPos = arrayOf(Point(69, 45), Point(101, 41), Point(133, 33))
         private val sMonsterIndicatorPos = arrayOf(Point(16, 14), Point(48, 3), Point(86, 0))

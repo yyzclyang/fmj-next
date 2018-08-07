@@ -410,6 +410,14 @@ class ScreenMainGame(
         return mNPCObj[id]
     }
 
+    fun setControlPlayer(id: Int) {
+        val player = playerList.find { it.index == id }
+        player?.let {
+            playerList.remove(it)
+            playerList.add(0, it)
+        }
+    }
+
     fun isNpcVisible(npc: NPC): Boolean {
         val (x, y) = npc.getPosOnScreen(mMapScreenPos)
         return x >= 0 && x < ResMap.WIDTH &&

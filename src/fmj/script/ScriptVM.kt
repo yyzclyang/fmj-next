@@ -315,8 +315,12 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_setcontrolid(code: ByteArray, start: Int): Command {
-            // start + 2
-            throw NotImplementedError("cmd_setcontrolid")
+            return makeCommand(2) {
+                val id = get2ByteInt(code, start)
+                cmdPrint("cmd_setcontrolid $id")
+                game.mainScene.setControlPlayer(id)
+                null
+            }
         }
 
         fun cmd_setevent(code: ByteArray, start: Int): Command {

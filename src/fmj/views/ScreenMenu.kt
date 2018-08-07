@@ -56,6 +56,8 @@ class ScreenMenu(override val parent: GameNode): BaseScreen {
             }
         } else if (key == Global.KEY_CANCEL && isCancelKeyDown) {
             sysExit()
+        } else if (key == Global.KEY_PAGEUP) {
+            DatLib.instance.tryCompileScripts(game.vm)
         }
     }
 

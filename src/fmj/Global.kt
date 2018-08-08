@@ -27,6 +27,7 @@ object Global {
     val KEY_CANCEL = 8
 
     var disableSave = false
+    const val delta = 40
 }
 
 enum class ScreenViewType {

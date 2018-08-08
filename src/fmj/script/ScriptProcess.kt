@@ -118,16 +118,16 @@ class ScriptProcess
 
     fun timerStep(delta: Long) {
         if (timer > 0 && timerEventId > 0) {
-            timerCounter -= 1
-            if (timerCounter == 0) {
-                timerCounter = timer
+            timerCounter -= delta.toInt()
+            if (timerCounter <= 0) {
+                timerCounter += timer
                 triggerEvent(timerEventId)
             }
         }
     }
 
     fun setTimer(timer: Int, eventId: Int) {
-        this.timer = timer * 20
+        this.timer = timer * 500
         timerCounter = this.timer
         timerEventId = eventId
     }

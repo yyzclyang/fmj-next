@@ -1213,12 +1213,41 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_timemsg(code: ByteArray, start: Int): Command {
-//            override fun getNextPos(code: ByteArray, start: Int): Int {
-//                var i = 2
-//                while (code[start + i].toInt() != 0) ++i
-//                return start + i + 1
-//            }
-            throw NotImplementedError("cmd_timemsg")
+            val time = get2ByteInt(code, start)
+            val text = getStringBytes(code, start + 2)
+            return makeCommand(text.size + 2) {
+                cmdPrint("cmd_timemsg $time ${text.gbkString()}")
+
+                object : Operate {
+                    var downKey: Int = 0
+                    var isAnyKeyDown: Boolean = false
+                    var countDown = time * 10
+
+                    override fun update(delta: Long): Boolean {
+                        if (countDown != 0) {
+                            countDown -= delta.toInt()
+                            if (countDown <= 0) {
+                                return false
+                            }
+                        }
+                        return !isAnyKeyDown
+                    }
+
+                    override fun onKeyUp(key: Int) {
+                        if (downKey == key) {
+                            isAnyKeyDown = true
+                        }
+                    }
+
+                    override fun onKeyDown(key: Int) {
+                        downKey = key
+                    }
+
+                    override fun draw(canvas: Canvas) {
+                        Util.showMessage(canvas, text)
+                    }
+                }
+            }
         }
 
         fun cmd_disablesave(code: ByteArray, start: Int): Command {

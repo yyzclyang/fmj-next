@@ -10,7 +10,6 @@ import graphics.Bitmap
 import java.*
 
 class MainGame: Game {
-    private  val delta = 40
     private  val canvas = Canvas(Bitmap(Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT))
     private  val screenStack = ScreenStack(this)
 
@@ -64,14 +63,14 @@ class MainGame: Game {
     }
 
     private fun listenUIEvents() {
-        val delta = this.delta.toLong()
+        val delta = Global.delta.toLong()
         sysAddKeyDownListener {
             keyDown(it)
         }
         sysAddKeyUpListener {
             keyUp(it)
         }
-        sysSetInterval(this.delta) {
+        sysSetInterval(Global.delta) {
             update(delta)
             draw()
             sysDrawScreen(canvas.buffer, canvas.width, canvas.height)

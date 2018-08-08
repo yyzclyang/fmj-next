@@ -76,7 +76,7 @@ class Player : FightingCharacter(), Coder {
         lingli = buf[offset + 0x37].toInt() and 0xff
         luck = buf[offset + 0x38].toInt() and 0xff
         currentExp = get2BytesInt(buf, offset + 0x32)
-        levelupChain = DatLib.getRes(DatLib.ResType.MLR, 2, index) as ResLevelupChain
+        levelupChain = DatLib.getRes(DatLib.ResType.MLR, 2, index, true) as ResLevelupChain? ?: ResLevelupChain()
 
         var tmp = buf[offset + 0x1e].toInt() and 0xff
 

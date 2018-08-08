@@ -250,13 +250,13 @@ class Player : FightingCharacter(), Coder {
         index = coder.readInt()
         if (index > 0)
             mImgHead = DatLib.getRes(DatLib.ResType.PIC, 1, index) as ResImage?
-        levelupChain = DatLib.getRes(DatLib.ResType.MLR, 2, index) as ResLevelupChain
+        levelupChain = DatLib.getRes(DatLib.ResType.MLR, 2, index, true) as ResLevelupChain? ?: ResLevelupChain()
         setWalkingSprite(WalkingSprite(type, coder.readInt()))
         fightingSprite = FightingSprite(DatLib.ResType.PIC, index)
         direction = Direction.fromInt(coder.readInt())
         step = coder.readInt()
         setPosInMap(coder.readInt(), coder.readInt())
-        magicChain = DatLib.getMlr(1, coder.readInt())
+        magicChain = DatLib.getMlr(1, coder.readInt(), true)
         magicChain?.learnNum = coder.readInt()
         name = coder.readString()
         level = coder.readInt()

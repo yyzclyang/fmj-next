@@ -116,6 +116,13 @@ class ScreenMainGame(
         }
     }
 
+    fun callChapter(type: Int, index: Int) {
+        val process = vm.loadScript(type, index)
+        process.prev = scriptProcess
+        scriptProcess = process
+        process.start()
+    }
+
     fun exitScript() {
         scriptProcess.stop()
     }

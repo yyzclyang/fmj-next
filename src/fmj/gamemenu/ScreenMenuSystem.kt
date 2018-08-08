@@ -99,6 +99,8 @@ class ScreenMenuSystem(override val parent: GameNode) : BaseScreen {
                 1 -> {
                     if (Global.disableSave)
                         showMessage("当前不能存档")
+                    else if (game.mainScene.scriptProcess.prev != null)
+                        showMessage("副本中不能存档")
                     else
                         pushScreen(ScreenSaveLoadGame(this, Operate.SAVE))
                 }

@@ -37,7 +37,9 @@ class ScriptProcess
     var running = false
         private set
 
-    fun start(goon: Boolean = true) {
+    var prev: ScriptProcess? = null
+
+    fun start() {
         running = true
         goonExecute = true
     }

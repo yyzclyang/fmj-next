@@ -1178,9 +1178,14 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_callchapter(code: ByteArray, start: Int): Command {
-            throw NotImplementedError("cmd_callchapter")
-//            return makeCommand(4) {
-//            }
+            val type = code[start].toInt() and 0xFF or (code[start + 1].toInt() shl 8 and 0xFF)
+            val index = code[start + 2].toInt() and 0xFF or (code[start + 3].toInt() shl 8 and 0xFF)
+
+            return makeCommand(4) {
+                cmdPrint("cmd_callchapter $type $index")
+                game.mainScene.callChapter(type, index)
+                null
+            }
         }
 
         fun cmd_discmp(code: ByteArray, start: Int): Command {
@@ -1198,8 +1203,13 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_return(code: ByteArray, start: Int): Command {
-//            return start
-            throw NotImplementedError("cmd_return")
+            return makeCommand(0) {
+                cmdPrint("cmd_return")
+                game.mainScene.scriptProcess.prev?.let {
+                    game.mainScene.scriptProcess = it
+                }
+                null
+            }
         }
 
         fun cmd_timemsg(code: ByteArray, start: Int): Command {
@@ -1208,7 +1218,7 @@ class ScriptVM(override val parent: GameNode): Control {
 //                while (code[start + i].toInt() != 0) ++i
 //                return start + i + 1
 //            }
-            throw NotImplementedError("cmd_return")
+            throw NotImplementedError("cmd_timemsg")
         }
 
         fun cmd_disablesave(code: ByteArray, start: Int): Command {

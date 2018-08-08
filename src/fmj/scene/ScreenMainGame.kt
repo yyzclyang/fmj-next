@@ -111,7 +111,7 @@ class ScreenMainGame(
             } else {
                 throw Error("存档读取出错")
             }
-            scriptProcess = vm.loadScript(SaveLoadGame.ScriptType, SaveLoadGame.ScriptIndex)
+            scriptProcess = SaveLoadGame.scriptProcess!!
             scriptProcess.goonExecute = true
         }
     }
@@ -148,11 +148,13 @@ class ScreenMainGame(
         if (scriptProcess.running) {
             scriptProcess.process()
             scriptProcess.update(delta)
+            scriptProcess.timerStep(delta)
         } else if (Combat.IsActive()) { // TODO fix this test
             Combat.Update(delta)
         } else {
             mNPCObj.filterNot { it.isEmpty }
                    .forEach { it.update(delta) }
+            scriptProcess.timerStep(delta)
         }
     }
 

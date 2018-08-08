@@ -15,7 +15,7 @@ interface Command {
      *
      * `null`指令执行完毕
      */
-    fun run(): Operate?
+    fun run(p: ScriptProcess): Operate?
 }
 
 interface Operate {

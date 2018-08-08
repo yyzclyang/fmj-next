@@ -23,11 +23,11 @@ import java.*
 
 typealias Instruct = (code: ByteArray, start: Int) -> Command
 
-inline fun makeCommand(len: Int, crossinline run: () -> Operate?): Command {
+inline fun makeCommand(len: Int, crossinline run: (p: ScriptProcess) -> Operate?): Command {
     return object: Command {
         override val len = len
-        override fun run(): Operate? {
-            return run()
+        override fun run(p: ScriptProcess): Operate? {
+            return run(p)
         }
     }
 }
@@ -248,8 +248,8 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_startchapter(code: ByteArray, start: Int): Command {
-            val type = code[start].toInt() and 0xFF or (code[start + 1].toInt() shl 8 and 0xFF)
-            val index = code[start + 2].toInt() and 0xFF or (code[start + 3].toInt() shl 8 and 0xFF)
+            val type = get2ByteInt(code, start)
+            val index = get2ByteInt(code, start + 2)
 
             return makeCommand(4) {
                 cmdPrint("cmd_startchapter $type $index")
@@ -1178,8 +1178,8 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_callchapter(code: ByteArray, start: Int): Command {
-            val type = code[start].toInt() and 0xFF or (code[start + 1].toInt() shl 8 and 0xFF)
-            val index = code[start + 2].toInt() and 0xFF or (code[start + 3].toInt() shl 8 and 0xFF)
+            val type = get2ByteInt(code, start)
+            val index = get2ByteInt(code, start + 2)
 
             return makeCommand(4) {
                 cmdPrint("cmd_callchapter $type $index")
@@ -1258,9 +1258,12 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_seteventtimer(code: ByteArray, start: Int): Command {
-            throw NotImplementedError("cmd_seteventtimer")
-//            return makeCommand(4) {
-//            }
+            val event = get2ByteInt(code, start)
+            val timer = get2ByteInt(code, start + 2)
+            return makeCommand(4) {
+                it.setTimer(timer, event)
+                null
+            }
         }
 
         fun cmd_enableshowpos(code: ByteArray, start: Int): Command {

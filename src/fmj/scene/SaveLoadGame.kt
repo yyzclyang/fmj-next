@@ -4,6 +4,7 @@ import fmj.characters.NPC
 import fmj.characters.Player
 import fmj.characters.SceneObj
 import fmj.combat.Combat
+import fmj.script.ScriptProcess
 import fmj.views.Game
 import java.ObjectInput
 import java.ObjectOutput
@@ -41,6 +42,7 @@ object SaveLoadGame {
     var SceneName = ""
 
     var NpcObjs: Array<NPC> = arrayOf()
+    var scriptProcess: ScriptProcess? = null
 
     fun write(game: Game, out: ObjectOutput) {
         out.writeString(SceneName)
@@ -55,6 +57,7 @@ object SaveLoadGame {
         out.writeInt(MapScreenY)
         out.writeInt(ScriptType)
         out.writeInt(ScriptIndex)
+        game.mainScene.scriptProcess.encode(out)
 
         out.writeInt(game.playerList.size)
         for (i in 0 until game.playerList.size) {
@@ -89,6 +92,8 @@ object SaveLoadGame {
         MapScreenY = coder.readInt()
         ScriptType = coder.readInt()
         ScriptIndex = coder.readInt()
+        scriptProcess = game.vm.loadScript(SaveLoadGame.ScriptType, SaveLoadGame.ScriptIndex)
+        scriptProcess?.decode(coder)
 
         val size = coder.readInt()
         game.playerList.clear()

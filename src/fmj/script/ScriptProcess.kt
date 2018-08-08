@@ -1,6 +1,9 @@
 package fmj.script
 
 import graphics.Canvas
+import java.Coder
+import java.ObjectInput
+import java.ObjectOutput
 
 class ScriptProcess
 /**
@@ -38,6 +41,10 @@ class ScriptProcess
         private set
 
     var prev: ScriptProcess? = null
+
+    var timer: Int = 0
+    var timerCounter: Int = 0
+    var timerEventId: Int = 0
 
     fun start() {
         running = true
@@ -86,7 +93,7 @@ class ScriptProcess
         if (curOp == null) {
             while (mCurExeOperateIndex < commands.size && goonExecute) {
                 val cmd = commands[mCurExeOperateIndex]
-                curOp = cmd.run()
+                curOp = cmd.run(this)
                 if (curOp != null) { // 执行 update draw
                     return
                 }
@@ -109,6 +116,22 @@ class ScriptProcess
         }
     }
 
+    fun timerStep(delta: Long) {
+        if (timer > 0 && timerEventId > 0) {
+            timerCounter -= 1
+            if (timerCounter == 0) {
+                timerCounter = timer
+                triggerEvent(timerEventId)
+            }
+        }
+    }
+
+    fun setTimer(timer: Int, eventId: Int) {
+        this.timer = timer * 20
+        timerCounter = this.timer
+        timerEventId = eventId
+    }
+
     fun draw(canvas: Canvas) {
         curOp?.draw(canvas)
     }
@@ -119,6 +142,18 @@ class ScriptProcess
 
     fun keyUp(key: Int) {
         curOp?.onKeyUp(key)
+    }
+
+    fun encode(coder: ObjectOutput) {
+        coder.writeInt(timer)
+        coder.writeInt(timerCounter)
+        coder.writeInt(timerEventId)
+    }
+
+    fun decode(coder: ObjectInput) {
+        timer = coder.readInt()
+        timerCounter = coder.readInt()
+        timerEventId = coder.readInt()
     }
 
     var goonExecute = true

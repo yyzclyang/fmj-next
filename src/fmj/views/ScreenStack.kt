@@ -40,7 +40,7 @@ class ScreenStack(override val parent: GameNode): GameNode {
     override fun showMessage(msg:String, delay:Long) {
         pushScreen(object: BaseScreen {
             override val parent: GameNode
-                get() = this
+                get() = this@ScreenStack
 
             internal var cnt:Long = 0
 

@@ -2,6 +2,7 @@ package fmj.characters
 
 import fmj.goods.BaseGoods
 import fmj.lib.DatLib
+import java.random
 
 class Monster : FightingCharacter() {
 
@@ -35,6 +36,17 @@ class Monster : FightingCharacter() {
             g.goodsNum = mCarryGoods2[2]
             return g
         }
+
+    fun stealGoods(attacker: FightingCharacter): BaseGoods? {
+        if (mCarryGoods1[0] == 0 || mCarryGoods1[1] == 0 || mCarryGoods1[2] == 0) {
+            return null
+        }
+        if (random() < 0.5) {// TODO: 根据双方属性判断
+            return null
+        }
+        mCarryGoods1[2] -= 1
+        return DatLib.getRes(DatLib.ResType.GRS, mCarryGoods1[0], mCarryGoods1[1]) as BaseGoods
+    }
 
     override fun setData(buf: ByteArray, offset: Int) {
         type = buf[offset].toInt() and 0xff

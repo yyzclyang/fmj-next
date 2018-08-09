@@ -3,6 +3,7 @@ package fmj.combat.actions
 import fmj.characters.FightingCharacter
 import fmj.characters.Monster
 import fmj.combat.anim.RaiseAnimation
+import fmj.goods.BaseGoods
 import graphics.Canvas
 
 abstract class ActionSingleTarget(attacker: FightingCharacter,
@@ -38,5 +39,13 @@ abstract class ActionSingleTarget(attacker: FightingCharacter,
 
     fun setTarget(fc: FightingCharacter) {
         mTarget = fc
+    }
+
+    fun steal(attacker: FightingCharacter): BaseGoods? {
+        val target = mTarget
+        if (target is Monster) {
+            return target.stealGoods(attacker)
+        }
+        return null
     }
 }

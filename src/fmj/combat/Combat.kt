@@ -621,21 +621,8 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
             sInstance = Combat(parent)
             sInstanceBk = null
 
-            var cnt = 0
-            for (i in monstersType.indices) {
-                if (monstersType[i] > 0) {
-                    ++cnt
-                }
-            }
-            sInstance!!.mMonsterType = IntArray(cnt)
-            var i = 0
-            var j = 0
-            while (i < monstersType.size) {
-                if (monstersType[i] > 0) {
-                    sInstance!!.mMonsterType!![j++] = monstersType[i]
-                }
-                ++i
-            }
+            sInstance!!.mMonsterType = monstersType.filter { it != 0 }
+                    .toIntArray()
 
             sInstance!!.mRoundCnt = 0
             sInstance!!.mMaxRound = 0 // 回合数无限制
@@ -644,8 +631,9 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
         }
 
         fun write(out: ObjectOutput) {
-            out.writeBoolean(IsActive())
-            if (IsActive()) {
+            val fightEnabled = sIsEnable && sInstance != null
+            out.writeBoolean(fightEnabled)
+            if (fightEnabled) {
                 out.writeIntArray(sInstance!!.mMonsterType!!)
                 out.writeInt(sInstance!!.mScrb)
                 out.writeInt(sInstance!!.mScrl)
@@ -719,23 +707,13 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
                 return false
             }
 
-            // 打乱怪物类型
-            for (i in sInstance!!.mMonsterType!!.size - 1 downTo 2) {
-                val r = sRandom.nextInt(i)
-
-                val t = sInstance!!.mMonsterType!![i]
-                sInstance!!.mMonsterType!![i] = sInstance!!.mMonsterType!![r]
-                sInstance!!.mMonsterType!![r] = t
-            }
-
             // 随机添加怪物
             sInstance!!.mMonsterList.clear()
-            var i = sRandom.nextInt(3)
-            var j = 0
-            while (i >= 0) {
-                val m = DatLib.getRes(DatLib.ResType.ARS, 3, sInstance!!.mMonsterType!![j++]) as Monster
+            val i = sRandom.nextInt(3)
+            (0..i).forEach {
+                val x = sRandom.nextInt(sInstance!!.mMonsterType!!.size)
+                val m = DatLib.getRes(DatLib.ResType.ARS, 3, sInstance!!.mMonsterType!![x]) as Monster
                 sInstance!!.mMonsterList.add(m)
-                i--
             }
 
             sInstance!!.mRoundCnt = 0

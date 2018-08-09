@@ -21,13 +21,15 @@ class ActionMagicHelpOne(attacker: FightingCharacter,
     internal var oy: Int = 0
 
     override fun preproccess() {
-        // TODO 记下伤害值、异常状态
         mAni = magic.magicAni!!
         mAni.start()
         mAni.setIteratorNum(2)
         mAnix = mTarget.combatX
         mAniy = mTarget.combatY
-        mRaiseAni = RaiseAnimation(mTarget.combatX, mTarget.combatTop, 10, 0)
+        val ohp = mTarget.hp
+        magic.use(mAttacker!!, mTarget)
+        val diff = mTarget.hp - ohp
+        mRaiseAni = RaiseAnimation(mTarget.combatX, mTarget.combatTop, diff, 0)
     }
 
     override fun update(delta: Long): Boolean {

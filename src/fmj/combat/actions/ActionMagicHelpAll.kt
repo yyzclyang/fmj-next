@@ -23,8 +23,12 @@ class ActionMagicHelpAll(attacker: FightingCharacter,
         oy = mAttacker!!.combatY
         animation.start()
         animation.setIteratorNum(2)
-        mRaiseAnis.add(RaiseAnimation(10, 20, 10, 0))
-        mRaiseAnis.add(RaiseAnimation(30, 10, 10, 0))
+        mTargets.forEach {
+            val hp = it.hp
+            magic.use(mAttacker!!, it)
+            val diff = it.hp - hp
+            mRaiseAnis.add(RaiseAnimation(it.combatX, it.combatY, diff, 0))
+        }
     }
 
     override fun update(delta: Long): Boolean {

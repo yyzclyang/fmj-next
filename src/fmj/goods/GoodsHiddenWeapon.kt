@@ -1,5 +1,7 @@
 package fmj.goods
 
+import fmj.characters.BuffMan
+import fmj.characters.FightingCharacter
 import fmj.lib.DatLib
 import fmj.lib.ResSrs
 
@@ -27,6 +29,8 @@ class GoodsHiddenWeapon : BaseGoods() {
         private set
     private var mBitMask: Int = 0 // 000 全体否 毒乱封眠
 
+    private var buff = BuffMan.fromInt((0x4 shl 4) or (mBitMask and 0xf))
+
     private fun get2ByteSint(buf: ByteArray, start: Int): Int {
         val i = buf[start].toInt() and 0xFF or (buf[start + 1].toInt() shl 8 and 0x7F00)
         return if (buf[start + 1].toInt() and 0x80 != 0) {
@@ -48,5 +52,11 @@ class GoodsHiddenWeapon : BaseGoods() {
 
     override fun effectAll(): Boolean {
         return mBitMask and 0x10 != 0
+    }
+
+    fun attack(other: FightingCharacter) {
+        other.hp -= affectHp
+        other.mp -= affectMp
+        other.beAttackedWithBuff(buff)
     }
 }

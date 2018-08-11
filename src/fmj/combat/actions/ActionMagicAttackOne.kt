@@ -28,21 +28,28 @@ class ActionMagicAttackOne(attacker: FightingCharacter, target: FightingCharacte
     private var tip: Animation? = null
 
     override fun preproccess() {
-        ox = mAttacker!!.combatX
-        oy = mAttacker!!.combatY
+        val attacker = mAttacker?:return
+        val target = mTarget
+
+        attacker.backupStatus()
+        target.backupStatus()
+
+        ox = attacker.combatX
+        oy = attacker.combatY
         mAni = magic.magicAni
-        mAni!!.start()
-        mAni!!.setIteratorNum(2)
-        val ohp = mTarget.hp
+        mAni?.start()
+        mAni?.setIteratorNum(2)
         if (magic is MagicAttack) {
-            magic.use(mAttacker!!, mTarget)
+            magic.use(attacker, target)
         }
-        mAniX = mTarget.combatX
-        mAniY = mTarget.combatY - mTarget.fightingSprite!!.height / 2
-        mRaiseAni = RaiseAnimation(mTarget.combatX, mTarget.combatY, mTarget.hp - ohp, 0/*FightingCharacter.BUFF_MASK_DU*/)
+        mAniX = target.combatX
+        mAniY = target.combatY - target.fightingSprite!!.height / 2
+
+        mRaiseAnimations.add(target.diffToAnimation())
+        mRaiseAnimations.add(attacker.diffToAnimation())
 
         if (magic is MagicSpecial) {
-            steal(mAttacker!!)?.let {
+            steal(attacker)?.let {
                 Player.sGoodsList.addGoods(it.type, it.index)
                 tip = object: Animation {
                     var countdown = 1000
@@ -86,7 +93,7 @@ class ActionMagicAttackOne(attacker: FightingCharacter, target: FightingCharacte
                 }
             }
 
-            STATE_AFT -> if (!mRaiseAni!!.update(delta)) {
+            STATE_AFT -> if (!updateRaiseAnimation(delta)) {
                 if (mTarget is Player) {
                     (mTarget as Player).setFrameByState()
                 } else {
@@ -105,7 +112,7 @@ class ActionMagicAttackOne(attacker: FightingCharacter, target: FightingCharacte
     override fun draw(canvas: Canvas) {
         when (mState) {
             STATE_ANI -> mAni?.drawAbsolutely(canvas, mAniX, mAniY)
-            STATE_AFT -> mRaiseAni?.draw(canvas)
+            STATE_AFT -> drawRaiseAnimation(canvas)
             STATE_TIP -> tip?.draw(canvas)
         }
     }

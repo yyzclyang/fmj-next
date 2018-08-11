@@ -8,7 +8,7 @@ import fmj.lib.ResSrs
 import graphics.Bitmap
 import graphics.Canvas
 
-class RaiseAnimation(private val x: Int, private val y: Int, hitpoint: Int, buff: Int) {
+class RaiseAnimation(private val x: Int, private val y: Int, hitpoint: Int, buff: Int): Animation {
 
     private var dy = 0
     private var dt = 0
@@ -54,7 +54,7 @@ class RaiseAnimation(private val x: Int, private val y: Int, hitpoint: Int, buff
         }
     }
 
-    fun update(delta: Long): Boolean {
+    override fun update(delta: Long): Boolean {
         if (bShowNum) {
             cnt += delta
             if (cnt > 50) {
@@ -78,7 +78,7 @@ class RaiseAnimation(private val x: Int, private val y: Int, hitpoint: Int, buff
         return true
     }
 
-    fun draw(canvas: Canvas) {
+    override fun draw(canvas: Canvas) {
         if (bShowNum) {
             canvas.drawBitmap(raiseNum, x, y + dy)
         } else {

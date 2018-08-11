@@ -1,11 +1,15 @@
 package fmj.characters
 
+import fmj.combat.anim.Animation
+import fmj.combat.anim.RaiseAnimation
+import fmj.combat.anim.SequencialAnimation
 import fmj.magic.BaseMagic
 import fmj.magic.ResMagicChain
 import java.Coder
 import java.ObjectInput
 import java.ObjectOutput
 import kotlin.coroutines.experimental.buildSequence
+import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -16,12 +20,32 @@ class Buff(var value: Int, var round: Int) {
             value -= 1
         }
     }
+
+    fun add(round: Int) {
+        if (round == 0) {
+            value += 1
+        } else {
+            if (round == 0) {
+                value += 1
+            }
+            this.round = max(this.round, round)
+        }
+    }
+
+    fun fill(other: Buff) {
+        other.value = value
+        other.round = round
+    }
+
+    fun diffFrom(other: Buff): Buff {
+        return Buff(value - other.value,
+                round - other.round)
+    }
 }
 
-class BuffMan: Coder
+class BuffMan(val buffs: Array<Buff> = Array(8) { Buff(0, 0) })
+    : Coder
 {
-    val buffs = Array(8) { Buff(0, 0) }
-
     override fun encode(out: ObjectOutput) {
         out.writeIntArray(buffs.map { it.value }.toIntArray())
         out.writeIntArray(buffs.map { it.round }.toIntArray())
@@ -46,14 +70,7 @@ class BuffMan: Coder
 
     fun addBuff(mask: Int, round: Int) {
         getBuffs(mask).forEach {
-            if (round == 0) {
-                it.value += 1
-            } else {
-                if (it.round == 0) {
-                    it.value += 1
-                }
-                it.round = max(round, it.round)
-            }
+            it.add(round)
         }
     }
 
@@ -67,9 +84,73 @@ class BuffMan: Coder
     fun reset() {
         buffs.forEach { it.reset() }
     }
+
+    fun fill(other: BuffMan) {
+        buffs.zip(other.buffs).forEach {
+            it.first.fill(it.second)
+        }
+    }
+
+    fun diffFrom(other: BuffMan): BuffMan {
+        val newbuffs = buffs.zip(other.buffs).map {
+            it.first.diffFrom(it.second)
+        }.toTypedArray()
+        return BuffMan(newbuffs)
+    }
+
+    companion object {
+        fun fromInt(v: Int): BuffMan {
+            val round = (v and 0xf0) shr 4
+            val inds = FightingCharacter.maskToIndexes(v and 0xf)
+            val man = BuffMan()
+            inds.forEach {
+                man.buffs[it].value = 1
+                man.buffs[it].round = round
+            }
+            return man
+        }
+    }
+}
+
+fun calcBuff(at: BuffMan, df: BuffMan, st: BuffMan): BuffMan {
+    val rv = BuffMan()
+    (1..4).forEach {
+        val a = at.buffs[it]
+        val d = df.buffs[it]
+        val s = st.buffs[it]
+
+        if (d.value == 0 && a.value > 0 && a.round > 0) {
+            s.add(a.round)
+            rv.buffs[it].value = 1
+        }
+    }
+    (5..7).forEach {
+        if (at.buffs[it].value != 0) {
+            st.buffs[it].value = -at.buffs[it].value
+        }
+    }
+    return rv
 }
 
 abstract class FightingCharacter : Character() {
+    class Diff {
+        var debuff = BuffMan()
+        var hp = 0
+        var mp = 0
+
+        fun toAnimation(x: Int, y: Int): Animation {
+            val buff = debuff.buffs.mapIndexed { index, buff ->
+                if (buff.value != 0 || buff.round != 0) {
+                    FightingCharacter.indexToMask(index)
+                } else {
+                    0
+                }
+            }.reduce { acc, i -> acc + i }
+
+            val num = max(abs(hp), abs(mp))
+            return RaiseAnimation(x, y, num, buff)
+        }
+    }
 
     /**
      * 人物战斗图
@@ -156,6 +237,8 @@ abstract class FightingCharacter : Character() {
     protected var debuff = BuffMan()
     /** 普通攻击产生(全体)毒乱封眠，对于主角，只有武器具有该效果 */
     protected var atbuff = BuffMan()
+
+    private val backup = Diff()
 
     /** 设置中心坐标 */
     fun setCombatPos(x: Int, y: Int) {
@@ -251,6 +334,32 @@ abstract class FightingCharacter : Character() {
         atbuff.delBuff(mask)
     }
 
+    fun attack(other: FightingCharacter): BuffMan {
+        return calcBuff(atbuff, other.buff, other.debuff)
+    }
+
+    fun beAttackedWithBuff(b: BuffMan): BuffMan {
+        return calcBuff(b, buff, debuff)
+    }
+
+    fun backupStatus() {
+        backup.hp = hp
+        backup.mp = mp
+        debuff.fill(backup.debuff)
+    }
+
+    fun diff(): Diff {
+        val diff = Diff()
+        diff.mp = mp - backup.mp
+        diff.hp = hp - backup.hp
+        diff.debuff = debuff.diffFrom(backup.debuff)
+        return diff
+    }
+
+    fun diffToAnimation(): Animation {
+        return diff().toAnimation(combatX, combatY)
+    }
+
     open fun getAllMagics(): Collection<BaseMagic> {
         return magicChain?.getAllLearntMagics() ?: listOf()
     }
@@ -275,6 +384,21 @@ abstract class FightingCharacter : Character() {
         fun maskToIndex(mask: Int): Int
         {
             return maskToIndexes(mask).first()
+        }
+
+        fun indexToMask(i: Int): Int
+        {
+            return when (i) {
+                0 -> BUFF_MASK_MIAN
+                1 -> BUFF_MASK_FENG
+                2 -> BUFF_MASK_LUAN
+                3 -> BUFF_MASK_DU
+                4 -> BUFF_MASK_ALL
+                5 -> BUFF_MASK_GONG
+                6 -> BUFF_MASK_FANG
+                7 -> BUFF_MASK_SU
+                else -> 0
+            }
         }
 
         fun maskToIndexes(mask: Int): Sequence<Int>

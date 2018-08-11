@@ -23,21 +23,18 @@ class ActionUseItemOne(attacker: FightingCharacter, target: FightingCharacter, i
     internal var oy: Int = 0
 
     override fun preproccess() {
-        // TODO 记下伤害值、异常状态
-        var hp = 0
+        mTarget.backupStatus()
         if (goods is GoodsMedicine) {
             mAni = (goods as GoodsMedicine).ani!!
-            hp = mTarget.hp
             (goods as GoodsMedicine).eat(mTarget as Player)
-            hp = mTarget.hp - hp
         } else {
-            mAni = DatLib.Companion.getRes(DatLib.ResType.SRS, 2, 1) as ResSrs
+            mAni = DatLib.getRes(DatLib.ResType.SRS, 2, 1) as ResSrs
         }
         mAni.start()
         mAni.setIteratorNum(2)
         mAnix = mTarget.combatX
         mAniy = mTarget.combatY
-        mRaiseAni = RaiseAnimation(mTarget.combatX, mTarget.combatTop, hp, 0)
+        mRaiseAnimations.add(mTarget.diffToAnimation())
     }
 
     override fun update(delta: Long): Boolean {
@@ -62,7 +59,7 @@ class ActionUseItemOne(attacker: FightingCharacter, target: FightingCharacter, i
                 }
             }
 
-            STATE_AFT -> return mRaiseAni!!.update(delta)
+            STATE_AFT -> return updateRaiseAnimation(delta)
         }//			break;
         return true
     }
@@ -71,7 +68,7 @@ class ActionUseItemOne(attacker: FightingCharacter, target: FightingCharacter, i
         if (mState == STATE_ANI) {
             mAni.drawAbsolutely(canvas, mAnix, mAniy)
         } else if (mState == STATE_AFT) {
-            mRaiseAni!!.draw(canvas)
+            drawRaiseAnimation(canvas)
         }
     }
 

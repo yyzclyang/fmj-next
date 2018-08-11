@@ -21,22 +21,27 @@ class ActionPhysicalAttackOne(attacker: FightingCharacter,
     private var mTotalMark = true
 
     override fun preproccess() {
-        // TODO 记下伤害值、异常状态
-        var damage: Int
-        ox = mAttacker!!.combatX
-        oy = mAttacker!!.combatY
-        dx = (mTarget.combatX - mAttacker!!.combatX).toFloat() / TOTAL_FRAME
-        dy = (mTarget.combatY - mAttacker!!.combatY).toFloat() / TOTAL_FRAME
-        damage = mAttacker!!.attack - mTarget.defend
+        val attacker = mAttacker?:return
+        val target = mTarget
+
+        target.backupStatus()
+
+        ox = attacker.combatX
+        oy = attacker.combatY
+        dx = (target.combatX - attacker.combatX).toFloat() / TOTAL_FRAME
+        dy = (target.combatY - attacker.combatY).toFloat() / TOTAL_FRAME
+
+        var damage = attacker.attack - target.defend
         if (damage <= 0) {
             damage = 1
         }
-        if (mAttacker is Player) {
-            damage *= 10
-        }
+//        if (attacker is Player) {
+//            damage *= 10
+//        }
         damage += (random() * 10).toInt()
-        mTarget.hp = mTarget.hp - damage
-        mRaiseAni = RaiseAnimation(mTarget.combatLeft, mTarget.combatTop, -damage, 0)
+        target.hp = target.hp - damage
+        attacker.attack(target)
+        mRaiseAnimations.add(target.diffToAnimation())
     }
 
     override fun update(delta: Long): Boolean {

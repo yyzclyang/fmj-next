@@ -21,16 +21,21 @@ class ActionThrowItemOne(attacker: FightingCharacter, target: FightingCharacter,
     private var oy: Int = 0
 
     override fun preproccess() {
-        // TODO 记下伤害值、异常状态 there is null pointer
-        ox = mAttacker!!.combatX
-        oy = mAttacker!!.combatY
+        val attacker = mAttacker?:return
+        val target = mTarget
+
+        target.backupStatus()
+
+        ox = attacker.combatX
+        oy = attacker.combatY
         mAni = hiddenWeapon.ani
         mAni!!.start()
         mAni!!.setIteratorNum(2)
-        // TODO effect it
         mAniX = mTarget.combatX
         mAniY = mTarget.combatY
-        mRaiseAni = RaiseAnimation(mAniX, mTarget.combatTop, 10, 0)
+        hiddenWeapon.attack(target)
+
+        mRaiseAnimations.add(target.diffToAnimation())
     }
 
     override fun update(delta: Long): Boolean {
@@ -60,7 +65,7 @@ class ActionThrowItemOne(attacker: FightingCharacter, target: FightingCharacter,
                 }
             }
 
-            STATE_AFT -> if (!mRaiseAni!!.update(delta)) {
+            STATE_AFT -> if (!updateRaiseAnimation(delta)) {
                 if (mTarget is Player) {
                     (mTarget as Player).setFrameByState()
                 } else {
@@ -76,7 +81,7 @@ class ActionThrowItemOne(attacker: FightingCharacter, target: FightingCharacter,
         if (mState == STATE_ANI) {
             mAni!!.drawAbsolutely(canvas, mAniX, mAniY)
         } else if (mState == STATE_AFT) {
-            mRaiseAni!!.draw(canvas)
+            drawRaiseAnimation(canvas)
         }
     }
 

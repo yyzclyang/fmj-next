@@ -29,7 +29,7 @@ class ActionMagicHelpOne(attacker: FightingCharacter,
         val ohp = mTarget.hp
         magic.use(mAttacker!!, mTarget)
         val diff = mTarget.hp - ohp
-        mRaiseAni = RaiseAnimation(mTarget.combatX, mTarget.combatTop, diff, 0)
+        mRaiseAnimations.add(RaiseAnimation(mTarget.combatX, mTarget.combatTop, diff, 0))
     }
 
     override fun update(delta: Long): Boolean {
@@ -54,8 +54,8 @@ class ActionMagicHelpOne(attacker: FightingCharacter,
                 }
             }
 
-            STATE_AFT -> return mRaiseAni!!.update(delta)
-        }//			break;
+            STATE_AFT -> return updateRaiseAnimation(delta)
+        }
         return true
     }
 
@@ -63,7 +63,7 @@ class ActionMagicHelpOne(attacker: FightingCharacter,
         if (mState == STATE_ANI) {
             mAni.drawAbsolutely(canvas, mAnix, mAniy)
         } else if (mState == STATE_AFT) {
-            mRaiseAni!!.draw(canvas)
+            drawRaiseAnimation(canvas)
         }
     }
 

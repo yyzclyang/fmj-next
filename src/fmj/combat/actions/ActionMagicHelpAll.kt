@@ -19,16 +19,17 @@ class ActionMagicHelpAll(attacker: FightingCharacter,
     internal var oy: Int = 0
 
     override fun preproccess() {
-        ox = mAttacker!!.combatX
-        oy = mAttacker!!.combatY
+        val attacker = mAttacker?:return
+        mTargets.forEach { it.backupStatus() }
+
+        ox = attacker.combatX
+        oy = attacker.combatY
         animation.start()
         animation.setIteratorNum(2)
         mTargets.forEach {
-            val hp = it.hp
             magic.use(mAttacker!!, it)
-            val diff = it.hp - hp
-            mRaiseAnis.add(RaiseAnimation(it.combatX, it.combatY, diff, 0))
         }
+        mRaiseAnimations.addAll(mTargets.map { it.diffToAnimation(false) })
     }
 
     override fun update(delta: Long): Boolean {

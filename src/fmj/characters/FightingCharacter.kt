@@ -348,16 +348,17 @@ abstract class FightingCharacter : Character() {
         debuff.fill(backup.debuff)
     }
 
-    fun diff(): Diff {
+    fun diff(withBuff: Boolean): Diff {
         val diff = Diff()
         diff.mp = mp - backup.mp
         diff.hp = hp - backup.hp
-        diff.debuff = debuff.diffFrom(backup.debuff)
+        if (withBuff)
+            diff.debuff = debuff.diffFrom(backup.debuff)
         return diff
     }
 
-    fun diffToAnimation(): Animation {
-        return diff().toAnimation(combatX, combatY)
+    fun diffToAnimation(withBuff: Boolean = true): Animation {
+        return diff(withBuff).toAnimation(combatX, combatY)
     }
 
     open fun getAllMagics(): Collection<BaseMagic> {

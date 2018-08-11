@@ -17,27 +17,29 @@ class ActionPhysicalAttackAll(attacker: FightingCharacter,
     private var ox: Int = 0
     private var oy: Int = 0
 
-//    private val buffRound: Int = 0
     override fun preproccess() {
-        // TODO 记下伤害值、异常状态
+        val attacker = mAttacker?:return
+        mTargets.forEach { it.backupStatus() }
+
+        ox = attacker.combatX
+        oy = attacker.combatY
+        dx = (44.0f - attacker.combatX) / TOTAL_FRAME
+        dy = (14.0f - attacker.combatY) / TOTAL_FRAME
         var damage: Int
-        ox = mAttacker!!.combatX
-        oy = mAttacker!!.combatY
-        dx = (44.0f - mAttacker!!.combatX) / TOTAL_FRAME
-        dy = (14.0f - mAttacker!!.combatY) / TOTAL_FRAME
         for (i in 0 until mTargets.size) {
             val fc = mTargets[i]
             if (!fc.isAlive) {
                 continue
             }
-            damage = mAttacker!!.attack - fc.defend
+            damage = attacker.attack - fc.defend
             if (damage <= 0) {
                 damage = 1
             }
             damage += (random() * 3).toInt()
             fc.hp = fc.hp - damage
-            mRaiseAnis.add(RaiseAnimation(mTargets[i].combatX, mTargets[i].combatY, -damage, 0))
+            attacker.attack(fc)
         }
+        mRaiseAnimations.addAll(mTargets.map { it.diffToAnimation(true) })
     }
 
     override fun update(delta: Long): Boolean {

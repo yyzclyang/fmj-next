@@ -2,30 +2,38 @@ package fmj.combat.actions
 
 import fmj.characters.FightingCharacter
 import fmj.characters.Player
-import fmj.combat.anim.RaiseAnimation
 import fmj.goods.BaseGoods
+import fmj.goods.GoodsMedicine
+import fmj.lib.DatLib
 import fmj.lib.ResSrs
 
 import graphics.Canvas
 
 class ActionUseItemAll(attacker: FightingCharacter,
-                       targets: List<FightingCharacter>, internal var goods: BaseGoods) : ActionMultiTarget(attacker, targets) {
+                       targets: List<FightingCharacter>, internal val goods: BaseGoods) : ActionMultiTarget(attacker, targets) {
 
     private var mState = 1
 
-    internal var mAni: ResSrs? = null
+    private var mAni: ResSrs? = null
 
     internal var ox: Int = 0
     internal var oy: Int = 0
 
     override fun preproccess() {
-        ox = mAttacker!!.combatX
-        oy = mAttacker!!.combatY
-        //		mAni = magic.getMagicAni(); TODO null fix
-        mAni!!.start()
-        mAni!!.setIteratorNum(2)
-        mRaiseAnis.add(RaiseAnimation(10, 20, 10, 0))
-        mRaiseAnis.add(RaiseAnimation(30, 10, 10, 0))
+        val attacker = mAttacker?:return
+        mTargets.forEach { it.backupStatus() }
+
+        ox = attacker.combatX
+        oy = attacker.combatY
+        if (goods is GoodsMedicine) {
+            mAni = goods.ani
+            mTargets.forEach { goods.eat(it as Player) }
+        } else {
+            mAni = DatLib.getRes(DatLib.ResType.SRS, 2, 1) as ResSrs
+        }
+        mAni?.start()
+        mAni?.setIteratorNum(2)
+        mRaiseAnimations.addAll(mTargets.map { it.diffToAnimation() })
     }
 
     override fun update(delta: Long): Boolean {
@@ -41,7 +49,7 @@ class ActionUseItemAll(attacker: FightingCharacter,
                 mState = STATE_ANI
             }
 
-            STATE_ANI -> if (!mAni!!.update(delta)) { // 魔法动画完成
+            STATE_ANI -> if (mAni?.update(delta) != true) { // 魔法动画完成
                 mState = STATE_AFT
                 if (mAttacker is Player) {
                     (mAttacker as Player).setFrameByState()
@@ -51,13 +59,13 @@ class ActionUseItemAll(attacker: FightingCharacter,
             }
 
             STATE_AFT -> return updateRaiseAnimation(delta)
-        }//			break;
+        }
         return true
     }
 
     override fun draw(canvas: Canvas) {
         if (mState == STATE_ANI) {
-            mAni!!.draw(canvas, 0, 0)
+            mAni?.draw(canvas, 0, 0)
         } else if (mState == STATE_AFT) {
             drawRaiseAnimation(canvas)
         }

@@ -20,14 +20,19 @@ class ActionMagicAttackAll(attacker: FightingCharacter,
     private var oy: Int = 0
 
     override fun preproccess() {
-        ox = mAttacker!!.combatX
-        oy = mAttacker!!.combatY
+        val attacker = mAttacker?:return
+        attacker.backupStatus()
+        mTargets.forEach { it.backupStatus() }
+
+        ox = attacker.combatX
+        oy = attacker.combatY
         mAni = magic.magicAni
         mAni!!.start()
         mAni!!.setIteratorNum(2)
-        magic.use(mAttacker!!, mTargets)
-        mRaiseAnis.add(RaiseAnimation(10, 10, 10, 0))
-        mRaiseAnis.add(RaiseAnimation(30, 10, 20, 0/*FightingCharacter.BUFF_MASK_DU*/))
+        magic.use(attacker, mTargets)
+
+        mRaiseAnimations.add(attacker.diffToAnimation())
+        mRaiseAnimations.addAll(mTargets.map { it.diffToAnimation() })
     }
 
     override fun update(delta: Long): Boolean {

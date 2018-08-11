@@ -1,6 +1,7 @@
 package fmj.combat.actions
 
 import fmj.characters.FightingCharacter
+import fmj.combat.anim.Animation
 import graphics.Canvas
 
 abstract class Action {
@@ -9,6 +10,8 @@ abstract class Action {
     protected var mAttacker: FightingCharacter? = null
     private var mTimeCnt: Long = 0
     protected var mCurrentFrame = 0
+    protected var mRaiseAnimations: MutableList<Animation> = arrayListOf()
+
 
     /**
      *
@@ -36,9 +39,17 @@ abstract class Action {
      */
     abstract fun postExecute()
 
-    protected abstract fun updateRaiseAnimation(delta: Long): Boolean
+    open fun updateRaiseAnimation(delta: Long): Boolean {
+        mRaiseAnimations.removeAll { !it.update(delta) }
+        return !mRaiseAnimations.isEmpty()
+    }
 
-    protected abstract fun drawRaiseAnimation(canvas: Canvas)
+    open fun drawRaiseAnimation(canvas: Canvas) {
+        mRaiseAnimations.forEach {
+            it.draw(canvas)
+        }
+    }
+
 
     /**
      *

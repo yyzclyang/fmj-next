@@ -16,6 +16,15 @@ class MagicAttack : BaseMagic() {
     private var mBuff: Int = 0//高四位 持续回合，低四位毒、乱、封、眠
     private var mSu: Int = 0//速 0~100，表示敌人的身法减慢的百分比
 
+    private val buff: BuffMan
+        get() {
+            val atbuff = BuffMan.fromInt(mBuff)
+            atbuff.buffs[FightingCharacter.maskToIndex(FightingCharacter.BUFF_MASK_FANG)].value = mDf
+            atbuff.buffs[FightingCharacter.maskToIndex(FightingCharacter.BUFF_MASK_GONG)].value = mAt
+            atbuff.buffs[FightingCharacter.maskToIndex(FightingCharacter.BUFF_MASK_SU)].value = mSu
+            return atbuff
+        }
+
     override fun setOtherData(buf: ByteArray, offset: Int) {
         mHp = get2BytesSInt(buf, offset + 0x12)
         mMp = get2BytesSInt(buf, offset + 0x14)
@@ -25,23 +34,18 @@ class MagicAttack : BaseMagic() {
         mSu = buf[offset + 0x19].toInt() and 0xff
     }
 
-    override fun use(src: FightingCharacter, dst: FightingCharacter) { // TODO
+    override fun use(src: FightingCharacter, dst: FightingCharacter) {
         src.mp = src.mp - costMp
         dst.hp = dst.hp - mHp
-        val atbuff = BuffMan.fromInt(mBuff)
-        atbuff.buffs[FightingCharacter.maskToIndex(FightingCharacter.BUFF_MASK_FANG)].value = mDf
-        atbuff.buffs[FightingCharacter.maskToIndex(FightingCharacter.BUFF_MASK_GONG)].value = mAt
-        atbuff.buffs[FightingCharacter.maskToIndex(FightingCharacter.BUFF_MASK_SU)].value = mSu
-        dst.beAttackedWithBuff(atbuff)
+        dst.beAttackedWithBuff(buff)
     }
 
     fun use(src: FightingCharacter, dst: List<FightingCharacter>) {
         src.mp = src.mp - costMp
-        val atbuff = BuffMan.fromInt(mBuff)
+        val buff = this.buff
         for (fc in dst) {
             fc.hp = fc.hp - mHp
-            fc.beAttackedWithBuff(atbuff)
+            fc.beAttackedWithBuff(buff)
         }
     }
-
 }

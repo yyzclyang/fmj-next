@@ -19,15 +19,16 @@ class ActionThrowItemAll(attacker: FightingCharacter,
     private var oy: Int = 0
 
     override fun preproccess() {
-        // TODO 记下伤害值、异常状态
-        ox = mAttacker!!.combatX
-        oy = mAttacker!!.combatY
+        val attacker = mAttacker?:return
+        mTargets.forEach { it.backupStatus() }
+
+        ox = attacker.combatX
+        oy = attacker.combatY
         mAni = hiddenWeapon.ani
         mAni!!.start()
         mAni!!.setIteratorNum(2)
-        // TODO effect it
-        mRaiseAnis.add(RaiseAnimation(10, 20, 10, 0))
-        mRaiseAnis.add(RaiseAnimation(30, 10, 10, 0))
+        mTargets.forEach { hiddenWeapon.attack(it) }
+        mRaiseAnimations.addAll(mTargets.map { it.diffToAnimation() })
     }
 
     override fun update(delta: Long): Boolean {

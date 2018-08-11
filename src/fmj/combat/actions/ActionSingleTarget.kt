@@ -2,15 +2,10 @@ package fmj.combat.actions
 
 import fmj.characters.FightingCharacter
 import fmj.characters.Monster
-import fmj.combat.anim.Animation
-import fmj.combat.anim.RaiseAnimation
 import fmj.goods.BaseGoods
-import graphics.Canvas
 
 abstract class ActionSingleTarget(attacker: FightingCharacter,
                                   protected var mTarget: FightingCharacter) : Action() {
-
-    protected var mRaiseAnimations: MutableList<Animation> = arrayListOf()
 
     override val isTargetAlive: Boolean
         get() = mTarget.isAlive
@@ -24,17 +19,6 @@ abstract class ActionSingleTarget(attacker: FightingCharacter,
 
     override fun postExecute() {
         mTarget.isVisiable = mTarget.isAlive
-    }
-
-    override fun updateRaiseAnimation(delta: Long): Boolean {
-        mRaiseAnimations.removeAll { !it.update(delta) }
-        return !mRaiseAnimations.isEmpty()
-    }
-
-    override fun drawRaiseAnimation(canvas: Canvas) {
-        mRaiseAnimations.forEach {
-            it.draw(canvas)
-        }
     }
 
     override fun targetIsMonster(): Boolean {

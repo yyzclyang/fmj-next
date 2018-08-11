@@ -1,5 +1,6 @@
 package fmj.goods
 
+import fmj.characters.FightingCharacter
 import fmj.characters.Player
 import fmj.lib.DatLib
 import fmj.lib.ResSrs

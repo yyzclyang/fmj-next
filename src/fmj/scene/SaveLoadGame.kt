@@ -13,7 +13,7 @@ import java.writeArray
 
 object SaveLoadGame {
     const val magicNum = 0x67736176
-    const val version = 1
+    const val version = 2
 
     /**
      * 是否开始新游戏
@@ -46,6 +46,11 @@ object SaveLoadGame {
     var NpcObjs: Array<NPC> = arrayOf()
     var scriptProcess: ScriptProcess? = null
 
+    // TODO: implement
+    var allowToss = true
+    // TODO: implement
+    var allowMiss = false
+
     fun write(game: Game, out: ObjectOutput) {
         out.writeString(SceneName)
         val actorNum = game.playerList.size
@@ -61,6 +66,12 @@ object SaveLoadGame {
         out.writeInt(MapScreenY)
         out.writeInt(ScriptType)
         out.writeInt(ScriptIndex)
+
+        // version 2
+        out.writeBoolean(allowMiss)
+        // version 2
+        out.writeBoolean(allowToss)
+
         game.mainScene.scriptProcess.encode(out)
 
         out.writeInt(game.playerList.size)
@@ -107,6 +118,13 @@ object SaveLoadGame {
         MapScreenY = coder.readInt()
         ScriptType = coder.readInt()
         ScriptIndex = coder.readInt()
+        if (version >= 2) {
+            allowMiss = coder.readBoolean()
+            allowToss = coder.readBoolean()
+        } else {
+            allowMiss = false
+            allowToss = true
+        }
         scriptProcess = game.vm.loadScript(SaveLoadGame.ScriptType, SaveLoadGame.ScriptIndex)
         scriptProcess?.decode(coder)
 

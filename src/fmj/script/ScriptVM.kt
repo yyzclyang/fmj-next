@@ -17,6 +17,7 @@ import fmj.graphics.Util
 import fmj.lib.DatLib
 import fmj.lib.ResGut
 import fmj.lib.ResSrs
+import fmj.scene.SaveLoadGame
 import fmj.views.Control
 import fmj.views.GameNode
 import fmj.views.ScreenSaveLoadGame
@@ -1348,14 +1349,15 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_setfightmiss(code: ByteArray, start: Int): Command {
             val enable = get2ByteInt(code, start)
             return makeCommand(2) {
-                // TODO
+                SaveLoadGame.allowMiss = enable == 1
                 null
             }
         }
 
         fun cmd_setarmstoss(code: ByteArray, start: Int): Command {
+            val enable = get2ByteInt(code, start)
             return makeCommand(2) {
-                // TODO
+                SaveLoadGame.allowToss = enable == 1
                 null
             }
         }

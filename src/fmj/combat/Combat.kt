@@ -5,11 +5,7 @@ import fmj.ScreenViewType
 import fmj.characters.FightingCharacter
 import fmj.characters.Monster
 import fmj.characters.Player
-import fmj.combat.actions.Action
-import fmj.combat.actions.ActionCoopMagic
-import fmj.combat.actions.ActionFlee
-import fmj.combat.actions.ActionPhysicalAttackAll
-import fmj.combat.actions.ActionPhysicalAttackOne
+import fmj.combat.actions.*
 import fmj.combat.ui.CombatSuccess
 import fmj.combat.ui.CombatUI
 import fmj.goods.BaseGoods
@@ -17,18 +13,15 @@ import fmj.goods.GoodsManage
 import fmj.lib.DatLib
 import fmj.lib.ResImage
 import fmj.lib.ResSrs
+import fmj.magic.MagicAttack
+import fmj.magic.MagicRestore
 import fmj.views.BaseScreen
 import fmj.views.GameNode
 
 import graphics.Bitmap
 import graphics.Canvas
 import graphics.Point
-
-import java.ArrayQueue
-import java.Runnable
-import java.ObjectInput
-import java.ObjectOutput
-import java.Random
+import java.*
 
 class Combat private constructor(override val parent: GameNode) : BaseScreen, CombatUI.CallBack {
 
@@ -134,7 +127,6 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
      * 随机获取一个或者的玩家角色
      * @return `null`全死了
      */
-    // 全死了
     val randomAlivePlayer: Player?
         get() {
             var cnt = 0
@@ -477,16 +469,50 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
     }
 
     private fun generateMonstersActions() {
-        // TODO according to the monster's intelligence, add some magic attack
         for (m in mMonsterList) {
             if (m.isAlive) {
-                val p = randomAlivePlayer
-                if (p != null) {
-                    mActionQueue.add(if (m.hasAtbuff(FightingCharacter.BUFF_MASK_ALL))
-                        ActionPhysicalAttackAll(m, mPlayerList)
-                    else
-                        ActionPhysicalAttackOne(m, p))
+                val p = randomAlivePlayer ?: return
+                val magics = m.magicChain?.getAllLearntMagics()?.filter {
+                    it.costMp < m.mp
                 }
+                if (magics != null) {
+                    val dyingMonster = mMonsterList.firstOrNull {
+                        it.hp < it.maxHP / 2
+                    }
+                    val restoreMagic = magics.firstOrNull { it is MagicRestore }
+                    val attackMagic = magics.firstOrNull {
+                        it is MagicAttack
+                    } as? MagicAttack
+
+                    if (dyingMonster != null && restoreMagic != null) {
+                        if (restoreMagic.isForAll) {
+                            mActionQueue.add(ActionMagicHelpAll(m, mMonsterList,
+                                    restoreMagic))
+                        } else {
+                            mActionQueue.add(
+                                    ActionMagicHelpOne(m,
+                                            dyingMonster,
+                                            restoreMagic))
+                        }
+                        continue
+                    }
+                    if (attackMagic != null && random() < 0.5) {
+                        if (attackMagic.isForAll) {
+                            mActionQueue.add(ActionMagicAttackAll(m, mPlayerList,
+                                    attackMagic))
+                        } else {
+                            mActionQueue.add(
+                                    ActionMagicAttackOne(m, p ,
+                                            attackMagic))
+                        }
+                        continue
+                    }
+
+                }
+                mActionQueue.add(if (m.hasAtbuff(FightingCharacter.BUFF_MASK_ALL))
+                    ActionPhysicalAttackAll(m, mPlayerList)
+                else
+                    ActionPhysicalAttackOne(m, p))
             }
         }
     }

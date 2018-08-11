@@ -79,7 +79,8 @@ class ActionCoopMagic : Action {
     }
 
     override fun preproccess() {
-        // TODO 记下伤害值、异常状态
+        mMonsters.forEach { it.backupStatus() }
+
         val midpos = arrayOf(intArrayOf(92, 52), intArrayOf(109, 63), intArrayOf(126, 74))
         dxy = Array(mActors.size) { FloatArray(2) }
         oxy = Array(mActors.size) { IntArray(2) }
@@ -106,6 +107,21 @@ class ActionCoopMagic : Action {
             DatLib.getRes(DatLib.ResType.SRS, 2, 240) as ResSrs
         } else {
             magic!!.magicAni!!
+        }
+        val mgc = magic
+        mActors.forEach {
+            if (mgc != null) {
+                if (isSingleTarget) {
+                    mgc.use(it, mMonster)
+                } else {
+                    mgc.use(it, mMonsters)
+                }
+            } else {
+                if (isSingleTarget) {
+                    it.attack(mMonster)
+                    it.attack(mMonster)
+                }
+            }
         }
         mAni.start()
     }

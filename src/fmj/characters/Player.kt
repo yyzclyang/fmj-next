@@ -51,7 +51,6 @@ class Player : FightingCharacter(), Coder {
     }
 
     override fun setData(buf: ByteArray, offset: Int) {
-        // TODO: buff and 自学magic
         type = buf[offset].toInt() and 0xFF
         index = buf[offset + 1].toInt() and 0xFF
         if (index > 0)

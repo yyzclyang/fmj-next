@@ -215,6 +215,9 @@ abstract class FightingCharacter : Character() {
 
     var isVisiable = true
 
+    val isActionable: Boolean
+        get() = isAlive && !hasDebuff(BUFF_MASK_LUAN) && !hasDebuff(BUFF_MASK_MIAN)
+
     var mp: Int = 0
         set(mp) {
             field = min(maxMP, mp)

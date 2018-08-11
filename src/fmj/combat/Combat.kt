@@ -106,6 +106,13 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
                     .firstOrNull { mPlayerList[it].isAlive }
                     ?: -1
 
+    private val nextActionablePlayerIndex: Int
+        get() =
+            (mCurSelActionPlayerIndex + 1 until mPlayerList.size)
+                    .firstOrNull {
+                        mPlayerList[it].isActionable
+                    } ?: -1
+
     private val preAlivePlayerIndex: Int
         get() =
             (mCurSelActionPlayerIndex - 1 downTo 0)
@@ -470,7 +477,7 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
 
     private fun generateMonstersActions() {
         for (m in mMonsterList) {
-            if (m.isAlive) {
+            if (m.isActionable) {
                 val p = randomAlivePlayer ?: return
                 val magics = m.magicChain?.getAllLearntMagics()?.filter {
                     it.costMp < m.mp
@@ -539,20 +546,26 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
 
         mCombatUI.reset() // 重置战斗UI
 
-        if (action is ActionCoopMagic) { // 只保留合击
-            mActionQueue.clear()
-            mActionQueue.add(action)
-            generateMonstersActions()
-            sortActionQueue()
-            mCombatState = CombatState.PerformAction
-        } else if (mCurSelActionPlayerIndex >= mPlayerList.size - 1 || isPlayerBehindDead(mCurSelActionPlayerIndex)) { // 全部玩家角色的动作选择完成
+        fun go() {
             generateMonstersActions()
             sortActionQueue()
             mCombatState = CombatState.PerformAction // 开始执行动作队列
+        }
+
+        if (action is ActionCoopMagic) { // 只保留合击
+            mActionQueue.clear()
+            mActionQueue.add(action)
+            go()
+        } else if (mCurSelActionPlayerIndex >= mPlayerList.size - 1 || isPlayerBehindDead(mCurSelActionPlayerIndex)) { // 全部玩家角色的动作选择完成
+            go()
         } else { // 选择下一个玩家角色的动作
-            mCurSelActionPlayerIndex = nextAlivePlayerIndex
-            //			if (mPlayerList.get(mCurSelActionPlayerIndex).hasDebuff(0)) TODO 乱眠死不能自己选择action
-            mCombatUI.setCurrentPlayerIndex(mCurSelActionPlayerIndex)
+            val nextIndex = nextActionablePlayerIndex
+            if (nextIndex == -1) {
+                go()
+            } else {
+                mCurSelActionPlayerIndex = nextIndex
+                mCombatUI.setCurrentPlayerIndex(nextIndex)
+            }
         }
     }
 
@@ -565,8 +578,6 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
     }
 
     override fun onFlee() {
-        // TODO add flee action to all the other actor
-
         mCombatUI.reset() // 重置战斗UI
 
         for (i in mCurSelActionPlayerIndex until mPlayerList.size) {

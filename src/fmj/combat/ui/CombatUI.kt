@@ -188,7 +188,8 @@ class CombatUI(override val parent: GameNode,
                 Global.KEY_DOWN -> mCurIconIndex = 3
 
                 Global.KEY_RIGHT -> {
-                    if (mPlayerList.size <= 1) { // 只有一人不能合击
+                    val aliveCount = mPlayerList.filter { it.isAlive }.size
+                    if (aliveCount <= 1) { // 只有一人不能合击
                         return
                     }
                     mCurIconIndex = 4

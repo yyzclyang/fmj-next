@@ -56,7 +56,7 @@ class Monster : FightingCharacter() {
         magicChain = DatLib.getMlr(1, magicIndex, true)
         magicChain?.learnNum = buf[offset + 2].toInt() and 0xff
         addBuff(buf[offset + 3].toInt() and 0xff)
-        mAtbuff = buf[offset + 4].toInt() and 0xff
+        atbuff.addBuff(buf[offset + 4].toInt() and 0xff, 0)
         mLastRound = buf[offset + 0x17].toInt() and 0xff
         name = getString(buf, offset + 6)
         level = buf[offset + 0x12].toInt() and 0xff

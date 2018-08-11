@@ -271,7 +271,11 @@ class CombatUI(override val parent: GameNode,
                             mMonsterList, object : OnCharacterSelectedListener {
 
                         override fun onCharacterSelected(fc: FightingCharacter) {
-                            onActionSelected(ActionCoopMagic(mPlayerList, fc))
+                            val lst = arrayListOf<Player>()
+                            val first = mPlayerList[mCurPlayerIndex]
+                            lst.add(first)
+                            lst.addAll(mPlayerList.filter { it.isAlive && it != first })
+                            onActionSelected(ActionCoopMagic(lst, fc))
                         }
                     }, true))
                 }

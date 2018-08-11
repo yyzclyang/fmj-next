@@ -12,6 +12,8 @@ import java.readArray
 import java.writeArray
 
 object SaveLoadGame {
+    const val magicNum = 0x67736176
+    const val version = 1
 
     /**
      * 是否开始新游戏
@@ -51,6 +53,8 @@ object SaveLoadGame {
         for (i in 0 until actorNum) {
             out.writeInt(game.playerList[i].index)
         }
+        out.writeInt(magicNum)
+        out.writeInt(version)
         out.writeInt(MapType)
         out.writeInt(MapIndex)
         out.writeInt(MapScreenX)
@@ -86,7 +90,18 @@ object SaveLoadGame {
         SceneName = coder.readString()
         var actorNum = coder.readInt()
         while (actorNum-- > 0) coder.readInt()
-        MapType = coder.readInt()
+
+        val m = coder.readInt()
+        val version = if (m == magicNum) {
+            0
+        } else {
+            coder.readInt()
+        }
+        MapType = if (version == 0) {
+            m
+        } else {
+            coder.readInt()
+        }
         MapIndex = coder.readInt()
         MapScreenX = coder.readInt()
         MapScreenY = coder.readInt()

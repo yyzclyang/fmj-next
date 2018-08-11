@@ -82,122 +82,119 @@ class CombatSuccess(private val parent: GameNode, exp: Int, money: Int, private 
     fun onKeyUp(key: Int) {
         mIsAnyKeyPressed = true
     }
-
-    /**
-     * 显示战斗胜利后玩家获得的东西
-     * @author Chen
-     */
-    private inner class MsgScreen(override val parent: GameNode, private val mY: Int, _msg: String) : BaseScreen {
-
-        private val mMsg: Bitmap
-
-        private val mX: Int
-
-        constructor(parent: GameNode, msg: String) : this(parent,(96 - 24) / 2, msg)
-
-        init {
-            val msg = _msg.gbkBytes()
-            val side = DatLib.getRes(DatLib.ResType.PIC, 2, 8) as ResImage
-            mMsg = Bitmap.createBitmap(msg.size * 8 + 8, 24)
-            val c = Canvas(mMsg)
-            c.drawColor(Global.COLOR_WHITE)
-            side.draw(c, 1, 0, 0)
-            side.draw(c, 2, mMsg.width - 3, 0)
-            val p = Paint()
-            p.color = Global.COLOR_BLACK
-            p.style = Style.FILL_AND_STROKE
-            c.drawLine(0, 1, mMsg.width, 1, p)
-            c.drawLine(0, 22, mMsg.width, 22, p)
-            TextRender.drawText(c, msg, 4, 4)
-
-            mX = (160 - mMsg.width) / 2
-        }
-
-        override fun update(delta: Long) {}
-
-        override fun draw(canvas: Canvas) {
-            canvas.drawBitmap(mMsg, mX, mY)
-        }
-
-        override fun onKeyDown(key: Int) {}
-
-        override fun onKeyUp(key: Int) {}
-
-    }
-
-    private inner class LevelupScreen(override val parent: GameNode, p: Player) : BaseScreen {
-
-        private val mInfo: Bitmap
-
-        init {
-            val ri = DatLib.getRes(DatLib.ResType.PIC, 2, 9) as ResImage
-            mInfo = ri.getBitmap(0)!!
-
-            val canvas = Canvas(mInfo)
-            val lc = p.levelupChain
-            val curl = p.level
-            Util.drawSmallNum(canvas, p.hp, 37, 9)
-            p.hp = p.maxHP
-            Util.drawSmallNum(canvas, p.maxHP - (lc.getMaxHP(curl) - lc.getMaxHP(curl - 1)), 56, 9)
-            Util.drawSmallNum(canvas, p.maxHP, 86, 9)
-            Util.drawSmallNum(canvas, p.maxHP, 105, 9)
-            Util.drawSmallNum(canvas, p.mp, 37, 21)
-            p.mp = p.maxMP
-            Util.drawSmallNum(canvas, p.maxMP - (lc.getMaxMP(curl) - lc.getMaxMP(curl - 1)), 56, 21)
-            Util.drawSmallNum(canvas, p.maxMP, 86, 21)
-            Util.drawSmallNum(canvas, p.maxMP, 105, 21)
-            Util.drawSmallNum(canvas, p.attack - (lc.getAttack(curl) - lc.getAttack(curl - 1)), 47, 33)
-            Util.drawSmallNum(canvas, p.attack, 96, 33)
-            Util.drawSmallNum(canvas, p.defend - (lc.getDefend(curl) - lc.getDefend(curl - 1)), 47, 45)
-            Util.drawSmallNum(canvas, p.defend, 96, 45)
-            Util.drawSmallNum(canvas, p.speed - (lc.getSpeed(curl) - lc.getSpeed(curl - 1)), 47, 57)
-            Util.drawSmallNum(canvas, p.speed, 96, 57)
-            Util.drawSmallNum(canvas, p.lingli - (lc.getLingli(curl) - lc.getLingli(curl - 1)), 47, 69)
-            Util.drawSmallNum(canvas, p.lingli, 96, 69)
-            Util.drawSmallNum(canvas, p.luck - (lc.getLuck(curl) - lc.getLuck(curl - 1)), 47, 81)
-            Util.drawSmallNum(canvas, p.luck, 96, 81)
-        }
-
-        override fun update(delta: Long) {}
-
-        override fun draw(canvas: Canvas) {
-            canvas.drawBitmap(mInfo, (160 - mInfo.width) / 2, (96 - mInfo.height) / 2)
-        }
-
-        override fun onKeyDown(key: Int) {}
-
-        override fun onKeyUp(key: Int) {}
-
-    }
-
-    private inner class LearnMagicScreen(override val parent: GameNode, playerName: String, magicName: String) : BaseScreen {
-
-        private val mInfo: Bitmap = (DatLib.getRes(DatLib.ResType.PIC, 2, 10) as ResImage).getBitmap(0)!!
-
-        init {
-            var pn: ByteArray
-            var mn: ByteArray
-            try {
-                pn = playerName.gbkBytes()
-                mn = magicName.gbkBytes()
-            } catch (e: Error) {
-                pn = ByteArray(0)
-                mn = ByteArray(0)
-            }
-
-            val canvas = Canvas(mInfo)
-            TextRender.drawText(canvas, pn, (mInfo.width - pn.size * 8) / 2, 8)
-            TextRender.drawText(canvas, mn, (mInfo.width - mn.size * 8) / 2, 42)
-        }
-
-        override fun update(delta: Long) {}
-
-        override fun draw(canvas: Canvas) {
-            canvas.drawBitmap(mInfo, (160 - mInfo.width) / 2, (96 - mInfo.height) / 2)
-        }
-
-        override fun onKeyDown(key: Int) {}
-
-        override fun onKeyUp(key: Int) {}
-    }
 }
+
+class LevelupScreen(override val parent: GameNode, p: Player) : BaseScreen {
+
+    private val mInfo: Bitmap
+
+    init {
+        val ri = DatLib.getRes(DatLib.ResType.PIC, 2, 9) as ResImage
+        mInfo = ri.getBitmap(0)!!
+
+        val canvas = Canvas(mInfo)
+        val lc = p.levelupChain
+        val curl = p.level
+        Util.drawSmallNum(canvas, p.hp, 37, 9)
+        p.hp = p.maxHP
+        Util.drawSmallNum(canvas, p.maxHP - (lc.getMaxHP(curl) - lc.getMaxHP(curl - 1)), 56, 9)
+        Util.drawSmallNum(canvas, p.maxHP, 86, 9)
+        Util.drawSmallNum(canvas, p.maxHP, 105, 9)
+        Util.drawSmallNum(canvas, p.mp, 37, 21)
+        p.mp = p.maxMP
+        Util.drawSmallNum(canvas, p.maxMP - (lc.getMaxMP(curl) - lc.getMaxMP(curl - 1)), 56, 21)
+        Util.drawSmallNum(canvas, p.maxMP, 86, 21)
+        Util.drawSmallNum(canvas, p.maxMP, 105, 21)
+        Util.drawSmallNum(canvas, p.attack - (lc.getAttack(curl) - lc.getAttack(curl - 1)), 47, 33)
+        Util.drawSmallNum(canvas, p.attack, 96, 33)
+        Util.drawSmallNum(canvas, p.defend - (lc.getDefend(curl) - lc.getDefend(curl - 1)), 47, 45)
+        Util.drawSmallNum(canvas, p.defend, 96, 45)
+        Util.drawSmallNum(canvas, p.speed - (lc.getSpeed(curl) - lc.getSpeed(curl - 1)), 47, 57)
+        Util.drawSmallNum(canvas, p.speed, 96, 57)
+        Util.drawSmallNum(canvas, p.lingli - (lc.getLingli(curl) - lc.getLingli(curl - 1)), 47, 69)
+        Util.drawSmallNum(canvas, p.lingli, 96, 69)
+        Util.drawSmallNum(canvas, p.luck - (lc.getLuck(curl) - lc.getLuck(curl - 1)), 47, 81)
+        Util.drawSmallNum(canvas, p.luck, 96, 81)
+    }
+
+    override fun update(delta: Long) {}
+
+    override fun draw(canvas: Canvas) {
+        canvas.drawBitmap(mInfo, (160 - mInfo.width) / 2, (96 - mInfo.height) / 2)
+    }
+
+    override fun onKeyDown(key: Int) {}
+
+    override fun onKeyUp(key: Int) {}
+
+}
+
+class MsgScreen(override val parent: GameNode, private val mY: Int, _msg: String) : BaseScreen {
+
+    private val mMsg: Bitmap
+
+    private val mX: Int
+
+    constructor(parent: GameNode, msg: String) : this(parent,(96 - 24) / 2, msg)
+
+    init {
+        val msg = _msg.gbkBytes()
+        val side = DatLib.getRes(DatLib.ResType.PIC, 2, 8) as ResImage
+        mMsg = Bitmap.createBitmap(msg.size * 8 + 8, 24)
+        val c = Canvas(mMsg)
+        c.drawColor(Global.COLOR_WHITE)
+        side.draw(c, 1, 0, 0)
+        side.draw(c, 2, mMsg.width - 3, 0)
+        val p = Paint()
+        p.color = Global.COLOR_BLACK
+        p.style = Style.FILL_AND_STROKE
+        c.drawLine(0, 1, mMsg.width, 1, p)
+        c.drawLine(0, 22, mMsg.width, 22, p)
+        TextRender.drawText(c, msg, 4, 4)
+
+        mX = (160 - mMsg.width) / 2
+    }
+
+    override fun update(delta: Long) {}
+
+    override fun draw(canvas: Canvas) {
+        canvas.drawBitmap(mMsg, mX, mY)
+    }
+
+    override fun onKeyDown(key: Int) {}
+
+    override fun onKeyUp(key: Int) {}
+
+}
+
+class LearnMagicScreen(override val parent: GameNode, playerName: String, magicName: String) : BaseScreen {
+
+    private val mInfo: Bitmap = (DatLib.getRes(DatLib.ResType.PIC, 2, 10) as ResImage).getBitmap(0)!!
+
+    init {
+        var pn: ByteArray
+        var mn: ByteArray
+        try {
+            pn = playerName.gbkBytes()
+            mn = magicName.gbkBytes()
+        } catch (e: Error) {
+            pn = ByteArray(0)
+            mn = ByteArray(0)
+        }
+
+        val canvas = Canvas(mInfo)
+        TextRender.drawText(canvas, pn, (mInfo.width - pn.size * 8) / 2, 8)
+        TextRender.drawText(canvas, mn, (mInfo.width - mn.size * 8) / 2, 42)
+    }
+
+    override fun update(delta: Long) {}
+
+    override fun draw(canvas: Canvas) {
+        canvas.drawBitmap(mInfo, (160 - mInfo.width) / 2, (96 - mInfo.height) / 2)
+    }
+
+    override fun onKeyDown(key: Int) {}
+
+    override fun onKeyUp(key: Int) {}
+}
+

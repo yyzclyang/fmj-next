@@ -6,6 +6,8 @@ import fmj.characters.Character
 import fmj.characters.Direction
 import fmj.characters.Player
 import fmj.combat.Combat
+import fmj.combat.ui.LevelupScreen
+import fmj.combat.ui.MsgScreen
 import fmj.gamemenu.ScreenCommonMenu
 import fmj.gamemenu.ScreenGoodsList
 import fmj.goods.BaseGoods
@@ -782,31 +784,43 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_actorlayerup(code: ByteArray, start: Int): Command {
+            val actor = get2ByteInt(code, start)
+            val toLevel = get2ByteInt(code, start+2)
+
             return makeCommand(4) {
-                cmdPrint("cmd_actorlayerup TODO")
+                cmdPrint("cmd_actorlayerup")
 
-                object : Operate { // TODO
+                val player = game.mainScene.getPlayer(actor) ?: return@makeCommand null
+                if (toLevel <= player.level) {
+                    return@makeCommand null
+                }
+                player.levelUp(toLevel)
+                val msgScreen = MsgScreen(this, player.name + "修行提升")
+                val levelupScreen = LevelupScreen(this, player)
 
-                    internal var exit = false
+                object : Operate {
+                    var exit = false
+                    var keydown = false
 
                     override fun update(delta: Long): Boolean {
                         return !exit
                     }
 
                     override fun onKeyUp(key: Int) {
-                        if (key == Global.KEY_CANCEL) {
+                        if (keydown) {
                             exit = true
                         }
                     }
 
-                    override fun onKeyDown(key: Int) {}
+                    override fun onKeyDown(key: Int) {
+                        keydown = true
+                    }
 
                     override fun draw(canvas: Canvas) {
-                        TextRender.drawText(canvas, "cmd_actorlayerup", 10, 20)
-                        TextRender.drawText(canvas, "press cancel to continue", 0, 40)
+                        msgScreen.draw(canvas)
+                        levelupScreen.draw(canvas)
                     }
                 }
-
             }
         }
 
@@ -1269,6 +1283,7 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_gamesave(code: ByteArray, start: Int): Command {
             return makeCommand(0) {
                 var end = false
+                // TODO: 判断副本
 
                 cmdPrint("cmd_gamesave")
                 val view = ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.SAVE)

@@ -338,6 +338,25 @@ class Player : FightingCharacter(), Coder {
         privateLearntMagics.add(magic)
     }
 
+    fun levelUp(to: Int) {
+        if (to <= level )
+            return
+        val cl = level
+        val c = levelupChain
+        val p = this
+        p.level = to
+        p.maxHP = p.maxHP + c.getMaxHP(to) - c.getMaxHP(cl)
+        p.hp = p.maxHP
+        p.maxMP = p.maxMP + c.getMaxMP(to) - c.getMaxMP(cl)
+        p.mp = p.maxMP
+        p.attack = p.attack + c.getAttack(to) - c.getAttack(cl)
+        p.defend = p.defend + c.getDefend(to) - c.getDefend(cl)
+        p.magicChain?.learnNum = c.getLearnMagicNum(to)
+        p.speed = p.speed + c.getSpeed(to) - c.getSpeed(cl)
+        p.lingli = p.lingli + c.getLingli(to) - c.getLingli(cl)
+        p.luck = p.luck + c.getLuck(to) - c.getLuck(cl)
+    }
+
     companion object {
         /** 装备界面从左至右的装备类型号 */
         val sEquipTypes = intArrayOf(6, 6, 5, 3, 7, 2, 4, 1)

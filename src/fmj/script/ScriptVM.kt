@@ -6,6 +6,7 @@ import fmj.characters.Character
 import fmj.characters.Direction
 import fmj.characters.Player
 import fmj.combat.Combat
+import fmj.combat.ui.LearnMagicScreen
 import fmj.combat.ui.LevelupScreen
 import fmj.combat.ui.MsgScreen
 import fmj.gamemenu.ScreenCommonMenu
@@ -142,7 +143,6 @@ class ScriptVM(override val parent: GameNode): Control {
 
             return makeCommand(2) {
                 cmdPrint("cmd_goto from $start to $address")
-                // TODO: 无需通过mainscreen
                 game.gotoAddress(address)
                 null
             }
@@ -675,11 +675,12 @@ class ScriptVM(override val parent: GameNode): Control {
                 val player = game.mainScene.getPlayer(actorId)
                 player?.learnMagic(magic)
                 val playerName = player?.name ?: "E"
+                val tip = LearnMagicScreen(this, playerName, magic.magicName)
 
                 object : Operate {
 
-                    internal var isAnyKeyDown: Boolean = false
-                    internal var timeCnt: Long = 0
+                    var isAnyKeyDown: Boolean = false
+                    var timeCnt: Long = 0
 
                     override fun update(delta: Long): Boolean {
                         timeCnt += delta
@@ -691,10 +692,7 @@ class ScriptVM(override val parent: GameNode): Control {
                     override fun onKeyDown(key: Int) {}
 
                     override fun draw(canvas: Canvas) {
-                        // TODO: better UI
-                        TextRender.drawText(canvas, playerName, 0, 0)
-                        TextRender.drawText(canvas, "学会了魔法:", 0, 16)
-                        TextRender.drawText(canvas, magic.magicName, 0, 16*2)
+                        tip.draw(canvas)
                     }
                 }
             }

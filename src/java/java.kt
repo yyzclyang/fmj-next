@@ -69,6 +69,8 @@ interface ObjectOutput {
 }
 
 interface ObjectInput {
+    var version: Int
+
     fun readInt(): Int
     fun readByte(): Byte
     fun readLong(): Long
@@ -232,6 +234,7 @@ private fun Int.byte(ind: Int): Byte {
 class ObjectInputStream(private val file: File): ObjectInput {
     private val buffer = file.readAll()
     private var cur = 0
+    override var version = 0
 
     override fun readByte(): Byte {
         return buffer[cur++]

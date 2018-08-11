@@ -151,9 +151,9 @@ abstract class FightingCharacter : Character() {
         } // 幸运
 
     /** 免疫毒乱封眠，不同装备可能具有相同的免疫效果，叠加之 */
-    private var buff = BuffMan()
+    protected var buff = BuffMan()
     /** 身中毒乱封眠 */
-    private var debuff = BuffMan()
+    protected var debuff = BuffMan()
     /** 普通攻击产生(全体)毒乱封眠，对于主角，只有武器具有该效果 */
     protected var atbuff = BuffMan()
 

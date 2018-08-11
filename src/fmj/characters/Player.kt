@@ -284,6 +284,11 @@ class Player : FightingCharacter(), Coder {
             val magic = DatLib.getMrs(type, index)
             privateLearntMagics.add(magic)
         }
+        if (coder.version > 2) {
+            buff.decode(coder)
+            debuff.decode(coder)
+            atbuff.decode(coder)
+        }
     }
 
     override fun encode(out: ObjectOutput) {
@@ -324,6 +329,9 @@ class Player : FightingCharacter(), Coder {
             out.writeInt(it.type)
             out.writeInt(it.index)
         }
+        buff.encode(out)
+        debuff.encode(out)
+        atbuff.encode(out)
     }
 
     fun setLevel(level: Int) {

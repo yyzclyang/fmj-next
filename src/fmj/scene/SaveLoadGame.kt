@@ -108,6 +108,7 @@ object SaveLoadGame {
         } else {
             coder.readInt()
         }
+        coder.version = version
         MapType = if (version == 0) {
             m
         } else {

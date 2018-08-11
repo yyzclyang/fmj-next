@@ -52,7 +52,7 @@ class ActionCoopMagic : Action {
         get() = mActors[0].speed
 
     override val isAttackerAlive: Boolean
-        get() = mActors[0].isAlive
+        get() = mActors.filter { it.isAlive }.size > 1
 
     override val isTargetAlive: Boolean
         get() = if (isSingleTarget) {

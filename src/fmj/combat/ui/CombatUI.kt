@@ -32,6 +32,7 @@ import fmj.magic.BaseMagic
 import fmj.magic.MagicAttack
 import fmj.magic.MagicSpecial
 import fmj.magic.ScreenMagic
+import fmj.scene.SaveLoadGame
 import fmj.views.BaseScreen
 import fmj.views.GameNode
 import fmj.views.ScreenStack
@@ -512,6 +513,9 @@ class CombatUI(override val parent: GameNode,
         /** 当前物品链表中，可用于投掷敌人的物品 */
         private val throwableGoodsList: List<BaseGoods>
             get() {
+                if (!SaveLoadGame.allowToss) {
+                    return arrayListOf()
+                }
                 return Player.sGoodsList.goodsList
                         .filter { it.type == 8 }
                         .toMutableList()

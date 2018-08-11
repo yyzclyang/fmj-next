@@ -530,7 +530,8 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
 
     /** 更新双方状态 */
     private fun updateFighterState() {
-        // TODO decrease the buff's round count
+        mPlayerList.forEach { it.decay() }
+        mMonsterList.forEach { it.decay() }
     }
 
     override fun onActionSelected(action: Action) {

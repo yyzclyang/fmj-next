@@ -41,6 +41,16 @@ class Buff(var value: Int, var round: Int) {
         return Buff(value - other.value,
                 round - other.round)
     }
+
+    fun decay() {
+        println("decay round:$round value:$value")
+        if (round > 0) {
+            round -= 1
+            if (round == 0) {
+                value -= 1
+            }
+        }
+    }
 }
 
 class BuffMan(val buffs: Array<Buff> = Array(8) { Buff(0, 0) })
@@ -96,6 +106,10 @@ class BuffMan(val buffs: Array<Buff> = Array(8) { Buff(0, 0) })
             it.first.diffFrom(it.second)
         }.toTypedArray()
         return BuffMan(newbuffs)
+    }
+
+    fun decay() {
+        buffs.forEach { it.decay() }
     }
 
     companion object {
@@ -359,6 +373,12 @@ abstract class FightingCharacter : Character() {
 
     fun diffToAnimation(withBuff: Boolean = true): Animation {
         return diff(withBuff).toAnimation(combatX, combatY)
+    }
+
+    fun decay() {
+        buff.decay()
+        debuff.decay()
+        atbuff.decay()
     }
 
     open fun getAllMagics(): Collection<BaseMagic> {

@@ -33,7 +33,6 @@ class ActionFlee
         get() = false
 
     override fun preproccess() {
-        // TODO calc the pos
         ox = player.combatX
         oy = player.combatY
         dy = (96 - oy) / FRAME_CNT

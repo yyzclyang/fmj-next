@@ -44,8 +44,6 @@ open class ActionMultiTarget(attacker: FightingCharacter,
     }
 
     override fun draw(canvas: Canvas) {
-        // TODO Auto-generated method stub
-
     }
 
     override fun targetIsMonster(): Boolean {

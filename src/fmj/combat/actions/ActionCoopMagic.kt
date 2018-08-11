@@ -112,7 +112,6 @@ class ActionCoopMagic : Action {
 
     override fun update(delta: Long): Boolean {
         super.update(delta)
-        // TODO Auto-generated method stub
         when (mState) {
             STATE_MOV -> if (mCurrentFrame < MOV_FRAME) {
                 for (i in mActors.indices) {
@@ -157,7 +156,6 @@ class ActionCoopMagic : Action {
     }
 
     override fun postExecute() {
-        // TODO Auto-generated method stub
     }
 
     override fun updateRaiseAnimation(delta: Long): Boolean {

@@ -1,5 +1,6 @@
 package fmj.magic
 
+import fmj.characters.FightingCharacter
 import fmj.characters.Player
 
 /**
@@ -16,7 +17,7 @@ class MagicRestore : BaseMagic() {
         mBuff = buf[offset + 0x18].toInt()
     }
 
-    fun use(src: Player, dst: Player) {
+    override fun use(src: FightingCharacter, dst: FightingCharacter) {
         if (src.mp < costMp) return
 
         src.mp = src.mp - costMp

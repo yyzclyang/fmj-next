@@ -21,6 +21,8 @@ class ActionMagicHelpOne(attacker: FightingCharacter,
     internal var oy: Int = 0
 
     override fun preproccess() {
+        ox = mAttacker!!.combatX
+        oy = mAttacker!!.combatY
         mAni = magic.magicAni!!
         mAni.start()
         mAni.setIteratorNum(2)

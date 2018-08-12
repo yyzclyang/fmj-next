@@ -1441,7 +1441,7 @@ class ScriptVM(override val parent: GameNode): Control {
                 ::cmd_disableshowpos,//75
                 ::cmd_setto,
                 ::cmd_testgoodsnum,
-                ::cmd_setfightmiss,// TODO: 和 ::cmd_setarmstoss 那个在前面?
+                ::cmd_setfightmiss,
                 ::cmd_setarmstoss)
     }
 

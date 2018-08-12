@@ -2,6 +2,8 @@ package fmj.views
 
 import fmj.ScreenViewType
 import fmj.characters.Player
+import fmj.combat.Combat
+import fmj.goods.GoodsManage
 import fmj.scene.ScreenMainGame
 import fmj.script.ScriptVM
 
@@ -44,6 +46,8 @@ interface Game: Control {
     val mainScene: ScreenMainGame
     val vm: ScriptVM
     val playerList: MutableList<Player>
+    val bag: GoodsManage
+    val combat: Combat.Companion
 
     fun triggerEvent(eventId: Int) {
         mainScene.triggerEvent(eventId)

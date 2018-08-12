@@ -1,6 +1,7 @@
 package fmj
 
 import fmj.characters.Player
+import fmj.combat.Combat
 import fmj.scene.ScreenMainGame
 import fmj.script.ScriptVM
 import fmj.views.*
@@ -18,6 +19,8 @@ class MainGame: Game {
     override val game = this
     override var mainScene: ScreenMainGame
     override val playerList = arrayListOf<Player>()
+    override val bag get() = Player.sGoodsList
+    override val combat get() = Combat.Companion
 
     constructor() {
         mainScene = ScreenMainGame(this, vm)
@@ -77,7 +80,7 @@ class MainGame: Game {
         }
     }
 }
-
+val game = MainGame()
 fun main(args: Array<String>) {
-    MainGame().start()
+    game.start()
 }

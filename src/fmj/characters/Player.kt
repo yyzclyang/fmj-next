@@ -283,7 +283,7 @@ class Player : FightingCharacter(), Coder {
             val magic = DatLib.getMrs(type, index)
             privateLearntMagics.add(magic)
         }
-        if (coder.version > 2) {
+        if (coder.version >= 3) {
             buff.decode(coder)
             debuff.decode(coder)
             atbuff.decode(coder)

@@ -13,7 +13,7 @@ import java.writeArray
 
 object SaveLoadGame {
     const val magicNum = 0x67736176
-    const val version = 2
+    const val version = 3
 
     /**
      * 是否开始新游戏

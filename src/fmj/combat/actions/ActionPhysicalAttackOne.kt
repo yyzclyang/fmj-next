@@ -35,9 +35,6 @@ class ActionPhysicalAttackOne(attacker: FightingCharacter,
         if (damage <= 0) {
             damage = 1
         }
-//        if (attacker is Player) {
-//            damage *= 10
-//        }
         damage += (random() * 10).toInt()
         target.hp = target.hp - damage
         attacker.attack(target)

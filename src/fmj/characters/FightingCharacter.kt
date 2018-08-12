@@ -15,17 +15,15 @@ import kotlin.math.min
 
 class Buff(var value: Int, var round: Int) {
     fun reset() {
-        if (round > 0) {
-            round = 0
-            value -= 1
-        }
+        round = 0
+        value = 0
     }
 
     fun add(round: Int) {
         if (round == 0) {
             value += 1
         } else {
-            if (round == 0) {
+            if (this.round == 0) {
                 value += 1
             }
             this.round = max(this.round, round)
@@ -128,13 +126,13 @@ class BuffMan(val buffs: Array<Buff> = Array(8) { Buff(0, 0) })
 
 fun calcBuff(at: BuffMan, df: BuffMan, st: BuffMan): BuffMan {
     val rv = BuffMan()
-    (1..4).forEach {
+    (0..3).forEach {
         val a = at.buffs[it]
         val d = df.buffs[it]
         val s = st.buffs[it]
 
-        if (d.value == 0 && a.value > 0 && a.round > 0) {
-            s.add(a.round)
+        if (d.value == 0 && a.value > 0) {
+            s.add(a.round+1)
             rv.buffs[it].value = 1
         }
     }
@@ -343,12 +341,13 @@ abstract class FightingCharacter : Character() {
      * @see {@link .hasAtbuff
      * @param mask
      */
-    fun addAtbuff(mask: Int, rounds: Int) {
+    fun setAtbuff(mask: Int, rounds: Int) {
+        atbuff.reset()
         atbuff.addBuff(mask, rounds)
     }
 
-    fun delAtbuff(mask: Int) {
-        atbuff.delBuff(mask)
+    fun resetAtbuff() {
+        atbuff.reset()
     }
 
     fun attack(other: FightingCharacter): BuffMan {
@@ -381,7 +380,7 @@ abstract class FightingCharacter : Character() {
     fun decay() {
         buff.decay()
         debuff.decay()
-        atbuff.decay()
+//        atbuff.decay()
     }
 
     open fun getAllMagics(): Collection<BaseMagic> {

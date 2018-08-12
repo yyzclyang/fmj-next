@@ -21,7 +21,7 @@ abstract class Action {
         get() = mAttacker!!.speed
 
     open val isAttackerAlive: Boolean
-        get() = mAttacker!!.isAlive
+        get() = mAttacker!!.isActionable
 
     abstract val isTargetAlive: Boolean
 

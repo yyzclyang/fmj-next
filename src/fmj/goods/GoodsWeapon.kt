@@ -11,12 +11,12 @@ class GoodsWeapon : GoodsEquipment() {
 
     override fun putOn(p: Player) {
         super.putOn(p)
-        p.addAtbuff(mBitEffect, sumRound)
+        p.setAtbuff(mBitEffect, sumRound)
     }
 
     override fun takeOff(p: Player) {
         super.takeOff(p)
-        p.delAtbuff(mBitEffect)
+        p.resetAtbuff()
     }
 
     fun attackAll(): Boolean {

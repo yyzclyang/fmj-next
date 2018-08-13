@@ -40,7 +40,7 @@ class Player : FightingCharacter(), Coder {
 
     fun setFrameByState() {
         if (isAlive) {
-            if (hasDebuff(FightingCharacter.Companion.BUFF_MASK_MIAN) || hp < maxHP / 10) {
+            if (isSleeping || hp < maxHP / 10) {
                 fightingSprite!!.currentFrame = 11
             } else {
                 fightingSprite!!.currentFrame = 1
@@ -223,16 +223,16 @@ class Player : FightingCharacter(), Coder {
             TextRender.drawText(canvas, "幸运   $luck", 41, 59)
             val sb = StringBuilder("免疫   ")
             val tmp = StringBuilder()
-            if (hasBuff(FightingCharacter.Companion.BUFF_MASK_DU)) {
+            if (isPoisoned) {
                 tmp.append('毒')
             }
-            if (hasBuff(FightingCharacter.Companion.BUFF_MASK_LUAN)) {
+            if (isConfusing) {
                 tmp.append('乱')
             }
-            if (hasBuff(FightingCharacter.Companion.BUFF_MASK_FENG)) {
+            if (isSealed) {
                 tmp.append('封')
             }
-            if (hasBuff(FightingCharacter.Companion.BUFF_MASK_MIAN)) {
+            if (isSleeping) {
                 tmp.append('眠')
             }
             if (tmp.isNotEmpty()) {

@@ -2,21 +2,10 @@ package fmj.combat.ui
 
 import fmj.Global
 import fmj.characters.FightingCharacter
+import fmj.characters.FightingCharacter.Companion.BUFF_MASK_LUAN
 import fmj.characters.Monster
 import fmj.characters.Player
-import fmj.combat.actions.Action
-import fmj.combat.actions.ActionCoopMagic
-import fmj.combat.actions.ActionDefend
-import fmj.combat.actions.ActionMagicAttackAll
-import fmj.combat.actions.ActionMagicAttackOne
-import fmj.combat.actions.ActionMagicHelpAll
-import fmj.combat.actions.ActionMagicHelpOne
-import fmj.combat.actions.ActionPhysicalAttackAll
-import fmj.combat.actions.ActionPhysicalAttackOne
-import fmj.combat.actions.ActionThrowItemAll
-import fmj.combat.actions.ActionThrowItemOne
-import fmj.combat.actions.ActionUseItemAll
-import fmj.combat.actions.ActionUseItemOne
+import fmj.combat.actions.*
 import fmj.combat.anim.FrameAnimation
 import fmj.gamemenu.ScreenChgEquipment
 import fmj.gamemenu.ScreenGoodsList
@@ -164,7 +153,11 @@ class CombatUI(override val parent: GameNode,
         private var mCurIconIndex = 1
 
         override fun update(delta: Long) {
-            mPlayerIndicator.update(delta)
+            when {
+                selectedPlayer.isConfusing -> onActionSelected(ActionNop(selectedPlayer))
+                selectedPlayer.isSleeping -> onActionSelected(ActionNop(selectedPlayer))
+                else -> mPlayerIndicator.update(delta)
+            }
         }
 
         override fun draw(canvas: Canvas) {
@@ -182,7 +175,7 @@ class CombatUI(override val parent: GameNode,
         override fun onKeyDown(key: Int) {
             when (key) {
                 Global.KEY_LEFT -> {
-                    if (selectedPlayer.hasDebuff(FightingCharacter.BUFF_MASK_FENG)) {
+                    if (selectedPlayer.isSealed) {
                         return // 被封，不能用魔法
                     }
                     mCurIconIndex = 2
@@ -191,7 +184,10 @@ class CombatUI(override val parent: GameNode,
                 Global.KEY_DOWN -> mCurIconIndex = 3
 
                 Global.KEY_RIGHT -> {
-                    val aliveCount = mPlayerList.filter { it.isAlive }.size
+                    val aliveCount = mPlayerList.filter {
+                        it.isAlive && !it.isSleeping
+                    }.size
+
                     if (aliveCount <= 1) { // 只有一人不能合击
                         return
                     }

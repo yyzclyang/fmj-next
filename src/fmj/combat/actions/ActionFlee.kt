@@ -23,8 +23,11 @@ class ActionFlee
     override val priority: Int
         get() = player.speed * 100
 
-    override val isAttackerAlive: Boolean
+    override val isAttackerActionable: Boolean
         get() = true
+
+    override val isAttackerConfusing: Boolean
+        get() = false
 
     override val isTargetAlive: Boolean
         get() = false

@@ -1,5 +1,6 @@
 package fmj.goods
 
+import fmj.characters.FightingCharacter
 import fmj.characters.Player
 import fmj.script.ScriptResources
 
@@ -63,4 +64,6 @@ open class GoodsEquipment : BaseGoods() {
             ScriptResources.clearEvent(eventId)
         }
     }
+
+    open fun affect(fighter: FightingCharacter) { }
 }

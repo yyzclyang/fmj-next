@@ -1,8 +1,6 @@
 package fmj.combat
 
-import fmj.combat.actions.Action
-import fmj.combat.actions.ActionFlee
-import fmj.combat.actions.ActionSingleTarget
+import fmj.combat.actions.*
 
 import graphics.Canvas
 
@@ -17,6 +15,8 @@ class ActionExecutor(
 
     private var mIsNewAction = true
 
+    private var postAction: PostAction? = null
+
     fun reset() {
         mCurrentAction = null
         mIsNewAction = true
@@ -28,6 +28,20 @@ class ActionExecutor(
      * @return 执行完毕返回`false`，否则返回`true`
      */
     fun update(delta: Long): Boolean {
+        postAction?.let {
+            if (it.update(delta)) {
+                return true
+            }
+            postAction = null
+            mCurrentAction!!.decay()
+            mCurrentAction = mActionQueue.pop() // 取下一个动作
+            if (mCurrentAction == null) { // 所有动作执行完毕
+                return false
+            }
+            mIsNewAction = true
+            return true
+        }
+
         if (mCurrentAction == null) {
             mCurrentAction = mActionQueue.pop()
             if (mCurrentAction == null) {
@@ -47,11 +61,7 @@ class ActionExecutor(
 
         if (!mCurrentAction!!.update(delta)) { // 当前动作执行完毕
             mCurrentAction!!.postExecute()
-            mCurrentAction = mActionQueue.pop() // 取下一个动作
-            if (mCurrentAction == null) { // 所有动作执行完毕
-                return false
-            }
-            mIsNewAction = true
+            postAction = mCurrentAction!!.postAction()
         }
 
         return true
@@ -62,16 +72,21 @@ class ActionExecutor(
      */
     private fun fixAction(): Boolean {
         // attacker dead, goto next action
-        while (!mCurrentAction!!.isAttackerAlive) {
+        while (!mCurrentAction!!.isAttackerActionable) {
             mCurrentAction = mActionQueue.pop()
             if (mCurrentAction == null) {
                 return false
             }
         }
 
+        // 乱
+        if (mCurrentAction!!.isAttackerConfusing) {
+            mCurrentAction = ActionSelfHurt(mCurrentAction!!.mAttacker!!)
+        }
+
         // target dead, get an alive target
         if (!mCurrentAction!!.isTargetAlive) {
-            if (mCurrentAction!!.isSingleTarget) { // 敌人都死了
+            if (!mCurrentAction!!.isSingleTarget) { // 敌人都死了
                 return false
             } else { // try to find an alive target
                 val newTarget =
@@ -92,6 +107,10 @@ class ActionExecutor(
     }
 
     fun draw(canvas: Canvas) {
+        postAction?.let {
+            it.draw(canvas)
+            return
+        }
         mCurrentAction?.draw(canvas)
     }
 }

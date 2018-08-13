@@ -106,13 +106,6 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
                     .firstOrNull { mPlayerList[it].isAlive }
                     ?: -1
 
-    private val nextActionablePlayerIndex: Int
-        get() =
-            (mCurSelActionPlayerIndex + 1 until mPlayerList.size)
-                    .firstOrNull {
-                        mPlayerList[it].isActionable
-                    } ?: -1
-
     private val preAlivePlayerIndex: Int
         get() =
             (mCurSelActionPlayerIndex - 1 downTo 0)
@@ -477,50 +470,48 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
 
     private fun generateMonstersActions() {
         for (m in mMonsterList) {
-            if (m.isActionable) {
-                val p = randomAlivePlayer ?: return
-                val magics = m.magicChain?.getAllLearntMagics()?.filter {
-                    it.costMp < m.mp
-                }
-                if (magics != null) {
-                    val dyingMonster = mMonsterList.firstOrNull {
-                        it.hp < it.maxHP / 2
-                    }
-                    val restoreMagic = magics.firstOrNull { it is MagicRestore }
-                    val attackMagic = magics.firstOrNull {
-                        it is MagicAttack
-                    } as? MagicAttack
-
-                    if (dyingMonster != null && restoreMagic != null) {
-                        if (restoreMagic.isForAll) {
-                            mActionQueue.add(ActionMagicHelpAll(m, mMonsterList,
-                                    restoreMagic))
-                        } else {
-                            mActionQueue.add(
-                                    ActionMagicHelpOne(m,
-                                            dyingMonster,
-                                            restoreMagic))
-                        }
-                        continue
-                    }
-                    if (attackMagic != null && random() < 0.5) {
-                        if (attackMagic.isForAll) {
-                            mActionQueue.add(ActionMagicAttackAll(m, mPlayerList,
-                                    attackMagic))
-                        } else {
-                            mActionQueue.add(
-                                    ActionMagicAttackOne(m, p ,
-                                            attackMagic))
-                        }
-                        continue
-                    }
-
-                }
-                mActionQueue.add(if (m.hasAtbuff(FightingCharacter.BUFF_MASK_ALL))
-                    ActionPhysicalAttackAll(m, mPlayerList)
-                else
-                    ActionPhysicalAttackOne(m, p))
+            val p = randomAlivePlayer ?: return
+            val magics = m.magicChain?.getAllLearntMagics()?.filter {
+                it.costMp < m.mp
             }
+            if (magics != null) {
+                val dyingMonster = mMonsterList.firstOrNull {
+                    it.hp < it.maxHP / 2
+                }
+                val restoreMagic = magics.firstOrNull { it is MagicRestore }
+                val attackMagic = magics.firstOrNull {
+                    it is MagicAttack
+                } as? MagicAttack
+
+                if (dyingMonster != null && restoreMagic != null) {
+                    if (restoreMagic.isForAll) {
+                        mActionQueue.add(ActionMagicHelpAll(m, mMonsterList,
+                                restoreMagic))
+                    } else {
+                        mActionQueue.add(
+                                ActionMagicHelpOne(m,
+                                        dyingMonster,
+                                        restoreMagic))
+                    }
+                    continue
+                }
+                if (attackMagic != null && random() < 0.5) {
+                    if (attackMagic.isForAll) {
+                        mActionQueue.add(ActionMagicAttackAll(m, mPlayerList,
+                                attackMagic))
+                    } else {
+                        mActionQueue.add(
+                                ActionMagicAttackOne(m, p ,
+                                        attackMagic))
+                    }
+                    continue
+                }
+
+            }
+            mActionQueue.add(if (m.hasAtbuff(FightingCharacter.BUFF_MASK_ALL))
+                ActionPhysicalAttackAll(m, mPlayerList)
+            else
+                ActionPhysicalAttackOne(m, p))
         }
     }
 
@@ -537,8 +528,6 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
 
     /** 更新双方状态 */
     private fun updateFighterState() {
-        mPlayerList.forEach { it.decay() }
-        mMonsterList.forEach { it.decay() }
     }
 
     override fun onActionSelected(action: Action) {
@@ -559,13 +548,9 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
         } else if (mCurSelActionPlayerIndex >= mPlayerList.size - 1 || isPlayerBehindDead(mCurSelActionPlayerIndex)) { // 全部玩家角色的动作选择完成
             go()
         } else { // 选择下一个玩家角色的动作
-            val nextIndex = nextActionablePlayerIndex
-            if (nextIndex == -1) {
-                go()
-            } else {
-                mCurSelActionPlayerIndex = nextIndex
-                mCombatUI.setCurrentPlayerIndex(nextIndex)
-            }
+            val nextIndex = nextAlivePlayerIndex
+            mCurSelActionPlayerIndex = nextIndex
+            mCombatUI.setCurrentPlayerIndex(nextIndex)
         }
     }
 

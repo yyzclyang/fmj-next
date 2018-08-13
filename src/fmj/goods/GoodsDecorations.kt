@@ -1,5 +1,6 @@
 package fmj.goods
 
+import fmj.characters.FightingCharacter
 import fmj.characters.Player
 import fmj.lib.DatLib
 import fmj.magic.MagicAttack
@@ -36,5 +37,10 @@ class GoodsDecorations : GoodsEquipment() {
     override fun takeOff(p: Player) {
         super.takeOff(p)
         // TODO 每回合的恢复扣除
+    }
+
+    override fun affect(fighter: FightingCharacter) {
+        fighter.hp += mHp
+        fighter.mp += mMp
     }
 }

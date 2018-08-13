@@ -51,8 +51,14 @@ class ActionCoopMagic : Action {
     override val priority: Int
         get() = mActors[0].speed
 
-    override val isAttackerAlive: Boolean
-        get() = mActors.filter { it.isAlive }.size > 1
+    override val isAttackerActionable: Boolean
+        get() = mActors.filter { it.isAlive && !it.isSleeping }.size > 2
+
+    override val isAttackerSleep: Boolean
+        get() = mActors.all { it.isSleeping }
+
+    override val isAttackerConfusing: Boolean
+        get() = false
 
     override val isTargetAlive: Boolean
         get() = if (isSingleTarget) {
@@ -174,6 +180,10 @@ class ActionCoopMagic : Action {
     override fun postExecute() {
     }
 
+    override fun postAction(): PostAction {
+        return AwardAndPunishPostAction(mActors)
+    }
+
     override fun updateRaiseAnimation(delta: Long): Boolean {
         if (isSingleTarget) {
             return mRaiseAni?.update(delta) ?: false
@@ -200,6 +210,10 @@ class ActionCoopMagic : Action {
 
     override fun targetIsMonster(): Boolean {
         return true
+    }
+
+    override fun decay() {
+        mActors.forEach { it.decay() }
     }
 
     companion object {

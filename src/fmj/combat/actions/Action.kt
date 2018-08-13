@@ -7,7 +7,9 @@ import graphics.Canvas
 abstract class Action {
 
     /** 动作的发起者 */
-    protected var mAttacker: FightingCharacter? = null
+    var mAttacker: FightingCharacter? = null
+        protected set
+
     private var mTimeCnt: Long = 0
     protected var mCurrentFrame = 0
     protected var mRaiseAnimations: MutableList<Animation> = arrayListOf()
@@ -20,8 +22,14 @@ abstract class Action {
     open val priority: Int
         get() = mAttacker!!.speed
 
-    open val isAttackerAlive: Boolean
-        get() = mAttacker!!.isActionable
+    open val isAttackerActionable: Boolean
+        get() = mAttacker!!.isAlive && !isAttackerSleep
+
+    open val isAttackerSleep: Boolean
+        get() = mAttacker!!.isSleeping
+
+    open val isAttackerConfusing: Boolean
+        get() = mAttacker!!.isConfusing
 
     abstract val isTargetAlive: Boolean
 
@@ -39,6 +47,11 @@ abstract class Action {
      */
     abstract fun postExecute()
 
+    open fun postAction(): PostAction {
+        val attacker = mAttacker ?: return PostAction()
+        return AwardAndPunishPostAction(arrayListOf(attacker))
+    }
+
     open fun updateRaiseAnimation(delta: Long): Boolean {
         mRaiseAnimations.removeAll { !it.update(delta) }
         return !mRaiseAnimations.isEmpty()
@@ -49,7 +62,6 @@ abstract class Action {
             it.draw(canvas)
         }
     }
-
 
     /**
      *
@@ -69,9 +81,12 @@ abstract class Action {
 
     abstract fun targetIsMonster(): Boolean
 
+    open fun decay() {
+        mAttacker?.decay()
+    }
+
     companion object {
 
         private val DELTA = 1000 / 20
     }
-
 }

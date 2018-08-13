@@ -2,14 +2,12 @@ package fmj.characters
 
 import fmj.combat.anim.Animation
 import fmj.combat.anim.RaiseAnimation
-import fmj.combat.anim.SequencialAnimation
 import fmj.magic.BaseMagic
 import fmj.magic.ResMagicChain
 import java.Coder
 import java.ObjectInput
 import java.ObjectOutput
 import kotlin.coroutines.experimental.buildSequence
-import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
 
@@ -158,8 +156,7 @@ abstract class FightingCharacter : Character() {
                 }
             }.reduce { acc, i -> acc + i }
 
-            val num = max(abs(hp), abs(mp))
-            return RaiseAnimation(x, y, num, buff)
+            return RaiseAnimation(x, y, hp, buff)
         }
     }
 
@@ -212,9 +209,6 @@ abstract class FightingCharacter : Character() {
 
     var isVisiable = true
 
-    val isActionable: Boolean
-        get() = isAlive && !hasDebuff(BUFF_MASK_LUAN) && !hasDebuff(BUFF_MASK_MIAN)
-
     var mp: Int = 0
         set(mp) {
             field = min(maxMP, mp)
@@ -253,6 +247,18 @@ abstract class FightingCharacter : Character() {
     protected var atbuff = BuffMan()
 
     private val backup = Diff()
+
+    val isPoisoned: Boolean
+        get() = hasDebuff(BUFF_MASK_DU)
+
+    val isConfusing: Boolean
+        get() = hasDebuff(BUFF_MASK_LUAN)
+
+    val isSealed: Boolean
+        get() = hasDebuff(BUFF_MASK_FENG)
+
+    val isSleeping: Boolean
+        get() = hasDebuff(BUFF_MASK_MIAN)
 
     /** 设置中心坐标 */
     fun setCombatPos(x: Int, y: Int) {

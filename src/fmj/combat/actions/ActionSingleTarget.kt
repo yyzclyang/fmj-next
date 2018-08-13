@@ -11,7 +11,7 @@ abstract class ActionSingleTarget(attacker: FightingCharacter,
         get() = mTarget.isAlive
 
     override val isSingleTarget: Boolean
-        get() = false
+        get() = true
 
     init {
         mAttacker = attacker

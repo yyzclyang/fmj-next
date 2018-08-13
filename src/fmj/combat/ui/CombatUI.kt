@@ -67,6 +67,9 @@ class CombatUI(override val parent: GameNode,
             DatLib.getRes(DatLib.ResType.PIC, 1, 2) as ResImage,
             DatLib.getRes(DatLib.ResType.PIC, 1, 3) as ResImage)
 
+    private val selectedPlayer: Player
+        get() = mPlayerList[mCurPlayerIndex]
+
     interface CallBack {
         /**
          * 当一个Action被选择后，会调用此方法
@@ -167,7 +170,7 @@ class CombatUI(override val parent: GameNode,
         override fun draw(canvas: Canvas) {
             mMenuIcon.draw(canvas, mCurIconIndex, 7, 96 - mMenuIcon.height)
             mPlayerInfoBg.draw(canvas, 1, 49, 66)
-            val p = this@CombatUI.mPlayerList[mCurPlayerIndex]
+            val p = selectedPlayer
             mHeadsImg[p.index - 1].draw(canvas, 1, 50, 63) // 角色头像
             Util.drawSmallNum(canvas, p.hp, 79, 72) // hp
             Util.drawSmallNum(canvas, p.maxHP, 104, 72) // maxhp
@@ -179,7 +182,7 @@ class CombatUI(override val parent: GameNode,
         override fun onKeyDown(key: Int) {
             when (key) {
                 Global.KEY_LEFT -> {
-                    if (mPlayerList[mCurPlayerIndex].hasDebuff(FightingCharacter.BUFF_MASK_FENG)) {
+                    if (selectedPlayer.hasDebuff(FightingCharacter.BUFF_MASK_FENG)) {
                         return // 被封，不能用魔法
                     }
                     mCurIconIndex = 2
@@ -205,8 +208,8 @@ class CombatUI(override val parent: GameNode,
                     1//物理攻击
                     -> {
                         // 攻击全体敌人
-                        if (mPlayerList[mCurPlayerIndex].hasAtbuff(FightingCharacter.BUFF_MASK_ALL)) {
-                            onActionSelected(ActionPhysicalAttackAll(mPlayerList[mCurPlayerIndex], mMonsterList))
+                        if (selectedPlayer.hasAtbuff(FightingCharacter.BUFF_MASK_ALL)) {
+                            onActionSelected(ActionPhysicalAttackAll(selectedPlayer, mMonsterList))
                             return
                         }
 
@@ -215,14 +218,14 @@ class CombatUI(override val parent: GameNode,
                                 mMonsterList, object : OnCharacterSelectedListener {
 
                             override fun onCharacterSelected(fc: FightingCharacter) {
-                                onActionSelected(ActionPhysicalAttackOne(mPlayerList[mCurPlayerIndex], fc))
+                                onActionSelected(ActionPhysicalAttackOne(selectedPlayer, fc))
                             }
                         }, true))
                     }
 
                     2//魔法技能
                     -> run {
-                        val magics = mPlayerList[mCurPlayerIndex].getAllMagics()
+                        val magics = selectedPlayer.getAllMagics()
                         if (magics.isEmpty()) {
                             return@run
                         }
@@ -233,27 +236,27 @@ class CombatUI(override val parent: GameNode,
                                         popScreen() // 弹出魔法选择界面
                                         if (magic is MagicAttack || magic is MagicSpecial) { // 选一个敌人
                                             if (magic.isForAll) {
-                                                onActionSelected(ActionMagicAttackAll(mPlayerList[mCurPlayerIndex],
+                                                onActionSelected(ActionMagicAttackAll(selectedPlayer,
                                                         mMonsterList, magic as MagicAttack))
                                             } else { // 选一个敌人
                                                 pushScreen(MenuCharacterSelect(this@MainMenu, mMonsterIndicator, sMonsterIndicatorPos,
                                                         mMonsterList, object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
-                                                        onActionSelected(ActionMagicAttackOne(mPlayerList[mCurPlayerIndex], fc, magic))
+                                                        onActionSelected(ActionMagicAttackOne(selectedPlayer, fc, magic))
                                                     }
                                                 }, true))
                                             }
                                         } else { // 选队友或自己
                                             if (magic.isForAll) {
-                                                onActionSelected(ActionMagicHelpAll(mPlayerList[mCurPlayerIndex],
+                                                onActionSelected(ActionMagicHelpAll(selectedPlayer,
                                                         mPlayerList, magic))
                                             } else { // 选一个Player
                                                 pushScreen(MenuCharacterSelect(this@MainMenu, mTargetIndicator, sPlayerIndicatorPos,
                                                         mPlayerList, object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
-                                                        onActionSelected(ActionMagicHelpOne(mPlayerList[mCurPlayerIndex],
+                                                        onActionSelected(ActionMagicHelpOne(selectedPlayer,
                                                                 fc, magic))
                                                     }
                                                 }, false))
@@ -272,7 +275,7 @@ class CombatUI(override val parent: GameNode,
 
                         override fun onCharacterSelected(fc: FightingCharacter) {
                             val lst = arrayListOf<Player>()
-                            val first = mPlayerList[mCurPlayerIndex]
+                            val first = selectedPlayer
                             lst.add(first)
                             lst.addAll(mPlayerList.filter { it.isAlive && it != first })
                             onActionSelected(ActionCoopMagic(lst, fc))
@@ -406,7 +409,7 @@ class CombatUI(override val parent: GameNode,
                     -> pushScreen(MenuGoods(this))
                     2//防御
                     -> {
-                        val p = mPlayerList[mCurPlayerIndex]
+                        val p = selectedPlayer
                         p.fightingSprite!!.currentFrame = 9
                         this@CombatUI.onActionSelected(ActionDefend(p))
                     }
@@ -571,14 +574,14 @@ class CombatUI(override val parent: GameNode,
                                     popScreen() // pop misc menu
                                     if (goods.effectAll()) {
                                         // 投掷伤害全体敌人
-                                        onActionSelected(ActionThrowItemAll(mPlayerList[mCurPlayerIndex], mMonsterList, goods as GoodsHiddenWeapon))
+                                        onActionSelected(ActionThrowItemAll(selectedPlayer, mMonsterList, goods as GoodsHiddenWeapon))
                                     } else { // 选一个敌人
                                         pushScreen(MenuCharacterSelect(this@CombatUI, mMonsterIndicator, sMonsterIndicatorPos, mMonsterList,
                                                 object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
                                                         // add throw action
-                                                        onActionSelected(ActionThrowItemOne(mPlayerList[mCurPlayerIndex],
+                                                        onActionSelected(ActionThrowItemOne(selectedPlayer,
                                                                 fc, goods as GoodsHiddenWeapon))
                                                     }
                                                 }, true))
@@ -594,14 +597,13 @@ class CombatUI(override val parent: GameNode,
                                     popScreen() // pop goods list
                                     popScreen() // pop misc menu
                                     if (goods.effectAll()) {
-                                        onActionSelected(ActionUseItemAll(mPlayerList[mCurPlayerIndex],
-                                                mMonsterList, goods))
+                                        onActionSelected(ActionUseItemAll(selectedPlayer, mMonsterList, goods))
                                     } else { // 选一个角色治疗
                                         pushScreen(MenuCharacterSelect(this@MenuGoods, mTargetIndicator, sPlayerIndicatorPos, mPlayerList,
                                                 object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
-                                                        onActionSelected(ActionUseItemOne(mPlayerList[mCurPlayerIndex],
+                                                        onActionSelected(ActionUseItemOne(selectedPlayer,
                                                                 fc, goods))
                                                     }
                                                 }, false))

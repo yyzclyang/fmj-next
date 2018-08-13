@@ -449,21 +449,27 @@ class CombatUI(override val parent: GameNode,
                 Util.drawSmallNum(canvas, p.attack, x + 50, y + 21) // 攻
                 Util.drawSmallNum(canvas, p.luck, x + 87, y + 9) // 运
                 Util.drawSmallNum(canvas, p.speed, x + 87, y + 21) // 身
-                // TODO TODO TODO ...
-                mMarker.draw(canvas, 1, x + 9, y + 48) // 攻
-                mMarker.draw(canvas, 2, x + 25, y + 48) // 防
-                mMarker.draw(canvas, 5, x + 41, y + 48) // 身
-                mMarker.draw(canvas, 3, x + 57, y + 48) // 毒
-                mMarker.draw(canvas, 4, x + 73, y + 48) // 乱
-                mMarker.draw(canvas, 3, x + 88, y + 48) // 封
-                mMarker.draw(canvas, 4, x + 104, y + 48) // 眠
-                Util.drawSmallNum(canvas, 5, x + 10, y + 57) // 攻
-                Util.drawSmallNum(canvas, 5, x + 26, y + 57) // 防
-                Util.drawSmallNum(canvas, 5, x + 42, y + 57) // 身
-                Util.drawSmallNum(canvas, 5, x + 58, y + 57) // 毒
-                Util.drawSmallNum(canvas, 5, x + 74, y + 57) // 乱
-                Util.drawSmallNum(canvas, 5, x + 90, y + 57) // 封
-                Util.drawSmallNum(canvas, 5, x + 106, y + 57) // 眠
+
+                fun drawMarker(mask: Int, ox: Int, isBool: Boolean) {
+                    val buff = p.debuff.getBuffs(mask).first()
+                    val ind = when {
+                        !isBool && buff.value > 0 -> 1
+                        !isBool && buff.value < 0 -> 2
+                        isBool && buff.value == 0 -> 3
+                        isBool && buff.value != 0 -> 4
+                        !isBool && buff.value == 0 -> 5
+                        else -> 1
+                    }
+                    mMarker.draw(canvas, ind, x + ox, y + 48) // marker
+                    Util.drawSmallNum(canvas, buff.round, x + ox + 1, y + 57) // round
+                }
+                drawMarker(FightingCharacter.BUFF_MASK_GONG, 9, false)
+                drawMarker(FightingCharacter.BUFF_MASK_FANG, 25, false)
+                drawMarker(FightingCharacter.BUFF_MASK_SU, 41, false)
+                drawMarker(FightingCharacter.BUFF_MASK_DU, 57, true)
+                drawMarker(FightingCharacter.BUFF_MASK_LUAN, 73, true)
+                drawMarker(FightingCharacter.BUFF_MASK_FANG, 88, true)
+                drawMarker(FightingCharacter.BUFF_MASK_MIAN, 104, true)
             }
 
             override fun onKeyDown(key: Int) {

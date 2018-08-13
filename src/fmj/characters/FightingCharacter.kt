@@ -41,7 +41,6 @@ class Buff(var value: Int, var round: Int) {
     }
 
     fun decay() {
-        println("decay round:$round value:$value")
         if (round > 0) {
             round -= 1
             if (round == 0) {

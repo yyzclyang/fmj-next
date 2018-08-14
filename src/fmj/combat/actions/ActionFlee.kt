@@ -30,7 +30,7 @@ class ActionFlee
         get() = false
 
     override val isTargetAlive: Boolean
-        get() = false
+        get() = true
 
     override val isSingleTarget: Boolean
         get() = false

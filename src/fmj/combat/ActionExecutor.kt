@@ -87,6 +87,7 @@ class ActionExecutor(
         // target dead, get an alive target
         if (!mCurrentAction!!.isTargetAlive) {
             if (!mCurrentAction!!.isSingleTarget) { // 敌人都死了
+                mCurrentAction = null
                 return false
             } else { // try to find an alive target
                 val newTarget =

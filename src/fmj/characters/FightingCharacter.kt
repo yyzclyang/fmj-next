@@ -324,19 +324,6 @@ abstract class FightingCharacter : Character() {
         buff.delBuff(mask)
     }
 
-    fun getBuffRound(mask: Int): Int {
-        return buff.getBuffs(mask).first().round
-    }
-
-    /**
-     * 增加角色身中的异常状态
-     * @see {@link .hasDebuff
-     * @param mask
-     */
-    fun addDebuff(mask: Int, rounds: Int) {
-        debuff.addBuff(mask, rounds)
-    }
-
     fun delDebuff(mask: Int) {
         debuff.delBuff(mask)
     }
@@ -385,7 +372,6 @@ abstract class FightingCharacter : Character() {
     fun decay() {
         buff.decay()
         debuff.decay()
-//        atbuff.decay()
     }
 
     open fun getAllMagics(): Collection<BaseMagic> {

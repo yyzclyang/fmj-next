@@ -41,7 +41,7 @@ class CombatSuccess(private val parent: GameNode, exp: Int, money: Int, private 
                 val newNum = p.levelupChain.getLearnMagicNum(p.level)
                 val oldNum = p.levelupChain.getLearnMagicNum(p.level - 1)
                 (oldNum until newNum).mapTo(mLvupList) {
-                    LearnMagicScreen(parent, p.name, magicChain.getMagic(it - 1).magicName)
+                    LearnMagicScreen(parent, p.name, magicChain.getMagic(it).magicName)
                 }
             }
         }

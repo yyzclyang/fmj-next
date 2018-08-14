@@ -29,7 +29,7 @@ class ActionCoopMagic : Action {
 
     internal var magic: MagicAttack? = null
 
-    private var mAni: ResSrs = ResSrs() // TODO: construct it
+    private var mAni: ResSrs = ResSrs()
 
     private val mRaiseAni: RaiseAnimation? = null
 

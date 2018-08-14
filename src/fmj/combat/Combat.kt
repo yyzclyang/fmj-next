@@ -76,7 +76,7 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
     private var mIsWin = false
 
     /**战斗背景图 */
-    internal var mBackground: Bitmap = Bitmap(0, 0) // TODO: construct
+    internal var mBackground: Bitmap = Bitmap(0, 0)
 
     /** 战斗胜利能获得的金钱和经验 */
     private var mWinMoney: Int = 0

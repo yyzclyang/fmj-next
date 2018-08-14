@@ -61,7 +61,7 @@ class ActionPhysicalAttackAll(attacker: FightingCharacter,
                 mAttacker!!.fightingSprite!!.currentFrame = 1
             } else if (mAttacker is Player) {
                 val fs = mAttacker!!.fightingSprite!!
-                fs.currentFrame = 1 // TODO the old state 眠
+                fs.currentFrame = 1
             }
         }
         return true

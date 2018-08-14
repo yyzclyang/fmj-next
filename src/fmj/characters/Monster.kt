@@ -41,7 +41,7 @@ class Monster : FightingCharacter() {
         if (mCarryGoods1[0] == 0 || mCarryGoods1[1] == 0 || mCarryGoods1[2] == 0) {
             return null
         }
-        if (random() < 0.5) {// TODO: 根据双方属性判断
+        if (random() < 0.5) {
             return null
         }
         mCarryGoods1[2] -= 1

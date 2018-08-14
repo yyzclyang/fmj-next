@@ -31,12 +31,10 @@ class GoodsDecorations : GoodsEquipment() {
 
     override fun putOn(p: Player) {
         super.putOn(p)
-        // TODO 每回合的恢复扣除
     }
 
     override fun takeOff(p: Player) {
         super.takeOff(p)
-        // TODO 每回合的恢复扣除
     }
 
     override fun affect(fighter: FightingCharacter) {

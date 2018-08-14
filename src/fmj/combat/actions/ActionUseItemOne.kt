@@ -14,7 +14,7 @@ class ActionUseItemOne(attacker: FightingCharacter, target: FightingCharacter, i
 
     private var mState = 1
 
-    internal var mAni: ResSrs = ResSrs() // TODO
+    internal var mAni: ResSrs = ResSrs()
 
     internal var mAnix: Int = 0
     internal var mAniy: Int = 0

@@ -44,7 +44,7 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
     private val mCombatUI = CombatUI(this, this, 0)
 
     /** 随机战斗中，可能出现的敌人类型 */
-    private var mMonsterType: IntArray? = null
+    private var mMonsterType: IntArray = intArrayOf()
 
     /** 参加战斗的怪物队列 */
     private var mMonsterList: MutableList<Monster> = mutableListOf()
@@ -641,26 +641,26 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
             sIsRandomFight = true
             sIsFighting = false
 
-            sInstance = Combat(parent)
+            val instance = Combat(parent)
+            sInstance = instance
             sInstanceBk = null
 
-            sInstance!!.mMonsterType = monstersType.filter { it != 0 }
+            instance.mMonsterType = monstersType.filter { it != 0 }
                     .toIntArray()
-
-            sInstance!!.mRoundCnt = 0
-            sInstance!!.mMaxRound = 0 // 回合数无限制
-
-            sInstance!!.createBackgroundBitmap(scrb, scrl, scrr)
+            instance.mRoundCnt = 0
+            instance.mMaxRound = 0 // 回合数无限制
+            instance.createBackgroundBitmap(scrb, scrl, scrr)
         }
 
         fun write(out: ObjectOutput) {
-            val fightEnabled = sIsEnable && sInstance != null
+            val instance = sInstance
+            val fightEnabled = sIsEnable && instance != null
             out.writeBoolean(fightEnabled)
-            if (fightEnabled) {
-                out.writeIntArray(sInstance!!.mMonsterType!!)
-                out.writeInt(sInstance!!.mScrb)
-                out.writeInt(sInstance!!.mScrl)
-                out.writeInt(sInstance!!.mScrR)
+            if (sIsEnable && instance != null) {
+                out.writeIntArray(instance.mMonsterType)
+                out.writeInt(instance.mScrb)
+                out.writeInt(instance.mScrl)
+                out.writeInt(instance.mScrR)
             }
         }
 
@@ -689,32 +689,33 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
             sIsRandomFight = false
 
             sInstanceBk = sInstance // 保存当前随机战斗的引用
-            sInstance = Combat(parent)
+            val instance = Combat(parent)
+            sInstance = instance
 
-            sInstance!!.mMonsterList = mutableListOf<Monster>()
+            instance.mMonsterList = mutableListOf()
             monstersType.indices
                     .filter { monstersType[it] > 0 }
                     .map { DatLib.getRes(DatLib.ResType.ARS, 3, monstersType[it]) as Monster }
-                    .forEach { sInstance!!.mMonsterList.add(it) }
+                    .forEach { instance.mMonsterList.add(it) }
 
-            sInstance!!.mMaxRound = roundMax
-            sInstance!!.mRoundCnt = 0
+            instance.mMaxRound = roundMax
+            instance.mRoundCnt = 0
 
-            PrepareForNewCombat()
+            prepareForNewCombat(instance)
 
-            sInstance!!.createBackgroundBitmap(scr[0], scr[1], scr[2])
+            instance.createBackgroundBitmap(scr[0], scr[1], scr[2])
 
-            sInstance!!.mEventRound = evtRnds
-            sInstance!!.mEventNum = evts
+            instance.mEventRound = evtRnds
+            instance.mEventNum = evts
 
-            sInstance!!.mLossAddr = lossto
-            sInstance!!.mWinAddr = winto
+            instance.mLossAddr = lossto
+            instance.mWinAddr = winto
         }
 
-        private fun PrepareForNewCombat() {
+        private fun prepareForNewCombat(combat: Combat) {
             sIsEnable = true
             sIsFighting = true
-            sInstance!!.prepareForNewCombat()
+            combat.prepareForNewCombat()
         }
 
         private val COMBAT_PROBABILITY = 20
@@ -725,42 +726,48 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
          * @return `true`新战斗 `false`不开始战斗
          */
         fun StartNewRandomCombat(): Boolean {
-            if (globalDisableFighting || !sIsEnable || sInstance == null || sRandom.nextInt(COMBAT_PROBABILITY) != 0) {
+            val instance = sInstance
+
+            if (globalDisableFighting
+                    || !sIsEnable
+                    || instance == null
+                    || instance.mMonsterType.isEmpty()
+                    || sRandom.nextInt(COMBAT_PROBABILITY) != 0) {
                 sIsFighting = false
                 return false
             }
 
             // 随机添加怪物
-            sInstance!!.mMonsterList.clear()
+            instance.mMonsterList.clear()
             val i = sRandom.nextInt(3)
             (0..i).forEach {
-                val x = sRandom.nextInt(sInstance!!.mMonsterType!!.size)
-                val m = DatLib.getRes(DatLib.ResType.ARS, 3, sInstance!!.mMonsterType!![x]) as Monster
-                sInstance!!.mMonsterList.add(m)
+                val x = sRandom.nextInt(instance.mMonsterType.size)
+                val m = DatLib.getRes(DatLib.ResType.ARS, 3, instance.mMonsterType[x]) as Monster
+                instance.mMonsterList.add(m)
             }
 
-            sInstance!!.mRoundCnt = 0
-            sInstance!!.mMaxRound = 0 // 回合不限
+            instance.mRoundCnt = 0
+            instance.mMaxRound = 0 // 回合不限
 
-            PrepareForNewCombat()
+            prepareForNewCombat(instance)
 
             return true
         }
 
         fun Update(delta: Long) {
-            sInstance!!.update(delta)
+            sInstance?.update(delta)
         }
 
         fun Draw(canvas: Canvas) {
-            sInstance!!.draw(canvas)
+            sInstance?.draw(canvas)
         }
 
         fun KeyDown(key: Int) {
-            sInstance!!.onKeyDown(key)
+            sInstance?.onKeyDown(key)
         }
 
         fun KeyUp(key: Int) {
-            sInstance!!.onKeyUp(key)
+            sInstance?.onKeyUp(key)
         }
 
         /** 玩家角色中心坐标 */

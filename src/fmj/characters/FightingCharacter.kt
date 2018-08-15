@@ -38,11 +38,14 @@ class Buff(var value: Int, var round: Int) {
                 round - other.round)
     }
 
-    fun decay() {
+    fun decay(mode: Int) {
         if (round > 0) {
             round -= 1
             if (round == 0) {
-                value -= 1
+                when (mode) {
+                    0 -> value -= 1
+                    1 -> value = 0
+                }
             }
         }
     }
@@ -104,7 +107,12 @@ class BuffMan(val buffs: Array<Buff> = Array(8) { Buff(0, 0) })
     }
 
     fun decay() {
-        buffs.forEach { it.decay() }
+        (0..3).forEach {
+            buffs[it].decay(0)
+        }
+        (5..7).forEach {
+            buffs[it].decay(1)
+        }
     }
 
     companion object {
@@ -136,6 +144,7 @@ fun calcBuff(at: BuffMan, df: BuffMan, st: BuffMan): BuffMan {
     (5..7).forEach {
         if (at.buffs[it].value != 0) {
             st.buffs[it].value = -at.buffs[it].value
+            st.buffs[it].round = at.buffs[it].round
         }
     }
     return rv
@@ -245,6 +254,15 @@ abstract class FightingCharacter : Character() {
     var debuff = BuffMan()
     /** 普通攻击产生(全体)毒乱封眠，对于主角，只有武器具有该效果 */
     protected var atbuff = BuffMan()
+
+    val computedSpeed: Int
+        get() = speed + speed*debuff.getBuffs(BUFF_MASK_SU).first().value / 100
+
+    val computedAttack: Int
+        get() = attack + attack*debuff.getBuffs(BUFF_MASK_GONG).first().value / 100
+
+    val computedDefend: Int
+        get() = defend + defend*debuff.getBuffs(BUFF_MASK_FANG).first().value / 100
 
     private val backup = Diff()
 

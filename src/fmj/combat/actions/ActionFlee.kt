@@ -21,7 +21,7 @@ class ActionFlee
     private var dy: Int = 0
 
     override val priority: Int
-        get() = player.speed * 100
+        get() = player.computedSpeed * 100
 
     override val isAttackerActionable: Boolean
         get() = true

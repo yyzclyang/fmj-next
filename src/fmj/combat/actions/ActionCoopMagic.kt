@@ -49,7 +49,7 @@ class ActionCoopMagic : Action {
         }
 
     override val priority: Int
-        get() = mActors[0].speed
+        get() = mActors[0].computedDefend
 
     override val isAttackerActionable: Boolean
         get() = mActors.filter { it.isAlive && !it.isSleeping }.size > 2

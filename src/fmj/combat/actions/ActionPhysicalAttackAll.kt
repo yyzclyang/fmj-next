@@ -31,7 +31,7 @@ class ActionPhysicalAttackAll(attacker: FightingCharacter,
             if (!fc.isAlive) {
                 continue
             }
-            damage = attacker.attack - fc.defend
+            damage = attacker.computedAttack - fc.computedDefend
             if (damage <= 0) {
                 damage = 1
             }

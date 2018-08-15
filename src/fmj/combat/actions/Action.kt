@@ -20,7 +20,7 @@ abstract class Action {
      * @return 动作发起者的身法
      */
     open val priority: Int
-        get() = mAttacker!!.speed
+        get() = mAttacker!!.computedSpeed
 
     open val isAttackerActionable: Boolean
         get() = mAttacker!!.isAlive && !isAttackerSleep

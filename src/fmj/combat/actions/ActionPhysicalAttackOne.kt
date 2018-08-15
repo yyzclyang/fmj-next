@@ -31,7 +31,7 @@ class ActionPhysicalAttackOne(attacker: FightingCharacter,
         dx = (target.combatX - attacker.combatX).toFloat() / TOTAL_FRAME
         dy = (target.combatY - attacker.combatY).toFloat() / TOTAL_FRAME
 
-        var damage = attacker.attack - target.defend
+        var damage = attacker.computedAttack - target.computedDefend
         if (damage <= 0) {
             damage = 1
         }

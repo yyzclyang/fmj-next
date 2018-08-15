@@ -70,6 +70,7 @@ class ResSrs : ResBase() {
      * 开始特效动画
      */
     fun start() {
+        if (mFrameNum == 0) return
         mShowList.clear()
         mShowList.add(Key(0))
     }

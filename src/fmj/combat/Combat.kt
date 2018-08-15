@@ -469,7 +469,8 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
     }
 
     private fun generateMonstersActions() {
-        for (m in mMonsterList) {
+        val liveMonsters = mMonsterList.filter { it.isAlive }
+        for (m in liveMonsters) {
             val p = randomAlivePlayer ?: return
             val magics = m.magicChain?.getAllLearntMagics()?.filter {
                 it.costMp < m.mp

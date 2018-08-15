@@ -85,6 +85,9 @@ class ActionCoopMagic : Action {
     }
 
     override fun preproccess() {
+        mMonsters.removeAll { !it.isAlive }
+        if (mMonsters.isEmpty())
+            return
         mMonsters.forEach { it.backupStatus() }
 
         val midpos = arrayOf(intArrayOf(92, 52), intArrayOf(109, 63), intArrayOf(126, 74))
@@ -133,6 +136,8 @@ class ActionCoopMagic : Action {
     }
 
     override fun update(delta: Long): Boolean {
+        if (mMonsters.isEmpty())
+            return false
         super.update(delta)
         when (mState) {
             STATE_MOV -> if (mCurrentFrame < MOV_FRAME) {

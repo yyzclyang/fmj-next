@@ -80,7 +80,7 @@ class DatLib(buffer: ByteArray) {
      */
     fun getRes(resType: ResType, type: Int, index: Int, allowNull: Boolean = false): ResBase? {
         val offset = getDataOffset(resType, type, index)
-        val res = (if (offset != -1) {
+        var res = (if (offset != -1) {
             val res: ResBase? =
                     when (resType) {
                         ResType.GUT -> ResGut()
@@ -124,6 +124,18 @@ class DatLib(buffer: ByteArray) {
             null
         })
         if (allowNull) return res
+        if (res == null) {
+            res = when (resType) {
+                ResType.SRS -> ResSrs()
+                ResType.TIL, ResType.ACP, ResType.GDP, ResType.GGJ, ResType.PIC -> ResImage()
+                ResType.MLR -> when(type) {
+                    1 -> ResMagicChain()
+                    2 -> ResLevelupChain()
+                    else -> null
+                }
+                else -> null
+            }
+        }
         return res ?: throw Error("res not found:resType=$resType,type=$type,index=$index")
     }
 

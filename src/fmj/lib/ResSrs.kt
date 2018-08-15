@@ -79,6 +79,7 @@ class ResSrs : ResBase() {
      * @return 返回false动画播放完毕
      */
     fun update(delta: Long): Boolean {
+        if (mFrameNum == 0) return false
         for (j in 0 until ITERATOR) {
             var iter: MutableListIterator<Key> = mShowList.listIterator()
             while (iter.hasNext()) {

@@ -1,62 +1,49 @@
 package fmj.goods
 
 import fmj.characters.BuffMan
-import fmj.characters.FightingCharacter
 import fmj.lib.DatLib
+import fmj.lib.ResBase
 import fmj.lib.ResSrs
 
 /**
  * 08暗器
  * @author Chen
  */
-class GoodsHiddenWeapon : BaseGoods() {
+class GoodsHiddenWeapon : BaseGoods(), Throwable {
 
     /**
      *
      * @return 当该值为正时表示敌人损失多少生命，
      * 为负时表示从敌人身上吸取多少生命到投掷者身上
      */
-    var affectHp: Int = 0
+    override var affectHp: Int = 0
         private set // 当该值为正时表示敌人损失多少生命，为负时表示从敌人身上吸取多少生命到投掷者身上
     /**
      *
      * @return 当该值为正时表示敌人损失多少真气，
      * 为负时表示从敌人身上吸取多少真气到投掷者身上
      */
-    var affectMp: Int = 0
+    override var affectMp: Int = 0
         private set // 当该值为正时表示敌人损失多少真气，为负时表示从敌人身上吸取多少真气到投掷者身上
-    var ani: ResSrs? = null
+    override var ani: ResSrs = ResSrs()
         private set
     private var mBitMask: Int = 0 // 000 全体否 毒乱封眠
 
-    private var buff = BuffMan.fromInt((0x4 shl 4) or (mBitMask and 0xf))
-
-    private fun get2ByteSint(buf: ByteArray, start: Int): Int {
-        val i = buf[start].toInt() and 0xFF or (buf[start + 1].toInt() shl 8 and 0x7F00)
-        return if (buf[start + 1].toInt() and 0x80 != 0) {
-            -i
-        } else i
-    }
+    override var buff = BuffMan.fromInt((0x4 shl 4) or (mBitMask and 0xf))
 
     override fun setOtherData(buf: ByteArray, offset: Int) {
-        affectHp = get2ByteSint(buf, offset + 0x16)
-        affectMp = get2ByteSint(buf, offset + 0x18)
+        affectHp = ResBase.get2BytesSInt(buf, offset + 0x16)
+        affectMp = ResBase.get2BytesSInt(buf, offset + 0x18)
         val type = buf[offset + 0x1b].toInt() and 0xff
         val index = buf[offset + 0x1a].toInt() and 0xff
         if (type > 0 && index > 0) {
             ani = DatLib.getRes(DatLib.ResType.SRS, type,
-                    index) as ResSrs?
+                    index) as ResSrs
         }
         mBitMask = buf[offset + 0x1c].toInt() and 0xff
     }
 
     override fun effectAll(): Boolean {
         return mBitMask and 0x10 != 0
-    }
-
-    fun attack(other: FightingCharacter) {
-        other.hp -= affectHp
-        other.mp -= affectMp
-        other.beAttackedWithBuff(buff)
     }
 }

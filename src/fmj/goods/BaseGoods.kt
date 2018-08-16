@@ -1,8 +1,11 @@
 package fmj.goods
 
+import fmj.characters.BuffMan
+import fmj.characters.FightingCharacter
 import fmj.lib.DatLib
 import fmj.lib.ResBase
 import fmj.lib.ResImage
+import fmj.lib.ResSrs
 
 import graphics.Canvas
 
@@ -92,3 +95,27 @@ abstract class BaseGoods : ResBase() {
         return type == (other as BaseGoods).type && index == other.index
     }
 }
+
+interface Throwable {
+    val ani: ResSrs
+    /**
+     *
+     * @return 当该值为正时表示敌人损失多少生命，
+     * 为负时表示从敌人身上吸取多少生命到投掷者身上
+     */
+    val affectHp: Int
+    /**
+     *
+     * @return 当该值为正时表示敌人损失多少真气，
+     * 为负时表示从敌人身上吸取多少真气到投掷者身上
+     */
+    val affectMp: Int
+    val buff: BuffMan
+
+    fun attack(other: FightingCharacter) {
+        other.hp -= affectHp
+        other.mp -= affectMp
+        other.beAttackedWithBuff(buff)
+    }
+}
+

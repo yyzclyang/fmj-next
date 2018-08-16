@@ -46,8 +46,7 @@ object SaveLoadGame {
     var NpcObjs: Array<NPC> = arrayOf()
     var scriptProcess: ScriptProcess? = null
 
-    // TODO: implement
-    var allowToss = true
+    var allowTossArm = true
     // TODO: implement
     var allowMiss = false
 
@@ -70,7 +69,7 @@ object SaveLoadGame {
         // version 2
         out.writeBoolean(allowMiss)
         // version 2
-        out.writeBoolean(allowToss)
+        out.writeBoolean(allowTossArm)
 
         game.mainScene.scriptProcess.encode(out)
 
@@ -121,10 +120,10 @@ object SaveLoadGame {
         ScriptIndex = coder.readInt()
         if (version >= 2) {
             allowMiss = coder.readBoolean()
-            allowToss = coder.readBoolean()
+            allowTossArm = coder.readBoolean()
         } else {
             allowMiss = false
-            allowToss = true
+            allowTossArm = true
         }
         scriptProcess = game.vm.loadScript(SaveLoadGame.ScriptType, SaveLoadGame.ScriptIndex)
         scriptProcess?.decode(coder)

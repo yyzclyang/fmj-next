@@ -2,17 +2,16 @@ package fmj.combat.actions
 
 import fmj.characters.FightingCharacter
 import fmj.characters.Player
-import fmj.combat.anim.RaiseAnimation
-import fmj.goods.GoodsHiddenWeapon
+import fmj.goods.Throwable
 import fmj.lib.ResSrs
 
 import graphics.Canvas
 
-class ActionThrowItemOne(attacker: FightingCharacter, target: FightingCharacter, internal var hiddenWeapon: GoodsHiddenWeapon) : ActionSingleTarget(attacker, target) {
+class ActionThrowItemOne(attacker: FightingCharacter, target: FightingCharacter, internal var weapon: Throwable) : ActionSingleTarget(attacker, target) {
 
     private var mState = 1
 
-    private var mAni: ResSrs? = null
+    private var mAni: ResSrs = ResSrs()
 
     private var mAniX: Int = 0
     private var mAniY: Int = 0
@@ -28,12 +27,12 @@ class ActionThrowItemOne(attacker: FightingCharacter, target: FightingCharacter,
 
         ox = attacker.combatX
         oy = attacker.combatY
-        mAni = hiddenWeapon.ani
-        mAni!!.start()
-        mAni!!.setIteratorNum(2)
+        mAni = weapon.ani
+        mAni.start()
+        mAni.setIteratorNum(2)
         mAniX = mTarget.combatX
         mAniY = mTarget.combatY
-        hiddenWeapon.attack(target)
+        weapon.attack(target)
 
         mRaiseAnimations.add(target.diffToAnimation())
     }
@@ -51,7 +50,7 @@ class ActionThrowItemOne(attacker: FightingCharacter, target: FightingCharacter,
                 mState = STATE_ANI
             }
 
-            STATE_ANI -> if (!mAni!!.update(delta)) {
+            STATE_ANI -> if (!mAni.update(delta)) {
                 mState = STATE_AFT
                 if (mAttacker is Player) {
                     (mAttacker as Player).setFrameByState()
@@ -79,7 +78,7 @@ class ActionThrowItemOne(attacker: FightingCharacter, target: FightingCharacter,
 
     override fun draw(canvas: Canvas) {
         if (mState == STATE_ANI) {
-            mAni!!.drawAbsolutely(canvas, mAniX, mAniY)
+            mAni.drawAbsolutely(canvas, mAniX, mAniY)
         } else if (mState == STATE_AFT) {
             drawRaiseAnimation(canvas)
         }

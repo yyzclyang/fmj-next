@@ -2,18 +2,17 @@ package fmj.combat.actions
 
 import fmj.characters.FightingCharacter
 import fmj.characters.Player
-import fmj.combat.anim.RaiseAnimation
-import fmj.goods.GoodsHiddenWeapon
+import fmj.goods.Throwable
 import fmj.lib.ResSrs
 
 import graphics.Canvas
 
 class ActionThrowItemAll(attacker: FightingCharacter,
-                         targets: List<FightingCharacter>, internal var hiddenWeapon: GoodsHiddenWeapon) : ActionMultiTarget(attacker, targets) {
+                         targets: List<FightingCharacter>, internal var weapon: Throwable) : ActionMultiTarget(attacker, targets) {
 
     private var mState = 1
 
-    private var mAni: ResSrs? = null
+    private var mAni: ResSrs = ResSrs()
 
     private var ox: Int = 0
     private var oy: Int = 0
@@ -24,10 +23,10 @@ class ActionThrowItemAll(attacker: FightingCharacter,
 
         ox = attacker.combatX
         oy = attacker.combatY
-        mAni = hiddenWeapon.ani
-        mAni!!.start()
-        mAni!!.setIteratorNum(2)
-        mTargets.forEach { hiddenWeapon.attack(it) }
+        mAni = weapon.ani
+        mAni.start()
+        mAni.setIteratorNum(2)
+        mTargets.forEach { weapon.attack(it) }
         mRaiseAnimations.addAll(mTargets.map { it.diffToAnimation() })
     }
 
@@ -44,7 +43,7 @@ class ActionThrowItemAll(attacker: FightingCharacter,
                 mState = STATE_ANI
             }
 
-            STATE_ANI -> if (!mAni!!.update(delta)) {
+            STATE_ANI -> if (!mAni.update(delta)) {
                 mState = STATE_AFT
                 if (mAttacker is Player) {
                     (mAttacker as Player).setFrameByState()
@@ -80,7 +79,7 @@ class ActionThrowItemAll(attacker: FightingCharacter,
 
     override fun draw(canvas: Canvas) {
         if (mState == STATE_ANI) {
-            mAni!!.draw(canvas, 0, 0)
+            mAni.draw(canvas, 0, 0)
         } else if (mState == STATE_AFT) {
             drawRaiseAnimation(canvas)
         }

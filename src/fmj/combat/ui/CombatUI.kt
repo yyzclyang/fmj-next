@@ -12,7 +12,7 @@ import fmj.gamemenu.ScreenGoodsList
 import fmj.gamemenu.ScreenGoodsList.Mode
 import fmj.goods.BaseGoods
 import fmj.goods.GoodsEquipment
-import fmj.goods.GoodsHiddenWeapon
+import fmj.goods.Throwable
 import fmj.graphics.TextRender
 import fmj.graphics.Util
 import fmj.lib.DatLib
@@ -523,11 +523,14 @@ class CombatUI(override val parent: GameNode,
         /** 当前物品链表中，可用于投掷敌人的物品 */
         private val throwableGoodsList: List<BaseGoods>
             get() {
-                if (!SaveLoadGame.allowToss) {
-                    return arrayListOf()
-                }
                 return Player.sGoodsList.goodsList
-                        .filter { it.type == 8 }
+                        .filter {
+                            if (SaveLoadGame.allowTossArm) {
+                                it.type == 7 || it.type == 8
+                            } else {
+                                it.type == 8
+                            }
+                        }
                         .toMutableList()
             }
 
@@ -564,13 +567,12 @@ class CombatUI(override val parent: GameNode,
                     1// 投掷
                     -> pushScreen(ScreenGoodsList(this, throwableGoodsList,
                             object : ScreenGoodsList.OnItemSelectedListener {
-
                                 override fun onItemSelected(goods: BaseGoods) {
                                     popScreen() // pop goods list
                                     popScreen() // pop misc menu
                                     if (goods.effectAll()) {
                                         // 投掷伤害全体敌人
-                                        onActionSelected(ActionThrowItemAll(selectedPlayer, mMonsterList, goods as GoodsHiddenWeapon))
+                                        onActionSelected(ActionThrowItemAll(selectedPlayer, mMonsterList, goods as Throwable))
                                     } else { // 选一个敌人
                                         pushScreen(MenuCharacterSelect(this@CombatUI, mMonsterIndicator, sMonsterIndicatorPos, mMonsterList,
                                                 object : OnCharacterSelectedListener {
@@ -578,7 +580,7 @@ class CombatUI(override val parent: GameNode,
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
                                                         // add throw action
                                                         onActionSelected(ActionThrowItemOne(selectedPlayer,
-                                                                fc, goods as GoodsHiddenWeapon))
+                                                                fc, goods as Throwable))
                                                     }
                                                 }, true))
                                     }

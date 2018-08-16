@@ -1357,7 +1357,7 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_setarmstoss(code: ByteArray, start: Int): Command {
             val enable = get2ByteInt(code, start)
             return makeCommand(2) {
-                SaveLoadGame.allowToss = enable == 1
+                SaveLoadGame.allowTossArm = enable == 1
                 null
             }
         }

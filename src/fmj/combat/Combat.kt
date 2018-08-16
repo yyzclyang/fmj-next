@@ -476,27 +476,23 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
                 it.costMp < m.mp
             }
             if (magics != null) {
-                val dyingMonster = mMonsterList.firstOrNull {
-                    it.hp < it.maxHP / 2
-                }
+                val dying = m.maxHP / m.hp > 3
+
                 val restoreMagic = magics.firstOrNull { it is MagicRestore }
                 val attackMagic = magics.firstOrNull {
                     it is MagicAttack
                 } as? MagicAttack
 
-                if (dyingMonster != null && restoreMagic != null) {
+                if (dying && restoreMagic != null) {
                     if (restoreMagic.isForAll) {
                         mActionQueue.add(ActionMagicHelpAll(m, mMonsterList,
                                 restoreMagic))
                     } else {
-                        mActionQueue.add(
-                                ActionMagicHelpOne(m,
-                                        dyingMonster,
-                                        restoreMagic))
+                        mActionQueue.add(ActionMagicHelpOne(m, m, restoreMagic))
                     }
                     continue
                 }
-                if (attackMagic != null && random() < 0.5) {
+                if (attackMagic != null && random() < 0.3) {
                     if (attackMagic.isForAll) {
                         mActionQueue.add(ActionMagicAttackAll(m, mPlayerList,
                                 attackMagic))

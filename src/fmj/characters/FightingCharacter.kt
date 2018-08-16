@@ -326,6 +326,10 @@ abstract class FightingCharacter : Character() {
         return debuff.hasBuff(mask)
     }
 
+    fun resetDebuff() {
+        debuff.reset()
+    }
+
     /**
      * 攻击是否能够产生异常状态
      * @param mask 只能为下面几个值，或者他们的位或中的任意一个

@@ -188,6 +188,10 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
         mCombatUI.setMonsterList(mMonsterList)
         mCombatUI.setPlayerList(mPlayerList)
 
+        mPlayerList.forEach {
+            it.resetDebuff()
+        }
+
         setOriginalPlayerPos()
         setOriginalMonsterPos()
 

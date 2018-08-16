@@ -183,6 +183,7 @@ class ActionCoopMagic : Action {
     }
 
     override fun postExecute() {
+        mMonsters.forEach { it.isVisiable = it.isAlive }
     }
 
     override fun postAction(): PostAction {

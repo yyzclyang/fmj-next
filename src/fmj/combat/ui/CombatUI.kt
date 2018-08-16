@@ -55,7 +55,12 @@ class CombatUI(override val parent: GameNode,
     private val mHeadsImg = arrayOf(
             DatLib.getRes(DatLib.ResType.PIC, 1, 1) as ResImage,
             DatLib.getRes(DatLib.ResType.PIC, 1, 2) as ResImage,
-            DatLib.getRes(DatLib.ResType.PIC, 1, 3) as ResImage)
+            DatLib.getRes(DatLib.ResType.PIC, 1, 3) as ResImage,
+            DatLib.getRes(DatLib.ResType.PIC, 1, 4) as ResImage,
+            DatLib.getRes(DatLib.ResType.PIC, 1, 5) as ResImage,
+            DatLib.getRes(DatLib.ResType.PIC, 1, 6) as ResImage,
+            DatLib.getRes(DatLib.ResType.PIC, 1, 7) as ResImage,
+            DatLib.getRes(DatLib.ResType.PIC, 1, 8) as ResImage)
 
     private val selectedPlayer: Player
         get() = mPlayerList[mCurPlayerIndex]

@@ -22,6 +22,7 @@ import graphics.Bitmap
 import graphics.Canvas
 import graphics.Point
 import java.*
+import kotlin.math.sqrt
 
 class Combat private constructor(override val parent: GameNode) : BaseScreen, CombatUI.CallBack {
 
@@ -471,6 +472,7 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
     private fun generateMonstersActions() {
         val liveMonsters = mMonsterList.filter { it.isAlive }
         for (m in liveMonsters) {
+            val iq = m.mIQ.toDouble() / 100.0
             val p = randomAlivePlayer ?: return
             val magics = m.magicChain?.getAllLearntMagics()?.filter {
                 it.costMp < m.mp
@@ -483,7 +485,7 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
                     it is MagicAttack
                 } as? MagicAttack
 
-                if (dying && restoreMagic != null) {
+                if (dying && restoreMagic != null && random() < sqrt(iq)) {
                     if (restoreMagic.isForAll) {
                         mActionQueue.add(ActionMagicHelpAll(m, mMonsterList,
                                 restoreMagic))
@@ -492,7 +494,7 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
                     }
                     continue
                 }
-                if (attackMagic != null && random() < 0.3) {
+                if (attackMagic != null && random() < iq) {
                     if (attackMagic.isForAll) {
                         mActionQueue.add(ActionMagicAttackAll(m, mPlayerList,
                                 attackMagic))

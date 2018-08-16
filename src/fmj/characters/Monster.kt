@@ -5,9 +5,7 @@ import fmj.lib.DatLib
 import java.random
 
 class Monster : FightingCharacter() {
-
-    private var mLastRound: Int = 0 // 异常状态持续回合
-    private var mIQ: Int = 0 // 智商，影响魔法使用率
+    var mIQ: Int = 0 // 智商，影响魔法使用率
     /**
      * 打怪得到的金钱
      * @return
@@ -56,8 +54,8 @@ class Monster : FightingCharacter() {
         magicChain = DatLib.getMlr(1, magicIndex, true)
         magicChain?.learnNum = buf[offset + 2].toInt() and 0xff
         addBuff(buf[offset + 3].toInt() and 0xff)
-        atbuff.addBuff(buf[offset + 4].toInt() and 0xff, 0)
-        mLastRound = buf[offset + 0x17].toInt() and 0xff
+        val round = buf[offset + 0x17].toInt() and 0xff
+        atbuff.addBuff(buf[offset + 4].toInt() and 0xff, round)
         name = getString(buf, offset + 6)
         level = buf[offset + 0x12].toInt() and 0xff
         maxHP = get2BytesInt(buf, offset + 0x18)

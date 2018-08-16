@@ -2,7 +2,6 @@ package fmj.goods
 
 import fmj.characters.BuffMan
 import fmj.characters.Player
-import fmj.lib.ResBase
 import fmj.lib.ResSrs
 
 
@@ -14,15 +13,9 @@ class GoodsWeapon : GoodsEquipment(), Throwable {
     override val ani = ResSrs()
     override var affectMp: Int = 0
         private set
-    override var affectHp: Int = 0
-        private set
+    override val affectHp: Int
+        get() = mat * 50
     override val buff = BuffMan()
-
-    override fun setOtherData(buf: ByteArray, offset: Int) {
-        super.setOtherData(buf, offset)
-        affectHp = ResBase.get2BytesSInt(buf, offset + 0x16)
-        affectMp = ResBase.get2BytesSInt(buf, offset + 0x18)
-    }
 
     override fun putOn(p: Player) {
         super.putOn(p)

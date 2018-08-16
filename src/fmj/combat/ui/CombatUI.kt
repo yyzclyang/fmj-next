@@ -32,6 +32,7 @@ import graphics.Rect
 
 import java.System
 import java.gbkBytes
+import kotlin.coroutines.experimental.buildSequence
 
 class CombatUI(override val parent: GameNode,
                private val mCallBack: CallBack?,
@@ -523,15 +524,15 @@ class CombatUI(override val parent: GameNode,
         /** 当前物品链表中，可用于投掷敌人的物品 */
         private val throwableGoodsList: List<BaseGoods>
             get() {
-                return Player.sGoodsList.goodsList
-                        .filter {
-                            if (SaveLoadGame.allowTossArm) {
-                                it.type == 7 || it.type == 8
-                            } else {
-                                it.type == 8
-                            }
-                        }
-                        .toMutableList()
+                val hide = Player.sGoodsList.goodsList
+                        .filter { it.type == 8 }
+                val arms = if (SaveLoadGame.allowTossArm) {
+                    Player.sGoodsList.equipList
+                            .filter { it.type == 7 }
+                } else {
+                    arrayListOf()
+                }
+                return hide + arms
             }
 
         override fun update(delta: Long) {}

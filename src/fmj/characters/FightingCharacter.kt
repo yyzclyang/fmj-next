@@ -7,6 +7,7 @@ import fmj.magic.ResMagicChain
 import java.Coder
 import java.ObjectInput
 import java.ObjectOutput
+import java.random
 import kotlin.coroutines.experimental.buildSequence
 import kotlin.math.max
 import kotlin.math.min
@@ -129,15 +130,27 @@ class BuffMan(val buffs: Array<Buff> = Array(8) { Buff(0, 0) })
     }
 }
 
-fun calcBuff(at: BuffMan, df: BuffMan, st: BuffMan): BuffMan {
+fun health(mask: Int, obj: BuffMan) {
+    obj.getBuffs(mask).forEach {
+        it.value = 0
+        it.round = 0
+    }
+}
+
+fun calcBuff(at: BuffMan, df: BuffMan, st: BuffMan, luck: Int): BuffMan {
     val rv = BuffMan()
+    val pluck = luck.toDouble() / 100
     (0..3).forEach {
+        if (random() < pluck) {
+            return@forEach
+        }
+
         val a = at.buffs[it]
         val d = df.buffs[it]
         val s = st.buffs[it]
 
         if (d.value == 0 && a.value > 0) {
-            s.add(a.round+1)
+            s.add(a.round)
             rv.buffs[it].value = 1
         }
     }
@@ -342,10 +355,6 @@ abstract class FightingCharacter : Character() {
         buff.delBuff(mask)
     }
 
-    fun delDebuff(mask: Int) {
-        debuff.delBuff(mask)
-    }
-
     /**
      * 增加角色攻击能够产生的异常状态
      * @see {@link .hasAtbuff
@@ -361,11 +370,11 @@ abstract class FightingCharacter : Character() {
     }
 
     fun attack(other: FightingCharacter): BuffMan {
-        return calcBuff(atbuff, other.buff, other.debuff)
+        return other.beAttackedWithBuff(atbuff)
     }
 
     fun beAttackedWithBuff(b: BuffMan): BuffMan {
-        return calcBuff(b, buff, debuff)
+        return calcBuff(b, buff, debuff, luck)
     }
 
     fun backupStatus() {

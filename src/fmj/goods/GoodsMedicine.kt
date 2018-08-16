@@ -2,6 +2,7 @@ package fmj.goods
 
 import fmj.characters.FightingCharacter
 import fmj.characters.Player
+import fmj.characters.health
 import fmj.lib.DatLib
 import fmj.lib.ResSrs
 
@@ -38,7 +39,7 @@ class GoodsMedicine : BaseGoods(), IEatMedicine {
         if (player.mp > player.maxMP) {
             player.mp = player.maxMP
         }
-        player.delDebuff(mBitMask)
+        health(mBitMask, player.debuff)
         Player.sGoodsList.deleteGoods(type, index)
     }
 

@@ -1,7 +1,7 @@
 package fmj.magic
 
 import fmj.characters.FightingCharacter
-import fmj.characters.Player
+import fmj.characters.health
 
 /**
  * 03恢复型
@@ -26,6 +26,6 @@ class MagicRestore : BaseMagic() {
         if (dst.hp > dst.maxHP) {
             dst.hp = dst.maxHP
         }
-        dst.delDebuff(mBuff)
+        health(mBuff, dst.debuff)
     }
 }

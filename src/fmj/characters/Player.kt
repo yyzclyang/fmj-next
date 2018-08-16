@@ -120,6 +120,10 @@ class Player : FightingCharacter(), Coder {
 
     }
 
+    fun getEquipmentByIndex(index: Int): GoodsEquipment? {
+        return equipmentsArray[index]
+    }
+
     fun getCurrentEquipment(type: Int): GoodsEquipment? {
         for (i in 0..7) {
             if (sEquipTypes[i] == type) {
@@ -155,11 +159,23 @@ class Player : FightingCharacter(), Coder {
         return false
     }
 
+    private fun putOnAt(goods: GoodsEquipment, index: Int) {
+        if (equipmentsArray[index] == null) {
+            goods.putOn(this)
+            equipmentsArray[index] = goods
+        }
+    }
+
     /**
      * 穿上goods装备
      * @param goods
      */
-    fun putOn(goods: GoodsEquipment) {
+    fun putOn(goods: GoodsEquipment, at: Int? = null) {
+        at?.let {
+            putOnAt(goods, at)
+            return
+        }
+
         for (i in 0..7) {
             if (goods.type == sEquipTypes[i]) {
                 if (equipmentsArray[i] == null) { // 适用2个装饰
@@ -175,7 +191,11 @@ class Player : FightingCharacter(), Coder {
      * 脱下类型号为type的装备
      * @param type
      */
-    fun takeOff(type: Int) {
+    fun takeOff(type: Int, index: Int? = null) {
+        index?.let {
+            takeOffByIndex(it)
+            return
+        }
         for (i in 0..7) {
             if (type == sEquipTypes[i]) {
                 if (equipmentsArray[i] != null) {
@@ -185,6 +205,11 @@ class Player : FightingCharacter(), Coder {
                 }
             }
         }
+    }
+
+    private fun takeOffByIndex(index: Int) {
+        equipmentsArray[index]?.takeOff(this)
+        equipmentsArray[index] = null
     }
 
     /**

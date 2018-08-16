@@ -136,7 +136,7 @@ class ScreenActorWearing(override val parent: GameNode): BaseScreen {
                                 val actor = game.playerList[mActorIndex]
                                 if (goods.canPlayerUse(actor.index)) {
                                     popScreen()
-                                    pushScreen(ScreenChgEquipment(this@ScreenActorWearing, actor, goods as GoodsEquipment))
+                                    pushScreen(ScreenChgEquipment(this@ScreenActorWearing, actor, goods as GoodsEquipment, mCurItem))
                                 } else {
                                     showMessage("不能装备!", 1000)
                                 }

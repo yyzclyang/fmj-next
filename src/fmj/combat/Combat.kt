@@ -595,7 +595,12 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
             mActionQueue.removeAt(mActionQueue.size-1).cancel()
             mCurSelActionPlayerIndex = i
             mCombatUI.setCurrentPlayerIndex(mCurSelActionPlayerIndex)
-
+            if (mCurSelActionPlayerIndex > 0) {
+                val p = mPlayerList[mCurSelActionPlayerIndex]
+                if (p.isSleeping || p.isConfusing) {
+                    onCancel()
+                }
+            }
             mCombatUI.reset()
         }
     }

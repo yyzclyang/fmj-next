@@ -94,6 +94,7 @@ class ScreenMainGame(
             ScriptResources.initGlobalVar()
             ScriptResources.initGlobalEvents()
             SaveLoadGame.NpcObjs = mNPCObj
+            SaveLoadGame.loadPlayers()
             playerList.clear()
             Player.sGoodsList.clear()
             Player.sMoney = 0
@@ -365,7 +366,7 @@ class ScreenMainGame(
      * @param y
      */
     fun createActor(actorId: Int, x: Int, y: Int) {
-        val p = DatLib.getRes(DatLib.ResType.ARS, 1, actorId) as Player
+        val p = SaveLoadGame.getPlayerByIndex(actorId)!!
         playerList.add(p)
         p.setPosOnScreen(x, y, mMapScreenPos)
         player = playerList[0]
@@ -387,7 +388,7 @@ class ScreenMainGame(
     }
 
     fun getPlayer(actorId: Int): Player? {
-        return playerList.firstOrNull { it.index == actorId }
+        return SaveLoadGame.playerDb.firstOrNull { it.index == actorId }
     }
 
     /**

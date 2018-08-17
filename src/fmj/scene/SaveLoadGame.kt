@@ -4,16 +4,18 @@ import fmj.characters.NPC
 import fmj.characters.Player
 import fmj.characters.SceneObj
 import fmj.combat.Combat
+import fmj.lib.DatLib
 import fmj.script.ScriptProcess
 import fmj.views.Game
 import java.ObjectInput
 import java.ObjectOutput
 import java.readArray
 import java.writeArray
+import kotlin.coroutines.experimental.buildSequence
 
 object SaveLoadGame {
     const val magicNum = 0x67736176
-    const val version = 3
+    const val version = 4
 
     /**
      * 是否开始新游戏
@@ -46,9 +48,27 @@ object SaveLoadGame {
     var NpcObjs: Array<NPC> = arrayOf()
     var scriptProcess: ScriptProcess? = null
 
+    var playerDb: MutableList<Player> = arrayListOf()
+
     var allowTossArm = true
     // TODO: implement
     var allowMiss = false
+
+    fun loadPlayers() {
+        playerDb = buildSequence {
+            (0..7).forEach {
+                yield(DatLib.getRes(DatLib.ResType.ARS, 1, it, true) as Player?)
+            }
+        }.filterNotNull().toMutableList()
+    }
+
+    fun getPlayerByIndex(index: Int): Player? {
+        for (p in playerDb) {
+            if (p.index == index)
+                return p
+        }
+        return null
+    }
 
     fun write(game: Game, out: ObjectOutput) {
         out.writeString(SceneName)
@@ -73,9 +93,9 @@ object SaveLoadGame {
 
         game.mainScene.scriptProcess.encode(out)
 
-        out.writeInt(game.playerList.size)
-        for (i in 0 until game.playerList.size) {
-            game.playerList[i].encode(out)
+        out.writeInt(playerDb.size)
+        for (i in 0 until playerDb.size) {
+            playerDb[i].encode(out)
         }
         out.writeInt(Player.sMoney)
         Player.sGoodsList.write(out)
@@ -96,16 +116,23 @@ object SaveLoadGame {
         Combat.write(out)
     }
 
-    fun read(game: Game, coder: ObjectInput) {
+    fun read(game: Game, coder: ObjectInput): Boolean {
         SceneName = coder.readString()
         var actorNum = coder.readInt()
-        while (actorNum-- > 0) coder.readInt()
+        val playerIds = buildSequence {
+            while (actorNum-- > 0)
+                yield(coder.readInt())
+        }.toList()
 
         val m = coder.readInt()
         val version = if (m == magicNum) {
             0
         } else {
             coder.readInt()
+        }
+        if (version < 4) {
+            game.showMessage("不兼容的存档版本")
+            return false
         }
         coder.version = version
         MapType = if (version == 0) {
@@ -129,12 +156,20 @@ object SaveLoadGame {
         scriptProcess?.decode(coder)
 
         val size = coder.readInt()
-        game.playerList.clear()
+        playerDb.clear()
         for (i in 0 until size) {
             val p = Player()
             p.decode(coder)
-            game.playerList.add(p)
+            playerDb.add(p)
         }
+
+        game.playerList.clear()
+        game.playerList.addAll(
+                playerIds.map {
+                    getPlayerByIndex(it)
+                }.filterNotNull()
+        )
+
         Player.sMoney = coder.readInt()
         Player.sGoodsList.read(coder)
 
@@ -153,5 +188,6 @@ object SaveLoadGame {
         }
 
         Combat.read(game, coder)
+        return true
     }
 }

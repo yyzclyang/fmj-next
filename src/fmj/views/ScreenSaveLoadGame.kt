@@ -106,7 +106,9 @@ class ScreenSaveLoadGame(override val parent: GameNode, private val mOperate: Op
                 if (!file.exists()) {
                     return
                 }
-                loadGame(file)
+                if (!loadGame(file)) {
+                    return
+                }
                 SaveLoadGame.startNewGame = false
                 game.changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
             } else { // 保存存档
@@ -133,11 +135,13 @@ class ScreenSaveLoadGame(override val parent: GameNode, private val mOperate: Op
         }
     }
 
-    private fun loadGame(file: File) {
+    private fun loadGame(file: File): Boolean {
         val ioIn = objectInputOf(file)
-        SaveLoadGame.read(game, ioIn)
+        if (!SaveLoadGame.read(game, ioIn))
+            return false
         ScriptResources.read(ioIn)
         ioIn.close()
+        return true
     }
 
     fun saveGame(file: File) {

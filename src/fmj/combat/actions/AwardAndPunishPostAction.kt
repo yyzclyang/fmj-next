@@ -26,7 +26,6 @@ class AwardAndPunishPostAction(attackers: Iterable<FightingCharacter>): PostActi
                 attacker.backupStatus()
                 val hp = attacker.hp.toDouble() * 0.75
                 attacker.hp = hp.toInt()
-                println("poisoning")
                 animations.add(attacker.diffToAnimation())
             }
         }

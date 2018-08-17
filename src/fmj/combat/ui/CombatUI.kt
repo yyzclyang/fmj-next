@@ -32,7 +32,6 @@ import graphics.Rect
 
 import java.System
 import java.gbkBytes
-import kotlin.coroutines.experimental.buildSequence
 
 class CombatUI(override val parent: GameNode,
                private val mCallBack: CallBack?,
@@ -473,7 +472,7 @@ class CombatUI(override val parent: GameNode,
                 drawMarker(FightingCharacter.BUFF_MASK_SU, 41, false)
                 drawMarker(FightingCharacter.BUFF_MASK_DU, 57, true)
                 drawMarker(FightingCharacter.BUFF_MASK_LUAN, 73, true)
-                drawMarker(FightingCharacter.BUFF_MASK_FANG, 88, true)
+                drawMarker(FightingCharacter.BUFF_MASK_FENG, 88, true)
                 drawMarker(FightingCharacter.BUFF_MASK_MIAN, 104, true)
             }
 

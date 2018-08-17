@@ -11,6 +11,7 @@ import java.random
 import kotlin.coroutines.experimental.buildSequence
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.sqrt
 
 class Buff(var value: Int, var round: Int) {
     fun reset() {
@@ -119,7 +120,12 @@ class BuffMan(val buffs: Array<Buff> = Array(8) { Buff(0, 0) })
     companion object {
         fun fromInt(v: Int): BuffMan {
             val round = (v and 0xf0) shr 4
-            val inds = FightingCharacter.maskToIndexes(v and 0xf)
+            val mask = v and 0xf
+            return fromRoundAndMask(round, mask)
+        }
+
+        fun fromRoundAndMask(round:Int, mask: Int): BuffMan {
+            val inds = FightingCharacter.maskToIndexes(mask)
             val man = BuffMan()
             inds.forEach {
                 man.buffs[it].value = 1
@@ -377,8 +383,8 @@ abstract class FightingCharacter : Character() {
         return other.beAttackedWithBuff(atbuff)
     }
 
-    fun beAttackedWithBuff(b: BuffMan): BuffMan {
-        return calcBuff(b, buff, debuff, luck)
+    fun beAttackedWithBuff(b: BuffMan, luck: Int? = null): BuffMan {
+        return calcBuff(b, buff, debuff, luck?:this.luck)
     }
 
     fun backupStatus() {

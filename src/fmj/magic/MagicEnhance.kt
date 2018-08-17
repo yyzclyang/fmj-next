@@ -29,7 +29,6 @@ class MagicEnhance : BaseMagic() {
     }
 
     override fun use(src: FightingCharacter, dst: FightingCharacter) {
-        dst.beAttackedWithBuff(buff)
+        dst.beAttackedWithBuff(buff, 0)
     }
-
 }

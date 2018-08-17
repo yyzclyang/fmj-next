@@ -29,18 +29,16 @@ class GoodsHiddenWeapon : BaseGoods(), Throwable {
         private set
     private var mBitMask: Int = 0 // 000 全体否 毒乱封眠
 
-    override var buff = BuffMan.fromInt((0x4 shl 4) or (mBitMask and 0xf))
+    override var buff = BuffMan()
 
     override fun setOtherData(buf: ByteArray, offset: Int) {
         affectHp = ResBase.get2BytesSInt(buf, offset + 0x16)
         affectMp = ResBase.get2BytesSInt(buf, offset + 0x18)
         val type = buf[offset + 0x1b].toInt() and 0xff
         val index = buf[offset + 0x1a].toInt() and 0xff
-        if (type > 0 && index > 0) {
-            ani = DatLib.getRes(DatLib.ResType.SRS, type,
-                    index) as ResSrs
-        }
+        ani = DatLib.getRes(DatLib.ResType.SRS, type, index) as ResSrs
         mBitMask = buf[offset + 0x1c].toInt() and 0xff
+        buff = BuffMan.fromRoundAndMask(sumRound, mBitMask)
     }
 
     override fun effectAll(): Boolean {

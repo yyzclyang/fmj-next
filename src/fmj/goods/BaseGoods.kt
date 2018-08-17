@@ -115,7 +115,7 @@ interface Throwable {
     fun attack(other: FightingCharacter) {
         other.hp -= affectHp
         other.mp -= affectMp
-        other.beAttackedWithBuff(buff)
+        other.beAttackedWithBuff(buff, 0)
     }
 }
 

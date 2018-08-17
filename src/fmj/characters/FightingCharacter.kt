@@ -139,9 +139,9 @@ fun health(mask: Int, obj: BuffMan) {
 
 fun calcBuff(at: BuffMan, df: BuffMan, st: BuffMan, luck: Int): BuffMan {
     val rv = BuffMan()
-    val pluck = luck.toDouble() / 100
+    val pluck = sqrt(luck.toDouble() / 100)
     (0..3).forEach {
-        if (random() < pluck) {
+        if (random() + 0.01 < pluck) {
             return@forEach
         }
 

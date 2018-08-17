@@ -73,6 +73,7 @@ class ActionExecutor(
     private fun fixAction(): Boolean {
         // attacker dead, goto next action
         while (!mCurrentAction!!.isAttackerActionable) {
+            mCurrentAction!!.cancel()
             mCurrentAction = mActionQueue.pop()
             if (mCurrentAction == null) {
                 return false
@@ -81,6 +82,7 @@ class ActionExecutor(
 
         // 乱
         if (mCurrentAction!!.isAttackerConfusing) {
+            mCurrentAction!!.cancel()
             mCurrentAction = ActionSelfHurt(mCurrentAction!!.mAttacker!!)
         }
 

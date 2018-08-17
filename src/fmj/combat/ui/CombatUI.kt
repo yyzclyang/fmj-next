@@ -576,6 +576,7 @@ class CombatUI(override val parent: GameNode,
                                     popScreen() // pop goods list
                                     popScreen() // pop misc menu
                                     if (goods.effectAll()) {
+                                        game.bag.deleteGoods(goods)
                                         // 投掷伤害全体敌人
                                         onActionSelected(ActionThrowItemAll(selectedPlayer, mMonsterList, goods as Throwable))
                                     } else { // 选一个敌人
@@ -583,6 +584,7 @@ class CombatUI(override val parent: GameNode,
                                                 object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
+                                                        game.bag.deleteGoods(goods)
                                                         // add throw action
                                                         onActionSelected(ActionThrowItemOne(selectedPlayer,
                                                                 fc, goods as Throwable))
@@ -600,12 +602,14 @@ class CombatUI(override val parent: GameNode,
                                     popScreen() // pop goods list
                                     popScreen() // pop misc menu
                                     if (goods.effectAll()) {
+                                        game.bag.deleteGoods(goods)
                                         onActionSelected(ActionUseItemAll(selectedPlayer, mMonsterList, goods))
                                     } else { // 选一个角色治疗
                                         pushScreen(MenuCharacterSelect(this@MenuGoods, mTargetIndicator, sPlayerIndicatorPos, mPlayerList,
                                                 object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
+                                                        game.bag.deleteGoods(goods)
                                                         onActionSelected(ActionUseItemOne(selectedPlayer,
                                                                 fc, goods))
                                                     }

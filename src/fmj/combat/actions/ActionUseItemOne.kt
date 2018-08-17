@@ -72,6 +72,10 @@ class ActionUseItemOne(attacker: FightingCharacter, target: FightingCharacter, i
         }
     }
 
+    override fun cancel() {
+        Player.sGoodsList.addGoods(goods)
+    }
+
     companion object {
 
         private val STATE_PRE = 1 // 起手动画

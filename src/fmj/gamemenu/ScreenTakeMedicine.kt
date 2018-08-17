@@ -55,6 +55,7 @@ class ScreenTakeMedicine(override val parent: GameNode, private val mMedicine: B
                 } else { // 仙药、灵药 不具有全体效果
                     (mMedicine as IEatMedicine).eat(game.playerList[mActorIndex])
                 }
+                game.bag.deleteGoods(mMedicine)
             } else {
                 popScreen()
             }

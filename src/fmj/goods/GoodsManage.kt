@@ -121,6 +121,14 @@ class GoodsManage {
         }
     }
 
+    fun addGoods(goods: BaseGoods) {
+        addGoods(goods.type, goods.index)
+    }
+
+    fun deleteGoods(goods: BaseGoods) {
+        deleteGoods(goods.type, goods.index)
+    }
+
     /**
      * 将type index号物品添加到list链表中
      *

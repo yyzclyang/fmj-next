@@ -592,7 +592,7 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
         val i = preAlivePlayerIndex
         if (i >= 0) { // 不是第一个角色
             // 重选上一个角色的动作
-            mActionQueue.removeAt(mActionQueue.size-1)
+            mActionQueue.removeAt(mActionQueue.size-1).cancel()
             mCurSelActionPlayerIndex = i
             mCombatUI.setCurrentPlayerIndex(mCurSelActionPlayerIndex)
 

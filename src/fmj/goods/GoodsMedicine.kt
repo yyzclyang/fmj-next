@@ -40,7 +40,6 @@ class GoodsMedicine : BaseGoods(), IEatMedicine {
             player.mp = player.maxMP
         }
         health(mBitMask, player.debuff)
-        Player.sGoodsList.deleteGoods(type, index)
     }
 
     /**

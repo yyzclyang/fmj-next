@@ -2,6 +2,7 @@ package fmj.combat.actions
 
 import fmj.characters.FightingCharacter
 import fmj.characters.Player
+import fmj.goods.BaseGoods
 import fmj.goods.Throwable
 import fmj.lib.ResSrs
 
@@ -83,6 +84,10 @@ class ActionThrowItemAll(attacker: FightingCharacter,
         } else if (mState == STATE_AFT) {
             drawRaiseAnimation(canvas)
         }
+    }
+
+    override fun cancel() {
+        Player.sGoodsList.addGoods(weapon as BaseGoods)
     }
 
     companion object {

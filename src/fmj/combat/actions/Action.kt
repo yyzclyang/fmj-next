@@ -85,6 +85,8 @@ abstract class Action {
         mAttacker?.decay()
     }
 
+    open fun cancel() {}
+
     companion object {
 
         private val DELTA = 1000 / 20

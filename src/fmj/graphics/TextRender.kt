@@ -74,8 +74,8 @@ object TextRender {
         var i = 0
         // 比r.top高的不画
         while (tmpY <= r.top - 16 && i < buf.size) {
-            var tmpX = 0
-            while (tmpX < 160 && i < buf.size) {
+            var tmpX = r.left
+            while (tmpX <= r.right-16 && i < buf.size) {
                 val t = buf[i].toInt() and 0xFF
                 if (t >= 0xa1) {
                     i += 2
@@ -93,9 +93,9 @@ object TextRender {
         }
 
         // 比r.bottom低的不画
-        while (tmpY < r.bottom && i < buf.size) {
-            var tmpX = 0
-            while (tmpX < 160 && i < buf.size) {
+        while (tmpY <= r.bottom-16 && i < buf.size) {
+            var tmpX = r.left
+            while (tmpX <= r.right-16 && i < buf.size) {
                 val t = buf[i].toInt() and 0xFF
                 if (t >= 0xa1) {
                     ++i
@@ -118,6 +118,32 @@ object TextRender {
             2
         } else 1
 
+    }
+
+    fun textHeightForWitdh(s: String, width: Int): Int {
+        return textHeightForWitdh(s.gbkBytes(), width)
+    }
+
+    fun textHeightForWitdh(buf: ByteArray, width: Int): Int {
+        var tmpY = 0
+        var i = 0
+        while (i < buf.size) {
+            var tmpX = 0
+            while (tmpX < width && i < buf.size) {
+                val t = buf[i].toInt() and 0xFF
+                tmpX += when {
+                    t >= 0xa1 -> {
+                        ++i
+                        16
+                    }
+                    t < 128 -> 8
+                    else -> 8
+                }
+                ++i
+            }
+            tmpY += 16
+        }
+        return tmpY
     }
 
     /**

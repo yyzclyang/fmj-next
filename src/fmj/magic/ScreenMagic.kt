@@ -12,12 +12,40 @@ import graphics.Paint
 import graphics.Paint.Style
 import graphics.Point
 import graphics.Rect
-import java.Stack
-import java.gbkBytes
+import kotlin.math.round
 
 class ScreenMagic(override val parent: GameNode,
                   magics: Collection<BaseMagic>,
                   private val mOnItemSelectedListener: OnItemSelectedListener) : BaseScreen {
+
+    class PageText(val text: String, val rect: Rect) {
+        private val totalHeight = TextRender.textHeightForWitdh(text, rect.width())
+        private var top = 0
+
+        fun draw(canvas: Canvas) {
+            TextRender.drawText(canvas, text, rect, top+rect.top)
+        }
+
+        fun alignTop(t: Int): Int {
+            val rd = round(t.toDouble() / 16) * 16
+            return rd.toInt()
+        }
+
+        fun pageup() {
+            val newTop = alignTop(top + rect.height())
+            if (newTop <= 0) {
+                top = newTop
+            }
+        }
+
+        fun pagedown() {
+            val newTop = alignTop(top - rect.height())
+            if (totalHeight + newTop >= 16) {
+                top = newTop
+            }
+        }
+    }
+
     private val magics = magics.toTypedArray()
 
     private var mFirstItemIndex = 0 // 界面上显示的第一个魔法的序号
@@ -31,11 +59,9 @@ class ScreenMagic(override val parent: GameNode,
     private val mRectTop = Rect(10, 4, 147, 39)
     private val mRectBtm = Rect(10, 41, 147, 76)
     private val mRectDsp = Rect(11, 42, 146, 75)
-    private var mToDraw = 0 // 当前要画的魔法描述中的字节
-    private var mNextToDraw = 0 // 下一个要画的魔法描述中的字节
-    private val mStackLastToDraw = Stack.create<Int>() // 保存上次魔法描述所画位置
     private val mTextPos = Point(10, 77)
     private val mFramePaint = Paint()
+    private var description = PageText(this.magics[mCurItemIndex].magicDescription, mRectDsp)
 
     interface OnItemSelectedListener {
         fun onItemSelected(magic: BaseMagic)
@@ -81,20 +107,20 @@ class ScreenMagic(override val parent: GameNode,
 
     override fun draw(canvas: Canvas) {
         canvas.drawColor(Global.COLOR_WHITE)
-        canvas.drawRect(mRectTop, mFramePaint)
-        canvas.drawRect(mRectBtm, mFramePaint)
         val hlMagic = magics[mFirstItemIndex]
         TextRender.drawText(canvas, hlMagic.magicName, mRectTop.left + 1, mRectTop.top + 1)
         if (mFirstItemIndex + 1 < magics.size) {
             TextRender.drawText(canvas, magics[mFirstItemIndex + 1].magicName, mRectTop.left + 1, mRectTop.top + 1 + 16)
         }
-        mNextToDraw = TextRender.drawText(canvas, hlMagic.magicDescription, mToDraw, mRectDsp)
+        description.draw(canvas)
         TextRender.drawText(canvas, "耗真气:" + hlMagic.costMp, mTextPos.x, mTextPos.y)
         canvas.drawBitmap(mBmpCursor, 100, if (mFirstItemIndex == mCurItemIndex) 10 else 26)
         canvas.drawBitmap(if (mFirstItemIndex == 0) mBmpMarker else mBmpMarker2, 135, 6)
         canvas.drawBitmap(mBmpMarker, 135, 6 + 8)
         canvas.drawBitmap(mBmpMarker, 135, 6 + 16)
         canvas.drawBitmap(if (mFirstItemIndex + 2 < magics.size) mBmpMarker2 else mBmpMarker, 135, 6 + 24)
+        canvas.drawRect(mRectTop, mFramePaint)
+        canvas.drawRect(mRectBtm, mFramePaint)
     }
 
     override fun onKeyDown(key: Int) {
@@ -103,27 +129,17 @@ class ScreenMagic(override val parent: GameNode,
             if (mCurItemIndex < mFirstItemIndex) {
                 --mFirstItemIndex
             }
-            mNextToDraw = 0
-            mToDraw = mNextToDraw
-            mStackLastToDraw.clear()
+            description = PageText(magics[mCurItemIndex].magicDescription, mRectDsp)
         } else if (key == Global.KEY_DOWN && mCurItemIndex + 1 < magics.size) {
             ++mCurItemIndex
             if (mCurItemIndex >= mFirstItemIndex + ITEM_NUM) {
                 ++mFirstItemIndex
             }
-            mNextToDraw = 0
-            mToDraw = mNextToDraw
-            mStackLastToDraw.clear()
+            description = PageText(magics[mCurItemIndex].magicDescription, mRectDsp)
         } else if (key == Global.KEY_PAGEDOWN) {
-            val len = magics[mCurItemIndex].magicDescription.gbkBytes().size
-            if (mNextToDraw < len) {
-                mStackLastToDraw.push(mToDraw) // 保存旧位置
-                mToDraw = mNextToDraw // 更新位置
-            }
-        } else if (key == Global.KEY_PAGEUP && mToDraw != 0) {
-            mStackLastToDraw.pop()?.let {
-                mToDraw = it
-            }
+            description.pagedown()
+        } else if (key == Global.KEY_PAGEUP) {
+            description.pageup()
         }
     }
 

@@ -14,9 +14,7 @@ class ActionSelfHurt(target: FightingCharacter): ActionSingleTarget(target, targ
         val target = mTarget
 
         target.backupStatus()
-        val hp = target.hp.toDouble() * 0.9
-        target.hp = hp.toInt()
-
+        target.attack(target, allowMiss = false)
         mRaiseAnimations.add(target.diffToAnimation())
     }
 

@@ -385,8 +385,8 @@ abstract class FightingCharacter : Character() {
         atbuff.reset()
     }
 
-    fun attack(other: FightingCharacter, rate: Double = 1.0): BuffMan {
-        if (SaveLoadGame.allowMiss) {
+    fun attack(other: FightingCharacter, rate: Double = 1.0, allowMiss: Boolean = true): BuffMan {
+        if (SaveLoadGame.allowMiss && allowMiss) {
             if (CalcDamage.randomMiss(this, other)) {
                 other.missed = true
                 return BuffMan()

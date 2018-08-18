@@ -124,7 +124,7 @@ class ActionCoopMagic : Action {
                 }
             } else {
                 mMonsters.forEach {
-                    it.attack(it)
+                    it.attack(it, 1.6)
                 }
             }
         }

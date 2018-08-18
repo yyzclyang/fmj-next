@@ -385,14 +385,14 @@ abstract class FightingCharacter : Character() {
         atbuff.reset()
     }
 
-    fun attack(other: FightingCharacter, coop: Boolean = false): BuffMan {
+    fun attack(other: FightingCharacter, rate: Double = 1.0): BuffMan {
         if (SaveLoadGame.allowMiss) {
             if (CalcDamage.randomMiss(this, other)) {
                 other.missed = true
                 return BuffMan()
             }
         }
-        var damage = CalcDamage.calcBaseDamage(computedAttack, other.computedDefend)
+        var damage = (CalcDamage.calcBaseDamage(computedAttack, other.computedDefend) * rate).toInt()
         if (damage <= 0) {
             damage = 1
         }

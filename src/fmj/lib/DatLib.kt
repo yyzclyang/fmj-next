@@ -18,6 +18,7 @@ import fmj.goods.GoodsTudun
 import fmj.goods.GoodsWeapon
 import fmj.magic.*
 import fmj.script.ScriptVM
+import graphics.Bitmap
 import java.File
 
 
@@ -247,6 +248,10 @@ class DatLib(buffer: ByteArray) {
 
         fun getMrs(type: Int, index: Int): BaseMagic {
             return getRes(ResType.MRS, type, index, false) as BaseMagic
+        }
+
+        val missBitmap: Bitmap by lazy {
+            getPic(2, 18)?.getBitmap(0) ?: Bitmap(0, 0)
         }
     }
 }

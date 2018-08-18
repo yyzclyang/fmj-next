@@ -19,24 +19,19 @@ class ActionPhysicalAttackAll(attacker: FightingCharacter,
 
     override fun preproccess() {
         val attacker = mAttacker?:return
-        mTargets.forEach { it.backupStatus() }
+        mTargets.forEach {
+            it.backupStatus()
+        }
 
         ox = attacker.combatX
         oy = attacker.combatY
         dx = (44.0f - attacker.combatX) / TOTAL_FRAME
         dy = (14.0f - attacker.combatY) / TOTAL_FRAME
-        var damage: Int
         for (i in 0 until mTargets.size) {
             val fc = mTargets[i]
             if (!fc.isAlive) {
                 continue
             }
-            damage = attacker.computedAttack - fc.computedDefend
-            if (damage <= 0) {
-                damage = 1
-            }
-            damage += (random() * 3).toInt()
-            fc.hp = fc.hp - damage
             attacker.attack(fc)
         }
         mRaiseAnimations.addAll(mTargets.map { it.diffToAnimation(true) })

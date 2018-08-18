@@ -31,12 +31,6 @@ class ActionPhysicalAttackOne(attacker: FightingCharacter,
         dx = (target.combatX - attacker.combatX).toFloat() / TOTAL_FRAME
         dy = (target.combatY - attacker.combatY).toFloat() / TOTAL_FRAME
 
-        var damage = attacker.computedAttack - target.computedDefend
-        if (damage <= 0) {
-            damage = 1
-        }
-        damage += (random() * 10).toInt()
-        target.hp = target.hp - damage
         attacker.attack(target)
         mRaiseAnimations.add(target.diffToAnimation())
     }

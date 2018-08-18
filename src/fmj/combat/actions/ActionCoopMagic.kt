@@ -126,9 +126,8 @@ class ActionCoopMagic : Action {
                     mgc.use(it, mMonsters)
                 }
             } else {
-                if (isSingleTarget) {
-                    it.attack(mMonster)
-                    it.attack(mMonster)
+                mMonsters.forEach {
+                    it.attack(it)
                 }
             }
         }

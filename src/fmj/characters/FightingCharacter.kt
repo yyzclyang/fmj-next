@@ -1,9 +1,13 @@
 package fmj.characters
 
+import fmj.combat.actions.CalcDamage
 import fmj.combat.anim.Animation
 import fmj.combat.anim.RaiseAnimation
+import fmj.combat.anim.RaiseBitmapAnimation
+import fmj.lib.DatLib
 import fmj.magic.BaseMagic
 import fmj.magic.ResMagicChain
+import fmj.scene.SaveLoadGame
 import java.Coder
 import java.ObjectInput
 import java.ObjectOutput
@@ -267,6 +271,8 @@ abstract class FightingCharacter : Character() {
             field = min(99, l)
         } // 幸运
 
+    var missed: Boolean = false
+
     /** 免疫毒乱封眠，不同装备可能具有相同的免疫效果，叠加之 */
     protected var buff = BuffMan()
     /** 身中毒乱封眠 */
@@ -379,7 +385,19 @@ abstract class FightingCharacter : Character() {
         atbuff.reset()
     }
 
-    fun attack(other: FightingCharacter): BuffMan {
+    fun attack(other: FightingCharacter, coop: Boolean = false): BuffMan {
+        if (SaveLoadGame.allowMiss) {
+            if (CalcDamage.randomMiss(this, other)) {
+                other.missed = true
+                return BuffMan()
+            }
+        }
+        var damage = CalcDamage.calcBaseDamage(computedAttack, other.computedDefend)
+        if (damage <= 0) {
+            damage = 1
+        }
+        damage += (random() * 10).toInt()
+        other.hp = other.hp - damage
         return other.beAttackedWithBuff(atbuff)
     }
 
@@ -391,6 +409,7 @@ abstract class FightingCharacter : Character() {
         backup.hp = hp
         backup.mp = mp
         debuff.fill(backup.debuff)
+        missed = false
     }
 
     fun diff(withBuff: Boolean): Diff {
@@ -403,7 +422,11 @@ abstract class FightingCharacter : Character() {
     }
 
     fun diffToAnimation(withBuff: Boolean = true): Animation {
-        return diff(withBuff).toAnimation(combatX, combatY)
+        return if (missed) {
+            RaiseBitmapAnimation(combatX, combatY, DatLib.missBitmap)
+        } else {
+            diff(withBuff).toAnimation(combatX, combatY)
+        }
     }
 
     fun decay() {

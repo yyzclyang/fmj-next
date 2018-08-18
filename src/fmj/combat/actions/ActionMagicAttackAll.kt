@@ -2,7 +2,6 @@ package fmj.combat.actions
 
 import fmj.characters.FightingCharacter
 import fmj.characters.Player
-import fmj.combat.anim.RaiseAnimation
 import fmj.lib.ResSrs
 import fmj.magic.MagicAttack
 

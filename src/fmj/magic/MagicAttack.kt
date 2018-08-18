@@ -2,6 +2,8 @@ package fmj.magic
 
 import fmj.characters.BuffMan
 import fmj.characters.FightingCharacter
+import fmj.combat.actions.CalcDamage
+import fmj.scene.SaveLoadGame
 
 /**
  * 01攻击型
@@ -35,6 +37,12 @@ class MagicAttack : BaseMagic() {
     }
 
     override fun use(src: FightingCharacter, dst: FightingCharacter) {
+        if (SaveLoadGame.allowMiss) {
+            if (CalcDamage.randomMiss(src, dst)) {
+                dst.missed = true
+                return
+            }
+        }
         src.mp = src.mp - costMp
         dst.hp = dst.hp - mHp
         dst.beAttackedWithBuff(buff)
@@ -44,6 +52,12 @@ class MagicAttack : BaseMagic() {
         src.mp = src.mp - costMp
         val buff = this.buff
         for (fc in dst) {
+            if (SaveLoadGame.allowMiss) {
+                if (CalcDamage.randomMiss(src, fc)) {
+                    fc.missed = true
+                    continue
+                }
+            }
             fc.hp = fc.hp - mHp
             fc.beAttackedWithBuff(buff)
         }

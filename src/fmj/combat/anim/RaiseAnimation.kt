@@ -89,3 +89,28 @@ class RaiseAnimation(private val x: Int, private val y: Int, hitpoint: Int, buff
     }
 
 }
+
+class RaiseBitmapAnimation(private val x: Int, private val y: Int, val image: Bitmap): Animation {
+
+    private var dy = 0
+    private var dt = 0
+
+    private var cnt: Long = 0
+
+    override fun update(delta: Long): Boolean {
+        cnt += delta
+        if (cnt > 50) {
+            cnt = 0
+            ++dt
+            dy -= dt
+            if (dt > 4) {
+                return false
+            }
+        }
+        return true
+    }
+
+    override fun draw(canvas: Canvas) {
+        canvas.drawBitmap(image, x, y + dy)
+    }
+}

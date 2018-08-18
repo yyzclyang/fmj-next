@@ -28,7 +28,7 @@ class ScreenChgEquipment
         } else {
             mActor.getEquipmentByIndex(itemIndex)
         }
-        if (currentEquip == null || mActor.hasSpace(goods.type)) {
+        if (currentEquip == null || (itemIndex == null && mActor.hasSpace(goods.type))) {
             mGoods = arrayOf(goods)
             mSelIndex = 0
         } else {

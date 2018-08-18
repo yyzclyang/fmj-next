@@ -33,7 +33,6 @@ class ActionExecutor(
                 return true
             }
             postAction = null
-            mCurrentAction!!.decay()
             mCurrentAction = mActionQueue.pop() // 取下一个动作
             if (mCurrentAction == null) { // 所有动作执行完毕
                 return false
@@ -47,37 +46,38 @@ class ActionExecutor(
             if (mCurrentAction == null) {
                 return false
             }
-            mCurrentAction!!.preproccess()
-            mIsNewAction = false
+            mIsNewAction = true
         }
 
-        if (mIsNewAction) { // 跳过死亡角色
-            if (!fixAction()) {
-                return false
-            }
-            mCurrentAction!!.preproccess()
-            mIsNewAction = false
+        if (mIsNewAction) {
+            prepareAction()
+            return true
         }
 
         if (!mCurrentAction!!.update(delta)) { // 当前动作执行完毕
             mCurrentAction!!.postExecute()
-            postAction = mCurrentAction!!.postAction()
+            postAction()
         }
 
         return true
     }
 
+    private fun postAction() {
+        postAction = mCurrentAction!!.postAction()
+        mCurrentAction!!.decay()
+        mCurrentAction = null
+        mIsNewAction = false
+    }
+
     /**
      * 执行完毕返回`false`
      */
-    private fun fixAction(): Boolean {
+    private fun prepareAction() {
         // attacker dead, goto next action
-        while (!mCurrentAction!!.isAttackerActionable) {
+        if (!mCurrentAction!!.isAttackerActionable) {
             mCurrentAction!!.cancel()
-            mCurrentAction = mActionQueue.pop()
-            if (mCurrentAction == null) {
-                return false
-            }
+            postAction()
+            return
         }
 
         // 乱
@@ -90,7 +90,6 @@ class ActionExecutor(
         if (!mCurrentAction!!.isTargetAlive) {
             if (!mCurrentAction!!.isSingleTarget) { // 敌人都死了
                 mCurrentAction = null
-                return false
             } else { // try to find an alive target
                 val newTarget =
                         if (mCurrentAction!!.targetIsMonster()) {
@@ -98,15 +97,16 @@ class ActionExecutor(
                         } else {
                             mCombat.randomAlivePlayer
                         }
-
                 if (newTarget == null) {
-                    return false
+                    postAction()
+                    return
                 } else if (mCurrentAction !is ActionFlee) {
                     (mCurrentAction as ActionSingleTarget).setTarget(newTarget)
                 }
             }
         }
-        return true
+        mCurrentAction?.preproccess()
+        mIsNewAction = false
     }
 
     fun draw(canvas: Canvas) {

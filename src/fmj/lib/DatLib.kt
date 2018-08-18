@@ -16,9 +16,11 @@ import fmj.goods.GoodsMedicineLife
 import fmj.goods.GoodsStimulant
 import fmj.goods.GoodsTudun
 import fmj.goods.GoodsWeapon
+import fmj.graphics.TextRender
 import fmj.magic.*
 import fmj.script.ScriptVM
 import graphics.Bitmap
+import graphics.Canvas
 import java.File
 
 
@@ -251,7 +253,12 @@ class DatLib(buffer: ByteArray) {
         }
 
         val missBitmap: Bitmap by lazy {
-            getPic(2, 18)?.getBitmap(0) ?: Bitmap(0, 0)
+            getPic(2, 18)?.getBitmap(0) ?: run {
+                val bmp = Bitmap(8*4, 14)
+                val canvas = Canvas(bmp)
+                TextRender.drawText(canvas, "Miss", 0, -2)
+                bmp
+            }
         }
     }
 }

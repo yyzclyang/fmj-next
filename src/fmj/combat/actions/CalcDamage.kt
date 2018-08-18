@@ -15,17 +15,15 @@ object CalcDamage {
 
     fun randomMiss(at: FightingCharacter, df: FightingCharacter): Boolean {
         val diff = at.computedSpeed - df.computedSpeed
-        val prob = if (diff > 0) {
-            // 1 = a*100 + b
-            // 0.7 =  b
-            // a = 0.003
-            diff*0.003 + 0.7
-        } else {
-            // 0 = a*-100 + b
-            // 0.7 =  b
-            // a = b/100 = 0.007
-            diff*0.007+0.7
-        }
+        /*
+        y = a*x + b
+        (100, 0)
+        (0, 0.3)
+        100*a + b = 0
+        b = 0.3
+        a = -0.003
+        * */
+        val prob = -diff*0.003 + 0.3
         return random() < prob
     }
 }

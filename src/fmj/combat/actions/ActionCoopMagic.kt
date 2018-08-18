@@ -31,10 +31,6 @@ class ActionCoopMagic : Action {
 
     private var mAni: ResSrs = ResSrs()
 
-    private val mRaiseAni: RaiseAnimation? = null
-
-    private val mRaiseAnis: MutableList<RaiseAnimation>? = null
-
     private var dxy: Array<FloatArray>? = null
     private var oxy: Array<IntArray>? = null
 
@@ -89,6 +85,7 @@ class ActionCoopMagic : Action {
         if (mMonsters.isEmpty())
             return
         mMonsters.forEach { it.backupStatus() }
+        mActors.forEach { it.backupStatus() }
 
         val midpos = arrayOf(intArrayOf(92, 52), intArrayOf(109, 63), intArrayOf(126, 74))
         dxy = Array(mActors.size) { FloatArray(2) }
@@ -131,6 +128,8 @@ class ActionCoopMagic : Action {
                 }
             }
         }
+        mMonsters.forEach { mRaiseAnimations.add(it.diffToAnimation()) }
+        mActors.forEach { mRaiseAnimations.add(it.diffToAnimation()) }
         mAni.start()
     }
 
@@ -165,10 +164,7 @@ class ActionCoopMagic : Action {
                 }
             }
 
-            STATE_AFT -> {
-                if (isSingleTarget) {
-                    //				return m
-                }
+            STATE_AFT -> if (!updateRaiseAnimation(delta)) {
                 return false
             }
         }
@@ -176,8 +172,9 @@ class ActionCoopMagic : Action {
     }
 
     override fun draw(canvas: Canvas) {
-        if (mState == STATE_ANI) {
-            mAni.drawAbsolutely(canvas, mAniX, mAniY)
+        when (mState) {
+            STATE_ANI -> mAni.drawAbsolutely(canvas, mAniX, mAniY)
+            STATE_AFT -> drawRaiseAnimation(canvas)
         }
     }
 
@@ -187,30 +184,6 @@ class ActionCoopMagic : Action {
 
     override fun postAction(): PostAction {
         return AwardAndPunishPostAction(mActors)
-    }
-
-    override fun updateRaiseAnimation(delta: Long): Boolean {
-        if (isSingleTarget) {
-            return mRaiseAni?.update(delta) ?: false
-        }
-
-        mRaiseAnis?.let {
-            it.removeAll { !it.update(delta) }
-            return !it.isEmpty()
-        }
-        return false
-    }
-
-    override fun drawRaiseAnimation(canvas: Canvas) {
-        if (isSingleTarget) {
-            mRaiseAni?.draw(canvas)
-        } else {
-            if (mRaiseAnis != null) {
-                for (ani in mRaiseAnis) {
-                    ani.draw(canvas)
-                }
-            }
-        }
     }
 
     override fun targetIsMonster(): Boolean {

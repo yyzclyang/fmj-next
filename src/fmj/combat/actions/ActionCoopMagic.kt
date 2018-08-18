@@ -116,6 +116,7 @@ class ActionCoopMagic : Action {
         }
         val mgc = magic
         mActors.forEach {
+            val player = it
             if (mgc != null) {
                 if (isSingleTarget) {
                     mgc.use(it, mMonster)
@@ -124,7 +125,7 @@ class ActionCoopMagic : Action {
                 }
             } else {
                 mMonsters.forEach {
-                    it.attack(it, 1.6)
+                    player.attack(it, 1.6)
                 }
             }
         }

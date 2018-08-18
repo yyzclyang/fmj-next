@@ -39,7 +39,7 @@ class Monster : FightingCharacter() {
         if (mCarryGoods1[0] == 0 || mCarryGoods1[1] == 0 || mCarryGoods1[2] == 0) {
             return null
         }
-        if (random() < 0.5) {
+        if (random() < 0.2) {
             return null
         }
         mCarryGoods1[2] -= 1

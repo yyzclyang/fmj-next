@@ -9,6 +9,9 @@ class AwardAndPunishPostAction(attackers: Iterable<FightingCharacter>): PostActi
     var animations: MutableList<Animation> = arrayListOf()
     init {
         for (attacker in attackers) {
+            if (!attacker.isAlive) {
+                continue
+            }
             if (attacker is Player) {
                 attacker.backupStatus()
                 val decs = attacker.equipmentsArray

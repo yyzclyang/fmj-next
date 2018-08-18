@@ -481,7 +481,7 @@ class Combat private constructor(override val parent: GameNode) : BaseScreen, Co
             val magics = m.magicChain?.getAllLearntMagics()?.filter {
                 it.costMp < m.mp
             }
-            if (magics != null) {
+            if (!m.isSealed && magics != null) {
                 val dying = m.maxHP / m.hp > 3
 
                 val restoreMagic = magics.firstOrNull { it is MagicRestore }

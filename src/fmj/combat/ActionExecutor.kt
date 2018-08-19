@@ -86,6 +86,11 @@ class ActionExecutor(
             mCurrentAction = ActionSelfHurt(mCurrentAction!!.mAttacker!!)
         }
 
+        if (mCurrentAction!!.isMagic && mCurrentAction!!.isAttackerSealed) {
+            mCurrentAction!!.cancel()
+            mCurrentAction = mCurrentAction!!.rollbackToPhysical()
+        }
+
         // target dead, get an alive target
         if (!mCurrentAction!!.isTargetAlive) {
             if (!mCurrentAction!!.isSingleTarget) { // 敌人都死了

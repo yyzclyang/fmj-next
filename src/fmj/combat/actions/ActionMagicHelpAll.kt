@@ -18,6 +18,8 @@ class ActionMagicHelpAll(attacker: FightingCharacter,
     internal var ox: Int = 0
     internal var oy: Int = 0
 
+    override val isMagic = true
+
     override fun preproccess() {
         val attacker = mAttacker?:return
         mTargets.forEach { it.backupStatus() }
@@ -65,6 +67,11 @@ class ActionMagicHelpAll(attacker: FightingCharacter,
         } else if (state == STATE_AFT) {
             drawRaiseAnimation(canvas)
         }
+    }
+
+    override fun rollbackToPhysical(): Action {
+        val attacker = mAttacker!!
+        return ActionNop(attacker)
     }
 
     companion object {

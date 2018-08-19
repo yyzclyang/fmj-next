@@ -18,6 +18,8 @@ class ActionMagicAttackAll(attacker: FightingCharacter,
     private var ox: Int = 0
     private var oy: Int = 0
 
+    override val isMagic = true
+
     override fun preproccess() {
         val attacker = mAttacker?:return
         attacker.backupStatus()
@@ -88,6 +90,14 @@ class ActionMagicAttackAll(attacker: FightingCharacter,
         } else if (mState == STATE_AFT) {
             drawRaiseAnimation(canvas)
         }
+    }
+
+    override fun rollbackToPhysical(): Action {
+        val attacker = mAttacker!!
+        return if (attacker.hasAtbuff(FightingCharacter.BUFF_MASK_ALL))
+            ActionPhysicalAttackAll(attacker, mTargets)
+        else
+            ActionPhysicalAttackOne(attacker, mTargets[0])
     }
 
     companion object {

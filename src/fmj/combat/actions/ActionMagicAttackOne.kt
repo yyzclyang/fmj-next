@@ -27,6 +27,8 @@ class ActionMagicAttackOne(attacker: FightingCharacter, target: FightingCharacte
     private var oy: Int = 0
     private var tip: Animation? = null
 
+    override val isMagic = true
+
     override fun preproccess() {
         val attacker = mAttacker?:return
         val target = mTarget
@@ -117,6 +119,10 @@ class ActionMagicAttackOne(attacker: FightingCharacter, target: FightingCharacte
         }
     }
 
+    override fun rollbackToPhysical(): Action {
+        val attacker = mAttacker!!
+        return ActionPhysicalAttackOne(attacker, mTarget)
+    }
     companion object {
 
         private val STATE_PRE = 1 // 起手动画

@@ -20,6 +20,8 @@ class ActionMagicHelpOne(attacker: FightingCharacter,
     internal var ox: Int = 0
     internal var oy: Int = 0
 
+    override val isMagic = true
+
     override fun preproccess() {
         ox = mAttacker!!.combatX
         oy = mAttacker!!.combatY
@@ -67,6 +69,11 @@ class ActionMagicHelpOne(attacker: FightingCharacter,
         } else if (mState == STATE_AFT) {
             drawRaiseAnimation(canvas)
         }
+    }
+
+    override fun rollbackToPhysical(): Action {
+        val attacker = mAttacker!!
+        return ActionNop(attacker)
     }
 
     companion object {

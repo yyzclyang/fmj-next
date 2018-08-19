@@ -56,6 +56,9 @@ class ActionCoopMagic : Action {
     override val isAttackerConfusing: Boolean
         get() = false
 
+    override val isAttackerSealed: Boolean
+        get() = false
+
     override val isTargetAlive: Boolean
         get() = if (isSingleTarget) {
             mMonster.isAlive

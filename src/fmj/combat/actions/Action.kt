@@ -31,6 +31,11 @@ abstract class Action {
     open val isAttackerConfusing: Boolean
         get() = mAttacker!!.isConfusing
 
+    open val isAttackerSealed: Boolean
+        get() = mAttacker!!.isSealed
+
+    open val isMagic = false
+
     abstract val isTargetAlive: Boolean
 
     abstract val isSingleTarget: Boolean
@@ -86,6 +91,10 @@ abstract class Action {
     }
 
     open fun cancel() {}
+
+    open fun rollbackToPhysical(): Action {
+        return ActionNop(mAttacker!!)
+    }
 
     companion object {
 

@@ -396,7 +396,7 @@ abstract class FightingCharacter : Character() {
         if (damage <= 0) {
             damage = 1
         }
-        damage += (random() * 5).toInt()
+        damage += (random() * 10).toInt()
         other.hp = other.hp - damage
         return other.beAttackedWithBuff(atbuff)
     }

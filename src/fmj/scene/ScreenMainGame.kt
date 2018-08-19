@@ -23,7 +23,9 @@ class ScreenMainGame(
         override val parent: GameNode,
         private val vm: ScriptVM): BaseScreen {
 
-    var player: Player? = null
+    val player: Player?
+        get() = playerList.firstOrNull()
+
     var currentMap: ResMap? = null
         private set
 
@@ -103,15 +105,11 @@ class ScreenMainGame(
         } else { // 再续前缘
             loadMap(SaveLoadGame.MapType, SaveLoadGame.MapIndex,
                     SaveLoadGame.MapScreenX, SaveLoadGame.MapScreenY)
+            fixMapPosition()
             mNPCObj = SaveLoadGame.NpcObjs
 
             mNPCObj.filterNot { it.isEmpty }
                     .forEach { it.setICanWalk(mCanWalk) }
-            if (playerList.size > 0) {
-                player = playerList[0]
-            } else {
-                throw Error("存档读取出错")
-            }
             scriptProcess = SaveLoadGame.scriptProcess!!
             scriptProcess.goonExecute = true
         }
@@ -355,6 +353,12 @@ class ScreenMainGame(
         SaveLoadGame.MapScreenY = y
     }
 
+    fun fixMapPosition() {
+        player?.let {
+            it.setPosOnScreen(4, 3, mMapScreenPos)
+        }
+    }
+
     fun setMapScreenPos(x: Int, y: Int) {
         mMapScreenPos.set(x, y)
     }
@@ -369,7 +373,6 @@ class ScreenMainGame(
         val p = SaveLoadGame.getPlayerByIndex(actorId)!!
         playerList.add(p)
         p.setPosOnScreen(x, y, mMapScreenPos)
-        player = playerList[0]
     }
 
     fun deleteActor(actorId: Int) {
@@ -378,12 +381,6 @@ class ScreenMainGame(
                 playerList.removeAt(i)
                 break
             }
-        }
-
-        player = if (playerList.isEmpty()) {
-            null
-        } else {
-            playerList[0]
         }
     }
 

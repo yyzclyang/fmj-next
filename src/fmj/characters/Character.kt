@@ -51,10 +51,6 @@ abstract class Character : ResBase() {
                 posInMap.y - posMapScreen.y)
     }
 
-    fun setPosOnScreen(p: Point, posMapScreen: Point) {
-        posInMap.set(p.x + posMapScreen.x, p.y + posMapScreen.y)
-    }
-
     fun setPosOnScreen(x: Int, y: Int, posMapScreen: Point) {
         posInMap.set(x + posMapScreen.x, y + posMapScreen.y)
     }

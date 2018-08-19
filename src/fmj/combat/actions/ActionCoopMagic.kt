@@ -48,7 +48,7 @@ class ActionCoopMagic : Action {
         get() = mActors[0].computedDefend
 
     override val isAttackerActionable: Boolean
-        get() = mActors.filter { it.isAlive && !it.isSleeping }.size > 2
+        get() = mActors.filter { it.isAlive && !it.isSleeping }.size >= 2
 
     override val isAttackerSleep: Boolean
         get() = mActors.all { it.isSleeping }

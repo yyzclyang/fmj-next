@@ -248,16 +248,16 @@ class Player : FightingCharacter(), Coder {
             TextRender.drawText(canvas, "幸运   $luck", 41, 59)
             val sb = StringBuilder("免疫   ")
             val tmp = StringBuilder()
-            if (isPoisoned) {
+            if (hasBuff(FightingCharacter.BUFF_MASK_DU)) {
                 tmp.append('毒')
             }
-            if (isConfusing) {
+            if (hasBuff(FightingCharacter.BUFF_MASK_LUAN)) {
                 tmp.append('乱')
             }
-            if (isSealed) {
+            if (hasBuff(FightingCharacter.BUFF_MASK_FENG)) {
                 tmp.append('封')
             }
-            if (isSleeping) {
+            if (hasBuff(FightingCharacter.BUFF_MASK_MIAN)) {
                 tmp.append('眠')
             }
             if (tmp.isNotEmpty()) {

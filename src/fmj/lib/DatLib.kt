@@ -46,7 +46,7 @@ class DatLib(buffer: ByteArray) {
     fun tryCompileScripts(vm: ScriptVM) {
         println("Trying to compile all guts")
         guts.forEach {
-            vm.loadScript(it.type, it.index)
+            vm.compileScript(it.type, it.index)
         }
         println("All guts compile OK")
     }
@@ -57,7 +57,7 @@ class DatLib(buffer: ByteArray) {
 
         while (i < mBuffer.size && mBuffer[i].toInt() != -1) {
             val resType = mBuffer[i++].toInt()
-            val type = mBuffer[i++].toInt()
+            val type = mBuffer[i++].toInt() and 0xFF
             val index = mBuffer[i++].toInt() and 0xFF
             val key = getKey(resType, type, index)
             val block = mBuffer[j++].toInt() and 0xFF

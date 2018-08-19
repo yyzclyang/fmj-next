@@ -3,6 +3,8 @@ package fmj.script
 import graphics.Canvas
 
 interface Command {
+    val description: String?
+
     /**
      * 指令长度
      */

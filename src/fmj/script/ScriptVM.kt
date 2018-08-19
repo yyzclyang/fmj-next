@@ -27,8 +27,9 @@ import java.*
 
 typealias Instruct = (code: ByteArray, start: Int) -> Command
 
-inline fun makeCommand(len: Int, crossinline run: (p: ScriptProcess) -> Operate?): Command {
+inline fun makeCommand(len: Int, desc: String? = null, crossinline run: (p: ScriptProcess) -> Operate?): Command {
     return object: Command {
+        override val description = desc
         override val len = len
         override fun run(p: ScriptProcess): Operate? {
             return run(p)
@@ -132,7 +133,7 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_callback(code: ByteArray, start: Int): Command {
-            return makeCommand(0) {
+            return makeCommand(0, "callback") {
                 cmdPrint("cmd_callback")
                 game.mainScene.exitScript()
                 null
@@ -141,8 +142,9 @@ class ScriptVM(override val parent: GameNode): Control {
 
         fun cmd_goto(code: ByteArray, start: Int): Command {
             val address = get2ByteInt(code, start)
+            val desc = "goto $address"
 
-            return makeCommand(2) {
+            return makeCommand(2, desc) {
                 cmdPrint("cmd_goto from $start to $address")
                 game.gotoAddress(address)
                 null
@@ -152,8 +154,8 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_if(code: ByteArray, start: Int): Command {
             val va = get2ByteInt(code, start)
             val address = get2ByteInt(code, start + 2)
-
-            return makeCommand(4) {
+            val desc = "if $va $address"
+            return makeCommand(4, desc) {
                 val value = ScriptResources.globalEvents[va]
                 cmdPrint("cmd_if $va(=$value) goto $address")
                 if (value) {
@@ -188,8 +190,9 @@ class ScriptVM(override val parent: GameNode): Control {
             val paint = Paint()
             paint.color = Global.COLOR_BLACK
             paint.style = Paint.Style.FILL_AND_STROKE
+            val desc = "say $picNum ${text.gbkString()}"
 
-            return makeCommand(2 + text.size) {
+            return makeCommand(2 + text.size, desc) {
                 cmdPrint("cmd_say ${text.gbkString()}")
                 var iOfText = 0
                 var iOfNext = 0
@@ -465,7 +468,9 @@ class ScriptVM(override val parent: GameNode): Control {
             bgx = (160 - bg.width) / 2
             bgy = (96 - bg.height) / 2
 
-            return makeCommand(addrOffset+2) {
+            val desc = "choice ${choice1.gbkString()} ${choice2.gbkString()} $address"
+
+            return makeCommand(addrOffset+2, desc) {
                 cmdPrint("cmd_choice")
                 object : Operate {
                     private var curChoice = 0
@@ -667,11 +672,14 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_learnmagic(code: ByteArray, start: Int): Command {
-            return makeCommand(6) {
+            val actorId = get2ByteInt(code, start)
+            val type = get2ByteInt(code, start + 2)
+            val index = get2ByteInt(code, start + 4)
+
+            val desc = "learnmagic $actorId $type $index"
+
+            return makeCommand(6, desc) {
                 cmdPrint("cmd_learmagic")
-                val actorId = get2ByteInt(code, start)
-                val type = get2ByteInt(code, start + 2)
-                val index = get2ByteInt(code, start + 4)
                 val magic = DatLib.getMrs(type, index)
                 val player = game.mainScene.getPlayer(actorId)
                 player?.learnMagic(magic)
@@ -724,7 +732,8 @@ class ScriptVM(override val parent: GameNode): Control {
         }
         fun cmd_message(code: ByteArray, start: Int): Command {
             val msg = getStringBytes(code, start)
-            return makeCommand(msg.size) {
+            val desc = "message ${msg.gbkString()}"
+            return makeCommand(msg.size, desc) {
                 cmdPrint("cmd_message ${msg.gbkString()}")
 
                 object : Operate {
@@ -896,7 +905,8 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_setscenename(code: ByteArray, start: Int): Command {
             val bytes = getStringBytes(code, start)
             val name = bytes.gbkString()
-            return makeCommand(bytes.size) {
+            val desc = "setscenename $name"
+            return makeCommand(bytes.size, desc) {
                 cmdPrint("cmd_setscenname $name")
                 game.mainScene.sceneName = name
                 null
@@ -949,7 +959,8 @@ class ScriptVM(override val parent: GameNode): Control {
             val index = get2ByteInt(code, start + 2)
             val address = get2ByteInt(code, start + 4)
 
-            return makeCommand(6) {
+            val desc = "usegoods $type $index $address"
+            return makeCommand(6, desc) {
                 cmdPrint("cmd_usegoods")
                 val b = Player.sGoodsList.deleteGoods(type, index)
                 if (!b) {
@@ -965,7 +976,9 @@ class ScriptVM(override val parent: GameNode): Control {
             val value = get2ByteInt(code, start+4)
             val addr1 = get2ByteInt(code, start+6)
             val addr2 = get2ByteInt(code, start+8)
-            return makeCommand(10) {
+
+            val desc = "attribtest $actor $type $value $addr1 $addr2"
+            return makeCommand(10, desc) {
                 cmdPrint("cmd_attribtest $actor $type $value")
                 val player = game.mainScene.getPlayer(actor) ?: return@makeCommand null
                 // 0-级别，1-攻击力，2-防御力，3-身法，4-生命，5-真气当前值，6-当前经验值
@@ -1007,7 +1020,8 @@ class ScriptVM(override val parent: GameNode): Control {
             val type = get2ByteInt(code, start+2)
             val value = get2ByteInt(code, start+4)
 
-            return makeCommand(6) {
+            val desc = "attribset $actor $type $value"
+            return makeCommand(6, desc) {
                 cmdPrint("cmd_attribset $actor $type $value")
                 val player = game.mainScene.getPlayer(actor) ?: return@makeCommand null
                 // 0-级别，1-攻击力，2-防御力，3-身法，4-生命，5-真气当前值，6-当前经验值
@@ -1036,7 +1050,8 @@ class ScriptVM(override val parent: GameNode): Control {
             val type = get2ByteInt(code, start+2)
             val value = get2ByteInt(code, start+4)
 
-            return makeCommand(6) {
+            val desc = "attribadd $actor $type $value"
+            return makeCommand(6, desc) {
                 cmdPrint("cmd_attribadd $actor $type $value")
                 val player = game.mainScene.getPlayer(actor) ?: return@makeCommand null
 
@@ -1067,8 +1082,9 @@ class ScriptVM(override val parent: GameNode): Control {
             val btm = code[start + 2].toInt() and 0xFF or (code[start + 3].toInt() shl 8 and 0xFF00)
             val imgTop = DatLib.getPic(5, top, true)
             val imgBottom = DatLib.getPic(5, btm, true)
+            val desc = "showgut .. $text"
 
-            return makeCommand(bytes.size+4) {
+            return makeCommand(bytes.size+4, desc) {
                 cmdPrint("cmd_showgut topimg = $top, btmimg = $btm")
                 var goon = true
                 var interval: Long = 50
@@ -1193,8 +1209,9 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_callchapter(code: ByteArray, start: Int): Command {
             val type = get2ByteInt(code, start)
             val index = get2ByteInt(code, start + 2)
+            val desc = "callchapter $type $index"
 
-            return makeCommand(4) {
+            return makeCommand(4, desc) {
                 cmdPrint("cmd_callchapter $type $index")
                 game.mainScene.callChapter(type, index)
                 null
@@ -1216,7 +1233,7 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_return(code: ByteArray, start: Int): Command {
-            return makeCommand(0) {
+            return makeCommand(0, "return") {
                 cmdPrint("cmd_return")
                 game.mainScene.scriptProcess.prev?.let {
                     game.mainScene.scriptProcess = it
@@ -1228,7 +1245,8 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_timemsg(code: ByteArray, start: Int): Command {
             val time = get2ByteInt(code, start)
             val text = getStringBytes(code, start + 2)
-            return makeCommand(text.size + 2) {
+            val desc = "timemsg $time $text"
+            return makeCommand(text.size + 2, desc) {
                 cmdPrint("cmd_timemsg $time ${text.gbkString()}")
 
                 object : Operate {
@@ -1445,7 +1463,7 @@ class ScriptVM(override val parent: GameNode): Control {
                 ::cmd_setarmstoss)
     }
 
-    private fun loadGut(gut: ResGut): ScriptProcess {
+    private fun loadGut(gut: ResGut, print: Boolean = false): ScriptProcess {
         val code = gut.scriptData
         var pointer = 0
 
@@ -1461,6 +1479,10 @@ class ScriptVM(override val parent: GameNode): Control {
             val cmdMaker = instructions[cmdCode]
             if (cmdMaker != null) {
                 val cmd = cmdMaker(code, pointer + 1)
+                if (print) {
+                    val desc = "cmd$cmdCode " + (cmd.description ?: "")
+                    println("$address: $desc")
+                }
                 commands.add(cmd)
                 pointer += cmd.len + 1
             } else {
@@ -1483,6 +1505,12 @@ class ScriptVM(override val parent: GameNode): Control {
     fun loadScript(type: Int, index: Int): ScriptProcess {
         val gut = DatLib.getRes(DatLib.ResType.GUT, type, index) as ResGut
         return loadGut(gut)
+    }
+
+    fun compileScript(type: Int, index: Int): ScriptProcess {
+        val gut = DatLib.getRes(DatLib.ResType.GUT, type, index) as ResGut
+        println("Compiling GUT $type $index")
+        return loadGut(gut, true)
     }
 
     companion object {

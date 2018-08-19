@@ -105,7 +105,7 @@ class ScreenMainGame(
         } else { // 再续前缘
             loadMap(SaveLoadGame.MapType, SaveLoadGame.MapIndex,
                     SaveLoadGame.MapScreenX, SaveLoadGame.MapScreenY)
-            fixMapPosition()
+            fixPlayerPosition()
             mNPCObj = SaveLoadGame.NpcObjs
 
             mNPCObj.filterNot { it.isEmpty }
@@ -353,7 +353,7 @@ class ScreenMainGame(
         SaveLoadGame.MapScreenY = y
     }
 
-    fun fixMapPosition() {
+    fun fixPlayerPosition() {
         player?.let {
             it.setPosOnScreen(4, 3, mMapScreenPos)
         }
@@ -418,10 +418,14 @@ class ScreenMainGame(
     }
 
     fun setControlPlayer(id: Int) {
-        val player = playerList.find { it.index == id }
-        player?.let {
-            playerList.remove(it)
-            playerList.add(0, it)
+        val p = playerList.find { it.index == id }
+        p?.let { newPlayer ->
+            val oldPos = player?.posInMap
+            oldPos?.let {
+                newPlayer.setPosInMap(it.x, it.y)
+            }
+            playerList.remove(newPlayer)
+            playerList.add(0, newPlayer)
         }
     }
 

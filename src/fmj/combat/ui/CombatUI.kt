@@ -231,6 +231,7 @@ class CombatUI(override val parent: GameNode,
                             return@run
                         }
                         pushScreen(ScreenMagic(this, magics,
+                                selectedPlayer.mp,
                                 object : ScreenMagic.OnItemSelectedListener {
 
                                     override fun onItemSelected(magic: BaseMagic) {

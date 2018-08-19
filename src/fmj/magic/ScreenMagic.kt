@@ -16,6 +16,7 @@ import kotlin.math.round
 
 class ScreenMagic(override val parent: GameNode,
                   magics: Collection<BaseMagic>,
+                  private val mp: Int,
                   private val mOnItemSelectedListener: OnItemSelectedListener) : BaseScreen {
 
     class PageText(val text: String, val rect: Rect) {
@@ -145,7 +146,11 @@ class ScreenMagic(override val parent: GameNode,
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_ENTER) { // 回调接口
-            mOnItemSelectedListener.onItemSelected(magics[mCurItemIndex])
+            if (mp < magics[mCurItemIndex].costMp) {
+                showMessage("真气不足")
+            } else {
+                mOnItemSelectedListener.onItemSelected(magics[mCurItemIndex])
+            }
         } else if (key == Global.KEY_CANCEL) {
             popScreen()
         }

@@ -2,6 +2,7 @@ package fmj.magic
 
 import fmj.lib.DatLib
 import fmj.lib.ResBase
+import kotlin.math.min
 
 /**
  * 魔法链资源
@@ -40,6 +41,6 @@ class ResMagicChain : ResBase() {
     }
 
     fun getAllLearntMagics(): Collection<BaseMagic> {
-        return mMagics.slice(0 until learnNum)
+        return mMagics.slice(0 until min(learnNum, magicSum))
     }
 }

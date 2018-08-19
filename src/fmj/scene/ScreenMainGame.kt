@@ -123,6 +123,10 @@ class ScreenMainGame(
     }
 
     fun exitScript() {
+        while (scriptProcess.prev != null) {
+            scriptProcess.stop()
+            scriptProcess = scriptProcess.prev!!
+        }
         scriptProcess.stop()
     }
 

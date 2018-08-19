@@ -1235,6 +1235,7 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_return(code: ByteArray, start: Int): Command {
             return makeCommand(0, "return") {
                 cmdPrint("cmd_return")
+                it.stop()
                 game.mainScene.scriptProcess.prev?.let {
                     game.mainScene.scriptProcess = it
                 }
@@ -1499,7 +1500,7 @@ class ScriptVM(override val parent: GameNode): Control {
                 eventIndex[i] = map[events[i] - events.size * 2 - 3]!!
             }
         }
-        return ScriptProcess(commands, eventIndex, map, events.size * 2 + 3)
+        return ScriptProcess("${gut.type}-${gut.index}", commands, eventIndex, map, events.size * 2 + 3)
     }
 
     fun loadScript(type: Int, index: Int): ScriptProcess {

@@ -8,6 +8,7 @@ import fmj.goods.BaseGoods
 import fmj.goods.GoodsEquipment
 import fmj.graphics.TextRender
 import fmj.graphics.Util
+import fmj.lib.DatLib
 import fmj.scene.ScreenMainGame
 import fmj.views.BaseScreen
 import fmj.views.GameNode
@@ -84,8 +85,17 @@ class ScreenMenuGoods(override val parent: GameNode): BaseScreen, OnItemSelected
 
             14 // 剧情类
             ->
-                // TODO 剧情类物品用法
-                showMessage("当前无法使用!", 1000)
+            {
+                val gut = DatLib.getRes(DatLib.ResType.GUT, 255, goods.index, true)
+                if (gut == null) {
+                    showMessage("当前无法使用!", 1000)
+                } else {
+                    while (getCurScreen() !is ScreenMainGame) {
+                        popScreen()
+                    }
+                    game.mainScene.callChapter(255, goods.index)
+                }
+            }
 
             9 // 药物
                 , 10 // 灵药

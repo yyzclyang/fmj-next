@@ -12,7 +12,7 @@ class ScriptProcess
  * @param eventIndex eventIndex[i]等于触发事件i+1时，要执行的Operate在list中的序号
  * @param map 地址偏移-序号
  */
-(private val commands: ArrayList<Command>,
+(private val name: String, private val commands: ArrayList<Command>,
  /**
   * eventIndex[i]等于触发事件i+1时，要执行的Operate在list中的序号，
   * -1表示不存在

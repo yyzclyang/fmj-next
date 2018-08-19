@@ -1381,6 +1381,82 @@ class ScriptVM(override val parent: GameNode): Control {
             }
         }
 
+/*
+GUT 指令表
+MUSIC                  NN                              00
+LOADMAP                NNNN                            01
+CREATEACTOR            NNN                             02
+DELETENPC              N                              03
+MAPEVENT               NNNNNN                          04
+ACTOREVENT             NA                              05
+MOVE                   NNN                             06
+ACTORMOVE              NNNNNN                          07
+ACTORSPEED             NN                              08
+CALLBACK                                                09
+GOTO                   A                              10
+IF                     NA                              11
+SET                    NN                              12
+SAY                    NC                              13
+STARTCHAPTER           NN                              14
+SCREENR                N                              15
+SCREENS                NN                              16
+SCREENA                N                              17
+EVENT                  NA                              18
+MONEY                  N                              19
+GAMEOVER                                                20
+IFCMP                  NNA                             21
+ADD                    NN                              22
+SUB                    NN                              23
+SETCONTROLID           N                              24
+GUTEVENT               NE                              25
+SETEVENT               N                              26
+CLREVENT               N                              27
+BUY                    U                              28
+FACETOFACE             NN                              29
+MOVIE                  NNNNN                           30
+CHOICE                 CCA                             31
+CREATEBOX              NNNN                            32
+DELETEBOX              N                              33
+GAINGOODS              NN                              34
+INITFIGHT               NNNNNNNNNNN                     35
+FIGHTENABLE                                             36
+FIGHTDISENABLE                                          37
+CREATENPC              NNNN                            38
+ENTERFIGHT              NNNNNNNNNNNNNAA                 39
+DELETEACTOR            N                              40
+GAINMONEY              L                              41
+USEMONEY               L                              42
+SETMONEY               L                              43
+LEARNMAGIC             NNN                             44
+SALE                                                    45
+NPCMOVEMOD             NN                              46
+MESSAGE                C                              47
+DELETEGOODS            NNA                             48
+RESUMEACTORHP          NN                              49
+ACTORLAYERUP           NN                              50
+BOXOPEN                N                              51
+DELALLNPC                                               52
+NPCSTEP                NNN                             53
+SETSCENENAME           C                              54
+SHOWSCENENAME                                           55
+SHOWSCREEN                                              56
+USEGOODS               NNA                             57
+ATTRIBTEST             NNNAA                           58
+ATTRIBSET              NNN                             59
+ATTRIBADD              NNN                             60
+SHOWGUT                NNC                             61
+USEGOODSNUM            NNNA                            62
+RANDRADE               NA                              63
+MENU                   NC                              64
+TESTMONEY              LA                              65
+CALLCHAPTER            NN                              66
+DISCMP                 NNAA                            67
+RETURN                                                  68
+TIMEMSG                NC                              69
+DISABLESAVE                                             70
+ENABLESAVE                                              71
+GAMESAVE                                                72
+* */
         instructions = arrayOf(
                 ::cmd_music,//0
                 ::cmd_loadmap,

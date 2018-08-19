@@ -4,6 +4,7 @@ import fmj.characters.BuffMan
 import fmj.characters.FightingCharacter
 import fmj.combat.actions.CalcDamage
 import fmj.scene.SaveLoadGame
+import kotlin.math.max
 
 /**
  * 01攻击型
@@ -36,6 +37,12 @@ class MagicAttack : BaseMagic() {
         mSu = buf[offset + 0x19].toInt() and 0xff
     }
 
+    private fun calcHurt(src: FightingCharacter, dst: FightingCharacter, hp: Int): Int
+    {
+        val add  = (src.lingli - dst.lingli).toDouble() / 100
+        return max(hp + (hp * add).toInt(), 0)
+    }
+
     override fun use(src: FightingCharacter, dst: FightingCharacter) {
         if (SaveLoadGame.allowMiss) {
             if (CalcDamage.randomMiss(src, dst)) {
@@ -44,7 +51,7 @@ class MagicAttack : BaseMagic() {
             }
         }
         src.mp = src.mp - costMp
-        dst.hp = dst.hp - mHp
+        dst.hp -= calcHurt(src, dst, mHp)
         dst.beAttackedWithBuff(buff)
     }
 
@@ -58,7 +65,7 @@ class MagicAttack : BaseMagic() {
                     continue
                 }
             }
-            fc.hp = fc.hp - mHp
+            fc.hp -= calcHurt(src, fc, mHp)
             fc.beAttackedWithBuff(buff)
         }
     }

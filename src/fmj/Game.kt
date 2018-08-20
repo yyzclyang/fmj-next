@@ -11,7 +11,7 @@ import graphics.Bitmap
 import java.*
 
 class MainGame: Game {
-    val version  = "004"
+    val version  = "005"
     private  val canvas = Canvas(Bitmap(Global.SCREEN_WIDTH, Global.SCREEN_HEIGHT))
     private  val screenStack = ScreenStack(this)
 

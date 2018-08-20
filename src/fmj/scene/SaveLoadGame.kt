@@ -56,7 +56,7 @@ object SaveLoadGame {
 
     fun loadPlayers() {
         playerDb = buildSequence {
-            (0..7).forEach {
+            (0..25).forEach {
                 yield(DatLib.getRes(DatLib.ResType.ARS, 1, it, true) as Player?)
             }
         }.filterNotNull().toMutableList()

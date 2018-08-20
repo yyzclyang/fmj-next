@@ -4,6 +4,7 @@ import fmj.characters.BuffMan
 import fmj.characters.FightingCharacter
 import fmj.combat.actions.CalcDamage
 import fmj.scene.SaveLoadGame
+import kotlin.math.abs
 import kotlin.math.max
 
 /**
@@ -51,7 +52,16 @@ class MagicAttack : BaseMagic() {
             }
         }
         src.mp = src.mp - costMp
-        dst.hp -= calcHurt(src, dst, mHp)
+        val hpHurt = calcHurt(src, dst, mHp)
+        dst.hp -= abs(hpHurt)
+        if (hpHurt < 0) {
+            src.hp -= hpHurt
+        }
+        val mpHurt = calcHurt(src, dst, mMp)
+        dst.mp -= abs(mpHurt)
+        if (mpHurt < 0) {
+            src.mp -= mpHurt
+        }
         dst.beAttackedWithBuff(buff)
     }
 

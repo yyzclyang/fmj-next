@@ -1304,7 +1304,7 @@ class ScriptVM(override val parent: GameNode): Control {
                 // TODO: 判断副本
 
                 cmdPrint("cmd_gamesave")
-                val view = ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.SAVE)
+                val view = ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.SAVE, popDepth = 1)
                 view.callback = {
                     end = true
                 }

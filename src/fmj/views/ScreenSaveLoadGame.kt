@@ -11,7 +11,7 @@ import fmj.script.ScriptResources
 import graphics.Canvas
 import java.*
 
-class ScreenSaveLoadGame(override val parent: GameNode, private val mOperate: Operate) : BaseScreen {
+class ScreenSaveLoadGame(override val parent: GameNode, private val mOperate: Operate, private val popDepth: Int = 3) : BaseScreen {
 
     private val mTextPos = arrayOf(intArrayOf(68, 28), intArrayOf(68, 51), intArrayOf(68, 74))
     private var index = 0
@@ -97,6 +97,13 @@ class ScreenSaveLoadGame(override val parent: GameNode, private val mOperate: Op
         }
     }
 
+    private fun exit() {
+        (0 until popDepth).forEach {
+            popScreen()
+        }
+        callback?.invoke()
+    }
+
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
             popScreen()
@@ -115,19 +122,13 @@ class ScreenSaveLoadGame(override val parent: GameNode, private val mOperate: Op
                 if (!file.exists()) {
                     file.createNewFile()
                     saveGame(file)
-                    popScreen()
-                    popScreen()
-                    popScreen()
-                    callback?.invoke()
+                    exit()
                 } else { // 询问是否覆盖存档
                     pushScreen(ScreenMessageBox(this, "覆盖原进度?",
                             object : ScreenMessageBox.OnOKClickListener {
                                 override fun onOKClick() {
                                     saveGame(file)
-                                    popScreen()
-                                    popScreen()
-                                    popScreen()
-                                    callback?.invoke()
+                                    exit()
                                 }
                             }))
                 }

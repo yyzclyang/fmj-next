@@ -254,10 +254,11 @@ class ScriptVM(override val parent: GameNode): Control {
         }
 
         fun cmd_startchapter(code: ByteArray, start: Int): Command {
-            val type = get2ByteInt(code, start)
-            val index = get2ByteInt(code, start + 2)
+            val type = get2ByteInt(code, start) and 0xFF
+            val index = get2ByteInt(code, start + 2) and 0xFF
 
-            return makeCommand(4) {
+            val desc = "startchapter $type $index"
+            return makeCommand(4, desc) {
                 cmdPrint("cmd_startchapter $type $index")
                 game.mainScene.startChapter(type, index)
                 null

@@ -57,17 +57,12 @@ abstract class ResBase {
          * @return
          */
         fun get2BytesSInt(buf: ByteArray, start: Int): Int {
-            val i = buf[start].toInt() and 0xFF or (buf[start + 1].toInt() shl 8 and 0x7F00)
-            return if (buf[start + 1].toInt() and 0x80 != 0) {
-                -i
-            } else i
+            val i = buf[start].toInt() and 0xFF or (buf[start + 1].toInt() shl 8 and 0xFF00)
+            return i.toShort().toInt()
         }
 
         fun get1ByteSInt(buf: ByteArray, start: Int): Int {
-            val i = buf[start].toInt() and 0x7f
-            return if (buf[start].toInt() and 0x80 != 0) {
-                -i
-            } else i
+            return buf[start].toInt()
         }
     }
 }

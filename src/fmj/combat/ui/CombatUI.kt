@@ -604,7 +604,7 @@ class CombatUI(override val parent: GameNode,
                                     popScreen() // pop misc menu
                                     if (goods.effectAll()) {
                                         game.bag.deleteGoods(goods)
-                                        onActionSelected(ActionUseItemAll(selectedPlayer, mMonsterList, goods))
+                                        onActionSelected(ActionUseItemAll(selectedPlayer, mPlayerList, goods))
                                     } else { // 选一个角色治疗
                                         pushScreen(MenuCharacterSelect(this@MenuGoods, mTargetIndicator, sPlayerIndicatorPos, mPlayerList,
                                                 object : OnCharacterSelectedListener {

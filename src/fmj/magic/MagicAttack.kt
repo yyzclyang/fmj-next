@@ -40,8 +40,17 @@ class MagicAttack : BaseMagic() {
 
     private fun calcHurt(src: FightingCharacter, dst: FightingCharacter, hp: Int): Int
     {
-        val add  = (src.lingli - dst.lingli).toDouble() / 100
-        return max(hp + (hp * add).toInt(), 0)
+        return if (hp > 0) {
+            val add  = (src.lingli - dst.lingli).toDouble() / 100
+            max(hp + (hp * add).toInt(), 0)
+        } else {
+            val rate = when {
+                dst.level <= 8 -> 1
+                dst.level <= 16 -> 2
+                else -> 3
+            }
+            hp * rate
+        }
     }
 
     override fun use(src: FightingCharacter, dst: FightingCharacter) {

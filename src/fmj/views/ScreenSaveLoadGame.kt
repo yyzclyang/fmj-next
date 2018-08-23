@@ -107,6 +107,7 @@ class ScreenSaveLoadGame(override val parent: GameNode, private val mOperate: Op
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_CANCEL) {
             popScreen()
+            callback?.invoke()
         } else if (key == Global.KEY_ENTER) {
             val file = File("sav/" + mFileNames[index])
             if (mOperate == Operate.LOAD) { // 加载存档

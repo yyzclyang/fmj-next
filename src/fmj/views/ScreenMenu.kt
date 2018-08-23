@@ -12,16 +12,16 @@ class ScreenMenu(override val parent: GameNode): BaseScreen {
     private val mImgMenu = DatLib.getPic(2, 14)!!
     private val mLeft: Int
     private val mTop: Int
-    private val mSrsSelector = arrayOf(
-            DatLib.getRes(DatLib.ResType.SRS, 1, 250) as ResSrs,
-            DatLib.getRes(DatLib.ResType.SRS, 1, 251) as ResSrs)
+    private val mSrsSelector = (250..255).mapNotNull {
+        DatLib.getRes(DatLib.ResType.SRS, 1, it, allowNull = true) as ResSrs?
+    }
+
     private var mCurSelect = 0
 
     private var isCancelKeyDown = false
 
     init {
-        mSrsSelector[0].start()
-        mSrsSelector[1].start()
+        mSrsSelector.forEach { it.start() }
         mLeft = (160 - mImgMenu.width) / 2
         mTop = (96 - mImgMenu.height) / 2
     }
@@ -40,19 +40,28 @@ class ScreenMenu(override val parent: GameNode): BaseScreen {
 
     override fun onKeyDown(key: Int) {
         when (key) {
-            Global.KEY_UP, Global.KEY_DOWN -> mCurSelect = 1 - mCurSelect
+            Global.KEY_UP, Global.KEY_DOWN -> {
+                mCurSelect += 1
+                mCurSelect %= mSrsSelector.size
+            }
             Global.KEY_CANCEL -> isCancelKeyDown = true
         }
     }
 
     override fun onKeyUp(key: Int) {
         if (key == Global.KEY_ENTER) {
-            if (mCurSelect == 0) { // 新游戏
-                SaveLoadGame.startNewGame = true
-                game.changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
-            } else if (mCurSelect == 1) { // 读取进度
-                pushScreen(
-                        ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.LOAD))
+            val index = mSrsSelector[mCurSelect].index
+            when (index) {
+                250 -> { // 新游戏
+                    SaveLoadGame.startNewGame = true
+                    game.changeScreen(ScreenViewType.SCREEN_MAIN_GAME)
+                }
+                251 -> // 读取进度
+                    pushScreen(
+                            ScreenSaveLoadGame(this, ScreenSaveLoadGame.Operate.LOAD))
+                else -> {
+                    // TODO
+                }
             }
         } else if (key == Global.KEY_CANCEL && isCancelKeyDown) {
             sysExit()

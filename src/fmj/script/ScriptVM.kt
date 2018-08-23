@@ -1248,7 +1248,7 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_timemsg(code: ByteArray, start: Int): Command {
             val time = get2ByteInt(code, start)
             val text = getStringBytes(code, start + 2)
-            val desc = "timemsg $time $text"
+            val desc = "timemsg $time ${text.gbkString()}"
             return makeCommand(text.size + 2, desc) {
                 cmdPrint("cmd_timemsg $time ${text.gbkString()}")
 

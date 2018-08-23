@@ -765,9 +765,10 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_deletegoods(code: ByteArray, start: Int): Command {
             val type = get2ByteInt(code, start)
             val index = get2ByteInt(code, start + 2)
-            val address = get2ByteInt(code, start + 2)
+            val address = get2ByteInt(code, start + 4)
+            val desc = "deletegoods $type $index $address"
 
-            return makeCommand(6) {
+            return makeCommand(6, desc) {
                 cmdPrint("cmd_deletegoods")
 
                 val r = Player.sGoodsList.deleteGoods(type, index)

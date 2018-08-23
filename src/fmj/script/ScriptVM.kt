@@ -146,7 +146,7 @@ class ScriptVM(override val parent: GameNode): Control {
 
             return makeCommand(2, desc) {
                 cmdPrint("cmd_goto from $start to $address")
-                game.gotoAddress(address)
+                it.gotoAddress(address)
                 null
             }
         }
@@ -159,7 +159,7 @@ class ScriptVM(override val parent: GameNode): Control {
                 val value = ScriptResources.globalEvents[va]
                 cmdPrint("cmd_if $va(=$value) goto $address")
                 if (value) {
-                    game.gotoAddress(address)
+                    it.gotoAddress(address)
                 }
                 null
             }
@@ -293,7 +293,7 @@ class ScriptVM(override val parent: GameNode): Control {
                 val value = ScriptResources.variables[id]
                 cmdPrint("cmd_ifcmp $id(=$value) vs $other goto $addr")
                 if (value == other) {
-                    game.gotoAddress(addr)
+                    it.gotoAddress(addr)
                 }
                 null
             }
@@ -482,7 +482,7 @@ class ScriptVM(override val parent: GameNode): Control {
                     override fun update(delta: Long): Boolean {
                         if (hasSelect) {
                             if (curChoice == 1) {
-                                game.gotoAddress(address)
+                                it.gotoAddress(address)
                             }
                             return false
                         }
@@ -773,7 +773,7 @@ class ScriptVM(override val parent: GameNode): Control {
 
                 val r = Player.sGoodsList.deleteGoods(type, index)
                 if (!r) {
-                    game.gotoAddress(address)
+                    it.gotoAddress(address)
                 }
                 null
             }
@@ -966,7 +966,7 @@ class ScriptVM(override val parent: GameNode): Control {
                 cmdPrint("cmd_usegoods")
                 val b = Player.sGoodsList.deleteGoods(type, index)
                 if (!b) {
-                    game.gotoAddress(address)
+                    it.gotoAddress(address)
                 }
                 null
             }
@@ -1011,8 +1011,8 @@ class ScriptVM(override val parent: GameNode): Control {
                     else -> throw NotImplementedError("ATTRIBTEST $type")
                 }
                 when {
-                    currentValue < value -> game.gotoAddress(addr1)
-                    currentValue > value -> game.gotoAddress(addr2)
+                    currentValue < value -> it.gotoAddress(addr1)
+                    currentValue > value -> it.gotoAddress(addr2)
                 }
                 null
             }
@@ -1138,7 +1138,7 @@ class ScriptVM(override val parent: GameNode): Control {
                 val b = Player.sGoodsList.useGoodsNum(get2ByteInt(code, start),
                         get2ByteInt(code, start + 2), get2ByteInt(code, start + 4))
                 if (!b) {
-                    game.gotoAddress(get2ByteInt(code, start + 6))
+                    it.gotoAddress(get2ByteInt(code, start + 6))
                 }
                 null
             }
@@ -1148,7 +1148,7 @@ class ScriptVM(override val parent: GameNode): Control {
             return makeCommand(4) {
                 cmdPrint("cmd_randrade")
                 if ((random() * 1000).toInt() <= get2ByteInt(code, start)) {
-                    game.gotoAddress(get2ByteInt(code, start + 2))
+                    it.gotoAddress(get2ByteInt(code, start + 2))
                 }
                 null
             }
@@ -1202,7 +1202,7 @@ class ScriptVM(override val parent: GameNode): Control {
             return makeCommand(6) {
                 cmdPrint("cmd_testmoney")
                 if (Player.sMoney < money) {
-                    game.gotoAddress(address)
+                    it.gotoAddress(address)
                 }
                 null
             }
@@ -1226,9 +1226,9 @@ class ScriptVM(override val parent: GameNode): Control {
                 val `var` = ScriptResources.variables[get2ByteInt(code, start)]
                 val num = get2ByteInt(code, start + 2)
                 if (`var` < num) {
-                    game.gotoAddress(get2ByteInt(code, start + 4))
+                    it.gotoAddress(get2ByteInt(code, start + 4))
                 } else if (`var` > num) {
-                    game.gotoAddress(get2ByteInt(code, start + 6))
+                    it.gotoAddress(get2ByteInt(code, start + 6))
                 }
                 null
             }
@@ -1359,9 +1359,9 @@ class ScriptVM(override val parent: GameNode): Control {
                         get2ByteInt(code, start + 2))
                 val num = get2ByteInt(code, start + 4)
                 if (goodsnum == num) {
-                    game.gotoAddress(get2ByteInt(code, start + 6))
+                    it.gotoAddress(get2ByteInt(code, start + 6))
                 } else if (goodsnum > num) {
-                    game.gotoAddress(get2ByteInt(code, start + 8))
+                    it.gotoAddress(get2ByteInt(code, start + 8))
                 }
                 null
             }

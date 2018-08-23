@@ -64,11 +64,11 @@ object TextRender {
      * 2,文字都在r.bottom下方
      * -1,出错
      */
-    fun drawText(canvas: Canvas, text: String, r: Rect, y: Int): Int {
-        return drawText(canvas, text.gbkBytes(), r, y)
+    fun drawText(canvas: Canvas, text: String, r: Rect, y: Int, partialBottom: Boolean = false): Int {
+        return drawText(canvas, text.gbkBytes(), r, y, partialBottom)
     }
 
-    fun drawText(canvas: Canvas, buf: ByteArray, r: Rect, y: Int): Int {
+    fun drawText(canvas: Canvas, buf: ByteArray, r: Rect, y: Int, partialBottom: Boolean): Int {
         var tmpY = y
 
         var i = 0
@@ -92,8 +92,13 @@ object TextRender {
             return 0
         }
 
+        val bottom = if (partialBottom) {
+            r.bottom
+        } else {
+            r.bottom-16
+        }
         // 比r.bottom低的不画
-        while (tmpY <= r.bottom-16 && i < buf.size) {
+        while (tmpY <= bottom && i < buf.size) {
             var tmpX = r.left
             while (tmpX <= r.right-16 && i < buf.size) {
                 val t = buf[i].toInt() and 0xFF

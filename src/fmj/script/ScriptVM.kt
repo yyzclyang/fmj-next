@@ -1121,7 +1121,7 @@ class ScriptVM(override val parent: GameNode): Control {
 
                     override fun draw(canvas: Canvas) {
                         canvas.drawColor(Global.COLOR_WHITE)
-                        val e = TextRender.drawText(canvas, text, rect, curY)
+                        val e = TextRender.drawText(canvas, text, rect, curY, true)
                         if (e != 1 && e != 2) {
                             goon = false
                         }

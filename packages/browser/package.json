@@ -1,0 +1,21 @@
+{
+  "name": "@fmj-next/browser",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./dist/index.js",
+    "./package.json": "./package.json"
+  },
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "dev": "tsdown -w",
+    "build": "tsdown"
+  },
+  "devDependencies": {
+    "@fmj-next/core": "workspace:*"
+  }
+}

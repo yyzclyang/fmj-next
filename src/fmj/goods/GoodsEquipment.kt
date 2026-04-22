@@ -21,7 +21,7 @@ open class GoodsEquipment : BaseGoods() {
     override fun setOtherData(buf: ByteArray, offset: Int) {
         mMpMax = get1ByteSInt(buf, offset + 0x16)
         mHpMax = get1ByteSInt(buf, offset + 0x17)
-        mdf = get1ByteSInt(buf, offset + 0x18)
+        mdf = buf[offset + 0x18].toInt() and 0xff
         mat = buf[offset + 0x19].toInt() and 0xff
         mlingli = get1ByteSInt(buf, offset + 0x1a)
         mSpeed = get1ByteSInt(buf, offset + 0x1b)
@@ -31,16 +31,27 @@ open class GoodsEquipment : BaseGoods() {
 
     open fun putOn(p: Player) {
         if (canPlayerUse(p.index)) {
-            p.maxMP = p.maxMP + mMpMax
-            p.maxHP = p.maxHP + mHpMax
-            p.defend = p.defend + mdf
-            p.attack = p.attack + mat
-            p.lingli = p.lingli + mlingli
-            p.speed = p.speed + mSpeed
+            // 更新不受限制的总属性值
+            p.totalMaxMP += mMpMax
+            p.totalMaxHP += mHpMax
+            p.totalDefend += mdf
+            p.totalAttack += mat
+            p.totalLingli += mlingli
+            p.totalSpeed += mSpeed
+            p.totalLuck += mLuck
+
+            // 应用到实际属性（受限制）
+            p.maxMP = p.totalMaxMP
+            p.maxHP = p.totalMaxHP
+            p.defend = p.totalDefend
+            p.attack = p.totalAttack
+            p.lingli = p.totalLingli
+            p.speed = p.totalSpeed
+            p.luck = p.totalLuck
+
             if (this !is GoodsWeapon) {
                 p.addBuff(mBitEffect) // 添加免疫效果
             }
-            p.luck = p.luck + mLuck
             if (eventId != 0) {
                 // 设置装备触发的事件
                 ScriptResources.setEvent(eventId)
@@ -49,16 +60,27 @@ open class GoodsEquipment : BaseGoods() {
     }
 
     open fun takeOff(p: Player) {
-        p.maxMP = p.maxMP - mMpMax
-        p.maxHP = p.maxHP - mHpMax
-        p.defend = p.defend - mdf
-        p.attack = p.attack - mat
-        p.lingli = p.lingli - mlingli
-        p.speed = p.speed - mSpeed
+        // 从不受限制的总属性值中减去装备加成
+        p.totalMaxMP -= mMpMax
+        p.totalMaxHP -= mHpMax
+        p.totalDefend -= mdf
+        p.totalAttack -= mat
+        p.totalLingli -= mlingli
+        p.totalSpeed -= mSpeed
+        p.totalLuck -= mLuck
+
+        // 应用到实际属性（受限制）
+        p.maxMP = p.totalMaxMP
+        p.maxHP = p.totalMaxHP
+        p.defend = p.totalDefend
+        p.attack = p.totalAttack
+        p.lingli = p.totalLingli
+        p.speed = p.totalSpeed
+        p.luck = p.totalLuck
+
         if (this !is GoodsWeapon) {
             p.delBuff(mBitEffect) // 删掉免疫效果
         }
-        p.luck = p.luck - mLuck
         if (eventId != 0) {
             // 取消该事件
             ScriptResources.clearEvent(eventId)

@@ -20,8 +20,8 @@ import java.System
 
 class ScreenMenuGoods(override val parent: GameNode): BaseScreen, OnItemSelectedListener {
 
-    private val mFrameBmp = Util.getFrameBitmap(77 - 39 + 1, 77 - 39 + 1)
-    private val strs = arrayOf("使用", "装备")
+    private val mFrameBmp = Util.getFrameBitmap(77 - 39 + 1, 93 - 39 + 1)
+    private val strs = arrayOf("使用", "装备", "丢弃")
     private var mSelId = 0
 
     override val isPopup: Boolean
@@ -31,18 +31,20 @@ class ScreenMenuGoods(override val parent: GameNode): BaseScreen, OnItemSelected
 
     override fun draw(canvas: Canvas) {
         canvas.drawBitmap(mFrameBmp, 39, 39)
-        if (mSelId == 0) {
-            TextRender.drawSelText(canvas, strs[0], 39 + 3, 39 + 3)
-            TextRender.drawText(canvas, strs[1], 39 + 3, 39 + 3 + 16)
-        } else if (mSelId == 1) {
-            TextRender.drawText(canvas, strs[0], 39 + 3, 39 + 3)
-            TextRender.drawSelText(canvas, strs[1], 39 + 3, 39 + 3 + 16)
+        for (i in strs.indices) {
+            if (i == mSelId) {
+                TextRender.drawSelText(canvas, strs[i], 39 + 3, 39 + 3 + 16 * i)
+            } else {
+                TextRender.drawText(canvas, strs[i], 39 + 3, 39 + 3 + 16 * i)
+            }
         }
     }
 
     override fun onKeyDown(key: Int) {
-        if (key == Global.KEY_UP || key == Global.KEY_DOWN) {
-            mSelId = 1 - mSelId
+        if (key == Global.KEY_UP && mSelId > 0) {
+            mSelId--
+        } else if (key == Global.KEY_DOWN && mSelId < strs.size - 1) {
+            mSelId++
         }
     }
 
@@ -51,20 +53,23 @@ class ScreenMenuGoods(override val parent: GameNode): BaseScreen, OnItemSelected
             popScreen()
         } else if (key == Global.KEY_ENTER) {
             popScreen()
-            pushScreen(ScreenGoodsList(this,
-                    if (mSelId == 0)
-                        Player.sGoodsList.goodsList
-                    else
-                        Player.sGoodsList.equipList, this, Mode.Use)
-            )
+            val list = when (mSelId) {
+                0 -> Player.sGoodsList.goodsList  // 使用：只显示消耗品
+                1 -> Player.sGoodsList.equipList  // 装备：只显示装备
+                2 -> Player.sGoodsList.allGoodsList  // 丢弃：显示所有物品
+                else -> Player.sGoodsList.goodsList
+            }
+            pushScreen(ScreenGoodsList(this, list, this, Mode.Use))
         }
     }
 
-    override fun onItemSelected(goods: BaseGoods) {
+    override fun onItemSelected(goods: BaseGoods, index: Int) {
         if (mSelId == 0) { // 使用
             goodsSelected(goods)
         } else if (mSelId == 1) { // 装备
             equipSelected(goods)
+        } else if (mSelId == 2) { // 丢弃
+            discardSelected(goods)
         }
     }
 
@@ -169,5 +174,55 @@ class ScreenMenuGoods(override val parent: GameNode): BaseScreen, OnItemSelected
                 }
             })
         }
+    }
+
+    private fun discardSelected(goods: BaseGoods) {
+        pushScreen(object : BaseScreen {
+            override val parent = this@ScreenMenuGoods
+            private val confirmBmp = Util.getFrameBitmap(16 * 8, 16 * 4)
+            private var curSel = 0
+
+            override val isPopup: Boolean
+                get() = true
+
+            override fun update(delta: Long) {}
+
+            override fun draw(canvas: Canvas) {
+                canvas.drawBitmap(confirmBmp, 25, 35)
+                TextRender.drawText(canvas, "确认丢弃?", 28, 38)
+                TextRender.drawText(canvas, "数量:${goods.goodsNum}", 28, 54)
+                if (curSel == 0) {
+                    TextRender.drawSelText(canvas, "全部丢弃", 28, 70)
+                    TextRender.drawText(canvas, "丢弃1个", 95, 70)
+                } else {
+                    TextRender.drawText(canvas, "全部丢弃", 28, 70)
+                    TextRender.drawSelText(canvas, "丢弃1个", 95, 70)
+                }
+            }
+
+            override fun onKeyDown(key: Int) {
+                if (key == Global.KEY_LEFT || key == Global.KEY_RIGHT) {
+                    curSel = 1 - curSel
+                }
+            }
+
+            override fun onKeyUp(key: Int) {
+                if (key == Global.KEY_CANCEL) {
+                    popScreen()
+                } else if (key == Global.KEY_ENTER) {
+                    if (curSel == 0) {
+                        val totalNum = goods.goodsNum
+                        Player.sGoodsList.useGoodsNum(goods.type, goods.index, totalNum)
+                        popScreen()
+                    } else {
+                        val numBefore = goods.goodsNum
+                        Player.sGoodsList.deleteGoods(goods)
+                        if (numBefore <= 1) {
+                            popScreen()
+                        }
+                    }
+                }
+            }
+        })
     }
 }

@@ -9,6 +9,10 @@ import graphics.Canvas
 
 class ActionMagicHelpOne(attacker: FightingCharacter,
                          target: FightingCharacter, internal var magic: BaseMagic) : ActionSingleTarget(attacker, target) {
+    
+    init {
+        println("ActionMagicHelpOne: 创建动作，施术者: ${attacker.name}, 目标: ${target.name} (HP: ${target.hp}/${target.maxHP}), 魔法: ${magic.magicName}")
+    }
 
     private var mState = 1
 
@@ -23,14 +27,17 @@ class ActionMagicHelpOne(attacker: FightingCharacter,
     override val isMagic = true
 
     override fun preproccess() {
+        println("ActionMagicHelpOne: 准备执行魔法，施术者: ${mAttacker!!.name}, 目标: ${mTarget.name} (HP: ${mTarget.hp}/${mTarget.maxHP})")
         ox = mAttacker!!.combatX
         oy = mAttacker!!.combatY
         mAni = magic.magicAni!!
         mAni.start()
         mAni.setIteratorNum(2)
+        // 治疗魔法的动画应该显示在目标位置（被治疗者）
         mAnix = mTarget.combatX
-        mAniy = mTarget.combatY
+        mAniy = mTarget.combatY - mTarget.fightingSprite!!.height / 2
         val ohp = mTarget.hp
+        println("ActionMagicHelpOne: 即将调用 magic.use，目标确认: ${mTarget.name} (HP: ${mTarget.hp})")
         magic.use(mAttacker!!, mTarget)
         val diff = mTarget.hp - ohp
         mRaiseAnimations.add(RaiseAnimation(mTarget.combatX, mTarget.combatTop, diff, 0))

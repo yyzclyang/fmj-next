@@ -27,6 +27,12 @@ class GoodsManage {
         get() = mEquipList
 
     /**
+     * 获取所有物品（装备 + 消耗品）
+     */
+    val allGoodsList: List<BaseGoods>
+        get() = mEquipList + mGoodsList
+
+    /**
      * 返回装备种类数目
      * @return
      */

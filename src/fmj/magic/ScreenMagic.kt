@@ -57,10 +57,10 @@ class ScreenMagic(override val parent: GameNode,
     private val mBmpMarker = Bitmap.createBitmap(5, 8)
     private val mBmpMarker2 = Bitmap.createBitmap(5, 8)
 
-    private val mRectTop = Rect(10, 4, 147, 39)
-    private val mRectBtm = Rect(10, 41, 147, 76)
-    private val mRectDsp = Rect(11, 42, 146, 75)
-    private val mTextPos = Point(10, 77)
+    // 适配大屏幕，扩大区域
+    private val mRectTop = Rect(10, 10, 300, 10 + 20 * ITEM_NUM)
+    private val mRectDsp = Rect(12, 24 + 20 * ITEM_NUM, 298, 160)
+    private val mTextPos = Point(10, 165)
     private val mFramePaint = Paint()
     private var description = PageText(this.magics[mCurItemIndex].magicDescription, mRectDsp)
 
@@ -108,20 +108,25 @@ class ScreenMagic(override val parent: GameNode,
 
     override fun draw(canvas: Canvas) {
         canvas.drawColor(Global.COLOR_WHITE)
-        val hlMagic = magics[mFirstItemIndex]
-        TextRender.drawText(canvas, hlMagic.magicName, mRectTop.left + 1, mRectTop.top + 1)
-        if (mFirstItemIndex + 1 < magics.size) {
-            TextRender.drawText(canvas, magics[mFirstItemIndex + 1].magicName, mRectTop.left + 1, mRectTop.top + 1 + 16)
+        // 列表区域
+        val showCount = minOf(ITEM_NUM, magics.size - mFirstItemIndex)
+        for (i in 0 until showCount) {
+            val idx = mFirstItemIndex + i
+            val y = mRectTop.top + 4 + i * 20
+            TextRender.drawText(canvas, magics[idx].magicName, mRectTop.left + 20, y)
+            // 高亮当前项
+            if (idx == mCurItemIndex) {
+                canvas.drawBitmap(mBmpCursor, mRectTop.left + 4, y + 2)
+            }
         }
+        // 描述区域
         description.draw(canvas)
+        // 消耗
+        val hlMagic = magics[mCurItemIndex]
         TextRender.drawText(canvas, "耗真气:" + hlMagic.costMp, mTextPos.x, mTextPos.y)
-        canvas.drawBitmap(mBmpCursor, 100, if (mFirstItemIndex == mCurItemIndex) 10 else 26)
-        canvas.drawBitmap(if (mFirstItemIndex == 0) mBmpMarker else mBmpMarker2, 135, 6)
-        canvas.drawBitmap(mBmpMarker, 135, 6 + 8)
-        canvas.drawBitmap(mBmpMarker, 135, 6 + 16)
-        canvas.drawBitmap(if (mFirstItemIndex + 2 < magics.size) mBmpMarker2 else mBmpMarker, 135, 6 + 24)
+        // 边框
         canvas.drawRect(mRectTop, mFramePaint)
-        canvas.drawRect(mRectBtm, mFramePaint)
+        canvas.drawRect(mRectDsp, mFramePaint)
     }
 
     override fun onKeyDown(key: Int) {
@@ -158,7 +163,7 @@ class ScreenMagic(override val parent: GameNode,
 
     companion object {
 
-        private val ITEM_NUM = 2 // 界面上显示的条目数
+        private val ITEM_NUM = 5 // 320x192大屏显示5条
     }
 
 }

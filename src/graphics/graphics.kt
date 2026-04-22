@@ -17,7 +17,8 @@ class Color(val r: Int, val g: Int, val b: Int, val a: Int) {
         val TRANSP = Color(0, 0, 0, 0)
         val RED = Color(0xff, 0, 0)
 //        val GREEN = Color(0, 0xff, 0)
-//        val BLUE = Color(0, 0, 0xff)
+        val BLUE = Color(0, 0, 0xff)
+        val GRAY = Color(128, 128, 128, 255)
     }
 }
 

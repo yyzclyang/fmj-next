@@ -62,7 +62,13 @@ abstract class ResBase {
         }
 
         fun get1ByteSInt(buf: ByteArray, start: Int): Int {
-            return buf[start].toInt()
+            val unsigned = buf[start].toInt() and 0xFF
+            return if (unsigned >= 128) {
+                // 截断异常高值，保持在有符号字节正数范围
+                127
+            } else {
+                unsigned        // 0-127 stays positive
+            }
         }
     }
 }

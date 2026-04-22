@@ -3,6 +3,7 @@ package fmj.characters
 import fmj.lib.ResBase
 
 import java.System
+import kotlin.math.pow
 
 class ResLevelupChain : ResBase() {
 
@@ -15,6 +16,9 @@ class ResLevelupChain : ResBase() {
         type = buf[offset].toInt() and 0xff
         index = buf[offset + 1].toInt() and 0xff
         maxLevel = buf[offset + 2].toInt() and 0xff
+        if (maxLevel <= 0) {
+            maxLevel = 99
+        }
         mLevelData = ByteArray(maxLevel * LEVEL_BYTES)
 
         System.arraycopy(buf, offset + 4, mLevelData, 0, mLevelData.size)
@@ -58,7 +62,17 @@ class ResLevelupChain : ResBase() {
 
     fun getNextLevelExp(l: Int): Int {
         return if (l <= maxLevel) {
-            get2BytesInt(mLevelData, 14 + l * LEVEL_BYTES - LEVEL_BYTES)
+            val exp = get2BytesInt(mLevelData, 14 + l * LEVEL_BYTES - LEVEL_BYTES)
+            // 如果读取的经验值无效（小于等于0），使用指数增长算法
+            if (exp <= 0) {
+                // 基础值100，每级增长50%，确保后期需要更多经验
+                val baseExp = 100
+                val growth = 1.5
+                (baseExp * growth.pow(l.toDouble())).toInt()
+                // 0级→1级: 100, 1级→2级: 150, 2级→3级: 225, 10级→11级: 5766
+            } else {
+                exp
+            }
         } else 0
     }
 

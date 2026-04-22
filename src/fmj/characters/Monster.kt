@@ -1,5 +1,6 @@
 package fmj.characters
 
+import fmj.Global
 import fmj.goods.BaseGoods
 import fmj.lib.DatLib
 import java.random
@@ -30,7 +31,12 @@ class Monster : FightingCharacter() {
             if (mCarryGoods2[0] == 0 || mCarryGoods2[1] == 0 || mCarryGoods2[2] == 0) {
                 return null
             }
-            val g = DatLib.Companion.getRes(DatLib.ResType.GRS, mCarryGoods2[0], mCarryGoods2[1]) as BaseGoods
+            val res = DatLib.Companion.getRes(DatLib.ResType.GRS, mCarryGoods2[0], mCarryGoods2[1])
+            if (res !is BaseGoods) {
+                println("Warning: Monster dropGoods type mismatch - expected BaseGoods but got ${res?.let { it::class.simpleName }}")
+                return null
+            }
+            val g = res
             g.goodsNum = mCarryGoods2[2]
             return g
         }
@@ -43,7 +49,12 @@ class Monster : FightingCharacter() {
             return null
         }
         mCarryGoods1[2] -= 1
-        return DatLib.getRes(DatLib.ResType.GRS, mCarryGoods1[0], mCarryGoods1[1]) as BaseGoods
+        val res = DatLib.getRes(DatLib.ResType.GRS, mCarryGoods1[0], mCarryGoods1[1])
+        if (res !is BaseGoods) {
+            println("Warning: Monster stealGoods type mismatch - expected BaseGoods but got ${res?.let { it::class.simpleName }}")
+            return null
+        }
+        return res
     }
 
     override fun setData(buf: ByteArray, offset: Int) {
@@ -85,11 +96,17 @@ class Monster : FightingCharacter() {
      */
     fun setOriginalCombatPos(i: Int) {
         val fs = fightingSprite
-        fs?.setCombatPos(arr[i][0] - fs.width / 6 + fs.width / 2,
-                arr[i][1] - fs.height / 10 + fs.height / 2)
+        // arr array only has 3 positions, ensure we don't access out of bounds
+        val posIndex = if (i < arr.size) i else arr.size - 1
+        fs?.setCombatPos(arr[posIndex][0] - fs.width / 6 + fs.width / 2,
+                arr[posIndex][1] - fs.height / 10 + fs.height / 2)
     }
 
     companion object {
-        private val arr = arrayOf(intArrayOf(12, 25), intArrayOf(44, 14), intArrayOf(82, 11))
+        val arr = arrayOf(
+            intArrayOf(12 + (Global.SCREEN_WIDTH - 160) / 2 - 30, 25 + (Global.SCREEN_HEIGHT - 96) / 2 - 30),
+            intArrayOf(44 + (Global.SCREEN_WIDTH - 160) / 2 - 30, 14 + (Global.SCREEN_HEIGHT - 96) / 2 - 30), 
+            intArrayOf(82 + (Global.SCREEN_WIDTH - 160) / 2 - 30, 11 + (Global.SCREEN_HEIGHT - 96) / 2 - 30)
+        )
     }
 }

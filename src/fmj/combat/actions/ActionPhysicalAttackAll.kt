@@ -19,22 +19,19 @@ class ActionPhysicalAttackAll(attacker: FightingCharacter,
 
     override fun preproccess() {
         val attacker = mAttacker?:return
-        mTargets.forEach {
-            it.backupStatus()
-        }
-
         ox = attacker.combatX
         oy = attacker.combatY
         dx = (44.0f - attacker.combatX) / TOTAL_FRAME
         dy = (14.0f - attacker.combatY) / TOTAL_FRAME
-        for (i in 0 until mTargets.size) {
-            val fc = mTargets[i]
-            if (!fc.isAlive) {
-                continue
-            }
+        // 过滤出活着的敌人，但不修改原始mTargets列表
+        val aliveTargets = mTargets.filter { it.isAlive }
+        aliveTargets.forEach { fc ->
+            fc.backupStatus()
             attacker.attack(fc)
         }
-        mRaiseAnimations.addAll(mTargets.map { it.diffToAnimation(true) })
+        
+        // 只为活着的敌人生成动画
+        mRaiseAnimations.addAll(aliveTargets.map { it.diffToAnimation(true) })
     }
 
     override fun update(delta: Long): Boolean {

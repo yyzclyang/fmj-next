@@ -67,6 +67,9 @@ interface Game: Control {
 interface BaseScreen: Control {
     val isPopup: Boolean
         get() = false
+    
+    val screenName: String
+        get() = "BaseScreen"
 
     fun update(delta: Long)
 

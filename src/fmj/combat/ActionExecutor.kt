@@ -1,6 +1,7 @@
 package fmj.combat
 
 import fmj.combat.actions.*
+import fmj.magic.MagicAuxiliary
 
 import graphics.Canvas
 
@@ -96,17 +97,36 @@ class ActionExecutor(
             if (!mCurrentAction!!.isSingleTarget) { // 敌人都死了
                 mCurrentAction = null
             } else { // try to find an alive target
-                val newTarget =
-                        if (mCurrentAction!!.targetIsMonster()) {
-                            mCombat.firstAliveMonster
-                        } else {
-                            mCombat.randomAlivePlayer
-                        }
-                if (newTarget == null) {
-                    postAction()
-                    return
-                } else if (mCurrentAction !is ActionFlee) {
-                    (mCurrentAction as ActionSingleTarget).setTarget(newTarget)
+                // 检查是否为复活药物动作（只有类型10灵药具有复活功能）
+                val isRevivalItemAction = mCurrentAction is ActionUseItemOne && 
+                    (mCurrentAction as ActionUseItemOne).goods.let { goods ->
+                        goods.type == 10    // 只有GoodsMedicineLife (灵药类) 具有复活功能
+                    }
+                
+                // 检查是否为复活魔法动作（只有MagicAuxiliary辅助型魔法具有复活功能）
+                val isRevivalMagicAction = mCurrentAction is ActionMagicHelpOne && 
+                    (mCurrentAction as ActionMagicHelpOne).magic.let { magic ->
+                        magic is MagicAuxiliary    // 只有MagicAuxiliary具有复活功能
+                    }
+                
+                if (isRevivalItemAction || isRevivalMagicAction) {
+                    // 复活道具或复活魔法允许对阵亡目标使用，不改变目标
+                    println("ActionExecutor: 复活动作保持阵亡目标不变")
+                    // Do nothing, keep the dead target
+                } else {
+                    // 非复活药物需要找存活目标
+                    val newTarget =
+                            if (mCurrentAction!!.targetIsMonster()) {
+                                mCombat.firstAliveMonster
+                            } else {
+                                mCombat.randomAlivePlayer
+                            }
+                    if (newTarget == null) {
+                        postAction()
+                        return
+                    } else if (mCurrentAction !is ActionFlee) {
+                        (mCurrentAction as ActionSingleTarget).setTarget(newTarget)
+                    }
                 }
             }
         }

@@ -39,8 +39,8 @@ class WalkingSprite(type: Int, id: Int) {
     fun draw(canvas: Canvas, x: Int, y: Int) {
         var tmpY = y
         tmpY = tmpY + 16 - resImage.height
-        if (x + resImage.width > 0 && x < 160 - 16 &&
-                tmpY + resImage.height > 0 && tmpY < 96) {
+        if (x + resImage.width > 0 && x < Global.SCREEN_WIDTH - 16 &&
+                tmpY + resImage.height > 0 && tmpY < Global.SCREEN_HEIGHT) {
             resImage.draw(canvas, offset + OFFSET[this.step], x + Global.MAP_LEFT_OFFSET, tmpY)
         }
     }

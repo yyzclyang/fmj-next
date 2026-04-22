@@ -1,5 +1,6 @@
 package fmj.characters
 
+import fmj.config.GameSettings
 import fmj.combat.actions.CalcDamage
 import fmj.combat.anim.Animation
 import fmj.combat.anim.RaiseAnimation
@@ -12,10 +13,10 @@ import java.Coder
 import java.ObjectInput
 import java.ObjectOutput
 import java.random
-import kotlin.coroutines.experimental.buildSequence
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt
+import kotlin.sequences.sequence
 
 class Buff(var value: Int, var round: Int) {
     fun reset() {
@@ -223,16 +224,37 @@ abstract class FightingCharacter : Character() {
 
     var maxHP: Int = 0
         set(maxHP) {
-            field = min(999, maxHP)
+            // Monster类不设置上限，Player类才限制
+            if (this is Monster) {
+                field = maxHP
+                if (maxHP > 9999) {
+                    println("[FightingCharacter] Monster '$name' has maxHP: $maxHP (no limit applied)")
+                }
+            } else {
+                val limit = if (GameSettings.enableEnhancedLimits) 9999 else 999
+                field = min(limit, maxHP)
+            }
         }
 
     var maxMP: Int = 0
         set(maxMP) {
-            field = min(999, maxMP)
+            // Monster类不设置上限，Player类才限制
+            if (this is Monster) {
+                field = maxMP
+                if (maxMP > 9999) {
+                    println("[FightingCharacter] Monster '$name' has maxMP: $maxMP (no limit applied)")
+                }
+            } else {
+                val limit = if (GameSettings.enableEnhancedLimits) 9999 else 999
+                field = min(limit, maxMP)
+            }
         }
 
     var hp: Int = 0
         set(hp) {
+            if (field != hp && this is Player) {
+                println("[HP_CHANGE] ${name} HP: $field -> $hp (变化: ${hp - field}) maxHP: $maxHP")
+            }
             field = min(maxHP, hp)
         }
 
@@ -248,27 +270,72 @@ abstract class FightingCharacter : Character() {
 
     var attack: Int = 0
         set(at) {
-            field = min(999, at)
+            // Monster类不设置上限，Player类才限制
+            if (this is Monster) {
+                field = max(0, at)
+                if (at > 9999) {
+                    println("[FightingCharacter] Monster '$name' has attack: $at (no limit applied)")
+                }
+            } else {
+                val limit = if (GameSettings.enableEnhancedLimits) 9999 else 999
+                field = min(limit, max(0, at))
+            }
         } // 攻击
 
     var defend: Int = 0
         set(d) {
-            field = min(999, d)
+            // Monster类不设置上限，Player类才限制
+            if (this is Monster) {
+                field = max(0, d)
+                if (d > 9999) {
+                    println("[FightingCharacter] Monster '$name' has defend: $d (no limit applied)")
+                }
+            } else {
+                val limit = if (GameSettings.enableEnhancedLimits) 9999 else 999
+                field = min(limit, max(0, d))
+            }
         } // 防御
 
     var speed: Int = 0
         set(s) {
-            field = min(99, s)
+            // Monster类不设置上限，Player类才限制
+            if (this is Monster) {
+                field = max(0, s)
+                if (s > 127) {
+                    println("[FightingCharacter] Monster '$name' has speed: $s (no limit applied)")
+                }
+            } else {
+                val limit = if (GameSettings.enableEnhancedLimits) 127 else 99
+                field = min(limit, max(0, s))
+            }
         } // 身法
 
     var lingli: Int = 0
         set(l) {
-            field = min(99, l)
+            // Monster类不设置上限，Player类才限制
+            if (this is Monster) {
+                field = max(0, l)
+                if (l > 127) {
+                    println("[FightingCharacter] Monster '$name' has lingli: $l (no limit applied)")
+                }
+            } else {
+                val limit = if (GameSettings.enableEnhancedLimits) 127 else 99
+                field = min(limit, max(0, l))
+            }
         } // 灵力
 
     var luck: Int = 0
         set(l) {
-            field = min(99, l)
+            // Monster类不设置上限，Player类才限制
+            if (this is Monster) {
+                field = max(0, l)
+                if (l > 127) {
+                    println("[FightingCharacter] Monster '$name' has luck: $l (no limit applied)")
+                }
+            } else {
+                val limit = if (GameSettings.enableEnhancedLimits) 127 else 99
+                field = min(limit, max(0, l))
+            }
         } // 幸运
 
     var missed: Boolean = false
@@ -386,17 +453,14 @@ abstract class FightingCharacter : Character() {
     }
 
     fun attack(other: FightingCharacter, rate: Double = 1.0, allowMiss: Boolean = true): BuffMan {
-        if (SaveLoadGame.allowMiss && allowMiss) {
+        if (GameSettings.allowMiss && allowMiss) {
             if (CalcDamage.randomMiss(this, other)) {
                 other.missed = true
                 return BuffMan()
             }
         }
-        var damage = (CalcDamage.calcBaseDamage(computedAttack, other.computedDefend) * rate).toInt()
-        if (damage <= 0) {
-            damage = 1
-        }
-        damage += (random() * 10).toInt()
+        // 使用原版精确的伤害计算公式，随机已包含在calcBaseDamage中
+        val damage = (CalcDamage.calcBaseDamage(computedAttack, other.computedDefend, other is Player) * rate).toInt()
         other.hp = other.hp - damage
         return other.beAttackedWithBuff(atbuff)
     }
@@ -475,18 +539,15 @@ abstract class FightingCharacter : Character() {
             }
         }
 
-        fun maskToIndexes(mask: Int): Sequence<Int>
-        {
-            return buildSequence {
-                if (isMaskSet(mask, BUFF_MASK_MIAN)) yield(0)
-                if (isMaskSet(mask, BUFF_MASK_FENG)) yield(1)
-                if (isMaskSet(mask, BUFF_MASK_LUAN)) yield(2)
-                if (isMaskSet(mask, BUFF_MASK_DU)) yield(3)
-                if (isMaskSet(mask, BUFF_MASK_ALL)) yield(4)
-                if (isMaskSet(mask, BUFF_MASK_GONG)) yield(5)
-                if (isMaskSet(mask, BUFF_MASK_FANG)) yield(6)
-                if (isMaskSet(mask, BUFF_MASK_SU)) yield(7)
-            }
+        fun maskToIndexes(mask: Int): Sequence<Int> = sequence {
+            if (mask and 0x1 != 0) yield(0)
+            if (mask and 0x2 != 0) yield(1)
+            if (mask and 0x4 != 0) yield(2)
+            if (mask and 0x8 != 0) yield(3)
+            if (mask and 0x10 != 0) yield(4)
+            if (mask and 0x20 != 0) yield(5)
+            if (mask and 0x40 != 0) yield(6)
+            if (mask and 0x80 != 0) yield(7)
         }
     }
 

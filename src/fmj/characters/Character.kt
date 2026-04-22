@@ -21,7 +21,7 @@ abstract class Character : ResBase() {
     var direction = Direction.South
         set(d) {
             field = d
-            mWalkingSprite!!.setDirection(d)
+            mWalkingSprite?.setDirection(d)
         }
 
     /**
@@ -30,16 +30,16 @@ abstract class Character : ResBase() {
     private var mWalkingSprite: WalkingSprite? = null
 
     val walkingSpriteId: Int
-        get() = mWalkingSprite!!.id
+        get() = mWalkingSprite?.id ?: 0
 
     /**
      * 设置脚步
      * @param step 0—迈左脚；1—立正；2—迈右脚
      */
     var step: Int
-        get() = mWalkingSprite!!.step
+        get() = mWalkingSprite?.step ?: 0
         set(step) {
-            mWalkingSprite!!.step = step
+            mWalkingSprite?.let { it.step = step }
         }
 
     fun setPosInMap(x: Int, y: Int) {
@@ -57,7 +57,7 @@ abstract class Character : ResBase() {
 
     fun setWalkingSprite(sprite: WalkingSprite) {
         mWalkingSprite = sprite
-        mWalkingSprite!!.setDirection(direction)
+        sprite.setDirection(direction)
     }
 
     open fun walk() {

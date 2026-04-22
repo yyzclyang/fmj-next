@@ -8,12 +8,16 @@ import fmj.magic.MagicAttack
 import graphics.Canvas
 
 class ActionMagicAttackAll(attacker: FightingCharacter,
-                           targets: List<FightingCharacter>, private val magic: MagicAttack
+                           targets: List<FightingCharacter>, internal val magic: MagicAttack
 ) : ActionMultiTarget(attacker, targets) {
 
     private var mState = 1
 
     private var mAni: ResSrs? = null
+    
+    // 动画显示位置
+    private var mAnix: Int = 0
+    private var mAniy: Int = 0
 
     private var ox: Int = 0
     private var oy: Int = 0
@@ -22,18 +26,35 @@ class ActionMagicAttackAll(attacker: FightingCharacter,
 
     override fun preproccess() {
         val attacker = mAttacker?:return
+        println("ActionMagicAttackAll: 准备执行群体攻击，施术者: ${attacker.name}, 目标数量: ${mTargets.size}")
         attacker.backupStatus()
-        mTargets.forEach { it.backupStatus() }
+        mTargets.forEach { 
+            println("  目标: ${it.name} at (${it.combatX}, ${it.combatY}), isPlayer=${it is Player}")
+            it.backupStatus() 
+        }
 
         ox = attacker.combatX
         oy = attacker.combatY
         mAni = magic.magicAni
         mAni!!.start()
         mAni!!.setIteratorNum(2)
-        magic.use(attacker, mTargets)
+        
+        // 动画显示在第一个目标的位置
+        if (mTargets.isNotEmpty()) {
+            val firstTarget = mTargets[0]
+            mAnix = firstTarget.combatX
+            mAniy = firstTarget.combatY - (firstTarget.fightingSprite?.height ?: 16) / 2
+            println("ActionMagicAttackAll: 动画位置计算完成（第一个目标位置） -> ($mAnix, $mAniy)")
+        }
+        
+        // 过滤出活着的敌人，但不修改原始mTargets列表
+        val aliveTargets = mTargets.filter { it.isAlive }
+        
+        magic.use(attacker, aliveTargets)
 
         mRaiseAnimations.add(attacker.diffToAnimation())
-        mRaiseAnimations.addAll(mTargets.map { it.diffToAnimation() })
+        // 只为活着的敌人生成动画
+        mRaiseAnimations.addAll(aliveTargets.map { it.diffToAnimation() })
     }
 
     override fun update(delta: Long): Boolean {
@@ -86,7 +107,8 @@ class ActionMagicAttackAll(attacker: FightingCharacter,
     override fun draw(canvas: Canvas) {
         super.draw(canvas)
         if (mState == STATE_ANI) {
-            mAni!!.draw(canvas, 0, 0)
+            println("ActionMagicAttackAll: 绘制动画 at ($mAnix, $mAniy)")
+            mAni!!.drawAbsolutely(canvas, mAnix, mAniy)
         } else if (mState == STATE_AFT) {
             drawRaiseAnimation(canvas)
         }

@@ -7,8 +7,10 @@ import fmj.lib.ResSrs
 import fmj.scene.SaveLoadGame
 import graphics.Canvas
 import java.sysExit
+import java.sysGetChoiceLibName
 
 class ScreenMenu(override val parent: GameNode): BaseScreen {
+    override val screenName: String = "ScreenMenu"
     private val mImgMenu = DatLib.getPic(2, 14)!!
     private val mLeft: Int
     private val mTop: Int
@@ -22,8 +24,8 @@ class ScreenMenu(override val parent: GameNode): BaseScreen {
 
     init {
         mSrsSelector.forEach { it.start() }
-        mLeft = (160 - mImgMenu.width) / 2
-        mTop = (96 - mImgMenu.height) / 2
+        mLeft = (Global.SCREEN_WIDTH - mImgMenu.width) / 2
+        mTop = (Global.SCREEN_HEIGHT - mImgMenu.height) / 2
     }
 
     override fun update(delta: Long) {
@@ -35,7 +37,15 @@ class ScreenMenu(override val parent: GameNode): BaseScreen {
     override fun draw(canvas: Canvas) {
         canvas.drawColor(Global.COLOR_WHITE)
         mImgMenu.draw(canvas, 1, mLeft, mTop)
-        mSrsSelector[mCurSelect].draw(canvas, 0, 0)
+        val currentGame = sysGetChoiceLibName().uppercase()
+        if (currentGame == "FMJ" || currentGame == "FMJWMB" || 
+        currentGame == "JYQXZ" || currentGame == "FMJLL" ||
+        currentGame == "FMJFYJ") {
+            mSrsSelector[mCurSelect].draw(canvas, mLeft - 22, mTop/2 + 12)
+            return    
+        }
+
+        mSrsSelector[mCurSelect].draw(canvas, mLeft - 0, mTop/2 + 24)
     }
 
     override fun onKeyDown(key: Int) {

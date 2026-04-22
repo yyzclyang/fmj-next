@@ -15,24 +15,51 @@ class ActionUseItemAll(attacker: FightingCharacter,
     private var mState = 1
 
     private var mAni: ResSrs? = null
+    
+    // 动画显示位置
+    internal var mAnix: Int = 0
+    internal var mAniy: Int = 0
 
     internal var ox: Int = 0
     internal var oy: Int = 0
 
     override fun preproccess() {
         val attacker = mAttacker?:return
-        mTargets.forEach { it.backupStatus() }
+        println("ActionUseItemAll: 准备使用物品，使用者: ${attacker.name}, 目标数量: ${mTargets.size}")
+        mTargets.forEach { 
+            println("  目标: ${it.name} at (${it.combatX}, ${it.combatY}), isPlayer=${it is Player}")
+            it.backupStatus() 
+        }
 
         ox = attacker.combatX
         oy = attacker.combatY
         if (goods is GoodsMedicine) {
             mAni = goods.ani
-            mTargets.forEach { goods.eat(it as Player) }
+            mTargets.forEach { target ->
+                if (target is Player) {
+                    goods.eat(target)
+                } else {
+                    println("Warning: Target ${target.name} is not a Player, skipping medicine effect")
+                }
+            }
         } else {
-            mAni = DatLib.getRes(DatLib.ResType.SRS, 2, 1) as ResSrs
+            val aniRes = DatLib.getRes(DatLib.ResType.SRS, 2, 1, true)
+            mAni = if (aniRes is ResSrs) aniRes else {
+                println("Warning: Failed to load SRS animation for ActionUseItemAll")
+                null
+            }
         }
         mAni?.start()
         mAni?.setIteratorNum(2)
+        
+        // 动画显示在第一个目标的位置
+        if (mTargets.isNotEmpty()) {
+            val firstTarget = mTargets[0]
+            mAnix = firstTarget.combatX
+            mAniy = firstTarget.combatY - (firstTarget.fightingSprite?.height ?: 16) / 2
+            println("ActionUseItemAll: 动画位置计算完成（第一个目标位置） -> ($mAnix, $mAniy)")
+        }
+        
         mRaiseAnimations.addAll(mTargets.map { it.diffToAnimation() })
     }
 
@@ -65,7 +92,8 @@ class ActionUseItemAll(attacker: FightingCharacter,
 
     override fun draw(canvas: Canvas) {
         if (mState == STATE_ANI) {
-            mAni?.draw(canvas, 0, 0)
+            println("ActionUseItemAll: 绘制动画 at ($mAnix, $mAniy)")
+            mAni?.drawAbsolutely(canvas, mAnix, mAniy)
         } else if (mState == STATE_AFT) {
             drawRaiseAnimation(canvas)
         }

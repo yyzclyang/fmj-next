@@ -5,6 +5,7 @@ import fmj.characters.Player
 import fmj.combat.anim.RaiseAnimation
 import fmj.goods.BaseGoods
 import fmj.goods.GoodsMedicine
+import fmj.goods.IEatMedicine
 import fmj.lib.DatLib
 import fmj.lib.ResSrs
 
@@ -24,11 +25,37 @@ class ActionUseItemOne(attacker: FightingCharacter, target: FightingCharacter, i
 
     override fun preproccess() {
         mTarget.backupStatus()
-        if (goods is GoodsMedicine) {
-            mAni = (goods as GoodsMedicine).ani!!
-            (goods as GoodsMedicine).eat(mTarget as Player)
+        if (goods is IEatMedicine) {
+            // 处理所有可食用药物（GoodsMedicine, GoodsMedicineLife, GoodsMedicineChg4Ever）
+            val targetPlayer = mTarget as Player
+            val wasTargetAlive = targetPlayer.hp > 0
+            println("ActionUseItemOne: 使用药物 ${goods::class.simpleName}(type=${goods.type}) 在目标 ${targetPlayer.name} (HP: ${targetPlayer.hp}/${targetPlayer.maxHP}, 存活状态: $wasTargetAlive)")
+            
+            val currentGoods = goods // 使用局部变量避免智能转换问题
+            if (currentGoods is GoodsMedicine) {
+                mAni = currentGoods.ani!!
+            } else {
+                val aniRes = DatLib.getRes(DatLib.ResType.SRS, 2, 1, false)
+                mAni = if (aniRes is ResSrs) aniRes else {
+                    println("Warning: Failed to load SRS animation for ActionUseItemOne")
+                    ResSrs() // 使用空的 ResSrs
+                }
+            }
+            // 统一调用eat方法，支持所有药物类型
+            if (currentGoods is IEatMedicine) {
+                currentGoods.eat(targetPlayer)
+            } else {
+                println("Warning: Item ${currentGoods::class.simpleName} does not implement IEatMedicine interface")
+            }
+            
+            val isTargetAliveAfter = targetPlayer.hp > 0
+            println("ActionUseItemOne: 使用药物后目标 ${targetPlayer.name} (HP: ${targetPlayer.hp}/${targetPlayer.maxHP}, 存活状态: $isTargetAliveAfter)")
         } else {
-            mAni = DatLib.getRes(DatLib.ResType.SRS, 2, 1) as ResSrs
+            val aniRes = DatLib.getRes(DatLib.ResType.SRS, 2, 1, false)
+            mAni = if (aniRes is ResSrs) aniRes else {
+                println("Warning: Failed to load SRS animation for ActionUseItemOne fallback")
+                ResSrs() // 使用空的 ResSrs
+            }
         }
         mAni.start()
         mAni.setIteratorNum(2)

@@ -42,7 +42,21 @@ class ScreenUseMagic(override val parent: GameNode,
         if (key == Global.KEY_CANCEL) {
             popScreen()
         } else if (key == Global.KEY_ENTER) {
-            mMagic.use(mScr, game.playerList[mCurActor])
+            // 检查魔法是否为群体魔法
+            if (mMagic.isForAll) {
+                // 群体恢复魔法：对所有活着的队员使用
+                println("ScreenUseMagic: 使用群体恢复魔法 ${mMagic.magicName}")
+                game.playerList.forEach { player ->
+                    if (player.hp > 0) {  // 只对活着的角色使用
+                        println("ScreenUseMagic: 对角色 ${player.name} 使用魔法")
+                        mMagic.use(mScr, player)
+                    }
+                }
+            } else {
+                // 单体魔法：只对当前选中的角色使用
+                println("ScreenUseMagic: 使用单体恢复魔法 ${mMagic.magicName} 对象: ${game.playerList[mCurActor].name}")
+                mMagic.use(mScr, game.playerList[mCurActor])
+            }
             popScreen()
         }
     }

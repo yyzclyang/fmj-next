@@ -14,7 +14,7 @@ class ActionCoopMagic : Action {
 
     private var mState = STATE_MOV
 
-    private var mActors: List<Player>
+    internal var mActors: List<Player>
 
     private var mMonsters: MutableList<FightingCharacter> = mutableListOf()
 
@@ -90,7 +90,8 @@ class ActionCoopMagic : Action {
         mMonsters.forEach { it.backupStatus() }
         mActors.forEach { it.backupStatus() }
 
-        val midpos = arrayOf(intArrayOf(92, 52), intArrayOf(109, 63), intArrayOf(126, 74))
+        // 调整合体攻击位置向右下角移动30像素
+        val midpos = arrayOf(intArrayOf(92 + 30, 52 + 30), intArrayOf(109 + 30, 63 + 30), intArrayOf(126 + 30, 74 + 30))
         dxy = Array(mActors.size) { FloatArray(2) }
         oxy = Array(mActors.size) { IntArray(2) }
         for (i in mActors.indices) {
@@ -113,7 +114,11 @@ class ActionCoopMagic : Action {
         }
 
         mAni = if (magic == null) {
-            DatLib.getRes(DatLib.ResType.SRS, 2, 240) as ResSrs
+            val aniRes = DatLib.getRes(DatLib.ResType.SRS, 2, 240, false)
+            if (aniRes is ResSrs) aniRes else {
+                println("Warning: Failed to load SRS animation for ActionCoopMagic")
+                ResSrs() // 使用空的 ResSrs
+            }
         } else {
             magic!!.magicAni!!
         }

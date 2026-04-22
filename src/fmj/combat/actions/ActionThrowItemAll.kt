@@ -14,19 +14,36 @@ class ActionThrowItemAll(attacker: FightingCharacter,
     private var mState = 1
 
     private var mAni: ResSrs = ResSrs()
+    
+    // 动画显示位置
+    private var mAnix: Int = 0
+    private var mAniy: Int = 0
 
     private var ox: Int = 0
     private var oy: Int = 0
 
     override fun preproccess() {
         val attacker = mAttacker?:return
-        mTargets.forEach { it.backupStatus() }
+        println("ActionThrowItemAll: 准备投掷物品，投掷者: ${attacker.name}, 目标数量: ${mTargets.size}")
+        mTargets.forEach { 
+            println("  目标: ${it.name} at (${it.combatX}, ${it.combatY}), isPlayer=${it is Player}")
+            it.backupStatus() 
+        }
 
         ox = attacker.combatX
         oy = attacker.combatY
         mAni = weapon.ani
         mAni.start()
         mAni.setIteratorNum(2)
+        
+        // 动画显示在第一个目标的位置
+        if (mTargets.isNotEmpty()) {
+            val firstTarget = mTargets[0]
+            mAnix = firstTarget.combatX
+            mAniy = firstTarget.combatY - (firstTarget.fightingSprite?.height ?: 16) / 2
+            println("ActionThrowItemAll: 动画位置计算完成（第一个目标位置） -> ($mAnix, $mAniy)")
+        }
+        
         mTargets.forEach { weapon.attack(it) }
         mRaiseAnimations.addAll(mTargets.map { it.diffToAnimation() })
     }
@@ -80,7 +97,8 @@ class ActionThrowItemAll(attacker: FightingCharacter,
 
     override fun draw(canvas: Canvas) {
         if (mState == STATE_ANI) {
-            mAni.draw(canvas, 0, 0)
+            println("ActionThrowItemAll: 绘制动画 at ($mAnix, $mAniy)")
+            mAni.drawAbsolutely(canvas, mAnix, mAniy)
         } else if (mState == STATE_AFT) {
             drawRaiseAnimation(canvas)
         }

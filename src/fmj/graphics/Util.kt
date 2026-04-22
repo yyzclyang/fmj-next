@@ -38,24 +38,24 @@ object Util {
 
         var ind = 0
         bmpInformationBg = Array(5) {
-            val bmp = Bitmap.createBitmap(138, 23 + 16 * ind)
+            val bmp = Bitmap.createBitmap(240, 23 + 16 * ind)
             canvas.setBitmap(bmp)
             canvas.drawColor(Global.COLOR_BLACK)
-            canvas.drawRect(1, 1, 135, 20 + 16 * ind, paint)
-            canvas.drawRect(136, 0, 138, 3, paint)
+            canvas.drawRect(1, 1, 237, 20 + 16 * ind, paint)
+            canvas.drawRect(238, 0, 240, 3, paint)
             canvas.drawLine(0, 21 + 16 * ind, 3, 21 + 16 * ind, paint)
             canvas.drawLine(0, 22 + 16 * ind, 3, 22 + 16 * ind, paint)
             ind++
             bmp
         }
 
-        bmpSideFrame = Bitmap.createBitmap(8, 96)
+        bmpSideFrame = Bitmap.createBitmap(8, Global.SCREEN_HEIGHT)
         canvas.setBitmap(bmpSideFrame)
         canvas.drawColor(Global.COLOR_WHITE)
         paint.color = Global.COLOR_BLACK
 
         for (i in 0..3) {
-            canvas.drawLine(i*2, 0, i*2, 96, paint)
+            canvas.drawLine(i*2, 0, i*2, Global.SCREEN_HEIGHT, paint)
         }
 
         bmpTriangleCursor = Bitmap.createBitmap(7, 13)
@@ -76,8 +76,16 @@ object Util {
 
     // 用于showscenename
     fun showInformation(canvas: Canvas, msg: String) {
-        canvas.drawBitmap(bmpInformationBg[0], 11, 37)
-        TextRender.drawText(canvas, msg, 16, 39)
+        // 居中显示在320x192的屏幕上
+        val boxWidth = 240
+        val boxX = (Global.SCREEN_WIDTH - boxWidth) / 2  // (320 - 240) / 2 = 40
+        val boxY = (Global.SCREEN_HEIGHT - 23) / 2  // 单行消息框高度为23
+        
+        canvas.drawBitmap(bmpInformationBg[0], boxX, boxY)
+        // 文字居中在框内
+        val textWidth = msg.gbkBytes().size * 8  // 估算文字宽度
+        val textX = boxX + (boxWidth - textWidth) / 2
+        TextRender.drawText(canvas, msg, textX, boxY + 2)
     }
 
     // 显示message,每行最多显示8个汉字，最多可显示5行
@@ -85,18 +93,34 @@ object Util {
         showMessage(canvas, msg.gbkBytes())
     }
 
-    // 显示message,每行最多显示8个汉字，最多可显示5行
+    // 显示message,适配320x192屏幕，每行最多显示14个汉字，最多可显示5行
     fun showMessage(canvas: Canvas, msg: ByteArray) {
-        var lineNum = msg.size / 16
+        // 每个汉字16像素宽，240像素可以显示15个汉字，留出边距显示14个
+        val charsPerLine = 28  // 14个汉字 = 28字节
+        var lineNum = msg.size / charsPerLine
+        if (msg.size % charsPerLine != 0) lineNum++
         if (lineNum >= 5) lineNum = 4
-        val textY = 39 - lineNum * 8
-        canvas.drawBitmap(bmpInformationBg[lineNum], 11, textY - 2)
-        TextRender.drawText(canvas, msg, 0, Rect(16, textY, 16 + 16 * 8, textY + 16 * lineNum + 16))
+        
+        // 居中显示在320x192的屏幕上
+        // 消息框宽度为240像素 (背景框)
+        val boxWidth = 240
+        val boxX = (Global.SCREEN_WIDTH - boxWidth) / 2  // (320 - 240) / 2 = 40
+        
+        // 垂直居中，考虑行数
+        val boxHeight = lineNum * 16 + 20  // 每行16像素高，加上边框
+        val boxY = (Global.SCREEN_HEIGHT - boxHeight) / 2  // 垂直居中
+        val textY = boxY + 2  // 文字相对于框的偏移
+        
+        canvas.drawBitmap(bmpInformationBg[lineNum], boxX, boxY - 2)
+        // 文字区域宽度: 14个汉字 * 16像素 = 224像素，居中在240宽的框内
+        val textWidth = 224
+        val textX = boxX + (boxWidth - textWidth) / 2  // 文字在框内居中
+        TextRender.drawText(canvas, msg, 0, Rect(textX, textY, textX + textWidth, textY + 16 * lineNum + 16))
     }
 
     fun drawSideFrame(canvas: Canvas) {
         canvas.drawBitmap(bmpSideFrame, 0, 0)
-        canvas.drawBitmap(bmpSideFrame, 152, 0)
+        canvas.drawBitmap(bmpSideFrame, Global.SCREEN_WIDTH - 8, 0)
     }
 
     init {

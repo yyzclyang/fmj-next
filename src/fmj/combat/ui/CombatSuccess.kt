@@ -40,7 +40,8 @@ class CombatSuccess(private val parent: GameNode, exp: Int, money: Int, private 
             if (magicChain != null) {
                 val newNum = p.levelupChain.getLearnMagicNum(p.level)
                 val oldNum = p.levelupChain.getLearnMagicNum(p.level - 1)
-                (oldNum until newNum).mapTo(mLvupList) {
+                val maxMagicCount = magicChain.getMagicCount()
+                (oldNum until kotlin.math.min(newNum, maxMagicCount)).mapTo(mLvupList) {
                     LearnMagicScreen(parent, p.name, magicChain.getMagic(it).magicName)
                 }
             }
@@ -89,8 +90,15 @@ class LevelupScreen(override val parent: GameNode, p: Player) : BaseScreen {
     private val mInfo: Bitmap
 
     init {
-        val ri = DatLib.getRes(DatLib.ResType.PIC, 2, 9) as ResImage
-        mInfo = ri.getBitmap(0)!!
+        val riRes = DatLib.getRes(DatLib.ResType.PIC, 2, 9, false)
+        val ri = if (riRes is ResImage) riRes else {
+            println("Warning: Failed to load PIC resource 2,9 for CombatSuccess")
+            ResImage() // 使用空的 ResImage
+        }
+        mInfo = ri.getBitmap(0) ?: run {
+            println("Warning: Failed to get bitmap from resource")
+            Bitmap(120, 96) // 创建默认大小的空位图
+        }
 
         val canvas = Canvas(mInfo)
         val lc = p.levelupChain
@@ -120,7 +128,7 @@ class LevelupScreen(override val parent: GameNode, p: Player) : BaseScreen {
     override fun update(delta: Long) {}
 
     override fun draw(canvas: Canvas) {
-        canvas.drawBitmap(mInfo, (160 - mInfo.width) / 2, (96 - mInfo.height) / 2)
+        canvas.drawBitmap(mInfo, (Global.SCREEN_WIDTH - mInfo.width) / 2, (Global.SCREEN_HEIGHT - mInfo.height) / 2)
     }
 
     override fun onKeyDown(key: Int) {}
@@ -135,11 +143,15 @@ class MsgScreen(override val parent: GameNode, private val mY: Int, _msg: String
 
     private val mX: Int
 
-    constructor(parent: GameNode, msg: String) : this(parent,(96 - 24) / 2, msg)
+    constructor(parent: GameNode, msg: String) : this(parent,(Global.SCREEN_HEIGHT - 24) / 2, msg)
 
     init {
         val msg = _msg.gbkBytes()
-        val side = DatLib.getRes(DatLib.ResType.PIC, 2, 8) as ResImage
+        val sideRes = DatLib.getRes(DatLib.ResType.PIC, 2, 8, true)
+        val side = if (sideRes is ResImage) sideRes else {
+            println("Warning: Failed to load PIC resource 2,8 for MsgScreen")
+            ResImage() // 使用空的 ResImage
+        }
         mMsg = Bitmap.createBitmap(msg.size * 8 + 8, 24)
         val c = Canvas(mMsg)
         c.drawColor(Global.COLOR_WHITE)
@@ -152,7 +164,7 @@ class MsgScreen(override val parent: GameNode, private val mY: Int, _msg: String
         c.drawLine(0, 22, mMsg.width, 22, p)
         TextRender.drawText(c, msg, 4, 4)
 
-        mX = (160 - mMsg.width) / 2
+        mX = (Global.SCREEN_WIDTH - mMsg.width) / 2
     }
 
     override fun update(delta: Long) {}
@@ -169,7 +181,17 @@ class MsgScreen(override val parent: GameNode, private val mY: Int, _msg: String
 
 class LearnMagicScreen(override val parent: GameNode, playerName: String, magicName: String) : BaseScreen {
 
-    private val mInfo: Bitmap = (DatLib.getRes(DatLib.ResType.PIC, 2, 10) as ResImage).getBitmap(0)!!
+    private val mInfo: Bitmap = run {
+        val infoRes = DatLib.getRes(DatLib.ResType.PIC, 2, 10, false)
+        val infoImage = if (infoRes is ResImage) infoRes else {
+            println("Warning: Failed to load PIC resource 2,10 for LearnMagicScreen")
+            ResImage()
+        }
+        infoImage.getBitmap(0) ?: run {
+            println("Warning: Failed to get bitmap for LearnMagicScreen")
+            Bitmap(120, 80) // 默认大小
+        }
+    }
 
     init {
         var pn: ByteArray
@@ -190,7 +212,7 @@ class LearnMagicScreen(override val parent: GameNode, playerName: String, magicN
     override fun update(delta: Long) {}
 
     override fun draw(canvas: Canvas) {
-        canvas.drawBitmap(mInfo, (160 - mInfo.width) / 2, (96 - mInfo.height) / 2)
+        canvas.drawBitmap(mInfo, (Global.SCREEN_WIDTH - mInfo.width) / 2, (Global.SCREEN_HEIGHT - mInfo.height) / 2)
     }
 
     override fun onKeyDown(key: Int) {}

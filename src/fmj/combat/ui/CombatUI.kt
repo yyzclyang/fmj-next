@@ -19,6 +19,8 @@ import fmj.lib.DatLib
 import fmj.lib.ResImage
 import fmj.magic.BaseMagic
 import fmj.magic.MagicAttack
+import fmj.magic.MagicAuxiliary
+import fmj.magic.MagicRestore
 import fmj.magic.MagicSpecial
 import fmj.magic.ScreenMagic
 import fmj.scene.SaveLoadGame
@@ -32,6 +34,7 @@ import graphics.Rect
 
 import java.System
 import java.gbkBytes
+import fmj.combat.Combat
 
 class CombatUI(override val parent: GameNode,
                private val mCallBack: CallBack?,
@@ -51,18 +54,32 @@ class CombatUI(override val parent: GameNode,
     /** 标记action作用的敌人角色 */
     private val mMonsterIndicator: FrameAnimation
 
-    private val mHeadsImg = arrayOf(
-            DatLib.getRes(DatLib.ResType.PIC, 1, 1) as ResImage,
-            DatLib.getRes(DatLib.ResType.PIC, 1, 2) as ResImage,
-            DatLib.getRes(DatLib.ResType.PIC, 1, 3) as ResImage,
-            DatLib.getRes(DatLib.ResType.PIC, 1, 4) as ResImage,
-            DatLib.getRes(DatLib.ResType.PIC, 1, 5) as ResImage,
-            DatLib.getRes(DatLib.ResType.PIC, 1, 6) as ResImage,
-            DatLib.getRes(DatLib.ResType.PIC, 1, 7) as ResImage,
-            DatLib.getRes(DatLib.ResType.PIC, 1, 8) as ResImage)
+    private fun loadSafeResImage(type: Int, index: Int): ResImage {
+        val res = DatLib.getRes(DatLib.ResType.PIC, type, index, false)
+        return if (res is ResImage) {
+            res
+        } else {
+            println("Warning: Failed to load PIC resource type=$type, index=$index")
+            ResImage() // 返回空的 ResImage
+        }
+    }
 
-    private val selectedPlayer: Player
-        get() = mPlayerList[mCurPlayerIndex]
+    private val mHeadsImg = arrayOf(
+            loadSafeResImage(1, 1),
+            loadSafeResImage(1, 2),
+            loadSafeResImage(1, 3),
+            loadSafeResImage(1, 4),
+            loadSafeResImage(1, 5),
+            loadSafeResImage(1, 6),
+            loadSafeResImage(1, 7),
+            loadSafeResImage(1, 8))
+
+    private val selectedPlayer: Player?
+        get() = if (mPlayerList.isEmpty() || mCurPlayerIndex < 0 || mCurPlayerIndex >= mPlayerList.size) {
+            null
+        } else {
+            mPlayerList[mCurPlayerIndex]
+        }
 
     interface CallBack {
         /**
@@ -90,11 +107,11 @@ class CombatUI(override val parent: GameNode,
     init {
         mScreenStack.pushScreen(MainMenu(this))
 
-        var tmpImg = DatLib.getRes(DatLib.ResType.PIC, 2, 4) as ResImage
-        mPlayerIndicator = FrameAnimation(tmpImg, 1, 2)
-        mTargetIndicator = FrameAnimation(tmpImg, 3, 4)
-        tmpImg = DatLib.getRes(DatLib.ResType.PIC, 2, 3) as ResImage
-        mMonsterIndicator = FrameAnimation(tmpImg)
+        val tmpImg1 = loadSafeResImage(2, 4)
+        mPlayerIndicator = FrameAnimation(tmpImg1, 1, 2)
+        mTargetIndicator = FrameAnimation(tmpImg1, 3, 4)
+        val tmpImg2 = loadSafeResImage(2, 3)
+        mMonsterIndicator = FrameAnimation(tmpImg2)
     }
 
     override fun update(delta: Long) {
@@ -150,37 +167,52 @@ class CombatUI(override val parent: GameNode,
     private inner class MainMenu(override val parent: GameNode) : BaseScreen {
 
         /** 1↑、2←、3↓、4→ */
-        private val mMenuIcon = DatLib.getRes(DatLib.ResType.PIC, 2, 1) as ResImage
+        private val mMenuIcon = loadSafeResImage(2, 1)
 
         /** 显示角色HP MP的背景图 */
-        private val mPlayerInfoBg = DatLib.getRes(DatLib.ResType.PIC, 2, 2) as ResImage
+        private val mPlayerInfoBg = loadSafeResImage(2, 2)
 
         private var mCurIconIndex = 1
 
         override fun update(delta: Long) {
+            val player = selectedPlayer ?: return
             when {
-                selectedPlayer.isConfusing -> onActionSelected(ActionNop(selectedPlayer))
-                selectedPlayer.isSleeping -> onActionSelected(ActionNop(selectedPlayer))
+                player.isConfusing -> onActionSelected(ActionNop(player))
+                player.isSleeping -> onActionSelected(ActionNop(player))
                 else -> mPlayerIndicator.update(delta)
             }
         }
 
         override fun draw(canvas: Canvas) {
-            mMenuIcon.draw(canvas, mCurIconIndex, 7, 96 - mMenuIcon.height)
-            mPlayerInfoBg.draw(canvas, 1, 49, 66)
-            val p = selectedPlayer
-            mHeadsImg[p.index - 1].draw(canvas, 1, 50, 63) // 角色头像
-            Util.drawSmallNum(canvas, p.hp, 79, 72) // hp
-            Util.drawSmallNum(canvas, p.maxHP, 104, 72) // maxhp
-            Util.drawSmallNum(canvas, p.mp, 79, 83) // mp
-            Util.drawSmallNum(canvas, p.maxMP, 104, 83) // maxmp
-            mPlayerIndicator.draw(canvas, sPlayerIndicatorPos[mCurPlayerIndex].x, sPlayerIndicatorPos[mCurPlayerIndex].y)
+            val centerOffsetX = (Global.SCREEN_WIDTH - 160) / 2
+            val centerOffsetY = (Global.SCREEN_HEIGHT - 96) / 2 - 15
+
+            // 安全绘制菜单图标，检查高度是否有效
+            val menuIconHeight = if (mMenuIcon.height > 0) mMenuIcon.height else 16
+            mMenuIcon.draw(canvas, mCurIconIndex, 20, Global.SCREEN_HEIGHT - menuIconHeight - 20)
+
+            val p = selectedPlayer ?: return
+            mPlayerInfoBg.draw(canvas, 1, 49 + centerOffsetX, 66 + centerOffsetY)
+
+            // 安全检查头像索引是否有效
+            val headIndex = p.index - 1
+            if (headIndex >= 0 && headIndex < mHeadsImg.size) {
+                mHeadsImg[headIndex].draw(canvas, 1, 50 + centerOffsetX, 63 + centerOffsetY) // 角色头像
+            }
+            Util.drawSmallNum(canvas, p.hp, 79 + centerOffsetX, 72 + centerOffsetY) // hp
+            Util.drawSmallNum(canvas, p.maxHP, 108 + centerOffsetX, 72 + centerOffsetY) // maxhp
+            Util.drawSmallNum(canvas, p.mp, 79 + centerOffsetX, 83 + centerOffsetY) // mp
+            Util.drawSmallNum(canvas, p.maxMP, 108 + centerOffsetX, 83 + centerOffsetY) // maxmp
+            if (mCurPlayerIndex < sPlayerIndicatorPos.size) {
+                mPlayerIndicator.draw(canvas, sPlayerIndicatorPos[mCurPlayerIndex].x, sPlayerIndicatorPos[mCurPlayerIndex].y)
+            }
         }
 
         override fun onKeyDown(key: Int) {
             when (key) {
                 Global.KEY_LEFT -> {
-                    if (selectedPlayer.isSealed) {
+                    val player = selectedPlayer
+                    if (player?.isSealed == true) {
                         return // 被封，不能用魔法
                     }
                     mCurIconIndex = 2
@@ -208,9 +240,10 @@ class CombatUI(override val parent: GameNode,
                 when (mCurIconIndex) {
                     1//物理攻击
                     -> {
+                        val player = selectedPlayer ?: return
                         // 攻击全体敌人
-                        if (selectedPlayer.hasAtbuff(FightingCharacter.BUFF_MASK_ALL)) {
-                            onActionSelected(ActionPhysicalAttackAll(selectedPlayer, mMonsterList))
+                        if (player.hasAtbuff(FightingCharacter.BUFF_MASK_ALL)) {
+                            onActionSelected(ActionPhysicalAttackAll(player, mMonsterList))
                             return
                         }
 
@@ -219,49 +252,69 @@ class CombatUI(override val parent: GameNode,
                                 mMonsterList, object : OnCharacterSelectedListener {
 
                             override fun onCharacterSelected(fc: FightingCharacter) {
-                                onActionSelected(ActionPhysicalAttackOne(selectedPlayer, fc))
+                                onActionSelected(ActionPhysicalAttackOne(player, fc))
                             }
                         }, true))
                     }
 
                     2//魔法技能
                     -> run {
-                        val magics = selectedPlayer.getAllMagics()
+                        val player = selectedPlayer ?: return@run
+                        val magics = player.getAllMagics()
                         if (magics.isEmpty()) {
                             return@run
                         }
                         pushScreen(ScreenMagic(this, magics,
-                                selectedPlayer.mp,
+                                player.mp,
                                 object : ScreenMagic.OnItemSelectedListener {
 
                                     override fun onItemSelected(magic: BaseMagic) {
                                         popScreen() // 弹出魔法选择界面
                                         if (magic is MagicAttack || magic is MagicSpecial) { // 选一个敌人
                                             if (magic.isForAll) {
-                                                onActionSelected(ActionMagicAttackAll(selectedPlayer,
+                                                onActionSelected(ActionMagicAttackAll(player,
                                                         mMonsterList, magic as MagicAttack))
                                             } else { // 选一个敌人
                                                 pushScreen(MenuCharacterSelect(this@MainMenu, mMonsterIndicator, sMonsterIndicatorPos,
                                                         mMonsterList, object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
-                                                        onActionSelected(ActionMagicAttackOne(selectedPlayer, fc, magic))
+                                                        onActionSelected(ActionMagicAttackOne(player, fc, magic))
                                                     }
                                                 }, true))
                                             }
                                         } else { // 选队友或自己
                                             if (magic.isForAll) {
-                                                onActionSelected(ActionMagicHelpAll(selectedPlayer,
+                                                onActionSelected(ActionMagicHelpAll(player,
                                                         mPlayerList, magic))
                                             } else { // 选一个Player
+                                                // 根据魔法类型决定是否忽略阵亡角色
+                                                // MagicAuxiliary(辅助型) = 复活类魔法，可以选择阵亡角色
+                                                // MagicRestore(恢复型) = 普通加血魔法，只能选择存活角色
+                                                val ignoreDead = when (magic) {
+                                                    is MagicAuxiliary -> {
+                                                        println("CombatUI: 辅助型魔法 ${magic.magicName}，允许选择阵亡角色")
+                                                        false // 辅助型魔法(起死回生)可以选择阵亡角色
+                                                    }
+                                                    is MagicRestore -> {
+                                                        println("CombatUI: 恢复型魔法 ${magic.magicName}，只能选择存活角色")
+                                                        true // 恢复型魔法只能选择存活角色
+                                                    }
+                                                    else -> {
+                                                        println("CombatUI: 其他类型魔法 ${magic::class.simpleName}，只能选择存活角色")
+                                                        true // 其他魔法默认只能选择存活角色
+                                                    }
+                                                }
+                                                
                                                 pushScreen(MenuCharacterSelect(this@MainMenu, mTargetIndicator, sPlayerIndicatorPos,
                                                         mPlayerList, object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
-                                                        onActionSelected(ActionMagicHelpOne(selectedPlayer,
+                                                        val player = selectedPlayer ?: return
+                                                        onActionSelected(ActionMagicHelpOne(player,
                                                                 fc, magic))
                                                     }
-                                                }, false))
+                                                }, ignoreDead))
                                             }
                                         }
                                     }
@@ -272,17 +325,26 @@ class CombatUI(override val parent: GameNode,
                     -> pushScreen(MenuMisc(this))
 
                     4//合击
-                    -> pushScreen(MenuCharacterSelect(this, mMonsterIndicator, sMonsterIndicatorPos,
-                            mMonsterList, object : OnCharacterSelectedListener {
-
-                        override fun onCharacterSelected(fc: FightingCharacter) {
-                            val lst = arrayListOf<Player>()
-                            val first = selectedPlayer
-                            lst.add(first)
-                            lst.addAll(mPlayerList.filter { it.isAlive && it != first })
-                            onActionSelected(ActionCoopMagic(lst, fc))
+                    -> {
+                        // 检查第一个玩家是否装备了合击装备
+                        val first = selectedPlayer ?: return
+                        val decoration = first.equipmentsArray[0] as? fmj.goods.GoodsDecorations
+                        if (decoration?.coopMagic == null) {
+                            // 如果没有合击装备，仍然允许使用普通合击（物理攻击）
+                            // 但可以在这里添加提示信息或其他逻辑
                         }
-                    }, true))
+                        
+                        pushScreen(MenuCharacterSelect(this, mMonsterIndicator, sMonsterIndicatorPos,
+                                mMonsterList, object : OnCharacterSelectedListener {
+
+                            override fun onCharacterSelected(fc: FightingCharacter) {
+                                val lst = arrayListOf<Player>()
+                                lst.add(first)
+                                lst.addAll(mPlayerList.filter { it.isAlive && it != first })
+                                onActionSelected(ActionCoopMagic(lst, fc))
+                            }
+                        }, true))
+                    }
                 }
             } else if (key == Global.KEY_CANCEL) {
                 this@CombatUI.onCancel()
@@ -314,11 +376,19 @@ class CombatUI(override val parent: GameNode,
         private var mCurSel: Int = 0
 
         init {
-            for (i in 0 until mList.size) {
-                if (mList[i].isAlive) {
-                    mCurSel = i
-                    break
+            if (mIgnoreDead) {
+                // 如果需要忽略阵亡角色，找第一个存活的
+                for (i in 0 until mList.size) {
+                    if (mList[i].isAlive) {
+                        mCurSel = i
+                        println("MenuCharacterSelect: ignoreDead=true, 选择存活角色 $i: ${mList[i].name} (HP: ${mList[i].hp})")
+                        break
+                    }
                 }
+            } else {
+                // 如果不忽略阵亡角色（如使用复活道具），默认选择第一个角色
+                mCurSel = 0
+                println("MenuCharacterSelect: ignoreDead=false, 选择第一个角色 $mCurSel: ${mList[mCurSel].name} (HP: ${mList[mCurSel].hp})")
             }
         }
 
@@ -328,14 +398,7 @@ class CombatUI(override val parent: GameNode,
 
         override fun draw(canvas: Canvas) {
             mIndicator.draw(canvas, mIndicatorPos[mCurSel].x, mIndicatorPos[mCurSel].y)
-            if (mIndicator == this@CombatUI.mTargetIndicator) { // 当前选择角色
-                val p = this@CombatUI.mPlayerList[mCurSel]
-                mHeadsImg[p.index - 1].draw(canvas, 1, 50, 63) // 角色头像
-                Util.drawSmallNum(canvas, p.hp, 79, 72) // hp
-                Util.drawSmallNum(canvas, p.maxHP, 104, 72) // maxhp
-                Util.drawSmallNum(canvas, p.mp, 79, 83) // mp
-                Util.drawSmallNum(canvas, p.maxMP, 104, 83) // maxmp
-            }
+            // 移除重复的玩家信息绘制，因为MainMenu已经在绘制这些信息了
         }
 
         private fun selectNextTarget() {
@@ -343,6 +406,7 @@ class CombatUI(override val parent: GameNode,
                 ++mCurSel
                 mCurSel %= mList.size
             } while (mIgnoreDead && !mList[mCurSel].isAlive)
+            println("MenuCharacterSelect: 切换到下一个目标 $mCurSel: ${mList[mCurSel].name} (HP: ${mList[mCurSel].hp}) ignoreDead=$mIgnoreDead")
         }
 
         private fun selectPreTarget() {
@@ -350,6 +414,7 @@ class CombatUI(override val parent: GameNode,
                 --mCurSel
                 mCurSel = (mCurSel + mList.size) % mList.size
             } while (mIgnoreDead && !mList[mCurSel].isAlive)
+            println("MenuCharacterSelect: 切换到上一个目标 $mCurSel: ${mList[mCurSel].name} (HP: ${mList[mCurSel].hp}) ignoreDead=$mIgnoreDead")
         }
 
         override fun onKeyDown(key: Int) {
@@ -364,6 +429,7 @@ class CombatUI(override val parent: GameNode,
             if (key == Global.KEY_CANCEL) {
                 popScreen()
             } else if (key == Global.KEY_ENTER) {
+                println("MenuCharacterSelect: 确认选择角色 $mCurSel: ${mList[mCurSel].name} (HP: ${mList[mCurSel].hp}/${mList[mCurSel].maxHP})")
                 popScreen()
                 mOnCharacterSelectedListener?.onCharacterSelected(mList[mCurSel])
             }
@@ -411,7 +477,7 @@ class CombatUI(override val parent: GameNode,
                     -> pushScreen(MenuGoods(this))
                     2//防御
                     -> {
-                        val p = selectedPlayer
+                        val p = selectedPlayer ?: return
                         p.fightingSprite!!.currentFrame = 9
                         this@CombatUI.onActionSelected(ActionDefend(p))
                     }
@@ -431,10 +497,10 @@ class CombatUI(override val parent: GameNode,
         /** 战斗中，显示玩家异常状态 */
         private inner class MenuState(override val parent: GameNode) : BaseScreen {
 
-            private val mBg = DatLib.getRes(DatLib.ResType.PIC, 2, 11) as ResImage
+            private val mBg = loadSafeResImage(2, 11)
 
             /**1↑2↓3×4√5回 */
-            private val mMarker = DatLib.getRes(DatLib.ResType.PIC, 2, 12) as ResImage
+            private val mMarker = loadSafeResImage(2, 12)
 
             private var mCurPlayer: Int = 0
 
@@ -445,8 +511,8 @@ class CombatUI(override val parent: GameNode,
             override fun update(delta: Long) {}
 
             override fun draw(canvas: Canvas) {
-                val x = (160 - mBg.width) / 2
-                val y = (96 - mBg.height) / 2
+                val x = (Global.SCREEN_WIDTH - mBg.width) / 2
+                val y = (Global.SCREEN_HEIGHT - mBg.height) / 2
                 mBg.draw(canvas, 1, x, y)
                 val p = mPlayerList[this.mCurPlayer]
                 p.drawHead(canvas, x + 7, y + 4)
@@ -565,7 +631,7 @@ class CombatUI(override val parent: GameNode,
                     0// 装备
                     -> pushScreen(ScreenGoodsList(this, Player.sGoodsList.equipList,
                             object : ScreenGoodsList.OnItemSelectedListener {
-                                override fun onItemSelected(goods: BaseGoods) {
+                                override fun onItemSelected(goods: BaseGoods, index: Int) {
                                     equipSelected(goods)
                                 }
                             }, Mode.Use))
@@ -573,21 +639,22 @@ class CombatUI(override val parent: GameNode,
                     1// 投掷
                     -> pushScreen(ScreenGoodsList(this, throwableGoodsList,
                             object : ScreenGoodsList.OnItemSelectedListener {
-                                override fun onItemSelected(goods: BaseGoods) {
+                                override fun onItemSelected(goods: BaseGoods, index: Int) {
                                     popScreen() // pop goods list
                                     popScreen() // pop misc menu
+                                    val player = selectedPlayer ?: return
                                     if (goods.effectAll()) {
-                                        game.bag.deleteGoods(goods)
+                                        game.bag.useGoodsNum(goods.type, goods.index, 1)
                                         // 投掷伤害全体敌人
-                                        onActionSelected(ActionThrowItemAll(selectedPlayer, mMonsterList, goods as Throwable))
+                                        onActionSelected(ActionThrowItemAll(player, mMonsterList, goods as Throwable))
                                     } else { // 选一个敌人
                                         pushScreen(MenuCharacterSelect(this@CombatUI, mMonsterIndicator, sMonsterIndicatorPos, mMonsterList,
                                                 object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
-                                                        game.bag.deleteGoods(goods)
+                                                        game.bag.useGoodsNum(goods.type, goods.index, 1)
                                                         // add throw action
-                                                        onActionSelected(ActionThrowItemOne(selectedPlayer,
+                                                        onActionSelected(ActionThrowItemOne(player,
                                                                 fc, goods as Throwable))
                                                     }
                                                 }, true))
@@ -599,22 +666,29 @@ class CombatUI(override val parent: GameNode,
                     -> pushScreen(ScreenGoodsList(this, useableGoodsList,
                             object : ScreenGoodsList.OnItemSelectedListener {
 
-                                override fun onItemSelected(goods: BaseGoods) {
+                                override fun onItemSelected(goods: BaseGoods, index: Int) {
                                     popScreen() // pop goods list
                                     popScreen() // pop misc menu
+                                    val player = selectedPlayer ?: return
                                     if (goods.effectAll()) {
-                                        game.bag.deleteGoods(goods)
-                                        onActionSelected(ActionUseItemAll(selectedPlayer, mPlayerList, goods))
+                                        game.bag.useGoodsNum(goods.type, goods.index, 1)
+                                        onActionSelected(ActionUseItemAll(player, mPlayerList, goods))
                                     } else { // 选一个角色治疗
+                                        // 根据药物类型决定是否忽略阵亡角色
+                                        val ignoreDead = when {
+                                            goods.type == 10 -> false // 灵药(复活药)可以选择阵亡角色
+                                            else -> true              // 普通药物只能选择存活角色
+                                        }
+                                        
                                         pushScreen(MenuCharacterSelect(this@MenuGoods, mTargetIndicator, sPlayerIndicatorPos, mPlayerList,
                                                 object : OnCharacterSelectedListener {
 
                                                     override fun onCharacterSelected(fc: FightingCharacter) {
-                                                        game.bag.deleteGoods(goods)
-                                                        onActionSelected(ActionUseItemOne(selectedPlayer,
+                                                        game.bag.useGoodsNum(goods.type, goods.index, 1)
+                                                        onActionSelected(ActionUseItemOne(player,
                                                                 fc, goods))
                                                     }
-                                                }, false))
+                                                }, ignoreDead))
                                     }
                                 }
                             }, Mode.Use))
@@ -712,7 +786,10 @@ class CombatUI(override val parent: GameNode,
     }
 
     companion object {
-        private val sPlayerIndicatorPos = arrayOf(Point(69, 45), Point(101, 41), Point(133, 33))
-        private val sMonsterIndicatorPos = arrayOf(Point(16, 14), Point(48, 3), Point(86, 0))
+        // 指示器位置直接引用角色实际坐标，保证光标和角色对齐
+        private val sPlayerIndicatorPos: Array<Point>
+            get() = Combat.sPlayerPos
+        private val sMonsterIndicatorPos: Array<Point>
+            get() = Monster.arr.map { Point(it[0], it[1]) }.toTypedArray()
     }
 }

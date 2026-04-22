@@ -48,14 +48,23 @@ class ScreenTakeMedicine(override val parent: GameNode, private val mMedicine: B
             popScreen()
         } else if (key == Global.KEY_ENTER) {
             if (mMedicine.goodsNum > 0) {
+                val targetPlayer = game.playerList[mActorIndex]
+                
+                // 检查普通药物是否可以对目标使用
+                if (mMedicine.type == 9 && !targetPlayer.isAlive) {
+                    // 普通药物不能对阵亡角色使用，显示提示或直接返回
+                    return
+                }
+                
                 if (mMedicine.type == 9 && (mMedicine as GoodsMedicine).effectAll()) { // 普通药物，判断是否全体
                     for (i in game.playerList.indices.reversed()) {
                         (mMedicine as IEatMedicine).eat(game.playerList[i])
                     }
                 } else { // 仙药、灵药 不具有全体效果
-                    (mMedicine as IEatMedicine).eat(game.playerList[mActorIndex])
+                    (mMedicine as IEatMedicine).eat(targetPlayer)
                 }
-                game.bag.deleteGoods(mMedicine)
+                // 使用 useGoodsNum 减少1个数量，而不是删除整个物品
+                game.bag.useGoodsNum(mMedicine.type, mMedicine.index, 1)
             } else {
                 popScreen()
             }

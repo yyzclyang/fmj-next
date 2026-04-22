@@ -13,7 +13,11 @@ class ActionMagicHelpAll(attacker: FightingCharacter,
 
     private var state = 1
 
-    private var animation: ResSrs = magic.magicAni!!
+    private lateinit var animation: ResSrs
+    
+    // 动画显示位置
+    internal var mAnix: Int = 0
+    internal var mAniy: Int = 0
 
     internal var ox: Int = 0
     internal var oy: Int = 0
@@ -22,14 +26,41 @@ class ActionMagicHelpAll(attacker: FightingCharacter,
 
     override fun preproccess() {
         val attacker = mAttacker?:return
-        mTargets.forEach { it.backupStatus() }
+        println("ActionMagicHelpAll: 准备执行群体魔法，施术者: ${attacker.name}, 目标数量: ${mTargets.size}")
+        mTargets.forEach { 
+            println("  目标: ${it.name} at (${it.combatX}, ${it.combatY}), isPlayer=${it is Player}")
+            it.backupStatus() 
+        }
 
         ox = attacker.combatX
         oy = attacker.combatY
+        animation = magic.magicAni!!
         animation.start()
         animation.setIteratorNum(2)
-        mTargets.forEach {
-            magic.use(mAttacker!!, it)
+        
+        // 动画显示在第一个目标的位置
+        if (mTargets.isNotEmpty()) {
+            val firstTarget = mTargets[0]
+            mAnix = firstTarget.combatX
+            mAniy = firstTarget.combatY - (firstTarget.fightingSprite?.height ?: 16) / 2
+            println("ActionMagicHelpAll: 动画位置计算完成（第一个目标位置） -> ($mAnix, $mAniy)")
+        }
+        
+        // 修复：群体恢复魔法只消耗一次MP
+        val currentMagic = magic
+        if (currentMagic is fmj.magic.MagicRestore) {
+            // 恢复魔法：只消耗一次MP，对所有目标应用效果
+            if (attacker.mp >= currentMagic.costMp) {
+                attacker.mp = attacker.mp - currentMagic.costMp
+                mTargets.forEach {
+                    currentMagic.applyEffect(attacker, it)
+                }
+            }
+        } else {
+            // 其他类型的群体辅助魔法，暂时保持原逻辑
+            mTargets.forEach {
+                magic.use(attacker, it)
+            }
         }
         mRaiseAnimations.addAll(mTargets.map { it.diffToAnimation(false) })
     }
@@ -63,7 +94,8 @@ class ActionMagicHelpAll(attacker: FightingCharacter,
 
     override fun draw(canvas: Canvas) {
         if (state == STATE_ANI) {
-            animation.draw(canvas, 0, 0)
+            println("ActionMagicHelpAll: 绘制动画 at ($mAnix, $mAniy)")
+            animation.drawAbsolutely(canvas, mAnix, mAniy)
         } else if (state == STATE_AFT) {
             drawRaiseAnimation(canvas)
         }

@@ -15,13 +15,18 @@ class GoodsDecorations : GoodsEquipment() {
     private var mHp: Int = 0 // 表示战斗时，每回合恢复或扣除多少生命
     private var mMagic: Int = 0 // 合体魔方序号
 
-    val coopMagic: MagicAttack
-        get() = DatLib.getRes(DatLib.ResType.MRS, 1, mMagic) as MagicAttack
+    val coopMagic: MagicAttack?
+        get() = if (mMagic > 0) {
+            val res = DatLib.getRes(DatLib.ResType.MRS, 1, mMagic, true)
+            if (res is MagicAttack) res else null
+        } else {
+            null
+        }
 
     override fun setOtherData(buf: ByteArray, offset: Int) {
         mMp = get1ByteSInt(buf, offset + 0x16)
         mHp = get1ByteSInt(buf, offset + 0x17)
-        mdf = get1ByteSInt(buf, offset + 0x18)
+        mdf = buf[offset + 0x18].toInt() and 0xff
         mat = buf[offset + 0x19].toInt() and 0xff
         mlingli = get1ByteSInt(buf, offset + 0x1a)
         mSpeed = get1ByteSInt(buf, offset + 0x1b)

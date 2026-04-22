@@ -6,6 +6,7 @@ import fmj.graphics.Tiles
 
 import graphics.Canvas
 import graphics.Color
+import graphics.Paint
 import java.System
 import java.gbkString
 
@@ -115,22 +116,81 @@ class ResMap : ResBase() {
      * @param top
      * 地图的最上边
      */
-    fun drawMap(canvas: Canvas, left: Int, top: Int) {
+    fun drawMap(canvas: Canvas, left: Int, top: Int, treasureBoxes: List<TreasureBoxInfo> = emptyList(), showEvents: Boolean = false) {
         if (mTiles == null) {
             mTiles = Tiles(mTilIndex)
         }
 
-        val minY = minOf(HEIGHT, mapHeight - top)
-        val minX = minOf(WIDTH, mapWidth - left)
-        for (y in 0 until minY) {
-            for (x in 0 until minX) {
+        // 绘制完整的视口，使用相邻图块填充空白区域
+        for (y in 0 until HEIGHT) {
+            for (x in 0 until WIDTH) {
+                val mapX = left + x
+                val mapY = top + y
+                
+                // 计算要使用的图块坐标（处理边界情况）
+                val tileX = when {
+                    mapX < mapWidth -> mapX
+                    mapWidth > 0 -> mapWidth - 1  // 使用最右边的图块
+                    else -> 0
+                }
+                
+                val tileY = when {
+                    mapY < mapHeight -> mapY
+                    mapHeight > 0 -> mapHeight - 1  // 使用最下面的图块
+                    else -> 0
+                }
+                
+                // 确保坐标在有效范围内
+                val safeTileX = maxOf(0, minOf(tileX, mapWidth - 1))
+                val safeTileY = maxOf(0, minOf(tileY, mapHeight - 1))
+                
                 mTiles!!.draw(canvas, x * Tiles.WIDTH + Global.MAP_LEFT_OFFSET,
-                        y * Tiles.HEIGHT, getTileIndex(left + x, top + y))
+                        y * Tiles.HEIGHT, getTileIndex(safeTileX, safeTileY))
+                
+                // 检查该位置是否有事件点或宝箱（只在视口范围内且坐标有效时检查）
+                if (mapX >= 0 && mapX < mapWidth && mapY >= 0 && mapY < mapHeight) {
+                    val sx = x * Tiles.WIDTH + Global.MAP_LEFT_OFFSET + 2
+                    val sy = y * Tiles.HEIGHT + 2
+                    
+                    // 检查该位置是否有宝箱（宝箱优先级更高）
+                    val treasureBox = treasureBoxes.find { it.x == mapX && it.y == mapY }
+                    if (treasureBox != null) {
+                        // 根据宝箱状态绘制不同颜色的指示符
+                        val fillColor = if (treasureBox.isCollected) Color.GRAY else Color.BLUE
+                        val fillPaint = Paint().apply {
+                            color = fillColor
+                            style = Paint.Style.FILL
+                        }
+                        val blackPaint = Paint().apply {
+                            color = Color.BLACK
+                            style = Paint.Style.STROKE
+                            strokeWidth = 1
+                        }
+                        // 填充颜色（蓝色=未获取，灰色=已获取）
+                        canvas.drawRect(sx + 4, sy + 4, sx + 8, sy + 8, fillPaint)
+                        // 黑色边框
+                        canvas.drawRect(sx + 4, sy + 4, sx + 8, sy + 8, blackPaint)
+                    } else if (showEvents) {
+                        // 如果没有宝箱但有事件点，绘制事件点指示符
+                        val eventNum = getEventNum(mapX, mapY)
+                        if (eventNum != 0) {
+                            // 绘制事件点指示符（红色小圆点）
+                            val redPaint = Paint().apply {
+                                color = Color.RED
+                                style = Paint.Style.FILL
+                            }
+                            // 绘制小方块表示事件点
+                            canvas.drawRect(sx + 4, sy + 4, sx + 8, sy + 8, redPaint)
+                        }
+                    }
+                }
             }
         }
     }
+    
+    data class TreasureBoxInfo(val x: Int, val y: Int, val name: String, val isCollected: Boolean = false)
 
-    fun drawWholeMap(canvas: Canvas, x: Int, y: Int) {
+    fun drawWholeMap(canvas: Canvas, x: Int, y: Int, showEvents: Boolean = true, treasureBoxes: List<TreasureBoxInfo> = emptyList()) {
         if (mTiles == null) {
             mTiles = Tiles(mTilIndex)
         }
@@ -140,12 +200,34 @@ class ResMap : ResBase() {
                 val sx = tx * Tiles.WIDTH + x
                 val sy = ty * Tiles.HEIGHT + y
                 mTiles!!.draw(canvas, sx, sy, getTileIndex(tx, ty))
-                val event = getEventNum(tx, ty)
-                if (event != 0) {
-                    // TODO: refactor
-                    Global.bgColor = Color.RED
-                    TextRender.drawText(canvas, event.toString(), sx, sy)
-                    Global.bgColor = Global.COLOR_WHITE
+                
+                // 检查该位置是否有宝箱（宝箱优先级更高）
+                val treasureBox = treasureBoxes.find { it.x == tx && it.y == ty }
+                if (treasureBox != null) {
+                    // 根据宝箱状态绘制不同颜色的指示符
+                    val fillColor = if (treasureBox.isCollected) Color.GRAY else Color.BLUE
+                    val fillPaint = Paint().apply {
+                        color = fillColor
+                        style = Paint.Style.FILL
+                    }
+                    val blackPaint = Paint().apply {
+                        color = Color.BLACK
+                        style = Paint.Style.STROKE
+                        strokeWidth = 1
+                    }
+                    // 填充颜色（蓝色=未获取，灰色=已获取）
+                    canvas.drawRect(sx + 4, sy + 4, sx + 12, sy + 12, fillPaint)
+                    // 黑色边框
+                    canvas.drawRect(sx + 4, sy + 4, sx + 12, sy + 12, blackPaint)
+                } else {
+                    // 如果没有宝箱，检查是否有事件点
+                    val event = getEventNum(tx, ty)
+                    if (showEvents && event != 0) {
+                        // TODO: refactor
+                        Global.bgColor = Color.RED
+                        TextRender.drawText(canvas, event.toString(), sx, sy)
+                        Global.bgColor = Global.COLOR_WHITE
+                    }
                 }
             }
         }
@@ -155,11 +237,11 @@ class ResMap : ResBase() {
         /**
          * 横向渲染的地图块总数
          */
-        val WIDTH = 160 / 16 - 1
+        val WIDTH = Global.SCREEN_WIDTH / 16 - 1
 
         /**
          * 纵向渲染的地图块总数
          */
-        val HEIGHT = 96 / 16
+        val HEIGHT = Global.SCREEN_HEIGHT / 16
     }
 }

@@ -51,7 +51,13 @@ abstract class BaseGoods : ResBase() {
         index = buf[offset + 1].toInt() and 0xFF
         mEnable = buf[offset + 3].toInt() and 0xFF
         sumRound = buf[offset + 4].toInt() and 0xff
-        mImage = DatLib.Companion.getRes(DatLib.ResType.GDP, type, buf[offset + 5].toInt() and 0xff) as ResImage
+        val imageRes = DatLib.Companion.getRes(DatLib.ResType.GDP, type, buf[offset + 5].toInt() and 0xff, true)
+        mImage = if (imageRes is ResImage) {
+            imageRes
+        } else {
+            println("Warning: Failed to load goods image for type=$type, index=${buf[offset + 5].toInt() and 0xff}")
+            null
+        }
         name = ResBase.getString(buf, offset + 6)
         buyPrice = ResBase.get2BytesInt(buf, offset + 0x12)
         sellPrice = ResBase.get2BytesInt(buf, offset + 0x14)
@@ -72,7 +78,7 @@ abstract class BaseGoods : ResBase() {
     }
 
     fun draw(canvas: Canvas, x: Int, y: Int) {
-        mImage!!.draw(canvas, 1, x, y)
+        mImage?.draw(canvas, 1, x, y)
     }
 
     /**
@@ -92,7 +98,15 @@ abstract class BaseGoods : ResBase() {
      * 比较物品编号是否相等
      */
     override fun equals(other: Any?): Boolean {
-        return type == (other as BaseGoods).type && index == other.index
+        if (this === other) return true
+        if (other !is BaseGoods) return false
+        return type == other.type && index == other.index
+    }
+
+    override fun hashCode(): Int {
+        var result = type
+        result = 31 * result + index
+        return result
     }
 }
 

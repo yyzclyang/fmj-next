@@ -22,6 +22,7 @@ import fmj.script.ScriptVM
 import graphics.Bitmap
 import graphics.Canvas
 import java.File
+import java.sysGetChoiceLibName
 
 
 class DatLib(buffer: ByteArray) {
@@ -64,6 +65,30 @@ class DatLib(buffer: ByteArray) {
             val low = mBuffer[j++].toInt() and 0xFF
             val high = mBuffer[j++].toInt() and 0xFF
             val value = block * 0x4000 or (high shl 8 or low)
+            
+            // 防护性检查：确保计算出的偏移量在有效范围内
+            if (value < 0 || value >= mBuffer.size - 6) {
+                continue
+            }
+            
+            // 检查数据是否损坏
+            if (value + 6 <= mBuffer.size) {
+                val testWidth = mBuffer[value + 2].toInt() and 0xFF
+                val testHeight = mBuffer[value + 3].toInt() and 0xFF
+                val testNumber = mBuffer[value + 4].toInt() and 0xFF
+                
+                // 检查多种损坏模式
+                val isCorrupted = when {
+                    // 异常大的尺寸（超出合理范围）
+                    testWidth > 250 && testHeight > 250 && testNumber > 250 -> true
+                    else -> false
+                }
+                
+                if (isCorrupted) {
+                    continue
+                }
+            }
+            
             mDataOffset.put(key, value)
             if (resType == 1) {
                 guts.add(Res(type, index))
@@ -139,7 +164,38 @@ class DatLib(buffer: ByteArray) {
                 else -> null
             }
         }
-        return res ?: throw Error("res not found:resType=$resType,type=$type,index=$index")
+        if (res == null) {
+            // Log warning for debugging but return a default resource instead of crashing
+            println("WARNING: res not found:resType=$resType,type=$type,index=$index")
+            
+            // Return an empty default resource based on type to prevent crashes
+            when (resType) {
+                ResType.MRS -> {
+                    // For invalid magic resources, return a basic MagicAttack with minimal properties
+                    if (type == 0 || index == 0) {
+                        return null // Type 0 or index 0 is intentionally null for MRS
+                    }
+                }
+                else -> {}
+            }
+        }
+        
+        if (res == null) {
+            // 对于图像资源，返回空占位符而不是崩溃
+            when (resType) {
+                ResType.TIL, ResType.ACP, ResType.GDP, ResType.GGJ, ResType.PIC -> {
+                    val emptyImg = ResImage()
+                    val emptyData = ByteArray(6)
+                    emptyData[0] = type.toByte()
+                    emptyData[1] = index.toByte()
+                    emptyImg.setData(emptyData, 0)
+                    return emptyImg
+                }
+                else -> return null
+            }
+        }
+        
+        return res
     }
 
     private fun getGoods(type: Int): BaseGoods? {
@@ -171,6 +227,7 @@ class DatLib(buffer: ByteArray) {
 
     private fun getMagic(type: Int): ResBase? {
         when (type) {
+            0 -> return null // Type 0 is invalid for magic resources
             1 -> return MagicAttack()
             2 -> return MagicEnhance()
             3 -> return MagicRestore()
@@ -225,7 +282,8 @@ class DatLib(buffer: ByteArray) {
 
     companion object {
         val instance: DatLib by lazy {
-            DatLib(File.contentsOf("DAT.LIB"))
+            val choiceLibName = sysGetChoiceLibName()
+            DatLib(File.contentsOf(choiceLibName+".LIB"))
         }
 
         fun getRes(resType: ResType, type: Int, index: Int, allowNull: Boolean = false): ResBase? {
@@ -233,23 +291,50 @@ class DatLib(buffer: ByteArray) {
         }
 
         fun getPic(type: Int, index: Int, allowNull: Boolean = false): ResImage? {
-            return getRes(ResType.PIC, type, index, allowNull) as ResImage?
+            val res = getRes(ResType.PIC, type, index, allowNull)
+            return if (res is ResImage) res else {
+                if (!allowNull) println("Warning: getPic failed for type=$type, index=$index")
+                null
+            }
         }
 
         fun getMlr(type: Int, index: Int, allowNull: Boolean = false): ResMagicChain? {
-            return getRes(ResType.MLR, type, index, allowNull) as ResMagicChain?
+            val res = getRes(ResType.MLR, type, index, allowNull)
+            return if (res is ResMagicChain) res else {
+                if (!allowNull) println("Warning: getMlr failed for type=$type, index=$index")
+                null
+            }
         }
 
         fun getACP(type: Int, index: Int, allowNull: Boolean = false): ResImage? {
-            return getRes(ResType.ACP, type, index, allowNull) as ResImage?
+            val res = getRes(ResType.ACP, type, index, allowNull)
+            return if (res is ResImage) res else {
+                if (!allowNull) println("Warning: getACP failed for type=$type, index=$index")
+                null
+            }
         }
 
         fun getMrsOrNull(type: Int, index: Int): BaseMagic? {
-            return getRes(ResType.MRS, type, index, true) as BaseMagic?
+            val res = getRes(ResType.MRS, type, index, true)
+            return if (res is BaseMagic) res else null
         }
 
         fun getMrs(type: Int, index: Int): BaseMagic {
-            return getRes(ResType.MRS, type, index, false) as BaseMagic
+            val res = getRes(ResType.MRS, type, index, false)
+            return when {
+                res is BaseMagic -> res
+                else -> {
+                    // 创建一个默认的魔法对象以防止崩溃
+                    println("Warning: getMrs failed for type=$type, index=$index, returning default magic")
+                    val defaultMagic = getMrsOrNull(1, 1) // 尝试获取基础攻击魔法
+                    if (defaultMagic != null) {
+                        defaultMagic
+                    } else {
+                        // 最后的保护措施
+                        throw IllegalStateException("Cannot create default magic for type=$type, index=$index")
+                    }
+                }
+            }
         }
 
         val missBitmap: Bitmap by lazy {

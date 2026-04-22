@@ -7,6 +7,7 @@ import fmj.lib.ResSrs
 import graphics.Canvas
 
 class ScreenAnimation(override val parent: GameNode, private val index: Int) : BaseScreen {
+    override val screenName: String = "ScreenAnimation($index)"
     private val mResSrs: ResSrs
 
     init {
@@ -33,7 +34,12 @@ class ScreenAnimation(override val parent: GameNode, private val index: Int) : B
 
     override fun draw(canvas: Canvas) {
         canvas.drawColor(Global.COLOR_WHITE)
-        mResSrs.draw(canvas, 0, 0)
+        // 假设动画原始尺寸为160x96，在320x192屏幕中居中显示
+        val animWidth = 160
+        val animHeight = 96
+        val centerX = (Global.SCREEN_WIDTH - animWidth) / 2
+        val centerY = (Global.SCREEN_HEIGHT - animHeight) / 2
+        mResSrs.draw(canvas, centerX, centerY)
     }
 
     override fun onKeyDown(key: Int) {

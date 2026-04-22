@@ -61,8 +61,11 @@ class ResSrs : ResBase() {
         internal var nshow: Int = 0
 
         init {
-            this.show = mFrameHeader!![index][2]
-            this.nshow = mFrameHeader!![index][3]
+            val frameHeaders = mFrameHeader
+            if (frameHeaders != null && index >= 0 && index < frameHeaders.size) {
+                this.show = frameHeaders[index][2]
+                this.nshow = frameHeaders[index][3]
+            }
         }
     }
 
@@ -70,7 +73,7 @@ class ResSrs : ResBase() {
      * 开始特效动画
      */
     fun start() {
-        if (mFrameNum == 0) return
+        if (mFrameNum == 0 || mFrameHeader == null || mImage == null) return
         mShowList.clear()
         mShowList.add(Key(0))
     }
@@ -80,7 +83,7 @@ class ResSrs : ResBase() {
      * @return 返回false动画播放完毕
      */
     fun update(delta: Long): Boolean {
-        if (mFrameNum == 0) return false
+        if (mFrameNum == 0 || mFrameHeader == null || mImage == null) return false
         for (j in 0 until ITERATOR) {
             var iter: MutableListIterator<Key> = mShowList.listIterator()
             while (iter.hasNext()) {
@@ -104,16 +107,38 @@ class ResSrs : ResBase() {
     }
 
     fun draw(canvas: Canvas, dx: Int, dy: Int) {
+        val images = mImage ?: return
+        val frameHeaders = mFrameHeader ?: return
+        
         for (i in mShowList) {
-            mImage!![mFrameHeader!![i.index][4]].draw(canvas, 1, mFrameHeader!![i.index][0] + dx, mFrameHeader!![i.index][1] + dy)
+            val frameIndex = i.index
+            if (frameIndex >= 0 && frameIndex < frameHeaders.size) {
+                val imageIndex = frameHeaders[frameIndex][4]
+                if (imageIndex >= 0 && imageIndex < images.size) {
+                    images[imageIndex].draw(canvas, 1, 
+                        frameHeaders[frameIndex][0] + dx, 
+                        frameHeaders[frameIndex][1] + dy)
+                }
+            }
         }
     }
 
     fun drawAbsolutely(canvas: Canvas, x: Int, y: Int) {
+        val images = mImage ?: return
+        val frameHeaders = mFrameHeader ?: return
+        
+        if (frameHeaders.isEmpty()) return
+        
         for (i in mShowList) {
-            mImage!![mFrameHeader!![i.index][4]].draw(canvas, 1,
-                    mFrameHeader!![i.index][0] - mFrameHeader!![0][0] + x,
-                    mFrameHeader!![i.index][1] - mFrameHeader!![0][1] + y)
+            val frameIndex = i.index
+            if (frameIndex >= 0 && frameIndex < frameHeaders.size) {
+                val imageIndex = frameHeaders[frameIndex][4]
+                if (imageIndex >= 0 && imageIndex < images.size) {
+                    images[imageIndex].draw(canvas, 1,
+                        frameHeaders[frameIndex][0] - frameHeaders[0][0] + x,
+                        frameHeaders[frameIndex][1] - frameHeaders[0][1] + y)
+                }
+            }
         }
     }
 

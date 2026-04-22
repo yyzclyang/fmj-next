@@ -1,10 +1,13 @@
 package fmj.script
 
 import fmj.Global
+import fmj.DebugLogger
 import fmj.ScreenViewType
+import fmj.config.GameSettings
 import fmj.characters.Character
 import fmj.characters.Direction
 import fmj.characters.Player
+import fmj.characters.SceneObj
 import fmj.combat.Combat
 import fmj.combat.ui.LearnMagicScreen
 import fmj.combat.ui.LevelupScreen
@@ -42,7 +45,7 @@ class ScriptVM(override val parent: GameNode): Control {
 
     init {
         fun cmd_music(code: ByteArray, start: Int): Command {
-            println("cmd_music not implemented")
+            cmdPrint("cmd_music not implemented")
             return makeCommand(4) { null }
         }
 
@@ -55,7 +58,7 @@ class ScriptVM(override val parent: GameNode): Control {
             return makeCommand(8) {
                 cmdPrint("cmd_loadmap type=$type index=$index x=$x y=$y")
 
-                game.mainScene.loadMap(type, index, x, y)
+                game.mainScene.loadMap(type, index, x - 5, y - 2)
 
                 object: OperateDrawOnce() {
                     override fun drawOnce(canvas: Canvas) {
@@ -68,8 +71,9 @@ class ScriptVM(override val parent: GameNode): Control {
 
         fun cmd_createactor(code: ByteArray, start: Int): Command {
             val actor = get2ByteInt(code, start)
-            val x = get2ByteInt(code, start + 2)
-            val y = get2ByteInt(code, start + 4)
+            // 原来的中心坐标为(4, 3)，大尺寸后中心坐标为(9, 5),所以需要偏移(5, 2)
+            val x = get2ByteInt(code, start + 2) + 5
+            val y = get2ByteInt(code, start + 4) + 2
 
             return makeCommand(6) {
                 cmdPrint("cmd_createactor $actor at ($x, $y)")
@@ -89,6 +93,26 @@ class ScriptVM(override val parent: GameNode): Control {
             return makeCommand(2) {
                 cmdPrint("cmd_deletenpc $npc")
                 game.mainScene.deleteNpc(npc)
+                null
+            }
+        }
+        
+        fun cmd_mapevent(code: ByteArray, start: Int): Command {
+            val eventNum = get2ByteInt(code, start)
+            return makeCommand(2) {
+                cmdPrint("cmd_mapevent eventNum=$eventNum")
+                // TODO: Implement actual map event setting when infrastructure is available
+                // game.mainScene.currentMap?.setEventNum(eventNum)
+                null
+            }
+        }
+        
+        fun cmd_actorevent(code: ByteArray, start: Int): Command {
+            val actorId = get2ByteInt(code, start)
+            val eventId = get2ByteInt(code, start + 2)
+            return makeCommand(4) {
+                cmdPrint("cmd_actorevent actorId=$actorId eventId=$eventId")
+                // TODO: Implement actor event binding
                 null
             }
         }
@@ -126,9 +150,30 @@ class ScriptVM(override val parent: GameNode): Control {
                     override fun onKeyDown(key: Int) {}
 
                     override fun draw(canvas: Canvas) {
-                        game.mainScene.drawScene(canvas)
+                        game.mainScene.drawSceneWithoutClear(canvas)
                     }
                 }
+            }
+        }
+        
+        fun cmd_actormove(code: ByteArray, start: Int): Command {
+            val actorId = get2ByteInt(code, start)
+            val targetX = get2ByteInt(code, start + 2) 
+            val targetY = get2ByteInt(code, start + 4)
+            return makeCommand(6) {
+                cmdPrint("cmd_actormove actorId=$actorId to ($targetX, $targetY)")
+                // TODO: Implement actor movement
+                null
+            }
+        }
+        
+        fun cmd_actorspeed(code: ByteArray, start: Int): Command {
+            val actorId = get2ByteInt(code, start)
+            val speed = get2ByteInt(code, start + 2)
+            return makeCommand(4) {
+                cmdPrint("cmd_actorspeed actorId=$actorId speed=$speed")
+                // TODO: Implement speed setting
+                null
             }
         }
 
@@ -145,7 +190,7 @@ class ScriptVM(override val parent: GameNode): Control {
             val desc = "goto $address"
 
             return makeCommand(2, desc) {
-                cmdPrint("cmd_goto from $start to $address")
+                cmdPrint("cmd_goto to $address")
                 it.gotoAddress(address)
                 null
             }
@@ -157,6 +202,16 @@ class ScriptVM(override val parent: GameNode): Control {
             val desc = "if $va $address"
             return makeCommand(4, desc) {
                 val value = ScriptResources.globalEvents[va]
+                
+                // 如果当前正在触发宝箱，建立映射关系
+                val triggeringBox = ScriptResources.currentTriggeringBox
+                if (triggeringBox != null) {
+                    val boxKey = triggeringBox.toKey()
+                    ScriptResources.setBoxEventMapping(boxKey, va)
+                    // 清除临时标记，避免后续的cmd_if误建立映射
+                    ScriptResources.currentTriggeringBox = null
+                }
+                
                 cmdPrint("cmd_if $va(=$value) goto $address")
                 if (value) {
                     it.gotoAddress(address)
@@ -181,12 +236,15 @@ class ScriptVM(override val parent: GameNode): Control {
             val text = getStringBytes(code, start + 2)
             val headImg = DatLib.getPic(1, picNum, allowNull = true)
             var isAnyKeyDown = false
-            val rWithPic = RectF(9f, 50f, 151f, 96 - 0.5f) // 有图边框
-            val rWithTextT = Rect(44, 58, 145, 75) // 上
-            val rWithTextB = Rect(14, 76, 145, 93) // 下
-            val rWithoutPic = RectF(9f, 55f, 151f, 96 - 0.5f) // 无图边框
-            val rWithoutTextT = Rect(14, 58, 145, 75) // 上
-            val rWithoutTextB = Rect(14, 76, 145, 93) // 下
+            // 计算居中偏移量
+            val centerOffsetX = (Global.SCREEN_WIDTH - 320) / 2
+            val centerOffsetY = (Global.SCREEN_HEIGHT - 192) / 2
+            val rWithPic = RectF(18f + centerOffsetX, 100f + centerOffsetY, 302f + centerOffsetX, Global.SCREEN_HEIGHT - 10f) // 有图边框
+            val rWithTextT = Rect(48 + centerOffsetX, 116 + centerOffsetY, 290 + centerOffsetX, 150 + centerOffsetY) // 上
+            val rWithTextB = Rect(28 + centerOffsetX, 152 + centerOffsetY, 290 + centerOffsetX, 186 + centerOffsetY) // 下
+            val rWithoutPic = RectF(18f + centerOffsetX, 110f + centerOffsetY, 302f + centerOffsetX, Global.SCREEN_HEIGHT - 10f) // 无图边框
+            val rWithoutTextT = Rect(28 + centerOffsetX, 116 + centerOffsetY, 290 + centerOffsetX, 150 + centerOffsetY) // 上
+            val rWithoutTextB = Rect(28 + centerOffsetX, 152 + centerOffsetY, 290 + centerOffsetX, 186 + centerOffsetY) // 下
             val paint = Paint()
             paint.color = Global.COLOR_BLACK
             paint.style = Paint.Style.FILL_AND_STROKE
@@ -194,6 +252,13 @@ class ScriptVM(override val parent: GameNode): Control {
 
             return makeCommand(2 + text.size, desc) {
                 cmdPrint("cmd_say ${text.gbkString()}")
+                // 保存对话到历史记录
+                try {
+                    fmj.script.DialogueHistory.addDialogue(text.gbkString())
+                } catch (e: Throwable) {
+                    println("Failed to save dialogue history: $e")
+                }
+                
                 var iOfText = 0
                 var iOfNext = 0
                 object: Operate {
@@ -217,7 +282,8 @@ class ScriptVM(override val parent: GameNode): Control {
 
                     override fun draw(canvas: Canvas) {
                         if (!Combat.Companion.IsActive()) {
-                            game.mainScene.drawScene(canvas)
+                            // 主屏幕已经清屏，这里只需要绘制场景（不清屏）
+                            game.mainScene.drawSceneWithoutClear(canvas)
                         }
                         if (headImg == null) { // 没头像
                             // 画矩形
@@ -241,9 +307,10 @@ class ScriptVM(override val parent: GameNode): Control {
                             paint.style = Paint.Style.STROKE
                             paint.strokeWidth = 1
                             canvas.drawRect(rWithPic, paint)
-                            canvas.drawLine(38, 50, 44, 56, paint)
-                            canvas.drawLine(43.5f, 56f, 151f, 56f, paint)
-                            headImg.draw(canvas, 1, 13, 46)
+                            // 计算居中偏移量
+                            val centerOffsetX = 0
+                            val centerOffsetY = (Global.SCREEN_HEIGHT - 96) / 2
+                            headImg.draw(canvas, 1, 13 + centerOffsetX, 46 + centerOffsetY)
                             iOfNext = TextRender.drawText(canvas, text, iOfText, rWithTextT)
                             iOfNext = TextRender.drawText(canvas, text, iOfNext, rWithTextB)
                         }
@@ -264,6 +331,15 @@ class ScriptVM(override val parent: GameNode): Control {
                 null
             }
         }
+        
+        fun cmd_screenr(code: ByteArray, start: Int): Command {
+            val redValue = code[start].toInt() and 0xFF
+            return makeCommand(1) {
+                cmdPrint("cmd_screenr red=$redValue")
+                // TODO: Implement screen color filter
+                null
+            }
+        }
 
         fun cmd_screens(code: ByteArray, start: Int): Command {
             val x = get2ByteInt(code, start)
@@ -272,6 +348,33 @@ class ScriptVM(override val parent: GameNode): Control {
             return makeCommand(4) {
                 cmdPrint("cmd_screens ($x,$y)")
                 game.mainScene.setMapScreenPos(x, y)
+                null
+            }
+        }
+        
+        fun cmd_screena(code: ByteArray, start: Int): Command {
+            val alphaValue = code[start].toInt() and 0xFF
+            return makeCommand(1) {
+                cmdPrint("cmd_screena alpha=$alphaValue")
+                // TODO: Implement screen alpha
+                null
+            }
+        }
+        
+        fun cmd_event(code: ByteArray, start: Int): Command {
+            val eventId = get2ByteInt(code, start)
+            return makeCommand(2) {
+                cmdPrint("cmd_event eventId=$eventId")
+                game.triggerEvent(eventId)
+                null
+            }
+        }
+        
+        fun cmd_money(code: ByteArray, start: Int): Command {
+            val amount = get4BytesInt(code, start)
+            return makeCommand(4) {
+                cmdPrint("cmd_money amount=$amount")
+                Player.sMoney = amount
                 null
             }
         }
@@ -290,7 +393,7 @@ class ScriptVM(override val parent: GameNode): Control {
             val addr = get2ByteInt(code, start + 4)
 
             return makeCommand(6) {
-                val value = ScriptResources.variables[id]
+                val value = ScriptResources.getVariable(id)
                 cmdPrint("cmd_ifcmp $id(=$value) vs $other goto $addr")
                 if (value == other) {
                     it.gotoAddress(addr)
@@ -329,6 +432,17 @@ class ScriptVM(override val parent: GameNode): Control {
                 null
             }
         }
+        
+        fun cmd_gutevent(code: ByteArray, start: Int): Command {
+            val gutId = get2ByteInt(code, start)
+            val eventId = get2ByteInt(code, start + 2)
+            return makeCommand(4) {
+                cmdPrint("cmd_gutevent gutId=$gutId eventId=$eventId")
+                game.mainScene.callChapter(1, gutId)
+                game.mainScene.triggerEvent(eventId)
+                null
+            }
+        }
 
         fun cmd_setevent(code: ByteArray, start: Int): Command {
             val event = get2ByteInt(code, start)
@@ -363,27 +477,49 @@ class ScriptVM(override val parent: GameNode): Control {
             val id0 = get2ByteInt(code, start)
             val id1 = get2ByteInt(code, start + 2)
 
-            fun getCharacter(id: Int): Character {
+            fun getCharacter(id: Int): Character? {
                 return if (id == 0) {
-                    game.mainScene.player!!
-                } else game.mainScene.getNPC(id)
+                    game.mainScene.player
+                } else {
+                    try {
+                        game.mainScene.getNPC(id)
+                    } catch (e: Exception) {
+                        cmdPrint("Error getting NPC with id $id: ${e.message}")
+                        null
+                    }
+                }
             }
             return makeCommand(4) {
                 cmdPrint("cmd_facetoface")
-                val c1 = getCharacter(id0)
-                val c2 = getCharacter(id1)
-                val p1 = c1.posInMap
-                val p2 = c2.posInMap
-                if (p1.x > p2.x) {
-                    c2.direction = Direction.East
-                } else if (p1.x < p2.x) {
-                    c2.direction = Direction.West
-                } else {
-                    if (p1.y > p2.y) {
-                        c2.direction = Direction.South
-                    } else if (p1.y < p2.y) {
-                        c2.direction = Direction.North
+                try {
+                    val c1 = getCharacter(id0)
+                    val c2 = getCharacter(id1)
+                    
+                    if (c1 == null || c2 == null) {
+                        cmdPrint("Warning: Cannot execute facetoface - character not found (id0=$id0, id1=$id1)")
+                        return@makeCommand object : OperateDrawOnce() {
+                            override fun drawOnce(canvas: Canvas) {
+                                game.mainScene.drawScene(canvas)
+                            }
+                        }
                     }
+                    
+                    val p1 = c1.posInMap
+                    val p2 = c2.posInMap
+                    
+                    if (p1.x > p2.x) {
+                        c2.direction = Direction.East
+                    } else if (p1.x < p2.x) {
+                        c2.direction = Direction.West
+                    } else {
+                        if (p1.y > p2.y) {
+                            c2.direction = Direction.South
+                        } else if (p1.y < p2.y) {
+                            c2.direction = Direction.North
+                        }
+                    }
+                } catch (e: Exception) {
+                    println("Error in cmd_facetoface execution: ${e.message}")
                 }
 
                 object : OperateDrawOnce() {
@@ -402,7 +538,11 @@ class ScriptVM(override val parent: GameNode): Control {
 
             return makeCommand(10) {
                 cmdPrint("cmd_movie")
-                val movie = DatLib.getRes(DatLib.ResType.SRS, type, index) as ResSrs? ?: return@makeCommand null
+                val movieRes = DatLib.getRes(DatLib.ResType.SRS, type, index, true)
+                val movie = if (movieRes is ResSrs) movieRes else {
+                    println("Warning: Failed to load movie SRS type=$type, index=$index")
+                    return@makeCommand null
+                }
                 movie.setIteratorNum(5)
                 movie.start()
                 object : Operate {
@@ -427,9 +567,16 @@ class ScriptVM(override val parent: GameNode): Control {
 
                     override fun draw(canvas: Canvas) {
                         if (ctl == 2 || ctl == 3) {
-                            game.mainScene.drawScene(canvas)
+                            game.mainScene.drawSceneWithoutClear(canvas)
                         }
-                        movie.draw(canvas, x, y)
+                        // 如果坐标在旧的160x96范围内，调整为在320x192中居中显示
+                        val adjustedX = if (x < 160 && y < 96) {
+                            x + (Global.SCREEN_WIDTH - 160) / 2
+                        } else x
+                        val adjustedY = if (x < 160 && y < 96) {
+                            y + (Global.SCREEN_HEIGHT - 96) / 2
+                        } else y
+                        movie.draw(canvas, adjustedX, adjustedY)
                     }
                 }
             }
@@ -466,8 +613,8 @@ class ScriptVM(override val parent: GameNode): Control {
             }
 
             bg = Util.getFrameBitmap(w, 16 * 2 + 6)
-            bgx = (160 - bg.width) / 2
-            bgy = (96 - bg.height) / 2
+            bgx = (Global.SCREEN_WIDTH - bg.width) / 2
+            bgy = (Global.SCREEN_HEIGHT - bg.height) / 2
 
             val desc = "choice ${choice1.gbkString()} ${choice2.gbkString()} $address"
 
@@ -506,7 +653,7 @@ class ScriptVM(override val parent: GameNode): Control {
                     }
 
                     override fun draw(canvas: Canvas) {
-                        game.mainScene.drawScene(canvas)
+                        game.mainScene.drawSceneWithoutClear(canvas)
                         canvas.drawBitmap(bg, bgx, bgy)
                         if (curChoice == 0) {
                             TextRender.drawSelText(canvas, choice1, bgx + 3, bgy + 3)
@@ -527,7 +674,8 @@ class ScriptVM(override val parent: GameNode): Control {
             val y = get2ByteInt(code, start + 6)
             return makeCommand(8) {
                 val box = game.mainScene.createBox(id, boxId, x, y)
-                cmdPrint("cmd_createbox ${box.name} at ($x,$y)")
+                // cmdPrint("cmd_createbox ${box.name} at ($x,$y)")
+                game.mainScene.updateTreasureBoxesInBrowser()
                 null
             }
         }
@@ -536,13 +684,20 @@ class ScriptVM(override val parent: GameNode): Control {
             return makeCommand(2) {
                 cmdPrint("cmd_deletebox")
                 game.mainScene.deleteBox(boxid)
+                game.mainScene.updateTreasureBoxesInBrowser()
                 null
             }
         }
 
         fun cmd_gaingoods(code: ByteArray, start: Int): Command {
-            val goods = DatLib.getRes(DatLib.ResType.GRS,
-                    get2ByteInt(code, start), get2ByteInt(code, start + 2)) as BaseGoods
+            val goodsRes = DatLib.getRes(DatLib.ResType.GRS,
+                    get2ByteInt(code, start), get2ByteInt(code, start + 2))
+            val goods = if (goodsRes is BaseGoods) {
+                goodsRes
+            } else {
+                println("Warning: cmd_gaingoods failed to load goods, type=${get2ByteInt(code, start)}, index=${get2ByteInt(code, start + 2)}")
+                return makeCommand(4) { null }
+            }
 
             val msg = "获得:" + goods.name
 
@@ -550,6 +705,40 @@ class ScriptVM(override val parent: GameNode): Control {
                 cmdPrint("cmd_gaingoods ${goods.name}")
                 goods.goodsNum = 1
                 Player.sGoodsList.addGoods(goods.type, goods.index)
+                
+                // 更新玩家面向的宝箱为已收集状态
+                val player = game.mainScene.player
+                if (player != null) {
+                    val playerPos = player.posInMap
+                    var boxUpdated = false
+                    
+                    // 根据玩家朝向确定宝箱位置
+                    val (dx, dy) = when (player.direction) {
+                        Direction.North -> Pair(0, -1)  // 面向北（上）
+                        Direction.South -> Pair(0, 1)   // 面向南（下）
+                        Direction.West -> Pair(-1, 0)   // 面向西（左）
+                        Direction.East -> Pair(1, 0)    // 面向东（右）
+                    }
+                    
+                    // 只检查玩家面向的那个格子
+                    val targetX = playerPos.x + dx
+                    val targetY = playerPos.y + dy
+                    val npc = game.mainScene.getNpcFromPosInMap(targetX, targetY)
+                    
+                    if (npc is SceneObj && !npc.isEmpty && npc.step != 2) {
+                        npc.step = 2
+                        boxUpdated = true
+                        println("cmd_gaingoods: Set treasure box at ($targetX,$targetY) to collected (player facing ${player.direction})")
+                    }
+                    
+                    // 如果更新了宝箱状态，同步到存档系统并刷新前端显示
+                    if (boxUpdated) {
+                        // 刷新前端显示
+                        game.mainScene.updateTreasureBoxesInBrowser()
+                    }
+                }
+                
+                
                 object : Operate {
                     internal var time: Long = 0
                     internal var isAnyKeyPressed = false
@@ -571,6 +760,10 @@ class ScriptVM(override val parent: GameNode): Control {
                     }
 
                     override fun draw(canvas: Canvas) {
+                        if (!Combat.Companion.IsActive()) {
+                            // 保持游戏场景背景，不清屏
+                            game.mainScene.drawSceneWithoutClear(canvas)
+                        }
                         Util.showMessage(canvas, msg)
                     }
                 }
@@ -615,22 +808,28 @@ class ScriptVM(override val parent: GameNode): Control {
             val y = get2ByteInt(code, start + 6)
             return makeCommand(8) {
                 val npc = game.mainScene.createNpc(id, resId, x, y)
-                cmdPrint("cmd_createnpc ${npc.name} at ${npc.posInMap}")
+                // cmdPrint("cmd_createnpc ${npc.name} at ${npc.posInMap}")
                 null
             }
         }
 
         fun cmd_enterfight(code: ByteArray, start: Int): Command {
-            return makeCommand(30) {
+            return makeCommand(30) { scriptProcess ->
                 cmdPrint("cmd_enterfight")
-                //					mScreenMainGame.gotoAddress(get2ByteInt(code, start + 28)); // win the fight
+                val roundMax = get2ByteInt(code, start)
                 val monstersType = intArrayOf(get2ByteInt(code, start + 2), get2ByteInt(code, start + 4), get2ByteInt(code, start + 6))
                 val scr = intArrayOf(get2ByteInt(code, start + 8), get2ByteInt(code, start + 10), get2ByteInt(code, start + 12))
                 val evtRnds = intArrayOf(get2ByteInt(code, start + 14), get2ByteInt(code, start + 16), get2ByteInt(code, start + 18))
                 val evts = intArrayOf(get2ByteInt(code, start + 20), get2ByteInt(code, start + 22), get2ByteInt(code, start + 24))
                 val lossto = get2ByteInt(code, start + 26)
                 val winto = get2ByteInt(code, start + 28)
-                Combat.EnterFight(this, get2ByteInt(code, start), monstersType, scr, evtRnds, evts, lossto, winto)
+                
+                // 记录当前脚本索引，用于最大回合结束后继续
+                val currentIndex = scriptProcess.getCurrentIndex()
+                Combat.setEnterFightScriptIndex(currentIndex)
+                println("[cmd_enterfight] Recording script index: $currentIndex")
+                
+                Combat.EnterFight(this, roundMax, monstersType, scr, evtRnds, evts, lossto, winto)
                 game.exitScript()
                 null
             }
@@ -647,10 +846,77 @@ class ScriptVM(override val parent: GameNode): Control {
 
         fun cmd_gainmoney(code: ByteArray, start: Int): Command {
             val value = get4BytesInt(code, start)
+            val msg = "获得金钱:${value}"
+            
             return makeCommand(4) {
-                cmdPrint("cmd_gainmoney")
+                cmdPrint("cmd_gainmoney ${value}")
                 Player.sMoney += value
-                null
+                // 游戏是 FMJYMQZQ（圆梦前奏曲）不需要提示获取金钱，直接返回
+                val currentGame = sysGetChoiceLibName().uppercase()
+                if (currentGame == "FMJYMQZQ" || currentGame == "FMJSNLWQ" || currentGame == "FMJMVKXQ" || currentGame == "FMJHMAHQ") {
+                    return@makeCommand null
+                }
+
+                // 更新玩家面向的宝箱为已收集状态
+                val player = game.mainScene.player
+                if (player != null) {
+                    val playerPos = player.posInMap
+                    var boxUpdated = false
+                    
+                    // 根据玩家朝向确定宝箱位置
+                    val (dx, dy) = when (player.direction) {
+                        Direction.North -> Pair(0, -1)  // 面向北（上）
+                        Direction.South -> Pair(0, 1)   // 面向南（下）
+                        Direction.West -> Pair(-1, 0)   // 面向西（左）
+                        Direction.East -> Pair(1, 0)    // 面向东（右）
+                    }
+                    
+                    // 只检查玩家面向的那个格子
+                    val targetX = playerPos.x + dx
+                    val targetY = playerPos.y + dy
+                    val npc = game.mainScene.getNpcFromPosInMap(targetX, targetY)
+                    
+                    if (npc is SceneObj && !npc.isEmpty && npc.step != 2) {
+                        npc.step = 2
+                        boxUpdated = true
+                        println("cmd_gainmoney: Set treasure box at ($targetX,$targetY) to collected (player facing ${player.direction})")
+                    }
+                    
+                    // 如果更新了宝箱状态，同步到存档系统并刷新前端显示
+                    if (boxUpdated) {
+                        // 刷新前端显示
+                        game.mainScene.updateTreasureBoxesInBrowser()
+                    }
+                }
+                
+                object : Operate {
+                    internal var time: Long = 0
+                    internal var isAnyKeyPressed = false
+                    internal var downKey = 0
+
+                    override fun update(delta: Long): Boolean {
+                        time += delta
+                        return !(time > 1000 || isAnyKeyPressed)
+                    }
+
+                    override fun onKeyUp(key: Int) {
+                        if (key == downKey) {
+                            isAnyKeyPressed = true
+                        }
+                    }
+
+                    override fun onKeyDown(key: Int) {
+                        downKey = key
+                    }
+
+                    override fun draw(canvas: Canvas) {
+                        if (!Combat.Companion.IsActive()) {
+                            // 保持游戏场景背景，不清屏
+                            game.mainScene.drawSceneWithoutClear(canvas)
+                        }
+                        Util.showMessage(canvas, msg)
+                    }
+                }
             }
         }
 
@@ -756,6 +1022,10 @@ class ScriptVM(override val parent: GameNode): Control {
                     }
 
                     override fun draw(canvas: Canvas) {
+                        if (!Combat.Companion.IsActive()) {
+                            // 保持游戏场景背景，不清屏
+                            game.mainScene.drawSceneWithoutClear(canvas)
+                        }
                         Util.showMessage(canvas, msg)
                     }
                 }
@@ -838,7 +1108,7 @@ class ScriptVM(override val parent: GameNode): Control {
             val id = get2ByteInt(code, start)
 
             return makeCommand(2) {
-                cmdPrint("cmd_boxopen")
+                cmdPrint("cmd_boxopen $id")
                 val box = game.mainScene.getNPC(id)
                 box.step = 1
                 null
@@ -868,22 +1138,35 @@ class ScriptVM(override val parent: GameNode): Control {
 
             return makeCommand(6) {
                 cmdPrint("cmd_npcstep $id $d step=$step")
-                val interval: Long
-                if (id == 0) {
-                    val p = game.mainScene.player!!
-                    p.direction = d
-                    p.step = step
-                    interval = 300
-                } else {
-                    val npc = game.mainScene.getNPC(id)
-                    npc.direction = d
-                    npc.step = step
-                    interval = if (game.mainScene.isNpcVisible(npc)) {
-                        300
+                var interval: Long = 0
+                try {
+                    if (id == 0) {
+                        val p = game.mainScene.player
+                        if (p != null) {
+                            p.direction = d
+                            p.step = step
+                            interval = 300
+                        } else {
+                            println("Warning: Player is null in cmd_npcstep")
+                        }
                     } else {
-                        0
+                        try {
+                            val npc = game.mainScene.getNPC(id)
+                            npc.direction = d
+                            npc.step = step
+                            interval = if (game.mainScene.isNpcVisible(npc)) {
+                                300
+                            } else {
+                                0
+                            }
+                        } catch (e: Exception) {
+                            println("Error getting NPC $id in cmd_npcstep: ${e.message}")
+                        }
                     }
+                } catch (e: Exception) {
+                    println("Error in cmd_npcstep execution: ${e.message}")
                 }
+                game.mainScene.updateTreasureBoxesInBrowser()
 
                 object : Operate {
                     internal var time: Long = 0
@@ -898,7 +1181,7 @@ class ScriptVM(override val parent: GameNode): Control {
                     override fun onKeyDown(key: Int) {}
 
                     override fun draw(canvas: Canvas) {
-                        game.mainScene.drawScene(canvas)
+                        game.mainScene.drawSceneWithoutClear(canvas)
                     }
                 }
 
@@ -906,7 +1189,17 @@ class ScriptVM(override val parent: GameNode): Control {
         }
         fun cmd_setscenename(code: ByteArray, start: Int): Command {
             val bytes = getStringBytes(code, start)
-            val name = bytes.gbkString()
+            val rawName = bytes.gbkString()
+            // 清理场景名称中的无效字符，避免编码错误
+            val name = rawName.map { char ->
+                when {
+                    char.code == 0xFFFD -> ' '  // Unicode替换字符
+                    char.code in 0xE000..0xF8FF -> ' '  // 私用区
+                    char.code > 0xFFFF -> ' '  // 补充平面字符
+                    else -> char
+                }
+            }.joinToString("").trim()
+            
             val desc = "setscenename $name"
             return makeCommand(bytes.size, desc) {
                 cmdPrint("cmd_setscenname $name")
@@ -918,6 +1211,12 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_showscenename(code: ByteArray, start: Int): Command {
             return makeCommand(0) {
                 cmdPrint("cmd_showscenename")
+                // 游戏是 FMJYMQZQ（圆梦前奏曲）不需要提示，直接返回
+                val currentGame = sysGetChoiceLibName().uppercase()
+                if (currentGame == "FMJYMQZQ" || currentGame == "FMJSNLWQ" || currentGame == "FMJMVKXQ" || currentGame == "FMJHMAHQ") {
+                    return@makeCommand null
+                }
+
                 val text = game.mainScene.sceneName
                 var time: Long = 0
                 var isAnyKeyDown = false
@@ -939,7 +1238,7 @@ class ScriptVM(override val parent: GameNode): Control {
                     }
 
                     override fun draw(canvas: Canvas) {
-                        game.mainScene.drawScene(canvas)
+                        game.mainScene.drawSceneWithoutClear(canvas)
                         Util.showInformation(canvas, text)
                     }
                 }
@@ -1008,7 +1307,41 @@ class ScriptVM(override val parent: GameNode): Control {
                     22 -> player.equipmentsArray[1]?.index ?: 0
                     23 -> player.maxHP
                     24 -> player.maxMP
-                    else -> throw NotImplementedError("ATTRIBTEST $type")
+                    // 9-14: 缺失类型的支持
+                    9 -> {
+                        // 攻击的异常回合数 - 暂时返回0
+                        cmdPrint("ATTRIBTEST type 9 (攻击的异常回合数) not fully implemented, returning 0")
+                        0
+                    }
+                    10 -> {
+                        // 对特殊状态的免疫 - 暂时返回0
+                        cmdPrint("ATTRIBTEST type 10 (对特殊状态的免疫) not fully implemented, returning 0")
+                        0
+                    }
+                    11 -> {
+                        // 普通攻击可能产生异常状态 - 暂时返回0
+                        cmdPrint("ATTRIBTEST type 11 (普通攻击可能产生异常状态) not fully implemented, returning 0")
+                        0
+                    }
+                    12 -> {
+                        // 合体法术 - 暂时返回0
+                        cmdPrint("ATTRIBTEST type 12 (合体法术) not fully implemented, returning 0")
+                        0
+                    }
+                    13 -> {
+                        // 每回合变化生命 - 暂时返回0
+                        cmdPrint("ATTRIBTEST type 13 (每回合变化生命) not fully implemented, returning 0")
+                        0
+                    }
+                    14 -> {
+                        // 每回合变化真气 - 暂时返回0
+                        cmdPrint("ATTRIBTEST type 14 (每回合变化真气) not fully implemented, returning 0")
+                        0
+                    }
+                    else -> {
+                        cmdPrint("ATTRIBTEST type $type not implemented, returning 0 for compatibility")
+                        0
+                    }
                 }
                 when {
                     currentValue < value -> it.gotoAddress(addr1)
@@ -1031,18 +1364,82 @@ class ScriptVM(override val parent: GameNode): Control {
                 // 12-合体法术，13-每回合变化生命，14-每回合变化真气，15-生命上限，16-真气上限
                 when (type) {
                     0 -> player.setLevel(value)
-                    1 -> player.attack = value
-                    2 -> player.defend = value
-                    3 -> player.speed = value
-                    4 -> player.hp = value
-                    5 -> player.mp = value
+                    1 -> {
+                        player.totalAttack = value
+                        player.attack = value
+                    }
+                    2 -> {
+                        player.totalDefend = value
+                        player.defend = value
+                    }
+                    3 -> {
+                        player.totalSpeed = value
+                        player.speed = value
+                    }
+                    4 -> {
+                        // type 4 是设置当前生命值，不应该修改最大生命值
+                        player.hp = value
+                    }
+                    5 -> {
+                        // type 5 是设置当前真气值，不应该修改最大真气值
+                        player.mp = value
+                    }
                     6 -> player.currentExp = value
-                    7 -> player.lingli = value
-                    8 -> player.luck = value
-                    15 -> player.maxHP = value
-                    16 -> player.maxMP = value
-                    else -> throw NotImplementedError("ATTRIBSET $type")
+                    7 -> {
+                        player.totalLingli = value
+                        player.lingli = value
+                    }
+                    8 -> {
+                        player.totalLuck = value
+                        player.luck = value
+                    }
+                    // 9-14: 缺失类型的实现
+                    9 -> {
+                        // 攻击的异常回合数 - 设置攻击buff
+                        cmdPrint("ATTRIBSET type 9 (攻击的异常回合数) not fully implemented, value=$value")
+                    }
+                    10 -> {
+                        // 对特殊状态的免疫 - 设置免疫buff
+                        cmdPrint("ATTRIBSET type 10 (对特殊状态的免疫) not fully implemented, value=$value")
+                    }
+                    11 -> {
+                        // 普通攻击可能产生异常状态 - 同type 9
+                        cmdPrint("ATTRIBSET type 11 (普通攻击可能产生异常状态) not fully implemented, value=$value")
+                    }
+                    12 -> {
+                        // 合体法术 - 暂时忽略，可能与魔法系统相关
+                        cmdPrint("ATTRIBSET type 12 (合体法术) not fully implemented, value=$value")
+                    }
+                    13 -> {
+                        // 每回合变化生命 - 可能与buff系统相关，暂时忽略
+                        cmdPrint("ATTRIBSET type 13 (每回合变化生命) not implemented, value=$value")
+                    }
+                    14 -> {
+                        // 每回合变化真气 - 可能与buff系统相关，暂时忽略
+                        cmdPrint("ATTRIBSET type 14 (每回合变化真气) not implemented, value=$value")
+                    }
+                    15 -> {
+                        player.totalMaxHP = value
+                        player.maxHP = value
+                        cmdPrint("[ATTRIBSET] Set MaxHP: totalMaxHP=$value, maxHP=${player.maxHP}")
+                    }
+                    16 -> {
+                        player.totalMaxMP = value
+                        player.maxMP = value
+                    }
+                    // 17-22: 可能的扩展类型
+                    in 17..22 -> {
+                        cmdPrint("ATTRIBSET type $type not implemented, value=$value (reserved)")
+                    }
+                    // 23及更高: 安全处理，避免崩溃
+                    23 -> {
+                        cmdPrint("ATTRIBSET type 23 not implemented, value=$value (ignored for compatibility)")
+                    }
+                    else -> {
+                        cmdPrint("ATTRIBSET type $type not implemented, value=$value (ignored)")
+                    }
                 }
+                cmdPrint("[ATTRIBSET] After: totalMaxHP=${player.totalMaxHP}, maxHP=${player.maxHP}, totalAttack=${player.totalAttack}, attack=${player.attack}")
                 null
             }
         }
@@ -1050,27 +1447,60 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_attribadd(code: ByteArray, start: Int): Command {
             val actor = get2ByteInt(code, start)
             val type = get2ByteInt(code, start+2)
-            val value = get2ByteInt(code, start+4)
+            var rawValue = get2ByteInt(code, start+4)
 
-            val desc = "attribadd $actor $type $value"
+            // 将无符号16位整数转换为有符号整数
+            // 65535 -> -1, 65534 -> -2, etc.
+            var value = if (rawValue >= 32768) {
+                rawValue - 65536  // 转换为负数
+            } else {
+                rawValue
+            }
+
+            val desc = "attribadd $actor $type $value (raw: $rawValue)"
             return makeCommand(6, desc) {
-                cmdPrint("cmd_attribadd $actor $type $value")
+                cmdPrint("cmd_attribadd $actor $type $rawValue (signed: $value)")
                 val player = game.mainScene.getPlayer(actor) ?: return@makeCommand null
+                // 新版魔塔最大级别是0，每次升级经验为150 + 当前经验值的10%
+                if (player.levelupChain.maxLevel <= 0 && type == 6) {
+                    value = 0 - 150 - (player.currentExp * 0.1).toInt()
+                }
 
                 // 0-级别，1-攻击力，2-防御力，3-身法，4-生命，5-真气当前值，6-当前经验值
                 // 7-灵力，8-幸运，9-攻击的异常回合数，10-生命上限，11-真气上限
                 when (type) {
                     0 -> player.setLevel(player.level + value)
-                    1 -> player.attack += value
-                    2 -> player.defend += value
-                    3 -> player.speed += value
+                    1 -> {
+                        player.totalAttack += value
+                        player.attack += value
+                    }
+                    2 -> {
+                        player.totalDefend += value
+                        player.defend += value
+                    }
+                    3 -> {
+                        player.totalSpeed += value
+                        player.speed += value
+                    }
                     4 -> player.hp += value
                     5 -> player.mp += value
                     6 -> player.currentExp += value
-                    7 -> player.lingli += value
-                    8 -> player.luck += value
-                    10 -> player.maxHP += value
-                    11 -> player.maxMP += value
+                    7 -> {
+                        player.totalLingli += value
+                        player.lingli += value
+                    }
+                    8 -> {
+                        player.totalLuck += value
+                        player.luck += value
+                    }
+                    10 -> {
+                        player.totalMaxHP += value
+                        player.maxHP += value
+                    }
+                    11 -> {
+                        player.totalMaxMP += value
+                        player.maxMP += value
+                    }
                     else -> throw NotImplementedError("ATTRIBADD $type")
                 }
                 null
@@ -1092,8 +1522,11 @@ class ScriptVM(override val parent: GameNode): Control {
                 var interval: Long = 50
                 var timeCnt: Long = 0
                 var step = 1
+                // 计算居中偏移量
+                val centerOffsetX = (Global.SCREEN_WIDTH - 160) / 2
+                val centerOffsetY = (Global.SCREEN_HEIGHT - 96) / 2
                 var curY = if (imgBottom != null) 96 - imgBottom.height else 96
-                val rect = Rect(0, imgTop?.height ?: 0, 160, curY)
+                val rect = Rect(centerOffsetX, (imgTop?.height ?: 0) + centerOffsetY, 160 + centerOffsetX, curY + centerOffsetY)
 
                 object : Operate {
                     override fun update(delta: Long): Boolean {
@@ -1125,8 +1558,8 @@ class ScriptVM(override val parent: GameNode): Control {
                         if (e != 1 && e != 2) {
                             goon = false
                         }
-                        imgTop?.draw(canvas, 1, 0, 0)
-                        imgBottom?.draw(canvas, 1, 0, 96 - imgBottom.height)
+                        imgTop?.draw(canvas, 1, centerOffsetX, centerOffsetY)
+                        imgBottom?.draw(canvas, 1, centerOffsetX, (96 - imgBottom.height) + centerOffsetY)
                     }
                 }
             }
@@ -1213,10 +1646,46 @@ class ScriptVM(override val parent: GameNode): Control {
             val index = get2ByteInt(code, start + 2)
             val desc = "callchapter $type $index"
 
-            return makeCommand(4, desc) {
+            return makeCommand(4, desc) { parentProcess ->
                 cmdPrint("cmd_callchapter $type $index")
-                game.mainScene.callChapter(type, index)
-                null
+
+                // 创建并启动子脚本
+                val childProcess = this@ScriptVM.loadScript(type, index)
+                childProcess.prev = parentProcess
+                game.mainScene.scriptProcess = childProcess
+                childProcess.start()
+
+                // 暂停父脚本执行
+                parentProcess.stop()
+
+                cmdPrint("[cmd_callchapter] Started child script $type-$index, parent paused")
+
+                // 返回一个Operate来等待子脚本完成
+                object : Operate {
+                    override fun update(delta: Long): Boolean {
+                        // 检查当前活动的脚本是否已经切换回父脚本
+                        // 这会在cmd_return执行后发生
+                        if (game.mainScene.scriptProcess === parentProcess) {
+                            cmdPrint("[cmd_callchapter] Child script completed, resuming parent")
+                            // 子脚本已完成，父脚本可以继续
+                            return false
+                        }
+                        // 子脚本仍在执行，继续等待
+                        return true
+                    }
+
+                    override fun onKeyUp(key: Int) {
+                        // 不处理输入，让子脚本处理
+                    }
+
+                    override fun onKeyDown(key: Int) {
+                        // 不处理输入，让子脚本处理
+                    }
+
+                    override fun draw(canvas: Canvas) {
+                        // 不需要绘制，让子脚本绘制
+                    }
+                }
             }
         }
 
@@ -1238,8 +1707,12 @@ class ScriptVM(override val parent: GameNode): Control {
             return makeCommand(0, "return") {
                 cmdPrint("cmd_return")
                 it.stop()
-                game.mainScene.scriptProcess.prev?.let {
-                    game.mainScene.scriptProcess = it
+                game.mainScene.scriptProcess.prev?.let { prevScript ->
+                    game.mainScene.scriptProcess = prevScript
+                    // 重要：恢复父脚本并确保它继续执行
+                    prevScript.start()
+                    // 不需要在这里调用 process()，让主循环处理
+                    cmdPrint("[cmd_return] Restored parent script and started it")
                 }
                 null
             }
@@ -1278,6 +1751,10 @@ class ScriptVM(override val parent: GameNode): Control {
                     }
 
                     override fun draw(canvas: Canvas) {
+                        if (!Combat.Companion.IsActive()) {
+                            // 保持游戏场景背景，不清屏
+                            game.mainScene.drawSceneWithoutClear(canvas)
+                        }
                         Util.showMessage(canvas, text)
                     }
                 }
@@ -1332,14 +1809,16 @@ class ScriptVM(override val parent: GameNode): Control {
 
         fun cmd_enableshowpos(code: ByteArray, start: Int): Command {
             return makeCommand(0) {
-                // TODO
+                cmdPrint("cmd_enableshowpos")
+                // TODO: Implement position display
                 null
             }
         }
 
         fun cmd_disableshowpos(code: ByteArray, start: Int): Command {
             return makeCommand(0) {
-                // TODO
+                cmdPrint("cmd_disableshowpos") 
+                // TODO: Implement position display
                 null
             }
         }
@@ -1370,7 +1849,13 @@ class ScriptVM(override val parent: GameNode): Control {
         fun cmd_setfightmiss(code: ByteArray, start: Int): Command {
             val enable = get2ByteInt(code, start)
             return makeCommand(2) {
-                SaveLoadGame.allowMiss = enable == 1
+                // 游戏是 FMJYMQZQ（圆梦前奏曲）不需要提示获取金钱，直接返回
+                val currentGame = sysGetChoiceLibName().uppercase()
+                if (currentGame == "FMJYMQZQ" || currentGame == "FMJSNLWQ" || currentGame == "FMJMVKXQ" || currentGame == "FMJHMAHQ") {
+                    return@makeCommand null
+                }
+                
+                GameSettings.allowMiss = enable == 1
                 null
             }
         }
@@ -1464,28 +1949,28 @@ GAMESAVE                                                72
                 ::cmd_loadmap,
                 ::cmd_createactor,
                 ::cmd_deletenpc,
-                null,
-                null,//5
+                ::cmd_mapevent,
+                ::cmd_actorevent,//5
                 ::cmd_move,
-                null,
-                null,
+                ::cmd_actormove,
+                ::cmd_actorspeed,
                 ::cmd_callback,
                 ::cmd_goto,//10
                 ::cmd_if,
                 ::cmd_set,
                 ::cmd_say,
                 ::cmd_startchapter,
-                null,//15
+                ::cmd_screenr,//15
                 ::cmd_screens,
-                null,
-                null,
-                null,
+                ::cmd_screena,
+                ::cmd_event,
+                ::cmd_money,
                 ::cmd_gameover,//20
                 ::cmd_ifcmp,
                 ::cmd_add,
                 ::cmd_sub,
                 ::cmd_setcontrolid,
-                null,//25
+                ::cmd_gutevent,//25
                 ::cmd_setevent,
                 ::cmd_clrevent,
                 ::cmd_buy,
@@ -1582,12 +2067,34 @@ GAMESAVE                                                72
     }
 
     fun loadScript(type: Int, index: Int): ScriptProcess {
-        val gut = DatLib.getRes(DatLib.ResType.GUT, type, index) as ResGut
+        val gutRes = DatLib.getRes(DatLib.ResType.GUT, type, index, false)
+        val gut = if (gutRes is ResGut) gutRes else {
+            println("Warning: Failed to load GUT script type=$type, index=$index - creating empty script")
+            // 返回一个空的脚本进程，而不是抛出异常
+            return ScriptProcess(
+                name = "EmptyScript_${type}_${index}",
+                commands = arrayListOf(),
+                eventIndex = IntArray(256) { -1 },
+                mMapAddrOffsetIndex = HashMap(),
+                mHeaderCnt = 0
+            )
+        }
         return loadGut(gut)
     }
 
     fun compileScript(type: Int, index: Int): ScriptProcess {
-        val gut = DatLib.getRes(DatLib.ResType.GUT, type, index) as ResGut
+        val gutRes = DatLib.getRes(DatLib.ResType.GUT, type, index, false)
+        val gut = if (gutRes is ResGut) gutRes else {
+            println("Warning: Failed to compile GUT script type=$type, index=$index - creating empty script")
+            // 返回一个空的脚本进程，而不是抛出异常
+            return ScriptProcess(
+                name = "EmptyCompiledScript_${type}_${index}",
+                commands = arrayListOf(),
+                eventIndex = IntArray(256) { -1 },
+                mMapAddrOffsetIndex = HashMap(),
+                mHeaderCnt = 0
+            )
+        }
         println("Compiling GUT $type $index")
         return loadGut(gut, true)
     }

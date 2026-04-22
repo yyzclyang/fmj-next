@@ -38,15 +38,17 @@ class ScreenActorWearing(override val parent: GameNode): BaseScreen {
     init {
         mEquipments = game.playerList[0].equipmentsArray
         mActorIndex = 0
-        mPos = arrayOf(// w 25
-                Point(4, 3),
-                Point(4, 30),
-                Point(21, 59),
-                Point(51, 65),
-                Point(80, 61),
-                Point(109, 46),
-                Point(107, 9),
-                Point(79, 2))
+        // 320x192大屏适配，装备分布更均匀
+        mPos = arrayOf(
+            Point(80, 20),   // 装饰1
+            Point(60, 60),   // 装饰2
+            Point(110, 100), // 护腕
+            Point(150, 120), // 脚蹬
+            Point(200, 100), // 手持
+            Point(240, 60),  // 身穿
+            Point(220, 25),  // 肩披
+            Point(140, 10)   // 头戴
+        )
     }
 
     private fun getGBKBytes(s: String): ByteArray {
@@ -57,28 +59,40 @@ class ScreenActorWearing(override val parent: GameNode): BaseScreen {
 
     override fun draw(canvas: Canvas) {
         canvas.drawColor(Global.COLOR_WHITE)
-        canvas.drawBitmap(Util.bmpChuandai, 160 - Util.bmpChuandai.width, 0)
+        // 穿戴底图放右下角
+        canvas.drawBitmap(Util.bmpChuandai, Global.SCREEN_WIDTH - Util.bmpChuandai.width - 10, Global.SCREEN_HEIGHT - Util.bmpChuandai.height - 10)
 
         // 画装备
         for (i in 0..7) {
             mEquipments[i]?.draw(canvas, mPos[i].x + 1, mPos[i].y + 1)
         }
         canvas.drawRect(mPos[mCurItem].x, mPos[mCurItem].y,
-                mPos[mCurItem].x + 25, mPos[mCurItem].y + 25, Util.sBlackPaint)
-        TextRender.drawText(canvas, mItemName[mCurItem], 120, 80)
+                mPos[mCurItem].x + 32, mPos[mCurItem].y + 32, Util.sBlackPaint)
+        TextRender.drawText(canvas, mItemName[mCurItem], 200, 60)
 
-        // 画人物头像、姓名
+        // 画人物头像、姓名，居中偏上
         if (mActorIndex >= 0) {
             val p = game.playerList[mActorIndex]
-            p.drawHead(canvas, 44, 12)
-            TextRender.drawText(canvas, p.name, 30, 40)
+            p.drawHead(canvas, 140, 40)
+            TextRender.drawText(canvas, p.name, 140, 80)
         }
 
         if (showingDesc) {
-            canvas.drawBitmap(bmpName, 9, 10)
-            canvas.drawBitmap(bmpDesc, 9, 28)
-            TextRender.drawText(canvas, mTextName, 9 + 3, 10 + 3)
-            mNextToDraw = TextRender.drawText(canvas, mTextDesc, mToDraw, sRectDesc)
+            // 320x192大屏适配：说明框放在底部，充分利用屏幕宽度
+            val descWidth = Global.SCREEN_WIDTH - 40  // 留出左右边距
+            val descHeight = 80  // 底部说明区域高度
+            val descBg = Util.getFrameBitmap(descWidth, descHeight)
+            val descY = Global.SCREEN_HEIGHT - descHeight - 10  // 距离底部10像素
+            
+            canvas.drawBitmap(descBg, 20, descY)
+            
+            // 显示装备名称在说明框顶部
+            TextRender.drawText(canvas, "装备: ", 25, descY + 5)
+            TextRender.drawText(canvas, mTextName, 65, descY + 5)
+            
+            // 显示装备描述，使用整个底部宽度
+            mNextToDraw = TextRender.drawText(canvas, mTextDesc, mToDraw, 
+                Rect(25, descY + 22, Global.SCREEN_WIDTH - 25, descY + descHeight - 5))
         }
     }
 
@@ -132,14 +146,10 @@ class ScreenActorWearing(override val parent: GameNode): BaseScreen {
                 resetDesc()
                 pushScreen(ScreenGoodsList(this, getTheEquipList(Player.sEquipTypes[mCurItem]),
                         object : ScreenGoodsList.OnItemSelectedListener {
-                            override fun onItemSelected(goods: BaseGoods) {
+                            override fun onItemSelected(goods: BaseGoods, index: Int) {
                                 val actor = game.playerList[mActorIndex]
-                                if (goods.canPlayerUse(actor.index)) {
-                                    popScreen()
-                                    pushScreen(ScreenChgEquipment(this@ScreenActorWearing, actor, goods as GoodsEquipment, mCurItem))
-                                } else {
-                                    showMessage("不能装备!", 1000)
-                                }
+                                popScreen()
+                                pushScreen(ScreenChgEquipment(this@ScreenActorWearing, actor, goods as GoodsEquipment, mCurItem))
                             }
                         }, Mode.Use))
             }
@@ -147,19 +157,9 @@ class ScreenActorWearing(override val parent: GameNode): BaseScreen {
     }
 
     private fun getTheEquipList(type: Int): List<BaseGoods> {
+        val currentPlayer = game.playerList[mActorIndex]
         return Player.sGoodsList.equipList
-                .filter { it.type == type }
-        /*
-        val tmplist = mutableListOf<BaseGoods>()
-        val iter = Player.sGoodsList.equipList.iterator()
-        while (iter.hasNext()) {
-            val g = iter.next()
-            if (g.type == Player.sEquipTypes[mCurItem]) { // 找到所有与当前选择类型相同的装备
-                tmplist.add(g)
-            }
-        }
-        return tmplist
-        */
+                .filter { it.type == type && it.canPlayerUse(currentPlayer.index) }
     }
 
     companion object {

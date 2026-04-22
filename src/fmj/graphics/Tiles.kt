@@ -7,7 +7,21 @@ import graphics.Canvas
 
 class Tiles(index: Int) {
 
-    private val mTileRes = DatLib.getRes(DatLib.ResType.TIL, 1, index) as ResImage
+    private val mTileRes: ResImage = run {
+        val res = DatLib.getRes(DatLib.ResType.TIL, 1, index, false)
+        if (res is ResImage) {
+            res
+        } else {
+            println("Warning: Failed to load tile $index, using empty image")
+            // 创建一个空的 ResImage 作为回退
+            val emptyRes = ResImage()
+            val emptyData = ByteArray(6)
+            emptyData[0] = 1.toByte()
+            emptyData[1] = index.toByte()
+            emptyRes.setData(emptyData, 0)
+            emptyRes
+        }
+    }
 
     /**
      *

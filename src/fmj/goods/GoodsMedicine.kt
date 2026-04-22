@@ -31,15 +31,41 @@ class GoodsMedicine : BaseGoods(), IEatMedicine {
     }
 
     override fun eat(player: Player) {
-        player.hp = player.hp + mHp
-        if (player.hp > player.maxHP) {
-            player.hp = player.maxHP
+        println("GoodsMedicine.eat: 角色 ${player.name} 使用药物前 HP: ${player.hp}/${player.maxHP}, 药品HP恢复: $mHp")
+        
+        // 检查角色是否已经阵亡（HP <= 0 表示阵亡）
+        val wasAlive = player.hp > 0
+        val wasDead = player.hp <= 0
+        
+        // 普通药物（GoodsMedicine）不具有复活功能，只能对存活角色使用
+        if (wasAlive && mHp > 0) {
+            println("GoodsMedicine.eat: 角色存活，增加HP $mHp")
+            // 角色活着时，正常增加HP
+            player.hp = player.hp + mHp
+            if (player.hp > player.maxHP) {
+                player.hp = player.maxHP
+            }
+        } else if (wasDead) {
+            println("GoodsMedicine.eat: 角色已死，普通药物无法复活")
+            // 普通药物对阵亡角色无效，不做任何处理
+        } else {
+            println("GoodsMedicine.eat: 药品无HP恢复效果 (mHp=$mHp)")
         }
-        player.mp = player.mp + mMp
-        if (player.mp > player.maxMP) {
-            player.mp = player.maxMP
+        
+        // MP恢复逻辑（只对存活角色有效）
+        if (wasAlive) {
+            player.mp = player.mp + mMp
+            if (player.mp > player.maxMP) {
+                player.mp = player.maxMP
+            }
         }
-        health(mBitMask, player.debuff)
+        
+        // 状态治疗（只对存活角色有效）
+        if (wasAlive) {
+            health(mBitMask, player.debuff)
+        }
+        
+        println("GoodsMedicine.eat: 角色 ${player.name} 使用药物后 HP: ${player.hp}/${player.maxHP}")
     }
 
     /**

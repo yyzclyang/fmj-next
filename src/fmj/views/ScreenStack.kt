@@ -1,11 +1,16 @@
 package fmj.views
 
 import fmj.graphics.Util
+import fmj.scene.ScreenMainGame
 import graphics.Canvas
 import java.Stack
 
 class ScreenStack(override val parent: GameNode): GameNode {
     private val mScreenStack = Stack.create<BaseScreen>()
+    
+    private fun getScreenName(screen: BaseScreen?): String {
+        return screen?.screenName ?: "None"
+    }
 
     fun clear() {
         mScreenStack.clear()
@@ -20,18 +25,25 @@ class ScreenStack(override val parent: GameNode): GameNode {
     }
 
     fun changeScreen(scr: BaseScreen) {
+        val previousScreen = if (mScreenStack.size > 0) getScreenName(mScreenStack.peek()) else "None"
         mScreenStack.clear()
         mScreenStack.push(scr)
+        println("ScreenStack: Changed from $previousScreen to ${getScreenName(scr)}")
         scr.willAppear()
     }
 
     override fun pushScreen(scr: BaseScreen) {
+        val currentScreen = if (mScreenStack.size > 0) mScreenStack.peek()!!::class.simpleName else "None"
         mScreenStack.push(scr)
+        println("ScreenStack: Pushed ${scr::class.simpleName} on top of $currentScreen")
         scr.willAppear()
     }
 
     override fun popScreen() {
+        val poppedScreen = getScreenName(mScreenStack.peek())
         mScreenStack.pop()
+        val currentScreen = getScreenName(mScreenStack.peek())
+        println("ScreenStack: Popped $poppedScreen, now showing $currentScreen")
         mScreenStack.peek()?.willAppear()
     }
 

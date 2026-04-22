@@ -298,6 +298,8 @@ fun<T> writeArray(out: ObjectOutput, objs: Array<T>, write: (ObjectOutput, T) ->
 class ObjectOutputStream(private val file: File): ObjectOutput {
     private var buffer = mutableListOf<Byte>()
 
+    // 使用2个字节表示int，1字节 = 8位（bit），2字节 = 16位，所以2字节可以表示0-65535
+    // 超过65535的值需要使用4个字节表示，这也就导致金币超过65535后，计算就有问题了。
     override fun writeInt(v: Int) {
         buffer.add(v.byte(0))
         buffer.add(v.byte(1))
@@ -361,3 +363,26 @@ external fun sysAddKeyUpListener(callback:(keyCode: Int) -> Unit)
 external fun sysSetInterval(interval: Int, callback:() -> Unit): Int
 external fun sysDrawScreen(buffer: Array<Color>, width: Int, height: Int)
 external fun sysExit()
+
+// 游戏配置相关的外部函数
+external fun sysGetSaveSlotCount(): Int
+external fun sysGetWinMoneyMultiple(): Int
+external fun sysGetWinExpMultiple(): Int
+external fun sysGetWinItemMultiple(): Int
+external fun sysGetCombatProbability(): Int
+external fun sysGetMapContainerState(): Boolean
+external fun sysGetMagicReverse(): Boolean
+external fun sysGetChoiceLibName(): String
+
+// 外部回调函数
+external fun sysShowMapBase64(data: String)
+external fun sysUpdatePlayerPosition(x: Double, y: Double, mapX: Int, mapY: Int, mapWidth: Int, mapHeight: Int)
+external fun sysUpdateTreasureBoxes(treasureBoxesJson: String, mapWidth: Int, mapHeight: Int)
+external fun sysInitializeFMJDevTools(gameInstance: Any)
+
+// 宝箱映射Cookie管理函数
+external fun sysInitBoxMapping()
+external fun sysAddBoxMapping(boxKey: String, eventId: Int)
+external fun sysGetBoxEventId(boxKey: String): Int?
+external fun sysGetAllBoxMappings(): dynamic
+external fun sysLoadBoxMappingsIntoKotlin(callback: (String, Int) -> Unit)

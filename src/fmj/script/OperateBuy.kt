@@ -48,14 +48,14 @@ class OperateBuy(override val parent: GameNode, data: ByteArray)
     }
 
     override fun draw(canvas: Canvas) {
-        game.mainScene.drawScene(canvas)
+        game.mainScene.drawSceneWithoutClear(canvas)
     }
 
     override fun onKeyDown(key: Int) {}
 
     override fun onKeyUp(key: Int) {}
 
-    override fun onItemSelected(goods: BaseGoods) {
+    override fun onItemSelected(goods: BaseGoods, index: Int) {
         if (Player.sMoney < goods.buyPrice) {
             showMessage("金钱不足!", 1000)
         } else {

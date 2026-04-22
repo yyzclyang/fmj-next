@@ -21,7 +21,7 @@ class ScreenCommonMenu(override val parent: GameNode, items: Array<String>, priv
     private val pady = 3
     init {
         val byteItems = items.map { it.gbkBytes() }
-        val colCount = byteItems.map { it.size }.max() ?: 2
+        val colCount = byteItems.map { it.size }.maxOrNull() ?: 2
         val width = 8 * colCount
         val height = 16 * items.size
         bg = Util.getFrameBitmap(width+padx*2, height+pady*2)

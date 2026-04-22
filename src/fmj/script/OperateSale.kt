@@ -15,6 +15,8 @@ import fmj.views.GameNode
 import graphics.Canvas
 
 class OperateSale(override val parent: GameNode): Control, Operate, ScreenGoodsList.OnItemSelectedListener {
+    private var lastSelectedIndex: Int = 0  // 记录上次选中的位置
+    
     override fun update(delta: Long): Boolean {
         return false
     }
@@ -25,7 +27,8 @@ class OperateSale(override val parent: GameNode): Control, Operate, ScreenGoodsL
 
     override fun onKeyUp(key: Int) {}
 
-    override fun onItemSelected(goods: BaseGoods) {
+    override fun onItemSelected(goods: BaseGoods, index: Int) {
+        lastSelectedIndex = index  // 保存当前选中的位置
         if (goods is GoodsDrama) {
             showMessage("任务物品!", 1000)
         } else {
@@ -67,7 +70,14 @@ class OperateSale(override val parent: GameNode): Control, Operate, ScreenGoodsL
                 val list = mutableListOf<BaseGoods>()
                 list.addAll(Player.sGoodsList.goodsList)
                 list.addAll(Player.sGoodsList.equipList)
-                pushScreen(ScreenGoodsList(this, list, this@OperateSale, Mode.Sale))
+                
+                // 调整光标位置：如果当前物品卖完了，光标移到下一个物品
+                var newIndex = lastSelectedIndex
+                if (newIndex >= list.size && list.isNotEmpty()) {
+                    newIndex = list.size - 1  // 如果超出范围，移到最后一个
+                }
+                
+                pushScreen(ScreenGoodsList(this, list, this@OperateSale, Mode.Sale, newIndex))
             } else if (key == Global.KEY_CANCEL) {
                 popScreen()
             }
@@ -80,9 +90,10 @@ class OperateSale(override val parent: GameNode): Control, Operate, ScreenGoodsL
             } else if (key == Global.KEY_DOWN && goods.goodsNum > saleCnt) {
                 ++saleCnt
                 money += goods.sellPrice
-                if (money > 99999) {
-                    money = 99999
-                }
+                // 使用long类型管理，不再对金钱做 99999 的限制
+                // if (money > 99999) {
+                    // money = 99999
+                // }
             }
         }
     }

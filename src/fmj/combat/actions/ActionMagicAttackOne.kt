@@ -13,7 +13,7 @@ import fmj.views.BaseScreen
 
 import graphics.Canvas
 
-class ActionMagicAttackOne(attacker: FightingCharacter, target: FightingCharacter, private val magic: BaseMagic
+class ActionMagicAttackOne(attacker: FightingCharacter, target: FightingCharacter, internal val magic: BaseMagic
 ) : ActionSingleTarget(attacker, target) {
 
     private var mState = 1

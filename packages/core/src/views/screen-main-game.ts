@@ -25,6 +25,8 @@ interface SceneObject {
   x: number;
   y: number;
   resId: number;
+  direction: Facing;
+  step: number;
 }
 
 interface DialogueState {
@@ -83,6 +85,7 @@ export class ScreenMainGame extends BaseScreen {
   private playerMapY = 0;
   private hasPlayer = false;
   private facing: Facing = KeyCode.Down;
+  private playerStep = 0;
   private dialogue: DialogueState | null = null;
   private gut: GutState | null = null;
 
@@ -154,6 +157,9 @@ export class ScreenMainGame extends BaseScreen {
       case KeyCode.Down:
         this.walkDown();
         return;
+      case KeyCode.Enter:
+        this.triggerSceneObjectEvent();
+        return;
     }
   }
 
@@ -197,27 +203,42 @@ export class ScreenMainGame extends BaseScreen {
       }
 
       if (obj.kind === 'box') {
-        this.drawBox(surface, screenX, screenY);
+        this.drawBox(surface, screenX, screenY, obj.step);
         continue;
       }
 
-      this.drawNpc(surface, screenX, screenY);
+      this.drawNpc(surface, screenX, screenY, obj);
     }
   }
 
-  private drawNpc(surface: Surface, screenX: number, screenY: number): void {
+  private drawNpc(surface: Surface, screenX: number, screenY: number, obj: SceneObject): void {
     const left = screenX * MAP_TILE_SIZE + Math.floor((MAP_TILE_SIZE - NPC_WIDTH) / 2);
     const top = screenY * MAP_TILE_SIZE + (MAP_TILE_SIZE - NPC_HEIGHT);
     surface.fillRect(left, top, NPC_WIDTH, NPC_HEIGHT, COLOR_BLACK);
     surface.fillRect(left + 1, top + 1, NPC_WIDTH - 2, NPC_HEIGHT - 2, COLOR_WHITE);
-    surface.fillRect(left + 4, top + 4, 2, 2, COLOR_BLACK);
+    drawFacingMark(surface, left, top, NPC_WIDTH, NPC_HEIGHT, obj.direction);
+    if ((obj.step & 1) === 1) {
+      surface.fillRect(left + 2, top + NPC_HEIGHT - 3, 2, 1, COLOR_BLACK);
+      surface.fillRect(left + NPC_WIDTH - 4, top + NPC_HEIGHT - 3, 2, 1, COLOR_BLACK);
+    }
   }
 
-  private drawBox(surface: Surface, screenX: number, screenY: number): void {
+  private drawBox(surface: Surface, screenX: number, screenY: number, step: number): void {
     const left = screenX * MAP_TILE_SIZE + Math.floor((MAP_TILE_SIZE - BOX_WIDTH) / 2);
     const top = screenY * MAP_TILE_SIZE + (MAP_TILE_SIZE - BOX_HEIGHT);
     surface.fillRect(left, top, BOX_WIDTH, BOX_HEIGHT, COLOR_BLACK);
     surface.fillRect(left + 1, top + 1, BOX_WIDTH - 2, BOX_HEIGHT - 2, COLOR_WHITE);
+    if (step >= 2) {
+      surface.fillRect(left + 2, top + 2, BOX_WIDTH - 4, BOX_HEIGHT - 4, COLOR_WHITE);
+      surface.fillRect(left + 2, top + 4, BOX_WIDTH - 4, 1, COLOR_BLACK);
+      surface.fillRect(left + 3, top + 6, BOX_WIDTH - 6, 1, COLOR_BLACK);
+      return;
+    }
+    if (step === 1) {
+      surface.fillRect(left + 1, top + 5, BOX_WIDTH - 2, 1, COLOR_BLACK);
+      surface.fillRect(left + 3, top + 1, BOX_WIDTH - 5, 1, COLOR_BLACK);
+      return;
+    }
     surface.fillRect(left + 1, top + 3, BOX_WIDTH - 2, 1, COLOR_BLACK);
   }
 
@@ -227,20 +248,10 @@ export class ScreenMainGame extends BaseScreen {
     const top = pos.y * MAP_TILE_SIZE + (MAP_TILE_SIZE - PLAYER_HEIGHT);
     surface.fillRect(left, top, PLAYER_WIDTH, PLAYER_HEIGHT, COLOR_BLACK);
     surface.fillRect(left + 1, top + 1, PLAYER_WIDTH - 2, PLAYER_HEIGHT - 2, COLOR_WHITE);
-
-    switch (this.facing) {
-      case KeyCode.Left:
-        surface.fillRect(left + 1, top + 5, 3, 2, COLOR_BLACK);
-        return;
-      case KeyCode.Right:
-        surface.fillRect(left + PLAYER_WIDTH - 4, top + 5, 3, 2, COLOR_BLACK);
-        return;
-      case KeyCode.Up:
-        surface.fillRect(left + 4, top + 1, 2, 3, COLOR_BLACK);
-        return;
-      case KeyCode.Down:
-        surface.fillRect(left + 4, top + PLAYER_HEIGHT - 4, 2, 3, COLOR_BLACK);
-        return;
+    drawFacingMark(surface, left, top, PLAYER_WIDTH, PLAYER_HEIGHT, this.facing);
+    if ((this.playerStep & 1) === 1) {
+      surface.fillRect(left + 2, top + PLAYER_HEIGHT - 3, 2, 1, COLOR_BLACK);
+      surface.fillRect(left + PLAYER_WIDTH - 4, top + PLAYER_HEIGHT - 3, 2, 1, COLOR_BLACK);
     }
   }
 
@@ -300,6 +311,7 @@ export class ScreenMainGame extends BaseScreen {
     if (!this.currentMap) return;
 
     this.facing = KeyCode.Left;
+    this.playerStep = 0;
     const x = this.playerMapX;
     const y = this.playerMapY;
     this.triggerMapEvent(x - 1, y);
@@ -315,6 +327,7 @@ export class ScreenMainGame extends BaseScreen {
     if (!this.currentMap) return;
 
     this.facing = KeyCode.Right;
+    this.playerStep = 0;
     const x = this.playerMapX;
     const y = this.playerMapY;
     this.triggerMapEvent(x + 1, y);
@@ -330,6 +343,7 @@ export class ScreenMainGame extends BaseScreen {
     if (!this.currentMap) return;
 
     this.facing = KeyCode.Up;
+    this.playerStep = 0;
     const x = this.playerMapX;
     const y = this.playerMapY;
     this.triggerMapEvent(x, y - 1);
@@ -345,6 +359,7 @@ export class ScreenMainGame extends BaseScreen {
     if (!this.currentMap) return;
 
     this.facing = KeyCode.Down;
+    this.playerStep = 0;
     const x = this.playerMapX;
     const y = this.playerMapY;
     this.triggerMapEvent(x, y + 1);
@@ -358,6 +373,7 @@ export class ScreenMainGame extends BaseScreen {
 
   startChapter(type: number, index: number): void {
     this.scriptProcess?.stop();
+    this.game.clearPendingBoxEvent();
     this.game.state.scriptType = type;
     this.game.state.scriptIndex = index;
     this.scriptProcess = this.game.scriptVm.loadScript(type, index);
@@ -373,6 +389,7 @@ export class ScreenMainGame extends BaseScreen {
     this.currentMap = mapRes;
     this.tileSet = this.loadTileSet(mapRes);
     this.sceneObjects.clear();
+    this.game.clearPendingBoxEvent();
     this.dialogue = null;
     this.gut = null;
     this.game.state.mapType = type;
@@ -389,27 +406,29 @@ export class ScreenMainGame extends BaseScreen {
   createActor(screenActorId: number, screenX: number, screenY: number): void {
     if (screenActorId < 0) return;
     this.hasPlayer = true;
+    this.playerStep = 0;
     this.setPlayerMapPosition(this.game.state.mapScreenX + screenX, this.game.state.mapScreenY + screenY);
   }
 
   createNpc(id: number, resId: number, x: number, y: number): void {
-    this.sceneObjects.set(id, { id, kind: 'npc', x, y, resId });
+    this.sceneObjects.set(id, { id, kind: 'npc', x, y, resId, direction: KeyCode.Down, step: 0 });
   }
 
   createBox(id: number, resId: number, x: number, y: number): void {
-    this.sceneObjects.set(id, { id, kind: 'box', x, y, resId });
+    const step = this.game.isBoxCollected(this.getBoxEventKey(x, y, resId)) ? 2 : 0;
+    this.sceneObjects.set(id, { id, kind: 'box', x, y, resId, direction: KeyCode.Down, step });
   }
 
   deleteNpc(id: number): void {
     this.sceneObjects.delete(id);
   }
 
+  deleteBox(id: number): void {
+    this.sceneObjects.delete(id);
+  }
+
   deleteAllNpc(): void {
-    for (const [id, obj] of this.sceneObjects.entries()) {
-      if (obj.kind === 'npc') {
-        this.sceneObjects.delete(id);
-      }
-    }
+    this.sceneObjects.clear();
   }
 
   moveActor(id: number, x: number, y: number): void {
@@ -422,6 +441,31 @@ export class ScreenMainGame extends BaseScreen {
     if (!obj) return;
     obj.x = x;
     obj.y = y;
+  }
+
+  setActorPose(id: number, facing: Facing, step: number): void {
+    if (id === 0) {
+      this.facing = facing;
+      this.playerStep = step;
+      return;
+    }
+    const obj = this.sceneObjects.get(id);
+    if (!obj) return;
+    obj.direction = facing;
+    obj.step = step;
+  }
+
+  openBox(id: number): void {
+    const obj = this.sceneObjects.get(id);
+    if (!obj || obj.kind !== 'box') return;
+    obj.step = Math.max(obj.step, 1);
+  }
+
+  collectFacingBox(): void {
+    const pos = this.getFacingMapPosition();
+    const obj = this.getSceneObjectAt(pos.x, pos.y);
+    if (!obj || obj.kind !== 'box') return;
+    obj.step = 2;
   }
 
   showDialogue(text: string, onClose: () => void): void {
@@ -466,7 +510,7 @@ export class ScreenMainGame extends BaseScreen {
   }
 
   setPlayerFacing(facing: Facing): void {
-    this.facing = facing;
+    this.setActorPose(0, facing, this.playerStep);
   }
 
   setSceneName(name: string): void {
@@ -542,18 +586,64 @@ export class ScreenMainGame extends BaseScreen {
     this.scriptProcess?.triggerEvent(eventId + 40);
   }
 
+  private triggerSceneObjectEvent(): void {
+    const pos = this.getFacingMapPosition();
+    const obj = this.getSceneObjectAt(pos.x, pos.y);
+    if (obj) {
+      if (obj.kind === 'box') {
+        this.game.setPendingBoxEvent(this.getBoxEventKey(obj.x, obj.y, obj.resId));
+      } else {
+        this.game.clearPendingBoxEvent();
+      }
+      const triggered = this.scriptProcess?.triggerEvent(obj.id) ?? false;
+      if (!triggered) {
+        this.game.clearPendingBoxEvent();
+      }
+      return;
+    }
+    this.game.clearPendingBoxEvent();
+    this.triggerMapEvent(pos.x, pos.y);
+  }
+
   private canPlayerStepTo(x: number, y: number): boolean {
     return this.currentMap?.canPlayerWalk(x, y) === true && !this.hasSceneObjectAt(x, y);
   }
 
   private hasSceneObjectAt(x: number, y: number): boolean {
+    return this.getSceneObjectAt(x, y) != null;
+  }
+
+  private getSceneObjectAt(x: number, y: number): SceneObject | null {
     for (const obj of this.sceneObjects.values()) {
       if (obj.x === x && obj.y === y) {
-        return true;
+        return obj;
       }
     }
+    return null;
+  }
 
-    return false;
+  private getFacingMapPosition(): { x: number; y: number } {
+    let x = this.playerMapX;
+    let y = this.playerMapY;
+    switch (this.facing) {
+      case KeyCode.Left:
+        x -= 1;
+        break;
+      case KeyCode.Right:
+        x += 1;
+        break;
+      case KeyCode.Up:
+        y -= 1;
+        break;
+      case KeyCode.Down:
+        y += 1;
+        break;
+    }
+    return { x, y };
+  }
+
+  private getBoxEventKey(x: number, y: number, resId: number): string {
+    return `${this.game.state.mapType}_${this.game.state.mapIndex}_${x}_${y}_4_${resId}`;
   }
 
   private loadTileSet(map: ResMap): ResImage | null {
@@ -605,6 +695,30 @@ export class ScreenMainGame extends BaseScreen {
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(Math.max(value, min), max);
+}
+
+function drawFacingMark(
+  surface: Surface,
+  left: number,
+  top: number,
+  width: number,
+  height: number,
+  facing: Facing
+): void {
+  switch (facing) {
+    case KeyCode.Left:
+      surface.fillRect(left + 1, top + 5, 3, 2, COLOR_BLACK);
+      return;
+    case KeyCode.Right:
+      surface.fillRect(left + width - 4, top + 5, 3, 2, COLOR_BLACK);
+      return;
+    case KeyCode.Up:
+      surface.fillRect(left + Math.floor(width / 2) - 1, top + 1, 2, 3, COLOR_BLACK);
+      return;
+    case KeyCode.Down:
+      surface.fillRect(left + Math.floor(width / 2) - 1, top + height - 4, 2, 3, COLOR_BLACK);
+      return;
+  }
 }
 
 function getGutLayout(gut: GutState): {

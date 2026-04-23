@@ -19,6 +19,8 @@ export class Game {
   readonly scriptVm = new ScriptVm(this);
   state: GameState = createInitialGameState();
   mainScene: ScreenMainGame | null = null;
+  private readonly boxEventMap = new Map<string, number>();
+  private pendingBoxEventKey: string | null = null;
   private readonly surface = new Surface(FRAME_WIDTH, FRAME_HEIGHT);
   private readonly screenStack = new ScreenStack();
   private readonly host: EngineHost;
@@ -55,12 +57,16 @@ export class Game {
   }
 
   startNewGame(): void {
+    this.boxEventMap.clear();
+    this.pendingBoxEventKey = null;
     this.state = createInitialGameState();
     this.changeScreen(ScreenViewType.SCREEN_MAIN_GAME);
     this.mainScene?.startChapter(STARTUP_CHAPTER_TYPE, STARTUP_CHAPTER_INDEX);
   }
 
   applyLoadedState(state: GameState): void {
+    this.boxEventMap.clear();
+    this.pendingBoxEventKey = null;
     this.state = state;
     this.changeScreen(ScreenViewType.SCREEN_MAIN_GAME);
     this.mainScene?.startChapter(this.state.scriptType, this.state.scriptIndex);
@@ -73,6 +79,30 @@ export class Game {
   setEvent(eventId: number): void {
     if (this.hasEvent(eventId)) return;
     this.state.eventFlags.push(eventId);
+  }
+
+  rememberBoxEvent(boxKey: string, eventId: number): void {
+    if (this.boxEventMap.has(boxKey)) return;
+    this.boxEventMap.set(boxKey, eventId);
+  }
+
+  isBoxCollected(boxKey: string): boolean {
+    const eventId = this.boxEventMap.get(boxKey);
+    return eventId != null && this.hasEvent(eventId);
+  }
+
+  setPendingBoxEvent(boxKey: string | null): void {
+    this.pendingBoxEventKey = boxKey;
+  }
+
+  consumePendingBoxEvent(): string | null {
+    const boxKey = this.pendingBoxEventKey;
+    this.pendingBoxEventKey = null;
+    return boxKey;
+  }
+
+  clearPendingBoxEvent(): void {
+    this.pendingBoxEventKey = null;
   }
 
   changeScreen(screenType: ScreenViewType): void {

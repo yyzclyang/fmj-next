@@ -41,6 +41,12 @@ export function readUint16(buf: Uint8Array, start: number): number {
   return low | (high << 8);
 }
 
+export function readUint32(buf: Uint8Array, start: number): number {
+  const low = readUint16(buf, start);
+  const high = readUint16(buf, start + 2);
+  return low + high * 0x10000;
+}
+
 export function readInt16(buf: Uint8Array, start: number): number {
   const value = readUint16(buf, start);
   return value >= 0x8000 ? value - 0x10000 : value;

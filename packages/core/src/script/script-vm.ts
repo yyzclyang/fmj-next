@@ -1,6 +1,6 @@
 import type { Game } from '@/game/game';
 import { ResGut } from '@/lib/res-gut';
-import { ResourceType, readGbkString, readUint16 } from '@/lib/resource-utils';
+import { ResourceType, readGbkString, readUint16, readUint32 } from '@/lib/resource-utils';
 import { KeyCode } from '@/shared/key-code';
 import { ScriptProcess } from './script-process';
 
@@ -17,10 +17,13 @@ const COMMAND = {
   SETEVENT: 26,
   MOVIE: 30,
   CREATEBOX: 32,
+  DELETEBOX: 33,
   GAINGOODS: 34,
   INITFIGHT: 35,
   CREATENPC: 38,
+  GAINMONEY: 41,
   SETMONEY: 43,
+  BOXOPEN: 51,
   DELALLNPC: 52,
   NPCSTEP: 53,
   SETSCENENAME: 54,
@@ -104,12 +107,16 @@ export class ScriptVm {
         return this.makeNoopCommand(10);
       case COMMAND.CREATEBOX:
         return this.readCreateBox(code, start);
+      case COMMAND.DELETEBOX:
+        return this.readDeleteBox(code, start);
       case COMMAND.GAINGOODS:
-        return this.makeNoopCommand(4);
+        return this.readGainGoods(code, start);
       case COMMAND.INITFIGHT:
         return this.makeNoopCommand(22);
       case COMMAND.CREATENPC:
         return this.readCreateNpc(code, start);
+      case COMMAND.GAINMONEY:
+        return this.readGainMoney(code, start);
       case COMMAND.SETMONEY:
         return this.makeNoopCommand(4);
       case COMMAND.DELALLNPC:
@@ -119,6 +126,8 @@ export class ScriptVm {
             this.game.mainScene?.deleteAllNpc();
           },
         };
+      case COMMAND.BOXOPEN:
+        return this.readBoxOpen(code, start);
       case COMMAND.NPCSTEP:
         return this.readNpcStep(code, start);
       case COMMAND.SETSCENENAME:
@@ -190,6 +199,10 @@ export class ScriptVm {
     return {
       len: 4,
       execute: process => {
+        const boxKey = this.game.consumePendingBoxEvent();
+        if (boxKey) {
+          this.game.rememberBoxEvent(boxKey, eventId);
+        }
         if (this.game.hasEvent(eventId)) {
           process.gotoAddress(address);
         }
@@ -251,6 +264,29 @@ export class ScriptVm {
     };
   }
 
+  private readDeleteBox(code: Uint8Array, start: number): CommandBuilder {
+    const id = readUint16(code, start);
+
+    return {
+      len: 2,
+      execute: () => {
+        this.game.mainScene?.deleteBox(id);
+      },
+    };
+  }
+
+  private readGainGoods(code: Uint8Array, start: number): CommandBuilder {
+    readUint16(code, start);
+    readUint16(code, start + 2);
+
+    return {
+      len: 4,
+      execute: () => {
+        this.game.mainScene?.collectFacingBox();
+      },
+    };
+  }
+
   private readCreateNpc(code: Uint8Array, start: number): CommandBuilder {
     const id = readUint16(code, start);
     const resId = readUint16(code, start + 2);
@@ -265,17 +301,37 @@ export class ScriptVm {
     };
   }
 
+  private readGainMoney(code: Uint8Array, start: number): CommandBuilder {
+    readUint32(code, start);
+
+    return {
+      len: 4,
+      execute: () => {
+        this.game.mainScene?.collectFacingBox();
+      },
+    };
+  }
+
+  private readBoxOpen(code: Uint8Array, start: number): CommandBuilder {
+    const id = readUint16(code, start);
+
+    return {
+      len: 2,
+      execute: () => {
+        this.game.mainScene?.openBox(id);
+      },
+    };
+  }
+
   private readNpcStep(code: Uint8Array, start: number): CommandBuilder {
     const actorId = readUint16(code, start);
     const faceTo = readUint16(code, start + 2);
-    readUint16(code, start + 4);
+    const step = readUint16(code, start + 4);
 
     return {
       len: 6,
       execute: () => {
-        if (actorId !== 0) return;
-
-        this.game.mainScene?.setPlayerFacing(mapFacing(faceTo));
+        this.game.mainScene?.setActorPose(actorId, mapFacing(faceTo), step);
       },
     };
   }

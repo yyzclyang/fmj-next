@@ -123,7 +123,7 @@ export class ScriptVm {
         return {
           len: 0,
           execute: () => {
-            this.game.mainScene?.deleteAllNpc();
+            this.game.mainSceneRuntime?.deleteAllNpc();
           },
         };
       case COMMAND.BOXOPEN:
@@ -150,7 +150,7 @@ export class ScriptVm {
     return {
       len: 8,
       execute: () => {
-        this.game.mainScene?.loadMap(type, index, x - 5, y - 2);
+        this.game.mainSceneRuntime?.loadMap(type, index, x - 5, y - 2);
       },
     };
   }
@@ -163,7 +163,7 @@ export class ScriptVm {
     return {
       len: 6,
       execute: () => {
-        this.game.mainScene?.createActor(actorId, x, y);
+        this.game.mainSceneRuntime?.createActor(actorId, x, y);
       },
     };
   }
@@ -174,7 +174,7 @@ export class ScriptVm {
     return {
       len: 2,
       execute: () => {
-        this.game.mainScene?.deleteNpc(npcId);
+        this.game.mainSceneRuntime?.deleteNpc(npcId);
       },
     };
   }
@@ -187,7 +187,7 @@ export class ScriptVm {
     return {
       len: 6,
       execute: () => {
-        this.game.mainScene?.moveActor(actorId, x, y);
+        this.game.mainSceneRuntime?.moveActor(actorId, x, y);
       },
     };
   }
@@ -234,7 +234,7 @@ export class ScriptVm {
     return {
       len: 4,
       execute: () => {
-        this.game.mainScene?.startChapter(type, index);
+        this.game.mainSceneRuntime?.startChapter(type, index);
       },
     };
   }
@@ -259,7 +259,7 @@ export class ScriptVm {
     return {
       len: 8,
       execute: () => {
-        this.game.mainScene?.createBox(id, resId, x, y);
+        this.game.mainSceneRuntime?.createBox(id, resId, x, y);
       },
     };
   }
@@ -270,7 +270,7 @@ export class ScriptVm {
     return {
       len: 2,
       execute: () => {
-        this.game.mainScene?.deleteBox(id);
+        this.game.mainSceneRuntime?.deleteBox(id);
       },
     };
   }
@@ -282,7 +282,7 @@ export class ScriptVm {
     return {
       len: 4,
       execute: () => {
-        this.game.mainScene?.collectFacingBox();
+        this.game.mainSceneRuntime?.collectFacingBox();
       },
     };
   }
@@ -296,7 +296,7 @@ export class ScriptVm {
     return {
       len: 8,
       execute: () => {
-        this.game.mainScene?.createNpc(id, resId, x, y);
+        this.game.mainSceneRuntime?.createNpc(id, resId, x, y);
       },
     };
   }
@@ -307,7 +307,7 @@ export class ScriptVm {
     return {
       len: 4,
       execute: () => {
-        this.game.mainScene?.collectFacingBox();
+        this.game.mainSceneRuntime?.collectFacingBox();
       },
     };
   }
@@ -318,7 +318,7 @@ export class ScriptVm {
     return {
       len: 2,
       execute: () => {
-        this.game.mainScene?.openBox(id);
+        this.game.mainSceneRuntime?.openBox(id);
       },
     };
   }
@@ -331,7 +331,7 @@ export class ScriptVm {
     return {
       len: 6,
       execute: () => {
-        this.game.mainScene?.setActorPose(actorId, mapFacing(faceTo), step);
+        this.game.mainSceneRuntime?.setActorPose(actorId, mapFacing(faceTo), step);
       },
     };
   }
@@ -343,7 +343,7 @@ export class ScriptVm {
     return {
       len,
       execute: () => {
-        this.game.mainScene?.setSceneName(name);
+        this.game.mainSceneRuntime?.setSceneName(name);
       },
     };
   }

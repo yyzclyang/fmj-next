@@ -6,8 +6,8 @@ import { Surface } from '@/rendering/surface';
 import { COLOR_WHITE } from '@/rendering/color';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
-import { BaseScreen } from './base-screen';
-import { ScreenViewType } from './screen-view-type';
+import { BaseScreen } from '../base-screen';
+import { ScreenViewType } from '../screen-view-type';
 
 // 菜单底图来自 PIC 2:14，对应原版启动菜单画面。
 const MENU_PIC_TYPE = 2;

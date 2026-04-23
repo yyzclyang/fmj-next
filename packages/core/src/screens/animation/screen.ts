@@ -5,8 +5,8 @@ import { Surface } from '@/rendering/surface';
 import { COLOR_WHITE } from '@/rendering/color';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
-import { BaseScreen } from './base-screen';
-import { ScreenViewType } from './screen-view-type';
+import { BaseScreen } from '../base-screen';
+import { ScreenViewType } from '../screen-view-type';
 
 const STARTUP_WIDTH = 160;
 const STARTUP_HEIGHT = 96;

@@ -1,11 +1,10 @@
 import type { Game } from '@/game/game';
 import { ResImage } from '@/lib/res-image';
-import { ResMap } from '@/lib/res-map';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import { Surface } from '@/rendering/surface';
 import { TextRender } from '@/rendering/text-render';
-import type { ScriptProcess } from '@/script/script-process';
+import type { Facing, MainSceneRuntime, SceneObject } from './runtime';
 import {
   MAP_TILE_SIZE,
   MAP_VIEW_TILE_HEIGHT,
@@ -14,20 +13,8 @@ import {
   SCREEN_WIDTH,
 } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
-import { BaseScreen } from './base-screen';
-
-type Facing = typeof KeyCode.Up | typeof KeyCode.Down | typeof KeyCode.Left | typeof KeyCode.Right;
-type SceneObjectKind = 'npc' | 'box';
-
-interface SceneObject {
-  id: number;
-  kind: SceneObjectKind;
-  x: number;
-  y: number;
-  resId: number;
-  direction: Facing;
-  step: number;
-}
+import { BaseScreen } from '@/screens/base-screen';
+import { clamp } from '@/shared/math';
 
 interface DialogueState {
   pages: string[];
@@ -46,8 +33,6 @@ interface GutState {
   onClose: () => void;
 }
 
-const PLAYER_SCREEN_X = 9;
-const PLAYER_SCREEN_Y = 5;
 const MAP_INFO_LEFT = 2;
 const MAP_INFO_TOP = 2;
 const MAP_INFO_LINE_GAP = 16;
@@ -74,43 +59,22 @@ const DIALOG_TEXT_WIDTH = DIALOG_WIDTH - 20;
 const DIALOG_PAGE_LINES = 4;
 const DIALOG_LINE_GAP = 16;
 
-// 这是当前最小主场景，负责承接启动章节、地图和占位主角移动。
+// 主场景屏幕层只负责 UI 状态、绘制和输入分发。
 export class ScreenMainGame extends BaseScreen {
-  private currentMap: ResMap | null = null;
-  private tileSet: ResImage | null = null;
-  private scriptProcess: ScriptProcess | null = null;
-  // 非主角场景对象先统一用占位块表示，后面接正式资源时再细化。
-  private readonly sceneObjects = new Map<number, SceneObject>();
-  private playerMapX = 0;
-  private playerMapY = 0;
-  private hasPlayer = false;
-  private facing: Facing = KeyCode.Down;
-  private playerStep = 0;
   private dialogue: DialogueState | null = null;
   private gut: GutState | null = null;
 
-  constructor(game: Game) {
+  constructor(
+    game: Game,
+    private readonly runtime: MainSceneRuntime
+  ) {
     super(game);
-    if (this.game.state.mapType > 0 && this.game.state.mapIndex > 0) {
-      this.loadMap(
-        this.game.state.mapType,
-        this.game.state.mapIndex,
-        this.game.state.mapScreenX,
-        this.game.state.mapScreenY
-      );
-    }
-
-    if (this.game.state.playerMapX > 0 || this.game.state.playerMapY > 0) {
-      this.hasPlayer = true;
-      this.setPlayerMapPosition(this.game.state.playerMapX, this.game.state.playerMapY);
-    }
   }
 
   override update(delta: number): void {
     this.updateGut(delta);
     if (this.gut) return;
-    void delta;
-    this.scriptProcess?.step();
+    this.runtime.update();
   }
 
   draw(surface: Surface): void {
@@ -122,7 +86,7 @@ export class ScreenMainGame extends BaseScreen {
     surface.drawColor(COLOR_WHITE);
     this.drawMap(surface);
     this.drawSceneObjects(surface);
-    if (this.hasPlayer) {
+    if (this.runtime.hasPlayer) {
       this.drawPlayer(surface);
     }
     this.drawMapInfo(surface);
@@ -140,25 +104,15 @@ export class ScreenMainGame extends BaseScreen {
       return;
     }
 
-    if (this.scriptProcess?.running || !this.currentMap || !this.hasPlayer) {
-      return;
-    }
-
     switch (key) {
       case KeyCode.Left:
-        this.walkLeft();
-        return;
       case KeyCode.Right:
-        this.walkRight();
-        return;
       case KeyCode.Up:
-        this.walkUp();
-        return;
       case KeyCode.Down:
-        this.walkDown();
+        this.runtime.move(key);
         return;
       case KeyCode.Enter:
-        this.triggerSceneObjectEvent();
+        this.runtime.interact();
         return;
     }
   }
@@ -168,9 +122,52 @@ export class ScreenMainGame extends BaseScreen {
     this.handleGutKeyUp(key);
   }
 
-  private drawMap(surface: Surface): void {
-    if (!this.currentMap) return;
+  showDialogue(text: string, onClose: () => void): void {
+    const pages = paginateDialogue(text);
+    if (pages.length === 0) {
+      onClose();
+      return;
+    }
 
+    this.dialogue = {
+      pages,
+      pageIndex: 0,
+      onClose,
+    };
+  }
+
+  showGut(topImageIndex: number, bottomImageIndex: number, text: string, onClose: () => void): void {
+    const topImage = this.loadPicture(topImageIndex);
+    const bottomImage = this.loadPicture(bottomImageIndex);
+    const layout = getGutLayout({
+      topImage,
+      bottomImage,
+      lines: [],
+      scrollY: 0,
+      step: 0,
+      interval: 0,
+      elapsed: 0,
+      onClose,
+    });
+    const lines = wrapTextBlock(text, layout.textWidth);
+
+    this.gut = {
+      topImage,
+      bottomImage,
+      lines,
+      scrollY: layout.textBottom,
+      step: GUT_DEFAULT_STEP,
+      interval: GUT_DEFAULT_INTERVAL,
+      elapsed: 0,
+      onClose,
+    };
+  }
+
+  private drawMap(surface: Surface): void {
+    const currentMap = this.runtime.currentMap;
+    if (!currentMap) return;
+
+    const tileSet = this.runtime.tileSet;
     for (let y = 0; y < MAP_VIEW_TILE_HEIGHT; y += 1) {
       for (let x = 0; x < MAP_VIEW_TILE_WIDTH; x += 1) {
         const mapX = this.game.state.mapScreenX + x;
@@ -178,24 +175,24 @@ export class ScreenMainGame extends BaseScreen {
         const drawX = x * MAP_TILE_SIZE;
         const drawY = y * MAP_TILE_SIZE;
 
-        if (this.tileSet) {
-          const tileX = clamp(mapX, 0, this.currentMap.mapWidth - 1);
-          const tileY = clamp(mapY, 0, this.currentMap.mapHeight - 1);
-          const tileIndex = this.currentMap.getTileIndex(tileX, tileY);
+        if (tileSet) {
+          const tileX = clamp(mapX, 0, currentMap.mapWidth - 1);
+          const tileY = clamp(mapY, 0, currentMap.mapHeight - 1);
+          const tileIndex = currentMap.getTileIndex(tileX, tileY);
           if (tileIndex >= 0) {
-            this.tileSet.draw(surface, tileIndex + 1, drawX, drawY);
+            tileSet.draw(surface, tileIndex + 1, drawX, drawY);
             continue;
           }
         }
 
-        const walkable = this.currentMap.canWalk(mapX, mapY);
+        const walkable = currentMap.canWalk(mapX, mapY);
         surface.fillRect(drawX, drawY, MAP_TILE_SIZE, MAP_TILE_SIZE, walkable ? COLOR_WHITE : COLOR_BLACK);
       }
     }
   }
 
   private drawSceneObjects(surface: Surface): void {
-    for (const obj of this.sceneObjects.values()) {
+    for (const obj of this.runtime.sceneObjects) {
       const screenX = obj.x - this.game.state.mapScreenX;
       const screenY = obj.y - this.game.state.mapScreenY;
       if (screenX < 0 || screenX >= MAP_VIEW_TILE_WIDTH || screenY < 0 || screenY >= MAP_VIEW_TILE_HEIGHT) {
@@ -243,26 +240,26 @@ export class ScreenMainGame extends BaseScreen {
   }
 
   private drawPlayer(surface: Surface): void {
-    const pos = this.getPlayerScreenPosition();
+    const pos = this.runtime.getPlayerScreenPosition();
     const left = pos.x * MAP_TILE_SIZE + Math.floor((MAP_TILE_SIZE - PLAYER_WIDTH) / 2);
     const top = pos.y * MAP_TILE_SIZE + (MAP_TILE_SIZE - PLAYER_HEIGHT);
     surface.fillRect(left, top, PLAYER_WIDTH, PLAYER_HEIGHT, COLOR_BLACK);
     surface.fillRect(left + 1, top + 1, PLAYER_WIDTH - 2, PLAYER_HEIGHT - 2, COLOR_WHITE);
-    drawFacingMark(surface, left, top, PLAYER_WIDTH, PLAYER_HEIGHT, this.facing);
-    if ((this.playerStep & 1) === 1) {
+    drawFacingMark(surface, left, top, PLAYER_WIDTH, PLAYER_HEIGHT, this.runtime.playerFacing);
+    if ((this.runtime.playerStep & 1) === 1) {
       surface.fillRect(left + 2, top + PLAYER_HEIGHT - 3, 2, 1, COLOR_BLACK);
       surface.fillRect(left + PLAYER_WIDTH - 4, top + PLAYER_HEIGHT - 3, 2, 1, COLOR_BLACK);
     }
   }
 
   private drawMapInfo(surface: Surface): void {
-    const mapName = this.game.state.sceneName || this.currentMap?.mapName || 'Map';
+    const mapName = this.game.state.sceneName || this.runtime.currentMap?.mapName || 'Map';
     TextRender.drawText(surface, mapName, MAP_INFO_LEFT, MAP_INFO_TOP);
 
-    if (!this.hasPlayer) return;
+    if (!this.runtime.hasPlayer) return;
     TextRender.drawText(
       surface,
-      `${this.playerMapX},${this.playerMapY}`,
+      `${this.runtime.playerMapX},${this.runtime.playerMapY}`,
       MAP_INFO_LEFT,
       MAP_INFO_TOP + MAP_INFO_LINE_GAP
     );
@@ -305,216 +302,6 @@ export class ScreenMainGame extends BaseScreen {
     for (let i = 0; i < lines.length; i += 1) {
       TextRender.drawText(surface, lines[i] ?? '', DIALOG_TEXT_LEFT, DIALOG_TEXT_TOP + i * DIALOG_LINE_GAP);
     }
-  }
-
-  private walkLeft(): void {
-    if (!this.currentMap) return;
-
-    this.facing = KeyCode.Left;
-    this.playerStep = 0;
-    const x = this.playerMapX;
-    const y = this.playerMapY;
-    this.triggerMapEvent(x - 1, y);
-    if (!this.canPlayerStepTo(x - 1, y)) return;
-
-    this.setPlayerMapPosition(x - 1, y);
-    if (this.getPlayerScreenPosition().x <= PLAYER_SCREEN_X) {
-      this.game.state.mapScreenX -= 1;
-    }
-  }
-
-  private walkRight(): void {
-    if (!this.currentMap) return;
-
-    this.facing = KeyCode.Right;
-    this.playerStep = 0;
-    const x = this.playerMapX;
-    const y = this.playerMapY;
-    this.triggerMapEvent(x + 1, y);
-    if (!this.canPlayerStepTo(x + 1, y)) return;
-
-    this.setPlayerMapPosition(x + 1, y);
-    if (this.getPlayerScreenPosition().x >= PLAYER_SCREEN_X) {
-      this.game.state.mapScreenX += 1;
-    }
-  }
-
-  private walkUp(): void {
-    if (!this.currentMap) return;
-
-    this.facing = KeyCode.Up;
-    this.playerStep = 0;
-    const x = this.playerMapX;
-    const y = this.playerMapY;
-    this.triggerMapEvent(x, y - 1);
-    if (!this.canPlayerStepTo(x, y - 1)) return;
-
-    this.setPlayerMapPosition(x, y - 1);
-    if (this.getPlayerScreenPosition().y <= PLAYER_SCREEN_Y) {
-      this.game.state.mapScreenY -= 1;
-    }
-  }
-
-  private walkDown(): void {
-    if (!this.currentMap) return;
-
-    this.facing = KeyCode.Down;
-    this.playerStep = 0;
-    const x = this.playerMapX;
-    const y = this.playerMapY;
-    this.triggerMapEvent(x, y + 1);
-    if (!this.canPlayerStepTo(x, y + 1)) return;
-
-    this.setPlayerMapPosition(x, y + 1);
-    if (this.getPlayerScreenPosition().y >= PLAYER_SCREEN_Y) {
-      this.game.state.mapScreenY += 1;
-    }
-  }
-
-  startChapter(type: number, index: number): void {
-    this.scriptProcess?.stop();
-    this.game.clearPendingBoxEvent();
-    this.game.state.scriptType = type;
-    this.game.state.scriptIndex = index;
-    this.scriptProcess = this.game.scriptVm.loadScript(type, index);
-    this.scriptProcess.start();
-  }
-
-  loadMap(type: number, index: number, screenX: number, screenY: number): void {
-    const mapRes = this.game.datLib.getRes(ResourceType.MAP, type, index);
-    if (!(mapRes instanceof ResMap)) {
-      throw new Error(`Missing map ${type}:${index}`);
-    }
-
-    this.currentMap = mapRes;
-    this.tileSet = this.loadTileSet(mapRes);
-    this.sceneObjects.clear();
-    this.game.clearPendingBoxEvent();
-    this.dialogue = null;
-    this.gut = null;
-    this.game.state.mapType = type;
-    this.game.state.mapIndex = index;
-    this.game.state.mapScreenX = screenX;
-    this.game.state.mapScreenY = screenY;
-    this.game.state.sceneName = mapRes.mapName;
-
-    if (this.hasPlayer) {
-      this.setPlayerMapPosition(screenX + PLAYER_SCREEN_X, screenY + PLAYER_SCREEN_Y);
-    }
-  }
-
-  createActor(screenActorId: number, screenX: number, screenY: number): void {
-    if (screenActorId < 0) return;
-    this.hasPlayer = true;
-    this.playerStep = 0;
-    this.setPlayerMapPosition(this.game.state.mapScreenX + screenX, this.game.state.mapScreenY + screenY);
-  }
-
-  createNpc(id: number, resId: number, x: number, y: number): void {
-    this.sceneObjects.set(id, { id, kind: 'npc', x, y, resId, direction: KeyCode.Down, step: 0 });
-  }
-
-  createBox(id: number, resId: number, x: number, y: number): void {
-    const step = this.game.isBoxCollected(this.getBoxEventKey(x, y, resId)) ? 2 : 0;
-    this.sceneObjects.set(id, { id, kind: 'box', x, y, resId, direction: KeyCode.Down, step });
-  }
-
-  deleteNpc(id: number): void {
-    this.sceneObjects.delete(id);
-  }
-
-  deleteBox(id: number): void {
-    this.sceneObjects.delete(id);
-  }
-
-  deleteAllNpc(): void {
-    this.sceneObjects.clear();
-  }
-
-  moveActor(id: number, x: number, y: number): void {
-    if (id === 0) {
-      this.setPlayerMapPosition(x, y);
-      return;
-    }
-
-    const obj = this.sceneObjects.get(id);
-    if (!obj) return;
-    obj.x = x;
-    obj.y = y;
-  }
-
-  setActorPose(id: number, facing: Facing, step: number): void {
-    if (id === 0) {
-      this.facing = facing;
-      this.playerStep = step;
-      return;
-    }
-    const obj = this.sceneObjects.get(id);
-    if (!obj) return;
-    obj.direction = facing;
-    obj.step = step;
-  }
-
-  openBox(id: number): void {
-    const obj = this.sceneObjects.get(id);
-    if (!obj || obj.kind !== 'box') return;
-    obj.step = Math.max(obj.step, 1);
-  }
-
-  collectFacingBox(): void {
-    const pos = this.getFacingMapPosition();
-    const obj = this.getSceneObjectAt(pos.x, pos.y);
-    if (!obj || obj.kind !== 'box') return;
-    obj.step = 2;
-  }
-
-  showDialogue(text: string, onClose: () => void): void {
-    const pages = paginateDialogue(text);
-    if (pages.length === 0) {
-      onClose();
-      return;
-    }
-
-    this.dialogue = {
-      pages,
-      pageIndex: 0,
-      onClose,
-    };
-  }
-
-  showGut(topImageIndex: number, bottomImageIndex: number, text: string, onClose: () => void): void {
-    const topImage = this.loadPicture(topImageIndex);
-    const bottomImage = this.loadPicture(bottomImageIndex);
-    const layout = getGutLayout({
-      topImage,
-      bottomImage,
-      lines: [],
-      scrollY: 0,
-      step: 0,
-      interval: 0,
-      elapsed: 0,
-      onClose,
-    });
-    const lines = wrapTextBlock(text, layout.textWidth);
-
-    this.gut = {
-      topImage,
-      bottomImage,
-      lines,
-      scrollY: layout.textBottom,
-      step: GUT_DEFAULT_STEP,
-      interval: GUT_DEFAULT_INTERVAL,
-      elapsed: 0,
-      onClose,
-    };
-  }
-
-  setPlayerFacing(facing: Facing): void {
-    this.setActorPose(0, facing, this.playerStep);
-  }
-
-  setSceneName(name: string): void {
-    this.game.state.sceneName = name;
   }
 
   private advanceDialogue(): void {
@@ -573,128 +360,11 @@ export class ScreenMainGame extends BaseScreen {
     onClose?.();
   }
 
-  private getPlayerScreenPosition(): { x: number; y: number } {
-    return {
-      x: this.playerMapX - this.game.state.mapScreenX,
-      y: this.playerMapY - this.game.state.mapScreenY,
-    };
-  }
-
-  private triggerMapEvent(x: number, y: number): void {
-    const eventId = this.currentMap?.getEventNum(x, y) ?? 0;
-    if (eventId <= 0) return;
-    this.scriptProcess?.triggerEvent(eventId + 40);
-  }
-
-  private triggerSceneObjectEvent(): void {
-    const pos = this.getFacingMapPosition();
-    const obj = this.getSceneObjectAt(pos.x, pos.y);
-    if (obj) {
-      if (obj.kind === 'box') {
-        this.game.setPendingBoxEvent(this.getBoxEventKey(obj.x, obj.y, obj.resId));
-      } else {
-        this.game.clearPendingBoxEvent();
-      }
-      const triggered = this.scriptProcess?.triggerEvent(obj.id) ?? false;
-      if (!triggered) {
-        this.game.clearPendingBoxEvent();
-      }
-      return;
-    }
-    this.game.clearPendingBoxEvent();
-    this.triggerMapEvent(pos.x, pos.y);
-  }
-
-  private canPlayerStepTo(x: number, y: number): boolean {
-    return this.currentMap?.canPlayerWalk(x, y) === true && !this.hasSceneObjectAt(x, y);
-  }
-
-  private hasSceneObjectAt(x: number, y: number): boolean {
-    return this.getSceneObjectAt(x, y) != null;
-  }
-
-  private getSceneObjectAt(x: number, y: number): SceneObject | null {
-    for (const obj of this.sceneObjects.values()) {
-      if (obj.x === x && obj.y === y) {
-        return obj;
-      }
-    }
-    return null;
-  }
-
-  private getFacingMapPosition(): { x: number; y: number } {
-    let x = this.playerMapX;
-    let y = this.playerMapY;
-    switch (this.facing) {
-      case KeyCode.Left:
-        x -= 1;
-        break;
-      case KeyCode.Right:
-        x += 1;
-        break;
-      case KeyCode.Up:
-        y -= 1;
-        break;
-      case KeyCode.Down:
-        y += 1;
-        break;
-    }
-    return { x, y };
-  }
-
-  private getBoxEventKey(x: number, y: number, resId: number): string {
-    return `${this.game.state.mapType}_${this.game.state.mapIndex}_${x}_${y}_4_${resId}`;
-  }
-
-  private loadTileSet(map: ResMap): ResImage | null {
-    const tileRes = this.game.datLib.getRes(ResourceType.TIL, 1, map.tilIndex);
-    return tileRes instanceof ResImage ? tileRes : null;
-  }
-
   private loadPicture(index: number): ResImage | null {
     if (index <= 0) return null;
     const picRes = this.game.datLib.getRes(ResourceType.PIC, 5, index);
     return picRes instanceof ResImage ? picRes : null;
   }
-
-  private setPlayerMapPosition(mapX: number, mapY: number): void {
-    const start = this.resolveStartPosition(mapX, mapY);
-    this.playerMapX = start.x;
-    this.playerMapY = start.y;
-    this.game.state.playerMapX = start.x;
-    this.game.state.playerMapY = start.y;
-  }
-
-  private resolveStartPosition(x: number, y: number): { x: number; y: number } {
-    if (!this.currentMap) {
-      return { x, y };
-    }
-
-    if (this.currentMap.canPlayerWalk(x, y)) {
-      return { x, y };
-    }
-
-    for (let radius = 1; radius <= 8; radius += 1) {
-      for (let dy = -radius; dy <= radius; dy += 1) {
-        for (let dx = -radius; dx <= radius; dx += 1) {
-          const nextX = x + dx;
-          const nextY = y + dy;
-          if (this.currentMap.canPlayerWalk(nextX, nextY)) {
-            return { x: nextX, y: nextY };
-          }
-        }
-      }
-    }
-
-    return {
-      x: clamp(x, 0, this.currentMap.mapWidth - 1),
-      y: clamp(y, 0, this.currentMap.mapHeight - 1),
-    };
-  }
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }
 
 function drawFacingMark(
@@ -753,8 +423,8 @@ function paginateDialogue(text: string): string[] {
   if (normalized.length === 0) return [];
 
   const lines = wrapTextBlock(normalized, DIALOG_TEXT_WIDTH);
-
   const pages: string[] = [];
+
   for (let i = 0; i < lines.length; i += DIALOG_PAGE_LINES) {
     pages.push(lines.slice(i, i + DIALOG_PAGE_LINES).join('\n'));
   }
@@ -772,7 +442,6 @@ function wrapTextBlock(text: string, maxWidth: number): string[] {
       lines.push('');
       continue;
     }
-
     lines.push(...wrapped);
   }
 

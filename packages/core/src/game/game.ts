@@ -2,13 +2,14 @@ import { DatLib } from '@/lib/dat-lib';
 import { Surface } from '@/rendering/surface';
 import { type FrameBuffer, FRAME_HEIGHT, FRAME_WIDTH } from '@/rendering/frame-buffer';
 import type { EngineHost } from '@/runtime/engine-host';
+import { MainSceneRuntime } from '@/screens/main-game/runtime';
 import { ScriptVm } from '@/script/script-vm';
 import { KeyCode } from '@/shared/key-code';
-import { ScreenAnimation } from '@/views/screen-animation';
-import { ScreenMainGame } from '@/views/screen-main-game';
-import { ScreenMenu } from '@/views/screen-menu';
-import { ScreenStack } from '@/views/screen-stack';
-import { ScreenViewType } from '@/views/screen-view-type';
+import { ScreenMainGame } from '@/screens/main-game/screen';
+import { ScreenAnimation } from '@/screens/animation/screen';
+import { ScreenMenu } from '@/screens/menu/screen';
+import { ScreenStack } from '@/screens/screen-stack';
+import { ScreenViewType } from '@/screens/screen-view-type';
 import { createInitialGameState, type GameState } from './game-state';
 
 const STARTUP_CHAPTER_TYPE = 1;
@@ -19,6 +20,7 @@ export class Game {
   readonly scriptVm = new ScriptVm(this);
   state: GameState = createInitialGameState();
   mainScene: ScreenMainGame | null = null;
+  mainSceneRuntime: MainSceneRuntime | null = null;
   private readonly boxEventMap = new Map<string, number>();
   private pendingBoxEventKey: string | null = null;
   private readonly surface = new Surface(FRAME_WIDTH, FRAME_HEIGHT);
@@ -61,7 +63,7 @@ export class Game {
     this.pendingBoxEventKey = null;
     this.state = createInitialGameState();
     this.changeScreen(ScreenViewType.SCREEN_MAIN_GAME);
-    this.mainScene?.startChapter(STARTUP_CHAPTER_TYPE, STARTUP_CHAPTER_INDEX);
+    this.mainSceneRuntime?.startChapter(STARTUP_CHAPTER_TYPE, STARTUP_CHAPTER_INDEX);
   }
 
   applyLoadedState(state: GameState): void {
@@ -69,7 +71,7 @@ export class Game {
     this.pendingBoxEventKey = null;
     this.state = state;
     this.changeScreen(ScreenViewType.SCREEN_MAIN_GAME);
-    this.mainScene?.startChapter(this.state.scriptType, this.state.scriptIndex);
+    this.mainSceneRuntime?.startChapter(this.state.scriptType, this.state.scriptIndex);
   }
 
   hasEvent(eventId: number): boolean {
@@ -108,19 +110,28 @@ export class Game {
   changeScreen(screenType: ScreenViewType): void {
     switch (screenType) {
       case ScreenViewType.SCREEN_DEV_LOGO:
+        this.mainScene = null;
+        this.mainSceneRuntime = null;
         this.screenStack.changeScreen(new ScreenAnimation(this, screenType));
         return;
       case ScreenViewType.SCREEN_GAME_LOGO:
+        this.mainScene = null;
+        this.mainSceneRuntime = null;
         this.screenStack.changeScreen(new ScreenAnimation(this, screenType));
         return;
       case ScreenViewType.SCREEN_GAME_FAIL:
+        this.mainScene = null;
+        this.mainSceneRuntime = null;
         this.screenStack.changeScreen(new ScreenAnimation(this, screenType));
         return;
       case ScreenViewType.SCREEN_MENU:
+        this.mainScene = null;
+        this.mainSceneRuntime = null;
         this.screenStack.changeScreen(new ScreenMenu(this));
         return;
       case ScreenViewType.SCREEN_MAIN_GAME:
-        this.mainScene = new ScreenMainGame(this);
+        this.mainSceneRuntime = new MainSceneRuntime(this);
+        this.mainScene = new ScreenMainGame(this, this.mainSceneRuntime);
         this.screenStack.changeScreen(this.mainScene);
         return;
     }

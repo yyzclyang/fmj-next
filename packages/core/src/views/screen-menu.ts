@@ -80,7 +80,7 @@ export class ScreenMenu extends BaseScreen {
 
     switch (this.currentSelection) {
       case 0:
-        this.game.changeScreen(ScreenViewType.SCREEN_MAIN_GAME);
+        this.game.startNewGame();
         return;
       case 1:
         this.game.changeScreen(ScreenViewType.SCREEN_LOAD_GAME);

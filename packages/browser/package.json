@@ -15,7 +15,7 @@
     "dev": "tsdown -w",
     "build": "tsdown"
   },
-  "devDependencies": {
+  "dependencies": {
     "@fmj-next/core": "workspace:*"
   }
 }

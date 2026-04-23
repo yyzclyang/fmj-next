@@ -6,4 +6,7 @@ export default defineConfig({
   dts: true,
   platform: 'browser',
   exports: true,
+  deps: {
+    neverBundle: ['@fmj-next/core'],
+  },
 });

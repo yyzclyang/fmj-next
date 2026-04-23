@@ -48,10 +48,13 @@ export class Game {
   changeScreen(screenType: ScreenViewType): void {
     switch (screenType) {
       case ScreenViewType.SCREEN_DEV_LOGO:
-        this.screenStack.changeScreen(new ScreenAnimation(this, 247));
+        this.screenStack.changeScreen(new ScreenAnimation(this, screenType));
         return;
       case ScreenViewType.SCREEN_GAME_LOGO:
-        this.screenStack.changeScreen(new ScreenAnimation(this, 248));
+        this.screenStack.changeScreen(new ScreenAnimation(this, screenType));
+        return;
+      case ScreenViewType.SCREEN_GAME_FAIL:
+        this.screenStack.changeScreen(new ScreenAnimation(this, screenType));
         return;
       case ScreenViewType.SCREEN_MENU:
         this.screenStack.changeScreen(new ScreenMenu(this));

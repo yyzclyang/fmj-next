@@ -2,17 +2,21 @@ import { COLOR_BLACK, COLOR_WHITE, type Color } from './color';
 import { ASC16_BASE64, HZK16_BASE64 } from './font-data';
 import type { Surface } from './surface';
 
+// 文字渲染固定使用 16 点阵字库，ASCII 和汉字宽度不同。
 const GLYPH_HEIGHT = 16;
 const ASCII_WIDTH = 8;
 const HZK_WIDTH = 16;
 const HZK_BYTES_PER_GLYPH = 32;
 const ASCII_BYTES_PER_GLYPH = 16;
+
+// 运行时需要把 GBK 双字节编码映射到 HZK16 字库中的实际偏移。
 const gbkDecoder = new TextDecoder('GBK');
 const base64Table = createBase64Table();
 
-let asc16Buffer: Uint8Array | null = null;
-let hzk16Buffer: Uint8Array | null = null;
-let hzkOffsets: Map<string, number> | null = null;
+// 字库数据和汉字偏移表在模块加载时一次性展开，运行时直接读取。
+const asc16Buffer = decodeBase64(ASC16_BASE64);
+const hzk16Buffer = decodeBase64(HZK16_BASE64);
+const hzkOffsets = createHzkOffsets();
 
 export class TextRender {
   static drawText(surface: Surface, text: string, left: number, top: number): void {
@@ -43,14 +47,7 @@ export class TextRender {
   }
 }
 
-function drawText(
-  surface: Surface,
-  text: string,
-  left: number,
-  top: number,
-  fgColor: Color,
-  bgColor: Color
-): void {
+function drawText(surface: Surface, text: string, left: number, top: number, fgColor: Color, bgColor: Color): void {
   let x = left;
 
   for (const char of text) {
@@ -60,7 +57,7 @@ function drawText(
     if (code == null) continue;
 
     if (code < 0x80) {
-      drawGlyph(surface, getAsc16Buffer(), code * ASCII_BYTES_PER_GLYPH, ASCII_WIDTH, x, top, fgColor, bgColor);
+      drawGlyph(surface, asc16Buffer, code * ASCII_BYTES_PER_GLYPH, ASCII_WIDTH, x, top, fgColor, bgColor);
       x += ASCII_WIDTH;
       continue;
     }
@@ -71,7 +68,7 @@ function drawText(
       continue;
     }
 
-    drawGlyph(surface, getHzk16Buffer(), offset, HZK_WIDTH, x, top, fgColor, bgColor);
+    drawGlyph(surface, hzk16Buffer, offset, HZK_WIDTH, x, top, fgColor, bgColor);
     x += HZK_WIDTH;
   }
 }
@@ -123,36 +120,7 @@ function setPixel(surface: Surface, x: number, y: number, color: Color): void {
   surface.buffer[offset + 3] = color[3];
 }
 
-function getAsc16Buffer(): Uint8Array {
-  if (!asc16Buffer) {
-    asc16Buffer = decodeBase64(ASC16_BASE64);
-  }
-  return asc16Buffer;
-}
-
-function getHzk16Buffer(): Uint8Array {
-  if (!hzk16Buffer) {
-    hzk16Buffer = decodeBase64(HZK16_BASE64);
-  }
-  return hzk16Buffer;
-}
-
 function getHzkOffset(char: string): number | null {
-  if (!hzkOffsets) {
-    hzkOffsets = new Map<string, number>();
-    let offset = 0;
-
-    for (let high = 0xa1; high <= 0xfe; high += 1) {
-      for (let low = 0xa1; low <= 0xfe; low += 1) {
-        const value = gbkDecoder.decode(new Uint8Array([high, low]));
-        if (value.length === 1 && value !== '\ufffd' && !hzkOffsets.has(value)) {
-          hzkOffsets.set(value, offset);
-        }
-        offset += HZK_BYTES_PER_GLYPH;
-      }
-    }
-  }
-
   return hzkOffsets.get(char) ?? null;
 }
 
@@ -184,6 +152,23 @@ function decodeBase64(base64: string): Uint8Array {
   }
 
   return result;
+}
+
+function createHzkOffsets(): Map<string, number> {
+  const offsets = new Map<string, number>();
+  let offset = 0;
+
+  for (let high = 0xa1; high <= 0xfe; high += 1) {
+    for (let low = 0xa1; low <= 0xfe; low += 1) {
+      const value = gbkDecoder.decode(new Uint8Array([high, low]));
+      if (value.length === 1 && value !== '\ufffd' && !offsets.has(value)) {
+        offsets.set(value, offset);
+      }
+      offset += HZK_BYTES_PER_GLYPH;
+    }
+  }
+
+  return offsets;
 }
 
 function createBase64Table(): Uint8Array {

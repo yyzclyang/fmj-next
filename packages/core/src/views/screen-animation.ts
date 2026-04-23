@@ -11,20 +11,45 @@ import { ScreenViewType } from './screen-view-type';
 const STARTUP_WIDTH = 160;
 const STARTUP_HEIGHT = 96;
 
+interface ScreenAnimationDef {
+  readonly resourceIndex: number;
+  readonly nextScreen: ScreenViewType;
+  readonly skippable: boolean;
+}
+
+const SCREEN_ANIMATION_DEFS: Partial<Record<ScreenViewType, ScreenAnimationDef>> = {
+  [ScreenViewType.SCREEN_DEV_LOGO]: {
+    resourceIndex: 247,
+    nextScreen: ScreenViewType.SCREEN_GAME_LOGO,
+    skippable: true,
+  },
+  [ScreenViewType.SCREEN_GAME_LOGO]: {
+    resourceIndex: 248,
+    nextScreen: ScreenViewType.SCREEN_MENU,
+    skippable: true,
+  },
+  [ScreenViewType.SCREEN_GAME_FAIL]: {
+    resourceIndex: 249,
+    nextScreen: ScreenViewType.SCREEN_MENU,
+    skippable: false,
+  },
+};
+
 export class ScreenAnimation extends BaseScreen {
   private readonly animation: ResSrs;
-  private readonly index: number;
+  private readonly def: ScreenAnimationDef;
 
-  constructor(game: Game, index: number) {
+  constructor(game: Game, screenType: ScreenViewType) {
     super(game);
-    this.index = index;
-    if (index !== 247 && index !== 248 && index !== 249) {
-      throw new Error('ScreenAnimation index must be 247, 248, or 249');
+    const def = SCREEN_ANIMATION_DEFS[screenType];
+    if (!def) {
+      throw new Error(`ScreenAnimation does not support screen type ${screenType}`);
     }
+    this.def = def;
 
-    const resource = this.game.datLib.getRes(ResourceType.SRS, 1, index);
+    const resource = this.game.datLib.getRes(ResourceType.SRS, 1, this.def.resourceIndex);
     if (!(resource instanceof ResSrs)) {
-      throw new Error(`Missing SRS animation 1:${index}`);
+      throw new Error(`Missing SRS animation 1:${this.def.resourceIndex}`);
     }
 
     this.animation = resource;
@@ -34,16 +59,7 @@ export class ScreenAnimation extends BaseScreen {
 
   override update(delta: number): void {
     if (this.animation.update(delta)) return;
-
-    switch (this.index) {
-      case 247:
-        this.game.changeScreen(ScreenViewType.SCREEN_GAME_LOGO);
-        return;
-      case 248:
-      case 249:
-        this.game.changeScreen(ScreenViewType.SCREEN_MENU);
-        return;
-    }
+    this.game.changeScreen(this.def.nextScreen);
   }
 
   draw(surface: Surface): void {
@@ -54,7 +70,7 @@ export class ScreenAnimation extends BaseScreen {
   }
 
   override onKeyDown(key: KeyCode): void {
-    if (key === KeyCode.Cancel && (this.index === 247 || this.index === 248)) {
+    if (key === KeyCode.Cancel && this.def.skippable) {
       this.game.changeScreen(ScreenViewType.SCREEN_MENU);
     }
   }

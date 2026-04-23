@@ -2,6 +2,7 @@ import { DatLib } from '@/lib/dat-lib';
 import { Surface } from '@/rendering/surface';
 import { type FrameBuffer, FRAME_HEIGHT, FRAME_WIDTH } from '@/rendering/frame-buffer';
 import type { EngineHost } from '@/runtime/engine-host';
+import { ScriptVm } from '@/script/script-vm';
 import { KeyCode } from '@/shared/key-code';
 import { ScreenAnimation } from '@/views/screen-animation';
 import { ScreenMainGame } from '@/views/screen-main-game';
@@ -10,8 +11,12 @@ import { ScreenStack } from '@/views/screen-stack';
 import { ScreenViewType } from '@/views/screen-view-type';
 import { createInitialGameState, type GameState } from './game-state';
 
+const STARTUP_CHAPTER_TYPE = 1;
+const STARTUP_CHAPTER_INDEX = 1;
+
 export class Game {
   readonly datLib: DatLib;
+  readonly scriptVm = new ScriptVm(this);
   state: GameState = createInitialGameState();
   mainScene: ScreenMainGame | null = null;
   private readonly surface = new Surface(FRAME_WIDTH, FRAME_HEIGHT);
@@ -52,11 +57,22 @@ export class Game {
   startNewGame(): void {
     this.state = createInitialGameState();
     this.changeScreen(ScreenViewType.SCREEN_MAIN_GAME);
+    this.mainScene?.startChapter(STARTUP_CHAPTER_TYPE, STARTUP_CHAPTER_INDEX);
   }
 
   applyLoadedState(state: GameState): void {
     this.state = state;
     this.changeScreen(ScreenViewType.SCREEN_MAIN_GAME);
+    this.mainScene?.startChapter(this.state.scriptType, this.state.scriptIndex);
+  }
+
+  hasEvent(eventId: number): boolean {
+    return this.state.eventFlags.includes(eventId);
+  }
+
+  setEvent(eventId: number): void {
+    if (this.hasEvent(eventId)) return;
+    this.state.eventFlags.push(eventId);
   }
 
   changeScreen(screenType: ScreenViewType): void {

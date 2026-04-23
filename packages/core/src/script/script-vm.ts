@@ -82,9 +82,9 @@ export class ScriptVm {
       case COMMAND.CREATEACTOR:
         return this.readCreateActor(code, start);
       case COMMAND.DELETENPC:
-        return this.makeNoopCommand(2);
+        return this.readDeleteNpc(code, start);
       case COMMAND.MOVE:
-        return this.makeNoopCommand(6);
+        return this.readMove(code, start);
       case COMMAND.CALLBACK:
         return {
           len: 0,
@@ -95,7 +95,7 @@ export class ScriptVm {
       case COMMAND.IF:
         return this.readIf(code, start);
       case COMMAND.SAY:
-        return this.makeTextNoopCommand(code, start, 2);
+        return this.readSay(code, start);
       case COMMAND.STARTCHAPTER:
         return this.readStartChapter(code, start);
       case COMMAND.SETEVENT:
@@ -103,17 +103,22 @@ export class ScriptVm {
       case COMMAND.MOVIE:
         return this.makeNoopCommand(10);
       case COMMAND.CREATEBOX:
-        return this.makeNoopCommand(8);
+        return this.readCreateBox(code, start);
       case COMMAND.GAINGOODS:
         return this.makeNoopCommand(4);
       case COMMAND.INITFIGHT:
         return this.makeNoopCommand(22);
       case COMMAND.CREATENPC:
-        return this.makeNoopCommand(8);
+        return this.readCreateNpc(code, start);
       case COMMAND.SETMONEY:
         return this.makeNoopCommand(4);
       case COMMAND.DELALLNPC:
-        return this.makeNoopCommand(0);
+        return {
+          len: 0,
+          execute: () => {
+            this.game.mainScene?.deleteAllNpc();
+          },
+        };
       case COMMAND.NPCSTEP:
         return this.readNpcStep(code, start);
       case COMMAND.SETSCENENAME:
@@ -121,7 +126,7 @@ export class ScriptVm {
       case COMMAND.SHOWSCENENAME:
         return this.makeNoopCommand(0);
       case COMMAND.SHOWGUT:
-        return this.makeTextNoopCommand(code, start, 4);
+        return this.readShowGut(code, start);
       default:
         throw new Error(`Unsupported script opcode ${opcode}`);
     }
@@ -154,6 +159,30 @@ export class ScriptVm {
     };
   }
 
+  private readDeleteNpc(code: Uint8Array, start: number): CommandBuilder {
+    const npcId = readUint16(code, start);
+
+    return {
+      len: 2,
+      execute: () => {
+        this.game.mainScene?.deleteNpc(npcId);
+      },
+    };
+  }
+
+  private readMove(code: Uint8Array, start: number): CommandBuilder {
+    const actorId = readUint16(code, start);
+    const x = readUint16(code, start + 2);
+    const y = readUint16(code, start + 4);
+
+    return {
+      len: 6,
+      execute: () => {
+        this.game.mainScene?.moveActor(actorId, x, y);
+      },
+    };
+  }
+
   private readIf(code: Uint8Array, start: number): CommandBuilder {
     const eventId = readUint16(code, start);
     const address = readUint16(code, start + 2);
@@ -164,6 +193,23 @@ export class ScriptVm {
         if (this.game.hasEvent(eventId)) {
           process.gotoAddress(address);
         }
+      },
+    };
+  }
+
+  private readSay(code: Uint8Array, start: number): CommandBuilder {
+    const len = getCStringLength(code, start + 2);
+    const text = readGbkString(code, start + 2);
+
+    return {
+      len: len + 2,
+      execute: process => {
+        const scene = this.game.mainScene;
+        if (!scene || text.length === 0) return;
+        process.pause();
+        scene.showDialogue(text, () => {
+          process.start();
+        });
       },
     };
   }
@@ -191,6 +237,34 @@ export class ScriptVm {
     };
   }
 
+  private readCreateBox(code: Uint8Array, start: number): CommandBuilder {
+    const id = readUint16(code, start);
+    const resId = readUint16(code, start + 2);
+    const x = readUint16(code, start + 4);
+    const y = readUint16(code, start + 6);
+
+    return {
+      len: 8,
+      execute: () => {
+        this.game.mainScene?.createBox(id, resId, x, y);
+      },
+    };
+  }
+
+  private readCreateNpc(code: Uint8Array, start: number): CommandBuilder {
+    const id = readUint16(code, start);
+    const resId = readUint16(code, start + 2);
+    const x = readUint16(code, start + 4);
+    const y = readUint16(code, start + 6);
+
+    return {
+      len: 8,
+      execute: () => {
+        this.game.mainScene?.createNpc(id, resId, x, y);
+      },
+    };
+  }
+
   private readNpcStep(code: Uint8Array, start: number): CommandBuilder {
     const actorId = readUint16(code, start);
     const faceTo = readUint16(code, start + 2);
@@ -214,6 +288,25 @@ export class ScriptVm {
       len,
       execute: () => {
         this.game.mainScene?.setSceneName(name);
+      },
+    };
+  }
+
+  private readShowGut(code: Uint8Array, start: number): CommandBuilder {
+    const topImageIndex = readUint16(code, start);
+    const bottomImageIndex = readUint16(code, start + 2);
+    const len = getCStringLength(code, start + 4);
+    const text = readGbkString(code, start + 4);
+
+    return {
+      len: len + 4,
+      execute: process => {
+        const scene = this.game.mainScene;
+        if (!scene) return;
+        process.pause();
+        scene.showGut(topImageIndex, bottomImageIndex, text, () => {
+          process.start();
+        });
       },
     };
   }

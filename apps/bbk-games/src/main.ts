@@ -49,7 +49,7 @@ async function bootstrap(): Promise<void> {
         </select>
       </label>
     </div>
-    <canvas id="screen" style="width:480px;height:288px;border:1px solid #111;image-rendering:pixelated;"></canvas>
+    <canvas id="screen" style="width:320px;height:192px;border:1px solid #111;image-rendering:pixelated;"></canvas>
   `;
 
   const canvas = root.querySelector<HTMLCanvasElement>('#screen');

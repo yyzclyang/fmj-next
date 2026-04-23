@@ -3,11 +3,7 @@ export class Bitmap {
   readonly height: number;
   readonly pixels: Uint8ClampedArray;
 
-  constructor(
-    width: number,
-    height: number,
-    pixels: Uint8ClampedArray
-  ) {
+  constructor(width: number, height: number, pixels: Uint8ClampedArray) {
     this.width = width;
     this.height = height;
     this.pixels = pixels;

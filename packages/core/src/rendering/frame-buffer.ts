@@ -23,14 +23,7 @@ export function clearFrameBuffer(buffer: FrameBuffer, color: Color): void {
   }
 }
 
-export function fillRect(
-  buffer: FrameBuffer,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  color: Color
-): void {
+export function fillRect(buffer: FrameBuffer, x: number, y: number, width: number, height: number, color: Color): void {
   const [r, g, b, a] = color;
 
   for (let row = 0; row < height; row += 1) {

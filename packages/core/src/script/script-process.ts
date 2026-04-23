@@ -24,6 +24,11 @@ export class ScriptProcess {
     this.running = false;
   }
 
+  pause(): void {
+    this.currentIndex += 1;
+    this.running = false;
+  }
+
   step(): void {
     let steps = 0;
 

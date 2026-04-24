@@ -101,6 +101,21 @@ export class ScreenMainGame extends BaseScreen {
       return;
     }
 
+    const overlay = this.runtime.overlay;
+    if (overlay?.coversScreen) {
+      surface.drawColor(COLOR_WHITE);
+      overlay.draw(surface);
+      return;
+    }
+
+    this.drawScene(surface);
+    overlay?.draw(surface);
+    if (!overlay) {
+      this.drawTransientUi(surface);
+    }
+  }
+
+  private drawScene(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
     this.drawMap(surface);
     this.drawSceneObjects(surface);
@@ -108,11 +123,20 @@ export class ScreenMainGame extends BaseScreen {
       this.drawPlayer(surface);
     }
     this.drawMapInfo(surface);
+  }
+
+  private drawTransientUi(surface: Surface): void {
     this.drawTip(surface);
     this.drawDialogue(surface);
   }
 
   override onKeyDown(key: KeyCode): void {
+    const overlay = this.runtime.overlay;
+    if (overlay?.onKeyDown) {
+      overlay.onKeyDown(key);
+      return;
+    }
+
     if (this.gut) {
       this.handleGutKeyDown();
       return;
@@ -142,6 +166,12 @@ export class ScreenMainGame extends BaseScreen {
   }
 
   override onKeyUp(key: KeyCode): void {
+    const overlay = this.runtime.overlay;
+    if (overlay?.onKeyUp) {
+      overlay.onKeyUp(key);
+      return;
+    }
+
     if (!this.gut) return;
     this.handleGutKeyUp(key);
   }

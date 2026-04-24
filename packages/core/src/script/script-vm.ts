@@ -104,7 +104,7 @@ export class ScriptVm {
       case COMMAND.SETEVENT:
         return this.cmdSetEvent(code, start);
       case COMMAND.MOVIE:
-        return this.makeNoopCommand(10);
+        return this.cmdMovie(code, start);
       case COMMAND.CREATEBOX:
         return this.cmdCreateBox(code, start);
       case COMMAND.DELETEBOX:
@@ -252,6 +252,21 @@ export class ScriptVm {
       len: 2,
       execute: () => {
         this.game.setEvent(eventId);
+      },
+    };
+  }
+
+  private cmdMovie(code: Uint8Array, start: number): CommandBuilder {
+    const type = readUint16(code, start);
+    const index = readUint16(code, start + 2);
+    const x = readUint16(code, start + 4);
+    const y = readUint16(code, start + 6);
+    const ctl = readUint16(code, start + 8);
+
+    return {
+      len: 10,
+      execute: process => {
+        this.game.mainSceneRuntime?.playMovie({ type, index, x, y, ctl }, process);
       },
     };
   }

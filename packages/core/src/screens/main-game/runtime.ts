@@ -1,9 +1,11 @@
 import type { Game } from '@/game/game';
 import { ResImage } from '@/lib/res-image';
 import { ResMap } from '@/lib/res-map';
+import { ResSrs } from '@/lib/res-srs';
 import { ResourceType } from '@/lib/resource-utils';
+import type { ScreenOverlay } from '@/screens/screen-overlay';
 import type { ScriptOperation, ScriptProcess } from '@/script/script-process';
-import { MAP_VIEW_TILE_HEIGHT, MAP_VIEW_TILE_WIDTH } from '@/shared/constants';
+import { MAP_VIEW_TILE_HEIGHT, MAP_VIEW_TILE_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
 import { clamp } from '@/shared/math';
 
@@ -24,6 +26,16 @@ const PLAYER_SCREEN_X = 9;
 const PLAYER_SCREEN_Y = 5;
 const SCRIPT_MOVE_INTERVAL = 100;
 const SCRIPT_POSE_WAIT = 300;
+const MOVIE_BASE_WIDTH = 160;
+const MOVIE_BASE_HEIGHT = 96;
+
+export interface MovieParams {
+  readonly type: number;
+  readonly index: number;
+  readonly x: number;
+  readonly y: number;
+  readonly ctl: number;
+}
 
 // 主场景运行时只负责地图、对象、交互和脚本入口，不处理具体 UI。
 export class MainSceneRuntime {
@@ -36,6 +48,7 @@ export class MainSceneRuntime {
   private hasPlayerValue = false;
   private facingValue: Facing = KeyCode.Down;
   private playerStepValue = 0;
+  private overlayValue: ScreenOverlay | null = null;
 
   constructor(private readonly game: Game) {
     if (this.game.state.mapType > 0 && this.game.state.mapIndex > 0) {
@@ -85,6 +98,10 @@ export class MainSceneRuntime {
     return this.playerStepValue;
   }
 
+  get overlay(): ScreenOverlay | null {
+    return this.overlayValue;
+  }
+
   update(delta = 0): void {
     this.scriptProcess?.step(delta);
   }
@@ -115,6 +132,7 @@ export class MainSceneRuntime {
 
   startChapter(type: number, index: number): void {
     this.scriptProcess?.stop();
+    this.overlayValue = null;
     this.game.clearPendingBoxEvent();
     this.game.state.scriptType = type;
     this.game.state.scriptIndex = index;
@@ -230,6 +248,43 @@ export class MainSceneRuntime {
         return elapsed < SCRIPT_POSE_WAIT;
       },
     };
+  }
+
+  playMovie(params: MovieParams, process: ScriptProcess): void {
+    const res = this.game.datLib.getRes(ResourceType.SRS, params.type, params.index);
+    if (!(res instanceof ResSrs)) return;
+
+    res.setIteratorNum(5);
+    res.start();
+
+    let downKey: KeyCode | null = null;
+    let skipped = false;
+    const skippable = (params.ctl & 1) === 1;
+    const overlayScene = (params.ctl & 2) === 2;
+    const x = shouldCenterMovie(params.x, params.y)
+      ? params.x + Math.floor((SCREEN_WIDTH - MOVIE_BASE_WIDTH) / 2)
+      : params.x;
+    const y = shouldCenterMovie(params.x, params.y)
+      ? params.y + Math.floor((SCREEN_HEIGHT - MOVIE_BASE_HEIGHT) / 2)
+      : params.y;
+
+    const overlay: ScreenOverlay = {
+      coversScreen: !overlayScene,
+      draw: surface => {
+        res.draw(surface, x, y);
+      },
+      onKeyDown: key => {
+        downKey = key;
+      },
+      onKeyUp: key => {
+        if (skippable && key === downKey) skipped = true;
+      },
+    };
+    const operation: ScriptOperation = {
+      update: delta => !skipped && res.update(delta),
+    };
+
+    process.wait(this.withOverlay(operation, overlay));
   }
 
   openBox(id: number): void {
@@ -417,6 +472,17 @@ export class MainSceneRuntime {
     return { x: obj.x, y: obj.y };
   }
 
+  private withOverlay(operation: ScriptOperation, overlay: ScreenOverlay): ScriptOperation {
+    this.overlayValue = overlay;
+    return {
+      update: delta => {
+        const running = operation.update(delta);
+        if (!running) this.overlayValue = null;
+        return running;
+      },
+    };
+  }
+
   private setActorMapPosition(id: number, x: number, y: number): void {
     if (id === 0) {
       this.setPlayerMapPosition(x, y);
@@ -476,6 +542,10 @@ export class MainSceneRuntime {
       y: clamp(y, 0, this.currentMapValue.mapHeight - 1),
     };
   }
+}
+
+function shouldCenterMovie(x: number, y: number): boolean {
+  return x < MOVIE_BASE_WIDTH && y < MOVIE_BASE_HEIGHT;
 }
 
 function getFacingToward(x: number, y: number, targetX: number, targetY: number): Facing {

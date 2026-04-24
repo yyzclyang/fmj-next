@@ -4,9 +4,19 @@ import { ResGut } from './res-gut';
 import { ResMap } from './res-map';
 import { ResourceType, serializeResourceKey, type ResourceKey } from './resource-utils';
 import { ResSrs } from './res-srs';
-import { createGoods } from '@/goods';
+import {
+  Character,
+  FightingSprite,
+  Monster,
+  Npc,
+  Player,
+  SceneObj,
+  WalkingSprite,
+  type CharacterResourceProvider,
+} from '@/characters';
+import { BaseGoods, GoodsEquipment, createGoods } from '@/goods';
 
-export class DatLib {
+export class DatLib implements CharacterResourceProvider {
   private readonly offsets = new Map<string, number>();
   private readonly resourceKeys: ResourceKey[] = [];
   private readonly buffer: Uint8Array;
@@ -17,6 +27,7 @@ export class DatLib {
   }
 
   getRes(resType: ResourceType, type: number, index: number): ResBase | null {
+    // TODO: 后续给角色、道具等资源使用方补明确方法，减少直接依赖通用 getRes。
     const offset = this.offsets.get(serializeResourceKey({ resType, type, index })) ?? null;
     if (offset == null) return null;
 
@@ -32,18 +43,60 @@ export class DatLib {
     return res.sort((a, b) => a.resType - b.resType || a.type - b.type || a.index - b.index);
   }
 
+  createWalkingSprite(type: number, index: number): WalkingSprite | null {
+    const image = this.getImage(ResourceType.ACP, type, index);
+    return image ? new WalkingSprite(image) : null;
+  }
+
+  createFightingSprite(resType: ResourceType, index: number): FightingSprite | null {
+    const image = this.getImage(resType, 3, index);
+    return image ? new FightingSprite(image) : null;
+  }
+
+  getImage(resType: ResourceType, type: number, index: number): ResImage | null {
+    const res = this.getRes(resType, type, index);
+    return res instanceof ResImage ? res : null;
+  }
+
+  getEquipment(type: number, index: number): GoodsEquipment | null {
+    const goods = this.getGoods(type, index);
+    return goods instanceof GoodsEquipment ? goods : null;
+  }
+
+  getGoods(type: number, index: number): BaseGoods | null {
+    const res = this.getRes(ResourceType.GRS, type, index);
+    return res instanceof BaseGoods ? res : null;
+  }
+
   private createResource(resType: ResourceType, type: number): ResBase | null {
     switch (resType) {
       case ResourceType.GUT:
         return new ResGut();
       case ResourceType.MAP:
         return new ResMap();
+      case ResourceType.ARS:
+        return this.createCharacter(type);
       case ResourceType.SRS:
         return new ResSrs();
       case ResourceType.GRS:
         return createGoods(type);
       default:
         return isImageResourceType(resType) ? new ResImage() : null;
+    }
+  }
+
+  private createCharacter(type: number): Character | null {
+    switch (type) {
+      case 1:
+        return new Player(this);
+      case 2:
+        return new Npc(this);
+      case 3:
+        return new Monster(this);
+      case 4:
+        return new SceneObj(this);
+      default:
+        return null;
     }
   }
 

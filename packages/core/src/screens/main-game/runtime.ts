@@ -1,4 +1,5 @@
 import type { Game } from '@/game/game';
+import { Npc, Player, SceneObj, type WalkingSprite } from '@/characters';
 import { ResImage } from '@/lib/res-image';
 import { ResMap } from '@/lib/res-map';
 import { ResSrs } from '@/lib/res-srs';
@@ -18,6 +19,7 @@ export interface SceneObject {
   x: number;
   y: number;
   resId: number;
+  walkingSprite: WalkingSprite | null;
   direction: Facing;
   step: number;
 }
@@ -46,6 +48,7 @@ export class MainSceneRuntime {
   private playerMapXValue = 0;
   private playerMapYValue = 0;
   private hasPlayerValue = false;
+  private playerWalkingSpriteValue: WalkingSprite | null = null;
   private facingValue: Facing = KeyCode.Down;
   private playerStepValue = 0;
   private overlayValue: ScreenOverlay | null = null;
@@ -96,6 +99,10 @@ export class MainSceneRuntime {
 
   get playerStep(): number {
     return this.playerStepValue;
+  }
+
+  get playerWalkingSprite(): WalkingSprite | null {
+    return this.playerWalkingSpriteValue;
   }
 
   get overlay(): ScreenOverlay | null {
@@ -163,18 +170,37 @@ export class MainSceneRuntime {
 
   createActor(screenActorId: number, screenX: number, screenY: number): void {
     if (screenActorId < 0) return;
+    const playerRes = this.game.datLib.getRes(ResourceType.ARS, 1, screenActorId);
+    if (playerRes instanceof Player) {
+      this.playerWalkingSpriteValue = playerRes.walkingSprite;
+      this.facingValue = playerRes.direction;
+      this.playerStepValue = playerRes.step;
+    } else {
+      this.playerWalkingSpriteValue = null;
+      this.playerStepValue = 0;
+    }
     this.hasPlayerValue = true;
-    this.playerStepValue = 0;
     this.setPlayerMapPosition(this.game.state.mapScreenX + screenX, this.game.state.mapScreenY + screenY);
   }
 
   createNpc(id: number, resId: number, x: number, y: number): void {
-    this.sceneObjectsValue.set(id, { id, kind: 'npc', x, y, resId, direction: KeyCode.Down, step: 0 });
+    const npcRes = this.game.datLib.getRes(ResourceType.ARS, 2, resId);
+    const walkingSprite = npcRes instanceof Npc ? npcRes.walkingSprite : null;
+    const direction = npcRes instanceof Npc ? npcRes.direction : KeyCode.Down;
+    const step = npcRes instanceof Npc ? npcRes.step : 0;
+    this.sceneObjectsValue.set(id, { id, kind: 'npc', x, y, resId, walkingSprite, direction, step });
   }
 
   createBox(id: number, resId: number, x: number, y: number): void {
-    const step = this.game.isBoxCollected(this.getBoxEventKey(x, y, resId)) ? 2 : 0;
-    this.sceneObjectsValue.set(id, { id, kind: 'box', x, y, resId, direction: KeyCode.Down, step });
+    const boxRes = this.game.datLib.getRes(ResourceType.ARS, 4, resId);
+    const walkingSprite = boxRes instanceof SceneObj ? boxRes.walkingSprite : null;
+    const direction = boxRes instanceof SceneObj ? boxRes.direction : KeyCode.Up;
+    const step = this.game.isBoxCollected(this.getBoxEventKey(x, y, resId))
+      ? 2
+      : boxRes instanceof SceneObj
+        ? boxRes.step
+        : 0;
+    this.sceneObjectsValue.set(id, { id, kind: 'box', x, y, resId, walkingSprite, direction, step });
   }
 
   deleteNpc(id: number): void {
@@ -316,12 +342,11 @@ export class MainSceneRuntime {
     if (!this.currentMapValue) return;
 
     this.facingValue = KeyCode.Left;
-    this.playerStepValue = 0;
     const x = this.playerMapXValue;
     const y = this.playerMapYValue;
     this.triggerMapEvent(x - 1, y);
+    this.stepActorPose(0, KeyCode.Left);
     if (!this.canPlayerStepTo(x - 1, y)) return;
-
     this.setPlayerMapPosition(x - 1, y);
     if (this.getPlayerScreenPosition().x <= PLAYER_SCREEN_X) {
       this.game.state.mapScreenX -= 1;
@@ -332,12 +357,11 @@ export class MainSceneRuntime {
     if (!this.currentMapValue) return;
 
     this.facingValue = KeyCode.Right;
-    this.playerStepValue = 0;
     const x = this.playerMapXValue;
     const y = this.playerMapYValue;
     this.triggerMapEvent(x + 1, y);
+    this.stepActorPose(0, KeyCode.Right);
     if (!this.canPlayerStepTo(x + 1, y)) return;
-
     this.setPlayerMapPosition(x + 1, y);
     if (this.getPlayerScreenPosition().x >= PLAYER_SCREEN_X) {
       this.game.state.mapScreenX += 1;
@@ -348,12 +372,11 @@ export class MainSceneRuntime {
     if (!this.currentMapValue) return;
 
     this.facingValue = KeyCode.Up;
-    this.playerStepValue = 0;
     const x = this.playerMapXValue;
     const y = this.playerMapYValue;
     this.triggerMapEvent(x, y - 1);
+    this.stepActorPose(0, KeyCode.Up);
     if (!this.canPlayerStepTo(x, y - 1)) return;
-
     this.setPlayerMapPosition(x, y - 1);
     if (this.getPlayerScreenPosition().y <= PLAYER_SCREEN_Y) {
       this.game.state.mapScreenY -= 1;
@@ -364,12 +387,11 @@ export class MainSceneRuntime {
     if (!this.currentMapValue) return;
 
     this.facingValue = KeyCode.Down;
-    this.playerStepValue = 0;
     const x = this.playerMapXValue;
     const y = this.playerMapYValue;
     this.triggerMapEvent(x, y + 1);
+    this.stepActorPose(0, KeyCode.Down);
     if (!this.canPlayerStepTo(x, y + 1)) return;
-
     this.setPlayerMapPosition(x, y + 1);
     if (this.getPlayerScreenPosition().y >= PLAYER_SCREEN_Y) {
       this.game.state.mapScreenY += 1;

@@ -4,6 +4,7 @@ import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import { Surface } from '@/rendering/surface';
 import { TextRender } from '@/rendering/text-render';
+import type { WalkingSprite } from '@/characters';
 import type { Facing, MainSceneRuntime, SceneObject } from './runtime';
 import {
   MAP_TILE_SIZE,
@@ -41,6 +42,7 @@ interface TipState {
 }
 
 type TipKind = 'message' | 'information';
+type SceneActor = { kind: 'object'; y: number; order: 0; obj: SceneObject } | { kind: 'player'; y: number; order: 1 };
 
 const MAP_INFO_LEFT = 2;
 const MAP_INFO_TOP = 2;
@@ -74,6 +76,7 @@ const TIP_TEXT_TOP_PADDING = 2;
 const TIP_LINE_GAP = 16;
 const TIP_MAX_LINES = 4;
 const TIP_DURATION = 1000;
+const WALKING_STEP_FRAMES = [0, 1, 2, 1] as const;
 
 // 主场景屏幕层只负责 UI 状态、绘制和输入分发。
 export class ScreenMainGame extends BaseScreen {
@@ -118,10 +121,7 @@ export class ScreenMainGame extends BaseScreen {
   private drawScene(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
     this.drawMap(surface);
-    this.drawSceneObjects(surface);
-    if (this.runtime.hasPlayer) {
-      this.drawPlayer(surface);
-    }
+    this.drawActors(surface);
     this.drawMapInfo(surface);
   }
 
@@ -252,24 +252,41 @@ export class ScreenMainGame extends BaseScreen {
     }
   }
 
-  private drawSceneObjects(surface: Surface): void {
+  private drawActors(surface: Surface): void {
+    const actors: SceneActor[] = [];
     for (const obj of this.runtime.sceneObjects) {
-      const screenX = obj.x - this.game.state.mapScreenX;
-      const screenY = obj.y - this.game.state.mapScreenY;
-      if (screenX < 0 || screenX >= MAP_VIEW_TILE_WIDTH || screenY < 0 || screenY >= MAP_VIEW_TILE_HEIGHT) {
+      actors.push({ kind: 'object', y: obj.y, order: 0, obj });
+    }
+    if (this.runtime.hasPlayer) {
+      actors.push({ kind: 'player', y: this.runtime.playerMapY, order: 1 });
+    }
+
+    actors.sort((a, b) => a.y - b.y || a.order - b.order);
+    for (const actor of actors) {
+      if (actor.kind === 'player') {
+        this.drawPlayer(surface);
         continue;
       }
-
-      if (obj.kind === 'box') {
-        this.drawBox(surface, screenX, screenY, obj.step);
-        continue;
-      }
-
-      this.drawNpc(surface, screenX, screenY, obj);
+      this.drawSceneObject(surface, actor.obj);
     }
   }
 
+  private drawSceneObject(surface: Surface, obj: SceneObject): void {
+    const screenX = obj.x - this.game.state.mapScreenX;
+    const screenY = obj.y - this.game.state.mapScreenY;
+
+    if (obj.kind === 'box') {
+      this.drawBox(surface, screenX, screenY, obj);
+      return;
+    }
+
+    this.drawNpc(surface, screenX, screenY, obj);
+  }
+
   private drawNpc(surface: Surface, screenX: number, screenY: number, obj: SceneObject): void {
+    if (this.drawWalkingSprite(surface, obj.walkingSprite, screenX, screenY, obj.direction, obj.step)) return;
+
+    if (!isTileVisible(screenX, screenY)) return;
     const left = screenX * MAP_TILE_SIZE + Math.floor((MAP_TILE_SIZE - NPC_WIDTH) / 2);
     const top = screenY * MAP_TILE_SIZE + (MAP_TILE_SIZE - NPC_HEIGHT);
     surface.fillRect(left, top, NPC_WIDTH, NPC_HEIGHT, COLOR_BLACK);
@@ -281,18 +298,21 @@ export class ScreenMainGame extends BaseScreen {
     }
   }
 
-  private drawBox(surface: Surface, screenX: number, screenY: number, step: number): void {
+  private drawBox(surface: Surface, screenX: number, screenY: number, obj: SceneObject): void {
+    if (this.drawWalkingSprite(surface, obj.walkingSprite, screenX, screenY, obj.direction, obj.step)) return;
+
+    if (!isTileVisible(screenX, screenY)) return;
     const left = screenX * MAP_TILE_SIZE + Math.floor((MAP_TILE_SIZE - BOX_WIDTH) / 2);
     const top = screenY * MAP_TILE_SIZE + (MAP_TILE_SIZE - BOX_HEIGHT);
     surface.fillRect(left, top, BOX_WIDTH, BOX_HEIGHT, COLOR_BLACK);
     surface.fillRect(left + 1, top + 1, BOX_WIDTH - 2, BOX_HEIGHT - 2, COLOR_WHITE);
-    if (step >= 2) {
+    if (obj.step >= 2) {
       surface.fillRect(left + 2, top + 2, BOX_WIDTH - 4, BOX_HEIGHT - 4, COLOR_WHITE);
       surface.fillRect(left + 2, top + 4, BOX_WIDTH - 4, 1, COLOR_BLACK);
       surface.fillRect(left + 3, top + 6, BOX_WIDTH - 6, 1, COLOR_BLACK);
       return;
     }
-    if (step === 1) {
+    if (obj.step === 1) {
       surface.fillRect(left + 1, top + 5, BOX_WIDTH - 2, 1, COLOR_BLACK);
       surface.fillRect(left + 3, top + 1, BOX_WIDTH - 5, 1, COLOR_BLACK);
       return;
@@ -302,6 +322,19 @@ export class ScreenMainGame extends BaseScreen {
 
   private drawPlayer(surface: Surface): void {
     const pos = this.runtime.getPlayerScreenPosition();
+    if (
+      this.drawWalkingSprite(
+        surface,
+        this.runtime.playerWalkingSprite,
+        pos.x,
+        pos.y,
+        this.runtime.playerFacing,
+        this.runtime.playerStep
+      )
+    )
+      return;
+
+    if (!isTileVisible(pos.x, pos.y)) return;
     const left = pos.x * MAP_TILE_SIZE + Math.floor((MAP_TILE_SIZE - PLAYER_WIDTH) / 2);
     const top = pos.y * MAP_TILE_SIZE + (MAP_TILE_SIZE - PLAYER_HEIGHT);
     surface.fillRect(left, top, PLAYER_WIDTH, PLAYER_HEIGHT, COLOR_BLACK);
@@ -448,6 +481,53 @@ export class ScreenMainGame extends BaseScreen {
     if (index <= 0) return null;
     const picRes = this.game.datLib.getRes(ResourceType.PIC, 5, index);
     return picRes instanceof ResImage ? picRes : null;
+  }
+
+  private drawWalkingSprite(
+    surface: Surface,
+    sprite: WalkingSprite | null,
+    screenX: number,
+    screenY: number,
+    facing: Facing,
+    step: number
+  ): boolean {
+    if (!sprite) return false;
+
+    const image = sprite.image;
+    const left = screenX * MAP_TILE_SIZE;
+    const top = screenY * MAP_TILE_SIZE + MAP_TILE_SIZE - image.height;
+    if (
+      left + image.width > 0 &&
+      left < SCREEN_WIDTH - MAP_TILE_SIZE &&
+      top + image.height > 0 &&
+      top < SCREEN_HEIGHT
+    ) {
+      image.draw(surface, getWalkingFrame(facing, step), left, top);
+    }
+    return true;
+  }
+}
+
+function isTileVisible(screenX: number, screenY: number): boolean {
+  return screenX >= 0 && screenX < MAP_VIEW_TILE_WIDTH && screenY >= 0 && screenY < MAP_VIEW_TILE_HEIGHT;
+}
+
+function getWalkingFrame(facing: Facing, step: number): number {
+  const offset = getWalkingDirectionOffset(facing);
+  const frame = WALKING_STEP_FRAMES[((step % 4) + 4) % 4] ?? 0;
+  return offset + frame;
+}
+
+function getWalkingDirectionOffset(facing: Facing): number {
+  switch (facing) {
+    case KeyCode.Up:
+      return 1;
+    case KeyCode.Right:
+      return 4;
+    case KeyCode.Down:
+      return 7;
+    case KeyCode.Left:
+      return 10;
   }
 }
 

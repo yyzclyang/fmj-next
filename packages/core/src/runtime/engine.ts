@@ -11,7 +11,7 @@ export interface BootOptions {
 }
 
 export class Engine {
-  readonly debug = createDebugApi(() => this.game?.getStateSnapshot() ?? null);
+  readonly debug = createDebugApi(() => this.game);
   private readonly emptyBuffer = createFrameBuffer();
   private accumulatorMs = 0;
   private game: Game | null = null;

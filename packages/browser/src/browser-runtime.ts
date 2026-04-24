@@ -15,6 +15,13 @@ export interface BrowserRuntimeStartOptions {
 export class BrowserRuntime {
   readonly debug: DebugApi = {
     getSnapshot: () => this.engine?.debug.getSnapshot() ?? null,
+    bag: {
+      list: () => this.engine?.debug.bag.list() ?? [],
+      listAll: () => this.engine?.debug.bag.listAll() ?? [],
+      add: (type, index, count) => this.engine?.debug.bag.add(type, index, count) ?? null,
+      addAll: count => this.engine?.debug.bag.addAll(count) ?? [],
+      delete: (type, index, count) => this.engine?.debug.bag.delete(type, index, count) ?? false,
+    },
   };
   private readonly presenter: CanvasPresenter;
   private readonly host: { readonly saveStore: SaveStore; readonly audio: AudioPort };

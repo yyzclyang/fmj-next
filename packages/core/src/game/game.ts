@@ -1,4 +1,6 @@
 import { DatLib } from '@/lib/dat-lib';
+import { BaseGoods } from '@/goods';
+import { GoodsBag } from '@/goods/goods-bag';
 import { Surface } from '@/rendering/surface';
 import { type FrameBuffer, FRAME_HEIGHT, FRAME_WIDTH } from '@/rendering/frame-buffer';
 import type { EngineHost } from '@/runtime/engine-host';
@@ -35,6 +37,10 @@ export class Game {
 
   get frameBuffer(): FrameBuffer {
     return this.surface.buffer;
+  }
+
+  get bag(): GoodsBag {
+    return new GoodsBag(this.state.goods, this.datLib);
   }
 
   getStateSnapshot(): GameState {
@@ -78,14 +84,24 @@ export class Game {
     this.mainSceneRuntime?.startChapter(this.state.scriptType, this.state.scriptIndex);
   }
 
-  gainGoods(type: number, index: number, count = 1): void {
-    const item = this.state.goods.find(g => g.type === type && g.index === index);
-    if (item) {
-      item.count += count;
-    } else {
-      this.state.goods.push({ type, index, count });
+  gainGoods(type: number, index: number, count = 1): BaseGoods | null {
+    const goods = this.bag.addGoods(type, index, count);
+    if (goods) {
+      this.mainScene?.showTip(`获得:${goods.name}`);
     }
-    this.mainScene?.showTip(`获得物品:${type}-${index}`);
+    return goods;
+  }
+
+  deleteGoods(type: number, index: number): boolean {
+    return this.bag.deleteGoods(type, index);
+  }
+
+  useGoodsNum(type: number, index: number, count: number): boolean {
+    return this.bag.useGoodsNum(type, index, count);
+  }
+
+  getGoodsNum(type: number, index: number): number {
+    return this.bag.getGoodsNum(type, index);
   }
 
   gainMoney(value: number): void {

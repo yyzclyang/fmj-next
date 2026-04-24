@@ -23,12 +23,16 @@ const COMMAND = {
   CREATENPC: 38,
   GAINMONEY: 41,
   SETMONEY: 43,
+  DELETEGOODS: 48,
   BOXOPEN: 51,
   DELALLNPC: 52,
   NPCSTEP: 53,
   SETSCENENAME: 54,
   SHOWSCENENAME: 55,
+  USEGOODS: 57,
   SHOWGUT: 61,
+  USEGOODSNUM: 62,
+  TESTGOODSNUM: 77,
 } as const;
 
 type CommandBuilder = {
@@ -119,6 +123,8 @@ export class ScriptVm {
         return this.cmdGainMoney(code, start);
       case COMMAND.SETMONEY:
         return this.cmdSetMoney(code, start);
+      case COMMAND.DELETEGOODS:
+        return this.cmdDeleteGoods(code, start);
       case COMMAND.DELALLNPC:
         return {
           len: 0,
@@ -134,8 +140,14 @@ export class ScriptVm {
         return this.cmdSetSceneName(code, start);
       case COMMAND.SHOWSCENENAME:
         return this.cmdShowSceneName();
+      case COMMAND.USEGOODS:
+        return this.cmdUseGoods(code, start);
       case COMMAND.SHOWGUT:
         return this.cmdShowGut(code, start);
+      case COMMAND.USEGOODSNUM:
+        return this.cmdUseGoodsNum(code, start);
+      case COMMAND.TESTGOODSNUM:
+        return this.cmdTestGoodsNum(code, start);
       default:
         throw new Error(`Unsupported script opcode ${opcode}`);
     }
@@ -315,8 +327,10 @@ export class ScriptVm {
     return {
       len: 4,
       execute: () => {
-        this.game.gainGoods(type, index);
-        this.game.mainSceneRuntime?.collectFacingBox();
+        const goods = this.game.gainGoods(type, index);
+        if (goods) {
+          this.game.mainSceneRuntime?.collectFacingBox();
+        }
       },
     };
   }
@@ -354,6 +368,21 @@ export class ScriptVm {
       len: 4,
       execute: () => {
         this.game.setMoney(value);
+      },
+    };
+  }
+
+  private cmdDeleteGoods(code: Uint8Array, start: number): CommandBuilder {
+    const type = readUint16(code, start);
+    const index = readUint16(code, start + 2);
+    const address = readUint16(code, start + 4);
+
+    return {
+      len: 6,
+      execute: process => {
+        if (!this.game.deleteGoods(type, index)) {
+          process.gotoAddress(address);
+        }
       },
     };
   }
@@ -423,6 +452,57 @@ export class ScriptVm {
         scene.showGut(topImageIndex, bottomImageIndex, text, () => {
           process.start();
         });
+      },
+    };
+  }
+
+  private cmdUseGoods(code: Uint8Array, start: number): CommandBuilder {
+    const type = readUint16(code, start);
+    const index = readUint16(code, start + 2);
+    const address = readUint16(code, start + 4);
+
+    return {
+      len: 6,
+      execute: process => {
+        if (!this.game.deleteGoods(type, index)) {
+          process.gotoAddress(address);
+        }
+      },
+    };
+  }
+
+  private cmdUseGoodsNum(code: Uint8Array, start: number): CommandBuilder {
+    const type = readUint16(code, start);
+    const index = readUint16(code, start + 2);
+    const count = readUint16(code, start + 4);
+    const address = readUint16(code, start + 6);
+
+    return {
+      len: 8,
+      execute: process => {
+        if (!this.game.useGoodsNum(type, index, count)) {
+          process.gotoAddress(address);
+        }
+      },
+    };
+  }
+
+  private cmdTestGoodsNum(code: Uint8Array, start: number): CommandBuilder {
+    const type = readUint16(code, start);
+    const index = readUint16(code, start + 2);
+    const count = readUint16(code, start + 4);
+    const equalAddress = readUint16(code, start + 6);
+    const greaterAddress = readUint16(code, start + 8);
+
+    return {
+      len: 10,
+      execute: process => {
+        const goodsNum = this.game.getGoodsNum(type, index);
+        if (goodsNum === count) {
+          process.gotoAddress(equalAddress);
+        } else if (goodsNum > count) {
+          process.gotoAddress(greaterAddress);
+        }
       },
     };
   }

@@ -2,11 +2,13 @@ import { isImageResourceType, ResImage } from './res-image';
 import { ResBase } from './res-base';
 import { ResGut } from './res-gut';
 import { ResMap } from './res-map';
-import { ResourceType, serializeResourceKey } from './resource-utils';
+import { ResourceType, serializeResourceKey, type ResourceKey } from './resource-utils';
 import { ResSrs } from './res-srs';
+import { createGoods } from '@/goods';
 
 export class DatLib {
   private readonly offsets = new Map<string, number>();
+  private readonly resourceKeys: ResourceKey[] = [];
   private readonly buffer: Uint8Array;
 
   constructor(buffer: Uint8Array) {
@@ -18,14 +20,19 @@ export class DatLib {
     const offset = this.offsets.get(serializeResourceKey({ resType, type, index })) ?? null;
     if (offset == null) return null;
 
-    const res = this.createResource(resType);
+    const res = this.createResource(resType, type);
     if (!res) return null;
 
     res.setData(this.buffer, offset);
     return res;
   }
 
-  private createResource(resType: ResourceType): ResBase | null {
+  listResourceKeys(resType?: ResourceType): ResourceKey[] {
+    const res = resType == null ? [...this.resourceKeys] : this.resourceKeys.filter(key => key.resType === resType);
+    return res.sort((a, b) => a.resType - b.resType || a.type - b.type || a.index - b.index);
+  }
+
+  private createResource(resType: ResourceType, type: number): ResBase | null {
     switch (resType) {
       case ResourceType.GUT:
         return new ResGut();
@@ -33,6 +40,8 @@ export class DatLib {
         return new ResMap();
       case ResourceType.SRS:
         return new ResSrs();
+      case ResourceType.GRS:
+        return createGoods(type);
       default:
         return isImageResourceType(resType) ? new ResImage() : null;
     }
@@ -52,7 +61,9 @@ export class DatLib {
       const offset = block * 0x4000 + (high << 8) + low;
 
       if (offset >= 0 && offset < this.buffer.length) {
-        this.offsets.set(serializeResourceKey({ resType, type, index }), offset);
+        const key = { resType, type, index };
+        this.offsets.set(serializeResourceKey(key), offset);
+        this.resourceKeys.push(key);
       }
 
       keyPtr += 3;

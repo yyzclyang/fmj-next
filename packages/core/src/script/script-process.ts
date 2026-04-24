@@ -2,11 +2,16 @@ interface ScriptCommand {
   execute(process: ScriptProcess): void;
 }
 
+export interface ScriptOperation {
+  update(delta: number): boolean;
+}
+
 const MAX_STEPS_PER_TICK = 2048;
 
 // 最小脚本进程只负责顺序执行、事件跳转和地址跳转。
 export class ScriptProcess {
   private currentIndex = 0;
+  private operation: ScriptOperation | null = null;
   running = false;
 
   constructor(
@@ -29,7 +34,23 @@ export class ScriptProcess {
     this.running = false;
   }
 
-  step(): void {
+  wait(operation: ScriptOperation): void {
+    this.currentIndex += 1;
+    this.operation = operation;
+    this.running = false;
+  }
+
+  get busy(): boolean {
+    return this.running || this.operation != null;
+  }
+
+  step(delta = 0): void {
+    if (this.operation) {
+      if (this.operation.update(delta)) return;
+      this.operation = null;
+      this.running = true;
+    }
+
     let steps = 0;
 
     while (this.running && this.currentIndex < this.commands.length && steps < MAX_STEPS_PER_TICK) {

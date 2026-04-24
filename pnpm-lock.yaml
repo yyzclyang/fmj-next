@@ -20,9 +20,9 @@ importers:
 
   apps/bbk-games:
     dependencies:
-      '@fmj-next/browser-runtime':
+      '@fmj-next/browser':
         specifier: workspace:*
-        version: link:../../packages/browser-runtime
+        version: link:../../packages/browser
       '@fmj-next/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -32,12 +32,6 @@ importers:
         version: 8.0.9(@types/node@22.19.3)(esbuild@0.27.2)
 
   packages/browser:
-    devDependencies:
-      '@fmj-next/core':
-        specifier: workspace:*
-        version: link:../core
-
-  packages/browser-runtime:
     dependencies:
       '@fmj-next/core':
         specifier: workspace:*

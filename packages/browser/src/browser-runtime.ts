@@ -1,4 +1,4 @@
-import { Engine, KeyCode, type AudioPort, type SaveStore } from '@fmj-next/core';
+import { Engine, KeyCode, type AudioPort, type DebugApi, type SaveStore } from '@fmj-next/core';
 import { CanvasPresenter } from './canvas-presenter';
 
 export interface BrowserRuntimeOptions {
@@ -13,6 +13,9 @@ export interface BrowserRuntimeStartOptions {
 }
 
 export class BrowserRuntime {
+  readonly debug: DebugApi = {
+    getSnapshot: () => this.engine?.debug.getSnapshot() ?? null,
+  };
   private readonly presenter: CanvasPresenter;
   private readonly host: { readonly saveStore: SaveStore; readonly audio: AudioPort };
   private engine: Engine | null = null;
@@ -32,7 +35,7 @@ export class BrowserRuntime {
   start(options: BrowserRuntimeStartOptions): void {
     this.stopLoop();
     this.engine = new Engine(this.host);
-    this.engine.boot(options);
+    this.engine.boot({ datLib: options.datLib });
     this.presenter.present(this.engine.frameBuffer);
     this.lastTimestamp = null;
     this.rafId = requestAnimationFrame(this.loop);

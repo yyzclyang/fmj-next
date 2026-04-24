@@ -1,3 +1,9 @@
+export interface GameGoodsState {
+  type: number;
+  index: number;
+  count: number;
+}
+
 export interface GameState {
   mapType: number;
   mapIndex: number;
@@ -9,6 +15,9 @@ export interface GameState {
   scriptType: number;
   scriptIndex: number;
   eventFlags: number[];
+  collectedBoxKeys: string[];
+  money: number;
+  goods: GameGoodsState[];
   sceneName: string;
 }
 
@@ -23,6 +32,18 @@ export function createInitialGameState(): GameState {
     scriptType: 1,
     scriptIndex: 1,
     eventFlags: [],
+    collectedBoxKeys: [],
+    money: 0,
+    goods: [],
     sceneName: '',
+  };
+}
+
+export function cloneGameState(state: GameState): GameState {
+  return {
+    ...state,
+    eventFlags: [...state.eventFlags],
+    collectedBoxKeys: [...state.collectedBoxKeys],
+    goods: state.goods.map(g => ({ ...g })),
   };
 }

@@ -60,7 +60,7 @@ export class ScriptVm {
     while (pointer < code.length) {
       addressIndexMap.set(pointer, commands.length);
       const opcode = code[pointer] ?? 0;
-      const command = this.readCommand(code, pointer, opcode);
+      const command = this.compileCommand(code, pointer, opcode);
       commands.push(command);
       pointer += command.len + 1;
     }
@@ -74,20 +74,20 @@ export class ScriptVm {
     return new ScriptProcess(commands, eventIndex, addressIndexMap, headerSize);
   }
 
-  private readCommand(code: Uint8Array, pointer: number, opcode: number): CommandBuilder {
+  private compileCommand(code: Uint8Array, pointer: number, opcode: number): CommandBuilder {
     const start = pointer + 1;
 
     switch (opcode) {
       case COMMAND.MUSIC:
         return this.makeNoopCommand(4);
       case COMMAND.LOADMAP:
-        return this.readLoadMap(code, start);
+        return this.cmdLoadMap(code, start);
       case COMMAND.CREATEACTOR:
-        return this.readCreateActor(code, start);
+        return this.cmdCreateActor(code, start);
       case COMMAND.DELETENPC:
-        return this.readDeleteNpc(code, start);
+        return this.cmdDeleteNpc(code, start);
       case COMMAND.MOVE:
-        return this.readMove(code, start);
+        return this.cmdMove(code, start);
       case COMMAND.CALLBACK:
         return {
           len: 0,
@@ -96,29 +96,29 @@ export class ScriptVm {
           },
         };
       case COMMAND.IF:
-        return this.readIf(code, start);
+        return this.cmdIf(code, start);
       case COMMAND.SAY:
-        return this.readSay(code, start);
+        return this.cmdSay(code, start);
       case COMMAND.STARTCHAPTER:
-        return this.readStartChapter(code, start);
+        return this.cmdStartChapter(code, start);
       case COMMAND.SETEVENT:
-        return this.readSetEvent(code, start);
+        return this.cmdSetEvent(code, start);
       case COMMAND.MOVIE:
         return this.makeNoopCommand(10);
       case COMMAND.CREATEBOX:
-        return this.readCreateBox(code, start);
+        return this.cmdCreateBox(code, start);
       case COMMAND.DELETEBOX:
-        return this.readDeleteBox(code, start);
+        return this.cmdDeleteBox(code, start);
       case COMMAND.GAINGOODS:
-        return this.readGainGoods(code, start);
+        return this.cmdGainGoods(code, start);
       case COMMAND.INITFIGHT:
         return this.makeNoopCommand(22);
       case COMMAND.CREATENPC:
-        return this.readCreateNpc(code, start);
+        return this.cmdCreateNpc(code, start);
       case COMMAND.GAINMONEY:
-        return this.readGainMoney(code, start);
+        return this.cmdGainMoney(code, start);
       case COMMAND.SETMONEY:
-        return this.makeNoopCommand(4);
+        return this.cmdSetMoney(code, start);
       case COMMAND.DELALLNPC:
         return {
           len: 0,
@@ -127,21 +127,21 @@ export class ScriptVm {
           },
         };
       case COMMAND.BOXOPEN:
-        return this.readBoxOpen(code, start);
+        return this.cmdBoxOpen(code, start);
       case COMMAND.NPCSTEP:
-        return this.readNpcStep(code, start);
+        return this.cmdNpcStep(code, start);
       case COMMAND.SETSCENENAME:
-        return this.readSetSceneName(code, start);
+        return this.cmdSetSceneName(code, start);
       case COMMAND.SHOWSCENENAME:
-        return this.makeNoopCommand(0);
+        return this.cmdShowSceneName();
       case COMMAND.SHOWGUT:
-        return this.readShowGut(code, start);
+        return this.cmdShowGut(code, start);
       default:
         throw new Error(`Unsupported script opcode ${opcode}`);
     }
   }
 
-  private readLoadMap(code: Uint8Array, start: number): CommandBuilder {
+  private cmdLoadMap(code: Uint8Array, start: number): CommandBuilder {
     const type = readUint16(code, start);
     const index = readUint16(code, start + 2);
     const x = readUint16(code, start + 4);
@@ -155,7 +155,7 @@ export class ScriptVm {
     };
   }
 
-  private readCreateActor(code: Uint8Array, start: number): CommandBuilder {
+  private cmdCreateActor(code: Uint8Array, start: number): CommandBuilder {
     const actorId = readUint16(code, start);
     const x = readUint16(code, start + 2) + 5;
     const y = readUint16(code, start + 4) + 2;
@@ -168,7 +168,7 @@ export class ScriptVm {
     };
   }
 
-  private readDeleteNpc(code: Uint8Array, start: number): CommandBuilder {
+  private cmdDeleteNpc(code: Uint8Array, start: number): CommandBuilder {
     const npcId = readUint16(code, start);
 
     return {
@@ -179,20 +179,26 @@ export class ScriptVm {
     };
   }
 
-  private readMove(code: Uint8Array, start: number): CommandBuilder {
+  private cmdMove(code: Uint8Array, start: number): CommandBuilder {
     const actorId = readUint16(code, start);
     const x = readUint16(code, start + 2);
     const y = readUint16(code, start + 4);
 
     return {
       len: 6,
-      execute: () => {
-        this.game.mainSceneRuntime?.moveActor(actorId, x, y);
+      execute: process => {
+        const runtime = this.game.mainSceneRuntime;
+        const operation = runtime?.createMoveActorOperation(actorId, x, y);
+        if (!operation) {
+          runtime?.moveActor(actorId, x, y);
+          return;
+        }
+        process.wait(operation);
       },
     };
   }
 
-  private readIf(code: Uint8Array, start: number): CommandBuilder {
+  private cmdIf(code: Uint8Array, start: number): CommandBuilder {
     const eventId = readUint16(code, start);
     const address = readUint16(code, start + 2);
 
@@ -210,7 +216,7 @@ export class ScriptVm {
     };
   }
 
-  private readSay(code: Uint8Array, start: number): CommandBuilder {
+  private cmdSay(code: Uint8Array, start: number): CommandBuilder {
     const len = getCStringLength(code, start + 2);
     const text = readGbkString(code, start + 2);
 
@@ -227,7 +233,7 @@ export class ScriptVm {
     };
   }
 
-  private readStartChapter(code: Uint8Array, start: number): CommandBuilder {
+  private cmdStartChapter(code: Uint8Array, start: number): CommandBuilder {
     const type = readUint16(code, start) & 0xff;
     const index = readUint16(code, start + 2) & 0xff;
 
@@ -239,7 +245,7 @@ export class ScriptVm {
     };
   }
 
-  private readSetEvent(code: Uint8Array, start: number): CommandBuilder {
+  private cmdSetEvent(code: Uint8Array, start: number): CommandBuilder {
     const eventId = readUint16(code, start);
 
     return {
@@ -250,7 +256,7 @@ export class ScriptVm {
     };
   }
 
-  private readCreateBox(code: Uint8Array, start: number): CommandBuilder {
+  private cmdCreateBox(code: Uint8Array, start: number): CommandBuilder {
     const id = readUint16(code, start);
     const resId = readUint16(code, start + 2);
     const x = readUint16(code, start + 4);
@@ -264,7 +270,7 @@ export class ScriptVm {
     };
   }
 
-  private readDeleteBox(code: Uint8Array, start: number): CommandBuilder {
+  private cmdDeleteBox(code: Uint8Array, start: number): CommandBuilder {
     const id = readUint16(code, start);
 
     return {
@@ -275,19 +281,20 @@ export class ScriptVm {
     };
   }
 
-  private readGainGoods(code: Uint8Array, start: number): CommandBuilder {
-    readUint16(code, start);
-    readUint16(code, start + 2);
+  private cmdGainGoods(code: Uint8Array, start: number): CommandBuilder {
+    const type = readUint16(code, start);
+    const index = readUint16(code, start + 2);
 
     return {
       len: 4,
       execute: () => {
+        this.game.gainGoods(type, index);
         this.game.mainSceneRuntime?.collectFacingBox();
       },
     };
   }
 
-  private readCreateNpc(code: Uint8Array, start: number): CommandBuilder {
+  private cmdCreateNpc(code: Uint8Array, start: number): CommandBuilder {
     const id = readUint16(code, start);
     const resId = readUint16(code, start + 2);
     const x = readUint16(code, start + 4);
@@ -301,18 +308,30 @@ export class ScriptVm {
     };
   }
 
-  private readGainMoney(code: Uint8Array, start: number): CommandBuilder {
-    readUint32(code, start);
+  private cmdGainMoney(code: Uint8Array, start: number): CommandBuilder {
+    const value = readUint32(code, start);
 
     return {
       len: 4,
       execute: () => {
+        this.game.gainMoney(value);
         this.game.mainSceneRuntime?.collectFacingBox();
       },
     };
   }
 
-  private readBoxOpen(code: Uint8Array, start: number): CommandBuilder {
+  private cmdSetMoney(code: Uint8Array, start: number): CommandBuilder {
+    const value = readUint32(code, start);
+
+    return {
+      len: 4,
+      execute: () => {
+        this.game.setMoney(value);
+      },
+    };
+  }
+
+  private cmdBoxOpen(code: Uint8Array, start: number): CommandBuilder {
     const id = readUint16(code, start);
 
     return {
@@ -323,20 +342,22 @@ export class ScriptVm {
     };
   }
 
-  private readNpcStep(code: Uint8Array, start: number): CommandBuilder {
+  private cmdNpcStep(code: Uint8Array, start: number): CommandBuilder {
     const actorId = readUint16(code, start);
     const faceTo = readUint16(code, start + 2);
     const step = readUint16(code, start + 4);
 
     return {
       len: 6,
-      execute: () => {
-        this.game.mainSceneRuntime?.setActorPose(actorId, mapFacing(faceTo), step);
+      execute: process => {
+        const operation = this.game.mainSceneRuntime?.createActorPoseOperation(actorId, mapFacing(faceTo), step);
+        if (!operation) return;
+        process.wait(operation);
       },
     };
   }
 
-  private readSetSceneName(code: Uint8Array, start: number): CommandBuilder {
+  private cmdSetSceneName(code: Uint8Array, start: number): CommandBuilder {
     const len = getCStringLength(code, start);
     const name = readGbkString(code, start);
 
@@ -348,7 +369,19 @@ export class ScriptVm {
     };
   }
 
-  private readShowGut(code: Uint8Array, start: number): CommandBuilder {
+  private cmdShowSceneName(): CommandBuilder {
+    return {
+      len: 0,
+      execute: () => {
+        const scene = this.game.mainScene;
+        const name = this.game.state.sceneName.trim();
+        if (!scene || name.length === 0) return;
+        scene.showTip(name, 'information');
+      },
+    };
+  }
+
+  private cmdShowGut(code: Uint8Array, start: number): CommandBuilder {
     const topImageIndex = readUint16(code, start);
     const bottomImageIndex = readUint16(code, start + 2);
     const len = getCStringLength(code, start + 4);

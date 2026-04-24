@@ -33,6 +33,15 @@ interface GutState {
   onClose: () => void;
 }
 
+interface TipState {
+  text: string;
+  kind: TipKind;
+  lines: string[];
+  elapsed: number;
+}
+
+type TipKind = 'message' | 'information';
+
 const MAP_INFO_LEFT = 2;
 const MAP_INFO_TOP = 2;
 const MAP_INFO_LINE_GAP = 16;
@@ -58,11 +67,19 @@ const DIALOG_TEXT_TOP = DIALOG_TOP + 8;
 const DIALOG_TEXT_WIDTH = DIALOG_WIDTH - 20;
 const DIALOG_PAGE_LINES = 4;
 const DIALOG_LINE_GAP = 16;
+const TIP_FRAME_WIDTH = 240;
+const TIP_TEXT_WIDTH = 224;
+const TIP_TEXT_PADDING_X = 8;
+const TIP_TEXT_TOP_PADDING = 2;
+const TIP_LINE_GAP = 16;
+const TIP_MAX_LINES = 4;
+const TIP_DURATION = 1000;
 
 // 主场景屏幕层只负责 UI 状态、绘制和输入分发。
 export class ScreenMainGame extends BaseScreen {
   private dialogue: DialogueState | null = null;
   private gut: GutState | null = null;
+  private tip: TipState | null = null;
 
   constructor(
     game: Game,
@@ -74,7 +91,8 @@ export class ScreenMainGame extends BaseScreen {
   override update(delta: number): void {
     this.updateGut(delta);
     if (this.gut) return;
-    this.runtime.update();
+    this.updateTip(delta);
+    this.runtime.update(delta);
   }
 
   draw(surface: Surface): void {
@@ -90,6 +108,7 @@ export class ScreenMainGame extends BaseScreen {
       this.drawPlayer(surface);
     }
     this.drawMapInfo(surface);
+    this.drawTip(surface);
     this.drawDialogue(surface);
   }
 
@@ -101,6 +120,11 @@ export class ScreenMainGame extends BaseScreen {
 
     if (this.dialogue) {
       this.advanceDialogue();
+      return;
+    }
+
+    if (this.tip) {
+      this.tip = null;
       return;
     }
 
@@ -134,6 +158,13 @@ export class ScreenMainGame extends BaseScreen {
       pageIndex: 0,
       onClose,
     };
+  }
+
+  showTip(text: string, kind: TipKind = 'message'): void {
+    const textWidth = kind === 'information' ? TIP_FRAME_WIDTH : TIP_TEXT_WIDTH;
+    const lines = wrapTextBlock(text, textWidth).slice(0, TIP_MAX_LINES);
+    if (lines.length === 0) return;
+    this.tip = { text, kind, lines, elapsed: 0 };
   }
 
   showGut(topImageIndex: number, bottomImageIndex: number, text: string, onClose: () => void): void {
@@ -291,6 +322,20 @@ export class ScreenMainGame extends BaseScreen {
     gut.bottomImage?.draw(surface, 1, layout.bottomImageLeft, layout.bottomImageTop);
   }
 
+  private drawTip(surface: Surface): void {
+    const tip = this.tip;
+    if (!tip) return;
+    const layout = getTipLayout(tip);
+    drawTipFrame(surface, layout.left, layout.top, layout.height);
+    for (let i = 0; i < layout.lines.length; i += 1) {
+      const line = layout.lines[i] ?? '';
+      const textWidth = getTextWidth(line);
+      const left =
+        tip.kind === 'information' ? layout.left + Math.floor((TIP_FRAME_WIDTH - textWidth) / 2) : layout.textLeft;
+      TextRender.drawText(surface, line, left, layout.textTop + i * TIP_LINE_GAP);
+    }
+  }
+
   private drawDialogue(surface: Surface): void {
     if (!this.dialogue) return;
 
@@ -331,6 +376,15 @@ export class ScreenMainGame extends BaseScreen {
     const textBottom = gut.scrollY + gut.lines.length * 16;
     if (textBottom < layout.textTop) {
       this.closeGut();
+    }
+  }
+
+  private updateTip(delta: number): void {
+    const tip = this.tip;
+    if (!tip) return;
+    tip.elapsed += delta;
+    if (tip.elapsed >= TIP_DURATION) {
+      this.tip = null;
     }
   }
 
@@ -389,6 +443,44 @@ function drawFacingMark(
       surface.fillRect(left + Math.floor(width / 2) - 1, top + height - 4, 2, 3, COLOR_BLACK);
       return;
   }
+}
+
+function getTipLayout(tip: TipState): {
+  left: number;
+  top: number;
+  height: number;
+  textLeft: number;
+  textTop: number;
+  lines: string[];
+} {
+  const lineCount = tip.kind === 'information' ? 1 : Math.max(1, tip.lines.length);
+  const height = tip.kind === 'information' ? 23 : lineCount * TIP_LINE_GAP + 20;
+  const left = Math.floor((SCREEN_WIDTH - TIP_FRAME_WIDTH) / 2);
+  const top = Math.floor((SCREEN_HEIGHT - height) / 2);
+
+  return {
+    left,
+    top,
+    height,
+    textLeft: left + TIP_TEXT_PADDING_X,
+    textTop: top + TIP_TEXT_TOP_PADDING,
+    lines: tip.kind === 'information' ? [tip.lines[0] ?? tip.text] : tip.lines,
+  };
+}
+
+function drawTipFrame(surface: Surface, left: number, top: number, height: number): void {
+  surface.fillRect(left, top - 2, TIP_FRAME_WIDTH, height + 3, COLOR_BLACK);
+  surface.fillRect(left + 1, top - 1, TIP_FRAME_WIDTH - 3, height - 3, COLOR_WHITE);
+  surface.fillRect(left + TIP_FRAME_WIDTH - 2, top - 2, 2, 3, COLOR_WHITE);
+  surface.fillRect(left, top + height - 2, 4, 2, COLOR_WHITE);
+}
+
+function getTextWidth(text: string): number {
+  let width = 0;
+  for (const char of text) {
+    width += getTextCharWidth(char);
+  }
+  return width;
 }
 
 function getGutLayout(gut: GutState): {

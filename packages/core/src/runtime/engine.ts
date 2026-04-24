@@ -1,4 +1,6 @@
+import { createDebugApi } from '@/debug/debug';
 import { Game } from '@/game/game';
+import type { GameState } from '@/game/game-state';
 import { createFrameBuffer, type FrameBuffer } from '@/rendering/frame-buffer';
 import { FIXED_STEP_MS } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
@@ -9,6 +11,7 @@ export interface BootOptions {
 }
 
 export class Engine {
+  readonly debug = createDebugApi(() => this.game?.getStateSnapshot() ?? null);
   private readonly emptyBuffer = createFrameBuffer();
   private accumulatorMs = 0;
   private game: Game | null = null;
@@ -26,6 +29,10 @@ export class Engine {
     this.accumulatorMs = 0;
     this.game = new Game(this.host, options.datLib);
     this.game.start();
+  }
+
+  getStateSnapshot(): GameState | null {
+    return this.game?.getStateSnapshot() ?? null;
   }
 
   tick(deltaMs: number): void {

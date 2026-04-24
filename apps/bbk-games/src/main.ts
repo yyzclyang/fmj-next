@@ -1,9 +1,15 @@
 import { createBrowserRuntime } from '@fmj-next/browser';
-import { KeyCode } from '@fmj-next/core';
+import { KeyCode, type DebugApi } from '@fmj-next/core';
 import { gameProfiles, type GameId } from './game-profiles';
 import { loadDatLib } from './load-datlib';
 import { webAudioPort } from './web-audio-port';
 import { webSaveStore } from './web-save-store';
+
+declare global {
+  interface Window {
+    fmjDebug?: DebugApi;
+  }
+}
 
 function mapKeyboard(code: string): KeyCode | null {
   switch (code) {
@@ -65,6 +71,7 @@ async function bootstrap(): Promise<void> {
     audio: webAudioPort,
     speed: 1,
   });
+  window.fmjDebug = runtime.debug;
 
   async function start(gameId: GameId): Promise<void> {
     const datLib = await loadDatLib(gameId);

@@ -2,7 +2,8 @@ import type { Game } from '@/game/game';
 import { ResImage } from '@/lib/res-image';
 import { ResMap } from '@/lib/res-map';
 import { ResourceType } from '@/lib/resource-utils';
-import type { ScriptProcess } from '@/script/script-process';
+import type { ScriptOperation, ScriptProcess } from '@/script/script-process';
+import { MAP_VIEW_TILE_HEIGHT, MAP_VIEW_TILE_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
 import { clamp } from '@/shared/math';
 
@@ -21,6 +22,8 @@ export interface SceneObject {
 
 const PLAYER_SCREEN_X = 9;
 const PLAYER_SCREEN_Y = 5;
+const SCRIPT_MOVE_INTERVAL = 100;
+const SCRIPT_POSE_WAIT = 300;
 
 // 主场景运行时只负责地图、对象、交互和脚本入口，不处理具体 UI。
 export class MainSceneRuntime {
@@ -82,8 +85,8 @@ export class MainSceneRuntime {
     return this.playerStepValue;
   }
 
-  update(): void {
-    this.scriptProcess?.step();
+  update(delta = 0): void {
+    this.scriptProcess?.step(delta);
   }
 
   move(facing: Facing): void {
@@ -180,6 +183,26 @@ export class MainSceneRuntime {
     obj.y = y;
   }
 
+  createMoveActorOperation(id: number, x: number, y: number): ScriptOperation | null {
+    const actor = this.getActorPosition(id);
+    if (!actor) return null;
+    let elapsed = SCRIPT_MOVE_INTERVAL;
+
+    return {
+      update: delta => {
+        elapsed += delta;
+        if (elapsed < SCRIPT_MOVE_INTERVAL) return true;
+        elapsed = 0;
+        const pos = this.getActorPosition(id);
+        if (!pos || (pos.x === x && pos.y === y)) return false;
+        const facing = getFacingToward(pos.x, pos.y, x, y);
+        this.stepActorPose(id, facing);
+        this.setActorMapPosition(id, getNextX(pos.x, facing), getNextY(pos.y, facing));
+        return true;
+      },
+    };
+  }
+
   setActorPose(id: number, facing: Facing, step: number): void {
     if (id === 0) {
       this.facingValue = facing;
@@ -193,6 +216,22 @@ export class MainSceneRuntime {
     obj.step = step;
   }
 
+  createActorPoseOperation(id: number, facing: Facing, step: number): ScriptOperation | null {
+    const actor = this.getActorPosition(id);
+    if (!actor) return null;
+    this.setActorPose(id, facing, step);
+    if (id !== 0 && !this.isActorVisible(id)) return null;
+
+    let elapsed = 0;
+
+    return {
+      update: delta => {
+        elapsed += delta;
+        return elapsed < SCRIPT_POSE_WAIT;
+      },
+    };
+  }
+
   openBox(id: number): void {
     const obj = this.sceneObjectsValue.get(id);
     if (!obj || obj.kind !== 'box') return;
@@ -204,6 +243,7 @@ export class MainSceneRuntime {
     const obj = this.getSceneObjectAt(pos.x, pos.y);
     if (!obj || obj.kind !== 'box') return;
     obj.step = 2;
+    this.game.markBoxCollected(this.getBoxEventKey(obj.x, obj.y, obj.resId));
   }
 
   setSceneName(name: string): void {
@@ -288,7 +328,7 @@ export class MainSceneRuntime {
   }
 
   private canControlPlayer(): boolean {
-    return !this.scriptProcess?.running && !!this.currentMapValue && this.hasPlayerValue;
+    return !this.scriptProcess?.busy && !!this.currentMapValue && this.hasPlayerValue;
   }
 
   private triggerSceneObjectEvent(): void {
@@ -296,6 +336,7 @@ export class MainSceneRuntime {
     const obj = this.getSceneObjectAt(pos.x, pos.y);
     if (obj) {
       if (obj.kind === 'box') {
+        if (this.game.isBoxCollected(this.getBoxEventKey(obj.x, obj.y, obj.resId))) return;
         this.game.setPendingBoxEvent(this.getBoxEventKey(obj.x, obj.y, obj.resId));
       } else {
         this.game.clearPendingBoxEvent();
@@ -366,6 +407,49 @@ export class MainSceneRuntime {
     this.game.state.playerMapY = start.y;
   }
 
+  private getActorPosition(id: number): { x: number; y: number } | null {
+    if (id === 0) {
+      return this.hasPlayerValue ? { x: this.playerMapXValue, y: this.playerMapYValue } : null;
+    }
+
+    const obj = this.sceneObjectsValue.get(id);
+    if (!obj) return null;
+    return { x: obj.x, y: obj.y };
+  }
+
+  private setActorMapPosition(id: number, x: number, y: number): void {
+    if (id === 0) {
+      this.setPlayerMapPosition(x, y);
+      return;
+    }
+
+    const obj = this.sceneObjectsValue.get(id);
+    if (!obj) return;
+    obj.x = x;
+    obj.y = y;
+  }
+
+  private stepActorPose(id: number, facing: Facing): void {
+    if (id === 0) {
+      this.facingValue = facing;
+      this.playerStepValue = (this.playerStepValue + 1) % 4;
+      return;
+    }
+
+    const obj = this.sceneObjectsValue.get(id);
+    if (!obj) return;
+    obj.direction = facing;
+    obj.step = (obj.step + 1) % 4;
+  }
+
+  private isActorVisible(id: number): boolean {
+    const pos = this.getActorPosition(id);
+    if (!pos) return false;
+    const screenX = pos.x - this.game.state.mapScreenX;
+    const screenY = pos.y - this.game.state.mapScreenY;
+    return screenX >= 0 && screenX < MAP_VIEW_TILE_WIDTH && screenY >= 0 && screenY < MAP_VIEW_TILE_HEIGHT;
+  }
+
   private resolveStartPosition(x: number, y: number): { x: number; y: number } {
     if (!this.currentMapValue) {
       return { x, y };
@@ -392,4 +476,23 @@ export class MainSceneRuntime {
       y: clamp(y, 0, this.currentMapValue.mapHeight - 1),
     };
   }
+}
+
+function getFacingToward(x: number, y: number, targetX: number, targetY: number): Facing {
+  if (targetX < x) return KeyCode.Left;
+  if (targetX > x) return KeyCode.Right;
+  if (targetY < y) return KeyCode.Up;
+  return KeyCode.Down;
+}
+
+function getNextX(x: number, facing: Facing): number {
+  if (facing === KeyCode.Left) return x - 1;
+  if (facing === KeyCode.Right) return x + 1;
+  return x;
+}
+
+function getNextY(y: number, facing: Facing): number {
+  if (facing === KeyCode.Up) return y - 1;
+  if (facing === KeyCode.Down) return y + 1;
+  return y;
 }

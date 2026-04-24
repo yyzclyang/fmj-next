@@ -10,7 +10,7 @@ import { ScreenAnimation } from '@/screens/animation/screen';
 import { ScreenMenu } from '@/screens/menu/screen';
 import { ScreenStack } from '@/screens/screen-stack';
 import { ScreenViewType } from '@/screens/screen-view-type';
-import { createInitialGameState, type GameState } from './game-state';
+import { cloneGameState, createInitialGameState, type GameState } from './game-state';
 
 const STARTUP_CHAPTER_TYPE = 1;
 const STARTUP_CHAPTER_INDEX = 1;
@@ -35,6 +35,10 @@ export class Game {
 
   get frameBuffer(): FrameBuffer {
     return this.surface.buffer;
+  }
+
+  getStateSnapshot(): GameState {
+    return cloneGameState(this.state);
   }
 
   start(): void {
@@ -74,6 +78,25 @@ export class Game {
     this.mainSceneRuntime?.startChapter(this.state.scriptType, this.state.scriptIndex);
   }
 
+  gainGoods(type: number, index: number, count = 1): void {
+    const item = this.state.goods.find(g => g.type === type && g.index === index);
+    if (item) {
+      item.count += count;
+    } else {
+      this.state.goods.push({ type, index, count });
+    }
+    this.mainScene?.showTip(`获得物品:${type}-${index}`);
+  }
+
+  gainMoney(value: number): void {
+    this.state.money += value;
+    this.mainScene?.showTip(`获得金钱:${value}`);
+  }
+
+  setMoney(value: number): void {
+    this.state.money = value;
+  }
+
   hasEvent(eventId: number): boolean {
     return this.state.eventFlags.includes(eventId);
   }
@@ -89,8 +112,14 @@ export class Game {
   }
 
   isBoxCollected(boxKey: string): boolean {
+    if (this.state.collectedBoxKeys.includes(boxKey)) return true;
     const eventId = this.boxEventMap.get(boxKey);
     return eventId != null && this.hasEvent(eventId);
+  }
+
+  markBoxCollected(boxKey: string): void {
+    if (this.state.collectedBoxKeys.includes(boxKey)) return;
+    this.state.collectedBoxKeys.push(boxKey);
   }
 
   setPendingBoxEvent(boxKey: string | null): void {

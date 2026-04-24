@@ -79,7 +79,7 @@ export class ScriptVm {
 
     switch (opcode) {
       case COMMAND.MUSIC:
-        return this.makeNoopCommand(4);
+        return this.cmdMusic(code, start);
       case COMMAND.LOADMAP:
         return this.cmdLoadMap(code, start);
       case COMMAND.CREATEACTOR:
@@ -151,6 +151,18 @@ export class ScriptVm {
       len: 8,
       execute: () => {
         this.game.mainSceneRuntime?.loadMap(type, index, x - 5, y - 2);
+      },
+    };
+  }
+
+  private cmdMusic(code: Uint8Array, start: number): CommandBuilder {
+    const type = readUint16(code, start);
+    const index = readUint16(code, start + 2);
+
+    return {
+      len: 4,
+      execute: () => {
+        this.game.playMusic(type, index);
       },
     };
   }

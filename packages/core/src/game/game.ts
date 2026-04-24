@@ -97,6 +97,10 @@ export class Game {
     this.state.money = value;
   }
 
+  playMusic(type: number, index: number): void {
+    this.host.audio.playMusic(`${type}:${index}`);
+  }
+
   hasEvent(eventId: number): boolean {
     return this.state.eventFlags.includes(eventId);
   }

@@ -1,14 +1,16 @@
 import { FightingSprite, ResLevelUpChain, WalkingSprite } from '@/characters';
 import { BaseGoods, GoodsEquipment } from '@/goods';
 import { BaseMagic, ResMagicChain } from '@/magic';
-import { parseCharacterResource } from './parse-character';
-import { parseGoodsResource } from './parse-goods';
-import { parseLevelUpChainResource } from './parse-level-up-chain';
-import { parseMagicChainResource, parseMagicResource } from './parse-magic';
+import { parseCharacterResource } from './parse/parse-character';
+import { parseGoodsResource } from './parse/parse-goods';
+import { parseGutResource } from './parse/parse-gut';
+import { parseImageResource } from './parse/parse-image';
+import { parseLevelUpChainResource } from './parse/parse-level-up-chain';
+import { parseMagicChainResource, parseMagicResource } from './parse/parse-magic';
+import { parseMapResource } from './parse/parse-map';
+import { parseSrsResource } from './parse/parse-srs';
 import { ResBase } from './res-base';
-import { ResGut } from './res-gut';
 import { isImageResourceType, ResImage } from './res-image';
-import { ResMap } from './res-map';
 import { ResSrs } from './res-srs';
 import { ResourceType, serializeResourceKey, type ResourceKey } from './resource-utils';
 
@@ -35,6 +37,22 @@ export class DatLib {
       return parseGoodsResource(this, this.buffer, type, offset);
     }
 
+    if (resType === ResourceType.GUT) {
+      return parseGutResource(this.buffer, offset);
+    }
+
+    if (resType === ResourceType.MAP) {
+      return parseMapResource(this.buffer, offset);
+    }
+
+    if (resType === ResourceType.SRS) {
+      return parseSrsResource(this.buffer, offset);
+    }
+
+    if (isImageResourceType(resType)) {
+      return parseImageResource(this.buffer, offset, { resType, type, index });
+    }
+
     if (resType === ResourceType.ARS) {
       return parseCharacterResource(this, this.buffer, type, offset);
     }
@@ -45,11 +63,7 @@ export class DatLib {
       return null;
     }
 
-    const res = this.createResource(resType);
-    if (!res) return null;
-
-    res.setData(this.buffer, offset);
-    return res;
+    return null;
   }
 
   listResourceKeys(resType?: ResourceType): ResourceKey[] {
@@ -100,19 +114,6 @@ export class DatLib {
   getLevelupChain(index: number): ResLevelUpChain | null {
     const res = this.getRes(ResourceType.MLR, 2, index);
     return res instanceof ResLevelUpChain ? res : null;
-  }
-
-  private createResource(resType: ResourceType): ResBase | null {
-    switch (resType) {
-      case ResourceType.GUT:
-        return new ResGut();
-      case ResourceType.MAP:
-        return new ResMap();
-      case ResourceType.SRS:
-        return new ResSrs();
-      default:
-        return isImageResourceType(resType) ? new ResImage() : null;
-    }
   }
 
   private loadOffsets(): void {

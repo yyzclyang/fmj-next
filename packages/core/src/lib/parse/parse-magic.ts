@@ -9,8 +9,8 @@ import {
   type BaseMagicData,
   type ResMagicChainData,
 } from '@/magic';
-import type { DatLib } from './dat-lib';
-import { readGbkString, readInt16, readUint16 } from './resource-utils';
+import type { DatLib } from '../dat-lib';
+import { readGbkString, readInt16, readUint16 } from '../resource-utils';
 
 export function parseMagicResource(datLib: DatLib, buffer: Uint8Array, type: number, offset: number): BaseMagic | null {
   const baseData = parseBaseMagicData(datLib, buffer, offset);

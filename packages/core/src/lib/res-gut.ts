@@ -1,26 +1,28 @@
 import { ResBase } from './res-base';
-import { readGbkString, readUint16 } from './resource-utils';
+
+export interface ResGutData {
+  readonly type: number;
+  readonly index: number;
+  readonly description: string;
+  readonly sceneEvent: number[];
+  readonly scriptData: Uint8Array;
+}
 
 export class ResGut extends ResBase {
   description = '';
   sceneEvent: number[] = [];
-  scriptData = new Uint8Array(0);
+  scriptData: Uint8Array = new Uint8Array(0);
 
-  setData(buf: Uint8Array, offset: number): void {
-    this.type = buf[offset] ?? 0;
-    this.index = buf[offset + 1] ?? 0;
-    this.description = readGbkString(buf, offset + 2);
-
-    const length = readUint16(buf, offset + 0x18);
-    const sceneEventCount = buf[offset + 0x1a] ?? 0;
-    this.sceneEvent = new Array<number>(sceneEventCount);
-
-    for (let i = 0; i < sceneEventCount; i += 1) {
-      this.sceneEvent[i] = readUint16(buf, offset + 0x1b + i * 2);
-    }
-
-    const scriptOffset = offset + 0x1b + sceneEventCount * 2;
-    const scriptLength = Math.max(0, length - sceneEventCount * 2 - 3);
-    this.scriptData = buf.slice(scriptOffset, scriptOffset + scriptLength);
+  constructor(data?: ResGutData) {
+    super();
+    if (!data) return;
+    this.type = data.type;
+    this.index = data.index;
+    this.description = data.description;
+    this.sceneEvent = data.sceneEvent;
+    this.scriptData = data.scriptData;
   }
+
+  // 脚本资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
+  setData(): void {}
 }

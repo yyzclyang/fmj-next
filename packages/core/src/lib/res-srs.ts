@@ -16,6 +16,17 @@ interface ActiveSrsFrame {
   nshow: number;
 }
 
+export interface ResSrsData {
+  readonly type: number;
+  readonly index: number;
+  readonly frameNum: number;
+  readonly imageNum: number;
+  readonly startFrame: number;
+  readonly endFrame: number;
+  readonly frameHeaders: SrsFrameHeader[];
+  readonly images: ResImage[];
+}
+
 export class ResSrs extends ResBase {
   frameNum = 0;
   imageNum = 0;
@@ -26,35 +37,21 @@ export class ResSrs extends ResBase {
   private iteratorCount = 1;
   private showList: ActiveSrsFrame[] = [];
 
-  setData(buf: Uint8Array, offset: number): void {
-    this.type = buf[offset] ?? 0;
-    this.index = buf[offset + 1] ?? 0;
-    this.frameNum = buf[offset + 2] ?? 0;
-    this.imageNum = buf[offset + 3] ?? 0;
-    this.startFrame = buf[offset + 4] ?? 0;
-    this.endFrame = buf[offset + 5] ?? 0;
-
-    let cursor = offset + 6;
-    this.frameHeaders = [];
-    for (let i = 0; i < this.frameNum; i += 1) {
-      this.frameHeaders.push({
-        x: buf[cursor] ?? 0,
-        y: buf[cursor + 1] ?? 0,
-        show: buf[cursor + 2] ?? 0,
-        nshow: buf[cursor + 3] ?? 0,
-        imageIndex: buf[cursor + 4] ?? 0,
-      });
-      cursor += 5;
-    }
-
-    this.images = [];
-    for (let i = 0; i < this.imageNum; i += 1) {
-      const image = new ResImage();
-      image.setData(buf, cursor);
-      this.images.push(image);
-      cursor += image.bytesCount;
-    }
+  constructor(data?: ResSrsData) {
+    super();
+    if (!data) return;
+    this.type = data.type;
+    this.index = data.index;
+    this.frameNum = data.frameNum;
+    this.imageNum = data.imageNum;
+    this.startFrame = data.startFrame;
+    this.endFrame = data.endFrame;
+    this.frameHeaders = data.frameHeaders;
+    this.images = data.images;
   }
+
+  // 动画资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
+  setData(): void {}
 
   start(): void {
     if (this.frameHeaders.length === 0) return;

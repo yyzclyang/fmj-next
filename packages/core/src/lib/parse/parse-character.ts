@@ -16,8 +16,8 @@ import {
 } from '@/characters';
 import type { GoodsEquipment } from '@/goods';
 import { KeyCode } from '@/shared/key-code';
-import type { DatLib } from './dat-lib';
-import { ResourceType, readGbkString, readUint16 } from './resource-utils';
+import type { DatLib } from '../dat-lib';
+import { ResourceType, readGbkString, readUint16 } from '../resource-utils';
 
 export function parseCharacterResource(
   datLib: DatLib,

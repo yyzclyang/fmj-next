@@ -14,9 +14,9 @@ import {
   type GoodsEquipmentData,
 } from '@/goods';
 import { MagicAttack } from '@/magic';
-import type { DatLib } from './dat-lib';
-import { ResSrs } from './res-srs';
-import { ResourceType, readGbkString, readInt8, readInt16, readUint16 } from './resource-utils';
+import type { DatLib } from '../dat-lib';
+import { ResSrs } from '../res-srs';
+import { ResourceType, readGbkString, readInt8, readInt16, readUint16 } from '../resource-utils';
 
 export function parseGoodsResource(datLib: DatLib, buffer: Uint8Array, type: number, offset: number): BaseGoods | null {
   const baseData = parseBaseGoodsData(datLib, buffer, offset);

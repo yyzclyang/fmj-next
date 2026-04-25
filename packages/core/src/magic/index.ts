@@ -10,4 +10,4 @@ export { MagicRestore } from './magic-restore';
 export type { MagicRestoreData } from './magic-restore';
 export { MagicSpecial } from './magic-special';
 export { ResMagicChain } from './res-magic-chain';
-export type { MagicChainResourceProvider } from './res-magic-chain';
+export type { ResMagicChainData } from './res-magic-chain';

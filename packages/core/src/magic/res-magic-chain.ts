@@ -1,8 +1,12 @@
 import { ResBase } from '@/lib/res-base';
 import type { BaseMagic } from './base-magic';
 
-export interface MagicChainResourceProvider {
-  getMagic(type: number, index: number): BaseMagic | null;
+export interface ResMagicChainData {
+  readonly type: number;
+  readonly index: number;
+  readonly magicSum: number;
+  readonly learnNum: number;
+  readonly magics: Array<BaseMagic | null>;
 }
 
 export class ResMagicChain extends ResBase {
@@ -10,25 +14,17 @@ export class ResMagicChain extends ResBase {
   learnNum = 0;
   magics: Array<BaseMagic | null> = [];
 
-  constructor(private readonly resources: MagicChainResourceProvider) {
+  constructor(data: ResMagicChainData) {
     super();
+    this.type = data.type;
+    this.index = data.index;
+    this.magicSum = data.magicSum;
+    this.learnNum = data.learnNum;
+    this.magics = data.magics;
   }
 
-  setData(buf: Uint8Array, offset: number): void {
-    this.type = buf[offset] ?? 0;
-    this.index = buf[offset + 1] ?? 0;
-    this.magicSum = buf[offset + 2] ?? 0;
-    this.magics = [];
-
-    let pointer = offset + 3;
-    for (let i = 0; i < this.magicSum; i += 1) {
-      const magicType = buf[pointer] ?? 0;
-      const magicIndex = buf[pointer + 1] ?? 0;
-      pointer += 2;
-      const magic = this.resources.getMagic(magicType, magicIndex);
-      this.magics.push(magic);
-    }
-  }
+  // 魔法链资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
+  setData(): void {}
 
   getMagic(index: number): BaseMagic | null {
     return this.magics[index] ?? null;

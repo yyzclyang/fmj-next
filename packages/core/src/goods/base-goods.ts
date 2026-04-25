@@ -1,16 +1,23 @@
 import { ResBase } from '@/lib/res-base';
 import { ResourceType, readGbkString, readUint16 } from '@/lib/resource-utils';
+import type { ResImage } from '@/lib/res-image';
+import type { ResSrs } from '@/lib/res-srs';
+import type { BaseMagic } from '@/magic';
 
-export interface ResourceRef {
-  readonly resType: ResourceType;
-  readonly type: number;
-  readonly index: number;
+export interface GoodsResourceProvider {
+  getImage(resType: ResourceType, type: number, index: number): ResImage | null;
+  getSrs(type: number, index: number): ResSrs | null;
+  getMagic(type: number, index: number): BaseMagic | null;
 }
 
 export abstract class BaseGoods extends ResBase {
+  constructor(protected readonly resources: GoodsResourceProvider) {
+    super();
+  }
+
   protected enable = 0;
   sumRound = 0;
-  imageRef: ResourceRef | null = null;
+  image: ResImage | null = null;
   name = '';
   buyPrice = 0;
   sellPrice = 0;
@@ -22,7 +29,7 @@ export abstract class BaseGoods extends ResBase {
     this.index = buf[offset + 1] ?? 0;
     this.enable = buf[offset + 3] ?? 0;
     this.sumRound = buf[offset + 4] ?? 0;
-    this.imageRef = { resType: ResourceType.GDP, type: this.type, index: buf[offset + 5] ?? 0 };
+    this.image = this.resources.getImage(ResourceType.GDP, this.type, buf[offset + 5] ?? 0);
     this.name = readGbkString(buf, offset + 6);
     this.buyPrice = readUint16(buf, offset + 0x12);
     this.sellPrice = readUint16(buf, offset + 0x14);

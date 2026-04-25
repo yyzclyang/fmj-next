@@ -1,5 +1,5 @@
 export { BaseGoods } from './base-goods';
-export type { ResourceRef } from './base-goods';
+export type { GoodsResourceProvider } from './base-goods';
 export { GoodsDecorations } from './goods-decorations';
 export { GoodsDrama } from './goods-drama';
 export { GoodsEquipment } from './goods-equipment';
@@ -11,7 +11,7 @@ export { GoodsStimulant } from './goods-stimulant';
 export { GoodsTudun } from './goods-tudun';
 export { GoodsWeapon } from './goods-weapon';
 
-import { BaseGoods } from './base-goods';
+import { BaseGoods, type GoodsResourceProvider } from './base-goods';
 import { GoodsDecorations } from './goods-decorations';
 import { GoodsDrama } from './goods-drama';
 import { GoodsEquipment } from './goods-equipment';
@@ -23,27 +23,27 @@ import { GoodsStimulant } from './goods-stimulant';
 import { GoodsTudun } from './goods-tudun';
 import { GoodsWeapon } from './goods-weapon';
 
-export function createGoods(type: number): BaseGoods | null {
-  if (type >= 1 && type <= 5) return new GoodsEquipment();
+export function createGoods(type: number, resources: GoodsResourceProvider): BaseGoods | null {
+  if (type >= 1 && type <= 5) return new GoodsEquipment(resources);
   switch (type) {
     case 6:
-      return new GoodsDecorations();
+      return new GoodsDecorations(resources);
     case 7:
-      return new GoodsWeapon();
+      return new GoodsWeapon(resources);
     case 8:
-      return new GoodsHiddenWeapon();
+      return new GoodsHiddenWeapon(resources);
     case 9:
-      return new GoodsMedicine();
+      return new GoodsMedicine(resources);
     case 10:
-      return new GoodsMedicineLife();
+      return new GoodsMedicineLife(resources);
     case 11:
-      return new GoodsMedicineChg4Ever();
+      return new GoodsMedicineChg4Ever(resources);
     case 12:
-      return new GoodsStimulant();
+      return new GoodsStimulant(resources);
     case 13:
-      return new GoodsTudun();
+      return new GoodsTudun(resources);
     case 14:
-      return new GoodsDrama();
+      return new GoodsDrama(resources);
     default:
       return null;
   }

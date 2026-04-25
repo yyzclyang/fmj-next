@@ -1,9 +1,8 @@
-import { ResourceType } from '@/lib/resource-utils';
-import type { ResourceRef } from './base-goods';
+import type { ResSrs } from '@/lib/res-srs';
 import { GoodsEquipment } from './goods-equipment';
 
 export class GoodsWeapon extends GoodsEquipment {
-  animationRef: ResourceRef = { resType: ResourceType.SRS, type: 0, index: 0 };
+  animation: ResSrs | null = null;
   affectMp = 0;
 
   get affectHp(): number {

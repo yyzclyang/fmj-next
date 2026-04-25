@@ -1,11 +1,11 @@
-import { ResourceType, readInt8 } from '@/lib/resource-utils';
-import type { ResourceRef } from './base-goods';
+import { readInt8 } from '@/lib/resource-utils';
+import { MagicAttack } from '@/magic';
 import { GoodsEquipment } from './goods-equipment';
 
 export class GoodsDecorations extends GoodsEquipment {
   mp = 0;
   hp = 0;
-  coopMagicRef: ResourceRef | null = null;
+  coopMagic: MagicAttack | null = null;
 
   protected override setOtherData(buf: Uint8Array, offset: number): void {
     this.mp = readInt8(buf, offset + 0x16);
@@ -15,7 +15,8 @@ export class GoodsDecorations extends GoodsEquipment {
     this.lingli = readInt8(buf, offset + 0x1a);
     this.speed = readInt8(buf, offset + 0x1b);
     const magicIndex = buf[offset + 0x1c] ?? 0;
-    this.coopMagicRef = magicIndex > 0 ? { resType: ResourceType.MRS, type: 1, index: magicIndex } : null;
+    const magic = magicIndex > 0 ? this.resources.getMagic(1, magicIndex) : null;
+    this.coopMagic = magic instanceof MagicAttack ? magic : null;
     this.luck = readInt8(buf, offset + 0x1d);
   }
 }

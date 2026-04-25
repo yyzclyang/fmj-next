@@ -14,11 +14,13 @@ import {
   WalkingSprite,
   type CharacterResourceProvider,
 } from '@/characters';
-import { BaseGoods, GoodsEquipment, createGoods } from '@/goods';
+import { BaseGoods, GoodsEquipment, createGoods, type GoodsResourceProvider } from '@/goods';
 import { BaseMagic, ResMagicChain, createMagic, type MagicChainResourceProvider, type MagicResourceProvider } from '@/magic';
 import { ResLevelupChain } from '@/characters/res-levelup-chain';
 
-export class DatLib implements CharacterResourceProvider, MagicResourceProvider, MagicChainResourceProvider {
+export class DatLib
+  implements CharacterResourceProvider, MagicResourceProvider, MagicChainResourceProvider, GoodsResourceProvider
+{
   private readonly offsets = new Map<string, number>();
   private readonly resourceKeys: ResourceKey[] = [];
   private readonly buffer: Uint8Array;
@@ -101,7 +103,7 @@ export class DatLib implements CharacterResourceProvider, MagicResourceProvider,
       case ResourceType.SRS:
         return new ResSrs();
       case ResourceType.GRS:
-        return createGoods(type);
+        return createGoods(type, this);
       case ResourceType.MRS:
         return createMagic(type, this);
       case ResourceType.MLR:

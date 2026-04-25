@@ -1,6 +1,5 @@
 import type { GameGoodsState } from '@/game/game-state';
 import type { DatLib } from '@/lib/dat-lib';
-import { ResourceType } from '@/lib/resource-utils';
 import { BaseGoods } from './base-goods';
 
 export interface GoodsBagItem {
@@ -73,8 +72,7 @@ export class GoodsBag {
   }
 
   private resolveGoods(type: number, index: number): BaseGoods | null {
-    const res = this.datLib.getRes(ResourceType.GRS, type, index);
-    return res instanceof BaseGoods ? res : null;
+    return this.datLib.getGoods(type, index);
   }
 }
 

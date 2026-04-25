@@ -1,5 +1,5 @@
 import { ResBase } from '@/lib/res-base';
-import type { ResourceKey, ResourceType } from '@/lib/resource-utils';
+import type { ResourceType } from '@/lib/resource-utils';
 import type { ResImage } from '@/lib/res-image';
 import type { BaseGoods, GoodsEquipment } from '@/goods';
 import type { ResMagicChain } from '@/magic';
@@ -19,8 +19,6 @@ export const CharacterState = {
 } as const;
 
 export type CharacterState = (typeof CharacterState)[keyof typeof CharacterState];
-
-export type ResourceRef = ResourceKey;
 
 export interface CharacterResourceProvider {
   createWalkingSprite(type: number, index: number): WalkingSprite | null;

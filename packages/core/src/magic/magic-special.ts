@@ -1,5 +1,7 @@
-import { BaseMagic } from './base-magic';
+import { BaseMagic, type BaseMagicData } from './base-magic';
 
 export class MagicSpecial extends BaseMagic {
-  protected setOtherData(): void {}
+  constructor(data: BaseMagicData) {
+    super(data);
+  }
 }

@@ -1,10 +1,14 @@
-import { readUint16 } from '@/lib/resource-utils';
-import { BaseMagic } from './base-magic';
+import { BaseMagic, type BaseMagicData } from './base-magic';
+
+export interface MagicAuxiliaryData extends BaseMagicData {
+  readonly hpPercent: number;
+}
 
 export class MagicAuxiliary extends BaseMagic {
-  hpPercent = 0;
+  hpPercent: number;
 
-  protected setOtherData(buf: Uint8Array, offset: number): void {
-    this.hpPercent = readUint16(buf, offset + 0x12);
+  constructor(data: MagicAuxiliaryData) {
+    super(data);
+    this.hpPercent = data.hpPercent;
   }
 }

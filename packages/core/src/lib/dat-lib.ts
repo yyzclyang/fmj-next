@@ -2,7 +2,7 @@ import { isImageResourceType, ResImage } from './res-image';
 import { ResBase } from './res-base';
 import { ResGut } from './res-gut';
 import { ResMap } from './res-map';
-import { ResourceType, serializeResourceKey, type ResourceKey } from './resource-utils';
+import { ResourceType, readGbkString, readInt16, readUint16, serializeResourceKey, type ResourceKey } from './resource-utils';
 import { ResSrs } from './res-srs';
 import {
   Character,
@@ -15,11 +15,21 @@ import {
   type CharacterResourceProvider,
 } from '@/characters';
 import { BaseGoods, GoodsEquipment, createGoods, type GoodsResourceProvider } from '@/goods';
-import { BaseMagic, ResMagicChain, createMagic, type MagicChainResourceProvider, type MagicResourceProvider } from '@/magic';
+import {
+  BaseMagic,
+  MagicAttack,
+  MagicAuxiliary,
+  MagicEnhance,
+  MagicRestore,
+  MagicSpecial,
+  ResMagicChain,
+  type BaseMagicData,
+  type MagicChainResourceProvider,
+} from '@/magic';
 import { ResLevelupChain } from '@/characters/res-levelup-chain';
 
 export class DatLib
-  implements CharacterResourceProvider, MagicResourceProvider, MagicChainResourceProvider, GoodsResourceProvider
+  implements CharacterResourceProvider, MagicChainResourceProvider, GoodsResourceProvider
 {
   private readonly offsets = new Map<string, number>();
   private readonly resourceKeys: ResourceKey[] = [];
@@ -34,6 +44,10 @@ export class DatLib
     // TODO: 后续给角色、道具等资源使用方补明确方法，减少直接依赖通用 getRes。
     const offset = this.offsets.get(serializeResourceKey({ resType, type, index })) ?? null;
     if (offset == null) return null;
+
+    if (resType === ResourceType.MRS) {
+      return this.createMagic(type, offset);
+    }
 
     const res = this.createResource(resType, type);
     if (!res) return null;
@@ -104,8 +118,6 @@ export class DatLib
         return new ResSrs();
       case ResourceType.GRS:
         return createGoods(type, this);
-      case ResourceType.MRS:
-        return createMagic(type, this);
       case ResourceType.MLR:
         return this.createMlr(type);
       default:
@@ -122,6 +134,70 @@ export class DatLib
       default:
         return null;
     }
+  }
+
+  private createMagic(type: number, offset: number): BaseMagic | null {
+    const baseData = this.parseBaseMagicData(offset);
+    switch (type) {
+      case 1:
+        return new MagicAttack({
+          ...baseData,
+          affectHp: readInt16(this.buffer, offset + 0x12),
+          affectMp: readInt16(this.buffer, offset + 0x14),
+          defendPercent: this.buffer[offset + 0x16] ?? 0,
+          attackPercent: this.buffer[offset + 0x17] ?? 0,
+          buffMask: this.buffer[offset + 0x18] ?? 0,
+          speedPercent: this.buffer[offset + 0x19] ?? 0,
+        });
+      case 2:
+        return new MagicEnhance({
+          ...baseData,
+          defendPercent: this.buffer[offset + 0x16] ?? 0,
+          attackPercent: this.buffer[offset + 0x17] ?? 0,
+          buffRound: ((this.buffer[offset + 0x18] ?? 0) >> 4) & 0x0f,
+          speedPercent: this.buffer[offset + 0x19] ?? 0,
+        });
+      case 3:
+        return new MagicRestore({
+          ...baseData,
+          hp: readUint16(this.buffer, offset + 0x12),
+          cureMask: this.buffer[offset + 0x18] ?? 0,
+        });
+      case 4:
+        return new MagicAuxiliary({
+          ...baseData,
+          hpPercent: readUint16(this.buffer, offset + 0x12),
+        });
+      case 5:
+        return new MagicSpecial(baseData);
+      default:
+        return null;
+    }
+  }
+
+  private parseBaseMagicData(offset: number): BaseMagicData {
+    const roundFlag = this.buffer[offset + 3] ?? 0;
+    const animationIndex = this.buffer[offset + 5] ?? 0;
+    return {
+      type: this.buffer[offset] ?? 0,
+      index: this.buffer[offset + 1] ?? 0,
+      roundNum: roundFlag & 0x7f,
+      isForAll: (roundFlag & 0x80) !== 0,
+      costMp: this.buffer[offset + 4] ?? 0,
+      magicAni: animationIndex > 0 ? this.getSrs(2, animationIndex) : null,
+      magicName: readGbkString(this.buffer, offset + 6),
+      magicDescription: this.readMagicDescription(offset),
+    };
+  }
+
+  private readMagicDescription(offset: number): string {
+    const declaredLength = this.buffer[offset + 2] ?? 0;
+    if (declaredLength <= 0x70) return readGbkString(this.buffer, offset + 0x1a);
+
+    // 原版会把 offset + 0x70 写成 0 来截断，这里复制切片避免修改共享资源缓冲区。
+    const end = offset + 0x70;
+    const slice = this.buffer.slice(offset + 0x1a, end);
+    return readGbkString(slice, 0);
   }
 
   private createCharacter(type: number): Character | null {

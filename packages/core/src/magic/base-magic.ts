@@ -1,46 +1,37 @@
 import { ResBase } from '@/lib/res-base';
 import type { ResSrs } from '@/lib/res-srs';
-import { readGbkString } from '@/lib/resource-utils';
 
-export interface MagicResourceProvider {
-  getSrs(type: number, index: number): ResSrs | null;
+export interface BaseMagicData {
+  readonly type: number;
+  readonly index: number;
+  readonly roundNum: number;
+  readonly isForAll: boolean;
+  readonly costMp: number;
+  readonly magicAni: ResSrs | null;
+  readonly magicName: string;
+  readonly magicDescription: string;
 }
 
 export abstract class BaseMagic extends ResBase {
-  roundNum = 0;
-  isForAll = false;
-  costMp = 0;
-  magicAni: ResSrs | null = null;
-  magicName = '';
-  magicDescription = '';
+  roundNum: number;
+  isForAll: boolean;
+  costMp: number;
+  magicAni: ResSrs | null;
+  magicName: string;
+  magicDescription: string;
 
-  constructor(protected readonly resources: MagicResourceProvider) {
+  protected constructor(data: BaseMagicData) {
     super();
+    this.type = data.type;
+    this.index = data.index;
+    this.roundNum = data.roundNum;
+    this.isForAll = data.isForAll;
+    this.costMp = data.costMp;
+    this.magicAni = data.magicAni;
+    this.magicName = data.magicName;
+    this.magicDescription = data.magicDescription;
   }
 
-  setData(buf: Uint8Array, offset: number): void {
-    this.type = buf[offset] ?? 0;
-    this.index = buf[offset + 1] ?? 0;
-    const roundFlag = buf[offset + 3] ?? 0;
-    this.roundNum = roundFlag & 0x7f;
-    this.isForAll = (roundFlag & 0x80) !== 0;
-    this.costMp = buf[offset + 4] ?? 0;
-    const animationIndex = buf[offset + 5] ?? 0;
-    this.magicAni = animationIndex > 0 ? this.resources.getSrs(2, animationIndex) : null;
-    this.magicName = readGbkString(buf, offset + 6);
-    this.magicDescription = readMagicDescription(buf, offset);
-    this.setOtherData(buf, offset);
-  }
-
-  protected abstract setOtherData(buf: Uint8Array, offset: number): void;
-}
-
-function readMagicDescription(buf: Uint8Array, offset: number): string {
-  const declaredLength = buf[offset + 2] ?? 0;
-  if (declaredLength <= 0x70) return readGbkString(buf, offset + 0x1a);
-
-  // 原版会把 offset + 0x70 写成 0 来截断，这里复制切片避免修改共享资源缓冲区。
-  const end = offset + 0x70;
-  const slice = buf.slice(offset + 0x1a, end);
-  return readGbkString(slice, 0);
+  // 魔法资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
+  setData(): void {}
 }

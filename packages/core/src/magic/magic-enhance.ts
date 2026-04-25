@@ -1,15 +1,23 @@
-import { BaseMagic } from './base-magic';
+import { BaseMagic, type BaseMagicData } from './base-magic';
+
+export interface MagicEnhanceData extends BaseMagicData {
+  readonly defendPercent: number;
+  readonly attackPercent: number;
+  readonly speedPercent: number;
+  readonly buffRound: number;
+}
 
 export class MagicEnhance extends BaseMagic {
-  defendPercent = 0;
-  attackPercent = 0;
-  speedPercent = 0;
-  buffRound = 0;
+  defendPercent: number;
+  attackPercent: number;
+  speedPercent: number;
+  buffRound: number;
 
-  protected setOtherData(buf: Uint8Array, offset: number): void {
-    this.defendPercent = buf[offset + 0x16] ?? 0;
-    this.attackPercent = buf[offset + 0x17] ?? 0;
-    this.buffRound = ((buf[offset + 0x18] ?? 0) >> 4) & 0x0f;
-    this.speedPercent = buf[offset + 0x19] ?? 0;
+  constructor(data: MagicEnhanceData) {
+    super(data);
+    this.defendPercent = data.defendPercent;
+    this.attackPercent = data.attackPercent;
+    this.speedPercent = data.speedPercent;
+    this.buffRound = data.buffRound;
   }
 }

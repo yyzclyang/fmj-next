@@ -1,11 +1,5 @@
 import { ResBase } from '@/lib/res-base';
-import type { ResourceType } from '@/lib/resource-utils';
-import type { ResImage } from '@/lib/res-image';
-import type { BaseGoods, GoodsEquipment } from '@/goods';
-import type { ResMagicChain } from '@/magic';
 import { KeyCode } from '@/shared/key-code';
-import type { FightingSprite } from './fighting-sprite';
-import type { ResLevelupChain } from './res-levelup-chain';
 import type { WalkingSprite } from './walking-sprite';
 
 export type Direction = typeof KeyCode.Up | typeof KeyCode.Right | typeof KeyCode.Down | typeof KeyCode.Left;
@@ -20,45 +14,40 @@ export const CharacterState = {
 
 export type CharacterState = (typeof CharacterState)[keyof typeof CharacterState];
 
-export interface CharacterResourceProvider {
-  createWalkingSprite(type: number, index: number): WalkingSprite | null;
-  createFightingSprite(resType: ResourceType, index: number): FightingSprite | null;
-  getImage(resType: ResourceType, type: number, index: number): ResImage | null;
-  getEquipment(type: number, index: number): GoodsEquipment | null;
-  getGoods(type: number, index: number): BaseGoods | null;
-  getMagicChain(index: number): ResMagicChain | null;
-  getLevelupChain(index: number): ResLevelupChain | null;
+export interface CharacterData {
+  readonly type: number;
+  readonly index: number;
+  readonly name: string;
+  readonly state: CharacterState;
+  readonly direction: Direction;
+  readonly step: number;
+  readonly mapX: number;
+  readonly mapY: number;
+  readonly walkingSprite: WalkingSprite | null;
 }
 
 export abstract class Character extends ResBase {
-  constructor(protected readonly resources: CharacterResourceProvider) {
+  name: string;
+  state: CharacterState;
+  direction: Direction;
+  step: number;
+  mapX: number;
+  mapY: number;
+  walkingSprite: WalkingSprite | null;
+
+  protected constructor(data: CharacterData) {
     super();
-  }
-  name = '';
-  state: CharacterState = CharacterState.Stop;
-  direction: Direction = KeyCode.Down;
-  step = 0;
-  mapX = 0;
-  mapY = 0;
-  walkingSprite: WalkingSprite | null = null;
-
-  protected createWalkingSprite(type: number, index: number): WalkingSprite | null {
-    return this.resources.createWalkingSprite(type, index);
+    this.type = data.type;
+    this.index = data.index;
+    this.name = data.name;
+    this.state = data.state;
+    this.direction = data.direction;
+    this.step = data.step;
+    this.mapX = data.mapX;
+    this.mapY = data.mapY;
+    this.walkingSprite = data.walkingSprite;
   }
 
-  protected createFightingSprite(resType: ResourceType, index: number): FightingSprite | null {
-    return this.resources.createFightingSprite(resType, index);
-  }
-
-  protected loadImage(resType: ResourceType, type: number, index: number): ResImage | null {
-    return this.resources.getImage(resType, type, index);
-  }
-
-  protected loadEquipment(type: number, index: number): GoodsEquipment | null {
-    return this.resources.getEquipment(type, index);
-  }
-
-  protected loadGoods(type: number, index: number): BaseGoods | null {
-    return this.resources.getGoods(type, index);
-  }
+  // 角色资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
+  setData(): void {}
 }

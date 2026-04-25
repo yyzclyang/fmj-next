@@ -3,20 +3,27 @@ import { readUint16 } from '@/lib/resource-utils';
 
 const LEVEL_BYTES = 20;
 
-export class ResLevelupChain extends ResBase {
-  maxLevel = 0;
-  private levelData = new Uint8Array();
+export interface ResLevelUpChainData {
+  readonly type: number;
+  readonly index: number;
+  readonly maxLevel: number;
+  readonly levelData: Uint8Array;
+}
 
-  setData(buf: Uint8Array, offset: number): void {
-    this.type = buf[offset] ?? 0;
-    this.index = buf[offset + 1] ?? 0;
-    this.maxLevel = buf[offset + 2] ?? 0;
-    if (this.maxLevel <= 0) this.maxLevel = 99;
+export class ResLevelUpChain extends ResBase {
+  maxLevel: number;
+  private levelData: Uint8Array;
 
-    const dataStart = offset + 4;
-    const dataEnd = dataStart + this.maxLevel * LEVEL_BYTES;
-    this.levelData = buf.slice(dataStart, Math.min(dataEnd, buf.length));
+  constructor(data: ResLevelUpChainData) {
+    super();
+    this.type = data.type;
+    this.index = data.index;
+    this.maxLevel = data.maxLevel;
+    this.levelData = data.levelData;
   }
+
+  // 升级链资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
+  setData(): void {}
 
   getMaxHp(level: number): number {
     return this.readLevelUint16(level, 0);

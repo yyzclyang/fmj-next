@@ -5,15 +5,24 @@ import { ResMap } from './res-map';
 import { ResourceType, readGbkString, readInt8, readInt16, readUint16, serializeResourceKey, type ResourceKey } from './resource-utils';
 import { ResSrs } from './res-srs';
 import {
+  BuffMan,
   Character,
+  CharacterState,
   FightingSprite,
   Monster,
   Npc,
   Player,
   SceneObj,
   WalkingSprite,
-  type CharacterResourceProvider,
+  mapCharacterState,
+  mapDirection,
+  type CarryGoods,
+  type CharacterData,
+  type FightingCharacterData,
+  type MonsterData,
+  type PlayerData,
 } from '@/characters';
+import { KeyCode } from '@/shared/key-code';
 import {
   BaseGoods,
   GoodsDecorations,
@@ -40,9 +49,11 @@ import {
   type BaseMagicData,
   type MagicChainResourceProvider,
 } from '@/magic';
-import { ResLevelupChain } from '@/characters/res-levelup-chain';
+import { ResLevelUpChain, type ResLevelUpChainData } from '@/characters/res-level-up-chain';
 
-export class DatLib implements CharacterResourceProvider, MagicChainResourceProvider {
+const LEVEL_UP_CHAIN_LEVEL_BYTES = 20;
+
+export class DatLib implements MagicChainResourceProvider {
   private readonly offsets = new Map<string, number>();
   private readonly resourceKeys: ResourceKey[] = [];
   private readonly buffer: Uint8Array;
@@ -63,6 +74,14 @@ export class DatLib implements CharacterResourceProvider, MagicChainResourceProv
 
     if (resType === ResourceType.GRS) {
       return this.createGoods(type, offset);
+    }
+
+    if (resType === ResourceType.ARS) {
+      return this.createCharacter(type, offset);
+    }
+
+    if (resType === ResourceType.MLR && type === 2) {
+      return this.createLevelUpChain(offset);
     }
 
     const res = this.createResource(resType, type);
@@ -117,9 +136,9 @@ export class DatLib implements CharacterResourceProvider, MagicChainResourceProv
     return res instanceof ResMagicChain ? res : null;
   }
 
-  getLevelupChain(index: number): ResLevelupChain | null {
+  getLevelupChain(index: number): ResLevelUpChain | null {
     const res = this.getRes(ResourceType.MLR, 2, index);
-    return res instanceof ResLevelupChain ? res : null;
+    return res instanceof ResLevelUpChain ? res : null;
   }
 
   private createResource(resType: ResourceType, type: number): ResBase | null {
@@ -128,8 +147,6 @@ export class DatLib implements CharacterResourceProvider, MagicChainResourceProv
         return new ResGut();
       case ResourceType.MAP:
         return new ResMap();
-      case ResourceType.ARS:
-        return this.createCharacter(type);
       case ResourceType.SRS:
         return new ResSrs();
       case ResourceType.MLR:
@@ -143,11 +160,27 @@ export class DatLib implements CharacterResourceProvider, MagicChainResourceProv
     switch (type) {
       case 1:
         return new ResMagicChain(this);
-      case 2:
-        return new ResLevelupChain();
       default:
         return null;
     }
+  }
+
+  private createLevelUpChain(offset: number): ResLevelUpChain {
+    const data = this.parseLevelUpChainData(offset);
+    return new ResLevelUpChain(data);
+  }
+
+  private parseLevelUpChainData(offset: number): ResLevelUpChainData {
+    let maxLevel = this.buffer[offset + 2] ?? 0;
+    if (maxLevel <= 0) maxLevel = 99;
+    const dataStart = offset + 4;
+    const dataEnd = dataStart + maxLevel * LEVEL_UP_CHAIN_LEVEL_BYTES;
+    return {
+      type: this.buffer[offset] ?? 0,
+      index: this.buffer[offset + 1] ?? 0,
+      maxLevel,
+      levelData: this.buffer.slice(dataStart, Math.min(dataEnd, this.buffer.length)),
+    };
   }
 
   private createMagic(type: number, offset: number): BaseMagic | null {
@@ -322,19 +355,211 @@ export class DatLib implements CharacterResourceProvider, MagicChainResourceProv
     return readGbkString(slice, 0);
   }
 
-  private createCharacter(type: number): Character | null {
+  private createCharacter(type: number, offset: number): Character | null {
     switch (type) {
       case 1:
-        return new Player(this);
+        return this.createPlayer(offset);
       case 2:
-        return new Npc(this);
+        return this.createNpc(offset);
       case 3:
-        return new Monster(this);
+        return this.createMonster(offset);
       case 4:
-        return new SceneObj(this);
+        return this.createSceneObj(offset);
       default:
         return null;
     }
+  }
+
+  private createPlayer(offset: number): Player {
+    const type = this.buffer[offset] ?? 0;
+    const index = this.buffer[offset + 1] ?? 0;
+    const magicChainIndex = this.buffer[offset + 0x17] ?? 0;
+    const magicChain = magicChainIndex > 0 ? this.getMagicChain(magicChainIndex) : null;
+    const learntMagicCount = this.buffer[offset + 9] ?? 0;
+    if (magicChain) magicChain.learnNum = learntMagicCount;
+    const maxHp = readUint16(this.buffer, offset + 0x26);
+    const maxMp = readUint16(this.buffer, offset + 0x2a);
+    const attack = readUint16(this.buffer, offset + 0x2e);
+    const defend = readUint16(this.buffer, offset + 0x30);
+    const speed = this.buffer[offset + 0x36] ?? 0;
+    const lingli = this.buffer[offset + 0x37] ?? 0;
+    const luck = this.buffer[offset + 0x38] ?? 0;
+    const equipment = this.createPlayerEquipment(offset);
+
+    const data: PlayerData = {
+      ...this.createFightingCharacterDefaults({
+        type,
+        index,
+        name: readGbkString(this.buffer, offset + 0x0a),
+        state: CharacterState.Stop,
+        direction: mapDirection(this.buffer[offset + 2] ?? 0),
+        step: this.buffer[offset + 3] ?? 0,
+        mapX: this.buffer[offset + 5] ?? 0,
+        mapY: this.buffer[offset + 6] ?? 0,
+        walkingSprite: this.createWalkingSprite(type, this.buffer[offset + 0x16] ?? 0),
+      }),
+      magicChain,
+      learntMagicCount,
+      level: this.buffer[offset + 0x20] ?? 0,
+      maxHp,
+      hp: readUint16(this.buffer, offset + 0x28),
+      maxMp,
+      mp: readUint16(this.buffer, offset + 0x2c),
+      attack,
+      defend,
+      speed,
+      lingli,
+      luck,
+      fightingSprite: this.createFightingSprite(ResourceType.PIC, index),
+      headImage: index > 0 ? this.getImage(ResourceType.PIC, 1, index) : null,
+      levelUpChain: this.getLevelupChain(index),
+      currentExp: readUint16(this.buffer, offset + 0x32),
+      equipment,
+      totalMaxHp: maxHp,
+      totalMaxMp: maxMp,
+      totalAttack: attack,
+      totalDefend: defend,
+      totalSpeed: speed,
+      totalLingli: lingli,
+      totalLuck: luck,
+    };
+
+    return new Player(data);
+  }
+
+  private createNpc(offset: number): Npc {
+    const delay = this.buffer[offset + 0x15] ?? 0;
+    const state = delay === 0 ? CharacterState.Stop : mapCharacterState(this.buffer[offset + 4] ?? 0);
+    return new Npc({
+      type: this.buffer[offset] ?? 0,
+      index: this.buffer[offset + 1] ?? 0,
+      name: readGbkString(this.buffer, offset + 9),
+      state,
+      direction: mapDirection(this.buffer[offset + 2] ?? 0),
+      step: this.buffer[offset + 3] ?? 0,
+      mapX: 0,
+      mapY: 0,
+      walkingSprite: this.createWalkingSprite(2, this.buffer[offset + 0x16] ?? 0),
+      delay,
+    });
+  }
+
+  private createMonster(offset: number): Monster {
+    const magicIndex = this.buffer[offset + 0x2f] ?? 0;
+    const magicChain = magicIndex > 0 ? this.getMagicChain(magicIndex) : null;
+    const learntMagicCount = this.buffer[offset + 2] ?? 0;
+    if (magicChain) magicChain.learnNum = learntMagicCount;
+    const buff = new BuffMan();
+    buff.addBuff(this.buffer[offset + 3] ?? 0, 0);
+    const atbuff = new BuffMan();
+    atbuff.addBuff(this.buffer[offset + 4] ?? 0, this.buffer[offset + 0x17] ?? 0);
+
+    const data: MonsterData = {
+      ...this.createFightingCharacterDefaults(
+        {
+          type: this.buffer[offset] ?? 0,
+          index: this.buffer[offset + 1] ?? 0,
+          name: readGbkString(this.buffer, offset + 6),
+          state: CharacterState.Stop,
+          direction: KeyCode.Down,
+          step: 0,
+          mapX: 0,
+          mapY: 0,
+          walkingSprite: null,
+        }
+      ),
+      magicChain,
+      learntMagicCount,
+      level: this.buffer[offset + 0x12] ?? 0,
+      speed: this.buffer[offset + 0x13] ?? 0,
+      lingli: this.buffer[offset + 0x14] ?? 0,
+      luck: this.buffer[offset + 0x16] ?? 0,
+      maxHp: readUint16(this.buffer, offset + 0x18),
+      hp: readUint16(this.buffer, offset + 0x1a),
+      maxMp: readUint16(this.buffer, offset + 0x1c),
+      mp: readUint16(this.buffer, offset + 0x1e),
+      attack: readUint16(this.buffer, offset + 0x20),
+      defend: readUint16(this.buffer, offset + 0x22),
+      buff,
+      debuff: new BuffMan(),
+      atbuff,
+      fightingSprite: this.createFightingSprite(ResourceType.ACP, this.buffer[offset + 0x2e] ?? 0),
+      iq: this.buffer[offset + 0x15] ?? 0,
+      money: readUint16(this.buffer, offset + 0x24),
+      exp: readUint16(this.buffer, offset + 0x26),
+      stealGoods: this.readCarryGoods(
+        this.buffer[offset + 0x28] ?? 0,
+        this.buffer[offset + 0x29] ?? 0,
+        this.buffer[offset + 0x2a] ?? 0
+      ),
+      dropGoods: this.readCarryGoods(
+        this.buffer[offset + 0x2b] ?? 0,
+        this.buffer[offset + 0x2c] ?? 0,
+        this.buffer[offset + 0x2d] ?? 0
+      ),
+    };
+
+    return new Monster(data);
+  }
+
+  private createSceneObj(offset: number): SceneObj {
+    return new SceneObj({
+      type: this.buffer[offset] ?? 0,
+      index: this.buffer[offset + 1] ?? 0,
+      name: readGbkString(this.buffer, offset + 9),
+      state: mapCharacterState(this.buffer[offset + 4] ?? 0),
+      direction: KeyCode.Up,
+      step: this.buffer[offset + 3] ?? 0,
+      mapX: 0,
+      mapY: 0,
+      walkingSprite: this.createWalkingSprite(4, this.buffer[offset + 0x16] ?? 0),
+      delay: this.buffer[offset + 0x15] ?? 0,
+    });
+  }
+
+  private createFightingCharacterDefaults(characterData: CharacterData): FightingCharacterData {
+    return {
+      ...characterData,
+      magicChain: null,
+      learntMagicCount: 0,
+      level: 0,
+      maxHp: 0,
+      hp: 0,
+      maxMp: 0,
+      mp: 0,
+      attack: 0,
+      defend: 0,
+      speed: 0,
+      lingli: 0,
+      luck: 0,
+      buff: new BuffMan(),
+      debuff: new BuffMan(),
+      atbuff: new BuffMan(),
+      fightingSprite: null,
+    };
+  }
+
+  private createPlayerEquipment(offset: number): Array<GoodsEquipment | null> {
+    return [
+      this.readEquipment(6, this.buffer[offset + 0x1e] ?? 0),
+      this.readEquipment(6, this.buffer[offset + 0x1f] ?? 0),
+      this.readEquipment(5, this.buffer[offset + 0x1b] ?? 0),
+      this.readEquipment(3, this.buffer[offset + 0x1d] ?? 0),
+      this.readEquipment(7, this.buffer[offset + 0x1c] ?? 0),
+      this.readEquipment(2, this.buffer[offset + 0x19] ?? 0),
+      this.readEquipment(4, this.buffer[offset + 0x1a] ?? 0),
+      this.readEquipment(1, this.buffer[offset + 0x18] ?? 0),
+    ];
+  }
+
+  private readEquipment(type: number, index: number): GoodsEquipment | null {
+    return index > 0 ? this.getEquipment(type, index) : null;
+  }
+
+  private readCarryGoods(type: number, index: number, count: number): CarryGoods | null {
+    if (type <= 0 || index <= 0 || count <= 0) return null;
+    const goods = this.getGoods(type, index);
+    return goods ? { goods, count } : null;
   }
 
   private loadOffsets(): void {

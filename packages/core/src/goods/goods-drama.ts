@@ -1,5 +1,7 @@
-import { BaseGoods } from './base-goods';
+import { BaseGoods, type BaseGoodsData } from './base-goods';
 
 export class GoodsDrama extends BaseGoods {
-  protected setOtherData(): void {}
+  constructor(data: BaseGoodsData) {
+    super(data);
+  }
 }

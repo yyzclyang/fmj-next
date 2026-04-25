@@ -1,42 +1,45 @@
 import { ResBase } from '@/lib/res-base';
-import { ResourceType, readGbkString, readUint16 } from '@/lib/resource-utils';
 import type { ResImage } from '@/lib/res-image';
-import type { ResSrs } from '@/lib/res-srs';
-import type { BaseMagic } from '@/magic';
 
-export interface GoodsResourceProvider {
-  getImage(resType: ResourceType, type: number, index: number): ResImage | null;
-  getSrs(type: number, index: number): ResSrs | null;
-  getMagic(type: number, index: number): BaseMagic | null;
+export interface BaseGoodsData {
+  readonly type: number;
+  readonly index: number;
+  readonly enable: number;
+  readonly sumRound: number;
+  readonly image: ResImage | null;
+  readonly name: string;
+  readonly buyPrice: number;
+  readonly sellPrice: number;
+  readonly description: string;
+  readonly eventId: number;
 }
 
 export abstract class BaseGoods extends ResBase {
-  constructor(protected readonly resources: GoodsResourceProvider) {
+  protected enable: number;
+  sumRound: number;
+  image: ResImage | null;
+  name: string;
+  buyPrice: number;
+  sellPrice: number;
+  description: string;
+  eventId: number;
+
+  protected constructor(data: BaseGoodsData) {
     super();
+    this.type = data.type;
+    this.index = data.index;
+    this.enable = data.enable;
+    this.sumRound = data.sumRound;
+    this.image = data.image;
+    this.name = data.name;
+    this.buyPrice = data.buyPrice;
+    this.sellPrice = data.sellPrice;
+    this.description = data.description;
+    this.eventId = data.eventId;
   }
 
-  protected enable = 0;
-  sumRound = 0;
-  image: ResImage | null = null;
-  name = '';
-  buyPrice = 0;
-  sellPrice = 0;
-  description = '';
-  eventId = 0;
-
-  setData(buf: Uint8Array, offset: number): void {
-    this.type = buf[offset] ?? 0;
-    this.index = buf[offset + 1] ?? 0;
-    this.enable = buf[offset + 3] ?? 0;
-    this.sumRound = buf[offset + 4] ?? 0;
-    this.image = this.resources.getImage(ResourceType.GDP, this.type, buf[offset + 5] ?? 0);
-    this.name = readGbkString(buf, offset + 6);
-    this.buyPrice = readUint16(buf, offset + 0x12);
-    this.sellPrice = readUint16(buf, offset + 0x14);
-    this.description = readGbkString(buf, offset + 0x1e);
-    this.eventId = readUint16(buf, offset + 0x84);
-    this.setOtherData(buf, offset);
-  }
+  // 道具资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
+  setData(): void {}
 
   canPlayerUse(playerId: number): boolean {
     return playerId >= 1 && playerId <= 4 && (this.enable & (1 << (playerId - 1))) !== 0;
@@ -45,6 +48,4 @@ export abstract class BaseGoods extends ResBase {
   effectAll(): boolean {
     return false;
   }
-
-  protected abstract setOtherData(buf: Uint8Array, offset: number): void;
 }

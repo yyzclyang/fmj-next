@@ -1,9 +1,14 @@
-import { BaseGoods } from './base-goods';
+import { BaseGoods, type BaseGoodsData } from './base-goods';
+
+export interface GoodsMedicineLifeData extends BaseGoodsData {
+  readonly percent: number;
+}
 
 export class GoodsMedicineLife extends BaseGoods {
-  percent = 0;
+  percent: number;
 
-  protected setOtherData(buf: Uint8Array, offset: number): void {
-    this.percent = Math.min(buf[offset + 0x17] ?? 0, 100);
+  constructor(data: GoodsMedicineLifeData) {
+    super(data);
+    this.percent = data.percent;
   }
 }

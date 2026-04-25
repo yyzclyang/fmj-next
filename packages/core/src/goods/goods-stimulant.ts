@@ -1,16 +1,24 @@
-import { BaseGoods } from './base-goods';
+import { BaseGoods, type BaseGoodsData } from './base-goods';
+
+export interface GoodsStimulantData extends BaseGoodsData {
+  readonly defendPercent: number;
+  readonly attackPercent: number;
+  readonly speedPercent: number;
+  readonly forAll: boolean;
+}
 
 export class GoodsStimulant extends BaseGoods {
-  defendPercent = 0;
-  attackPercent = 0;
-  speedPercent = 0;
-  forAll = false;
+  defendPercent: number;
+  attackPercent: number;
+  speedPercent: number;
+  forAll: boolean;
 
-  protected setOtherData(buf: Uint8Array, offset: number): void {
-    this.defendPercent = buf[offset + 0x18] ?? 0;
-    this.attackPercent = buf[offset + 0x19] ?? 0;
-    this.speedPercent = buf[offset + 0x1b] ?? 0;
-    this.forAll = ((buf[offset + 0x1c] ?? 0) & 0x10) !== 0;
+  constructor(data: GoodsStimulantData) {
+    super(data);
+    this.defendPercent = data.defendPercent;
+    this.attackPercent = data.attackPercent;
+    this.speedPercent = data.speedPercent;
+    this.forAll = data.forAll;
   }
 
   override effectAll(): boolean {

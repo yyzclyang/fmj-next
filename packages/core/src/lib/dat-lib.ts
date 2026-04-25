@@ -2,7 +2,7 @@ import { isImageResourceType, ResImage } from './res-image';
 import { ResBase } from './res-base';
 import { ResGut } from './res-gut';
 import { ResMap } from './res-map';
-import { ResourceType, readGbkString, readInt16, readUint16, serializeResourceKey, type ResourceKey } from './resource-utils';
+import { ResourceType, readGbkString, readInt8, readInt16, readUint16, serializeResourceKey, type ResourceKey } from './resource-utils';
 import { ResSrs } from './res-srs';
 import {
   Character,
@@ -14,7 +14,21 @@ import {
   WalkingSprite,
   type CharacterResourceProvider,
 } from '@/characters';
-import { BaseGoods, GoodsEquipment, createGoods, type GoodsResourceProvider } from '@/goods';
+import {
+  BaseGoods,
+  GoodsDecorations,
+  GoodsDrama,
+  GoodsEquipment,
+  GoodsHiddenWeapon,
+  GoodsMedicine,
+  GoodsMedicineChg4Ever,
+  GoodsMedicineLife,
+  GoodsStimulant,
+  GoodsTudun,
+  GoodsWeapon,
+  type BaseGoodsData,
+  type GoodsEquipmentData,
+} from '@/goods';
 import {
   BaseMagic,
   MagicAttack,
@@ -28,9 +42,7 @@ import {
 } from '@/magic';
 import { ResLevelupChain } from '@/characters/res-levelup-chain';
 
-export class DatLib
-  implements CharacterResourceProvider, MagicChainResourceProvider, GoodsResourceProvider
-{
+export class DatLib implements CharacterResourceProvider, MagicChainResourceProvider {
   private readonly offsets = new Map<string, number>();
   private readonly resourceKeys: ResourceKey[] = [];
   private readonly buffer: Uint8Array;
@@ -47,6 +59,10 @@ export class DatLib
 
     if (resType === ResourceType.MRS) {
       return this.createMagic(type, offset);
+    }
+
+    if (resType === ResourceType.GRS) {
+      return this.createGoods(type, offset);
     }
 
     const res = this.createResource(resType, type);
@@ -116,8 +132,6 @@ export class DatLib
         return this.createCharacter(type);
       case ResourceType.SRS:
         return new ResSrs();
-      case ResourceType.GRS:
-        return createGoods(type, this);
       case ResourceType.MLR:
         return this.createMlr(type);
       default:
@@ -173,6 +187,114 @@ export class DatLib
       default:
         return null;
     }
+  }
+
+  private createGoods(type: number, offset: number): BaseGoods | null {
+    const baseData = this.parseBaseGoodsData(offset);
+    if (type >= 1 && type <= 5) return new GoodsEquipment(this.parseGoodsEquipmentData(baseData, offset));
+
+    switch (type) {
+      case 6: {
+        const magicIndex = this.buffer[offset + 0x1c] ?? 0;
+        const magic = magicIndex > 0 ? this.getMagic(1, magicIndex) : null;
+        return new GoodsDecorations({
+          ...this.parseGoodsEquipmentData(baseData, offset),
+          mpMax: 0,
+          hpMax: 0,
+          bitEffect: 0,
+          mp: readInt8(this.buffer, offset + 0x16),
+          hp: readInt8(this.buffer, offset + 0x17),
+          coopMagic: magic instanceof MagicAttack ? magic : null,
+        });
+      }
+      case 7:
+        return new GoodsWeapon({
+          ...this.parseGoodsEquipmentData(baseData, offset),
+          animation: new ResSrs(),
+          affectMp: 0,
+        });
+      case 8: {
+        const animationIndex = this.buffer[offset + 0x1a] ?? 0;
+        const animationType = this.buffer[offset + 0x1b] ?? 0;
+        return new GoodsHiddenWeapon({
+          ...baseData,
+          affectHp: readInt16(this.buffer, offset + 0x16),
+          affectMp: readInt16(this.buffer, offset + 0x18),
+          animation: animationIndex > 0 ? this.getSrs(animationType, animationIndex) : null,
+          bitMask: this.buffer[offset + 0x1c] ?? 0,
+        });
+      }
+      case 9: {
+        const animationIndex = this.buffer[offset + 0x1a] ?? 0;
+        return new GoodsMedicine({
+          ...baseData,
+          hp: readUint16(this.buffer, offset + 0x16),
+          mp: readUint16(this.buffer, offset + 0x18),
+          animation: animationIndex > 0 ? this.getSrs(2, animationIndex) : null,
+          bitMask: this.buffer[offset + 0x1c] ?? 0,
+        });
+      }
+      case 10:
+        return new GoodsMedicineLife({
+          ...baseData,
+          percent: Math.min(this.buffer[offset + 0x17] ?? 0, 100),
+        });
+      case 11:
+        return new GoodsMedicineChg4Ever({
+          ...baseData,
+          mpMax: readInt8(this.buffer, offset + 0x16),
+          hpMax: readInt8(this.buffer, offset + 0x17),
+          defend: this.buffer[offset + 0x18] ?? 0,
+          attack: this.buffer[offset + 0x19] ?? 0,
+          lingli: readInt8(this.buffer, offset + 0x1a),
+          speed: readInt8(this.buffer, offset + 0x1b),
+          luck: readInt8(this.buffer, offset + 0x1d),
+        });
+      case 12:
+        return new GoodsStimulant({
+          ...baseData,
+          defendPercent: this.buffer[offset + 0x18] ?? 0,
+          attackPercent: this.buffer[offset + 0x19] ?? 0,
+          speedPercent: this.buffer[offset + 0x1b] ?? 0,
+          forAll: ((this.buffer[offset + 0x1c] ?? 0) & 0x10) !== 0,
+        });
+      case 13:
+        return new GoodsTudun(baseData);
+      case 14:
+        return new GoodsDrama(baseData);
+      default:
+        return null;
+    }
+  }
+
+  private parseBaseGoodsData(offset: number): BaseGoodsData {
+    const type = this.buffer[offset] ?? 0;
+    return {
+      type,
+      index: this.buffer[offset + 1] ?? 0,
+      enable: this.buffer[offset + 3] ?? 0,
+      sumRound: this.buffer[offset + 4] ?? 0,
+      image: this.getImage(ResourceType.GDP, type, this.buffer[offset + 5] ?? 0),
+      name: readGbkString(this.buffer, offset + 6),
+      buyPrice: readUint16(this.buffer, offset + 0x12),
+      sellPrice: readUint16(this.buffer, offset + 0x14),
+      description: readGbkString(this.buffer, offset + 0x1e),
+      eventId: readUint16(this.buffer, offset + 0x84),
+    };
+  }
+
+  private parseGoodsEquipmentData(baseData: BaseGoodsData, offset: number): GoodsEquipmentData {
+    return {
+      ...baseData,
+      mpMax: readInt8(this.buffer, offset + 0x16),
+      hpMax: readInt8(this.buffer, offset + 0x17),
+      defend: this.buffer[offset + 0x18] ?? 0,
+      attack: this.buffer[offset + 0x19] ?? 0,
+      lingli: readInt8(this.buffer, offset + 0x1a),
+      speed: readInt8(this.buffer, offset + 0x1b),
+      bitEffect: this.buffer[offset + 0x1c] ?? 0,
+      luck: readInt8(this.buffer, offset + 0x1d),
+    };
   }
 
   private parseBaseMagicData(offset: number): BaseMagicData {

@@ -1,13 +1,14 @@
 import { ResourceType, readGbkString, readUint16 } from '@/lib/resource-utils';
 import { KeyCode } from '@/shared/key-code';
 import { FightingCharacter } from './fighting-character';
-import type { Direction, ResourceRef } from './character';
+import type { Direction } from './character';
 import type { GoodsEquipment } from '@/goods';
 import type { ResImage } from '@/lib/res-image';
+import type { ResLevelupChain } from './res-levelup-chain';
 
 export class Player extends FightingCharacter {
   headImage: ResImage | null = null;
-  levelupChainRef: ResourceRef | null = null;
+  levelupChain: ResLevelupChain | null = null;
   currentExp = 0;
   readonly equipment: Array<GoodsEquipment | null> = Array.from({ length: 8 }, () => null);
 
@@ -30,8 +31,9 @@ export class Player extends FightingCharacter {
     this.mapX = buf[offset + 5] ?? 0;
     this.mapY = buf[offset + 6] ?? 0;
     const magicChainIndex = buf[offset + 0x17] ?? 0;
-    this.magicChainRef = magicChainIndex > 0 ? { resType: ResourceType.MLR, type: 1, index: magicChainIndex } : null;
+    this.magicChain = magicChainIndex > 0 ? this.resources.getMagicChain(magicChainIndex) : null;
     this.learntMagicCount = buf[offset + 9] ?? 0;
+    if (this.magicChain) this.magicChain.learnNum = this.learntMagicCount;
     this.name = readGbkString(buf, offset + 0x0a);
     this.level = buf[offset + 0x20] ?? 0;
     this.maxHp = readUint16(buf, offset + 0x26);
@@ -52,7 +54,7 @@ export class Player extends FightingCharacter {
     this.totalSpeed = this.speed;
     this.totalLingli = this.lingli;
     this.totalLuck = this.luck;
-    this.levelupChainRef = { resType: ResourceType.MLR, type: 2, index: this.index };
+    this.levelupChain = this.resources.getLevelupChain(this.index);
     this.readInitialEquipment(buf, offset);
   }
 

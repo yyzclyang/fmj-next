@@ -9,4 +9,5 @@ export { Monster } from './monster';
 export type { CarryGoods } from './monster';
 export { Npc } from './npc';
 export { Player } from './player';
+export { ResLevelupChain } from './res-levelup-chain';
 export { SceneObj } from './scene-obj';

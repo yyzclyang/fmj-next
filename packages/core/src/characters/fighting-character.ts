@@ -1,10 +1,10 @@
 import { Character } from './character';
 import { BuffMan } from './buff';
-import type { ResourceRef } from './character';
 import type { FightingSprite } from './fighting-sprite';
+import type { ResMagicChain } from '@/magic';
 
 export abstract class FightingCharacter extends Character {
-  magicChainRef: ResourceRef | null = null;
+  magicChain: ResMagicChain | null = null;
   learntMagicCount = 0;
   level = 0;
   maxHp = 0;

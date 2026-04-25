@@ -2,8 +2,10 @@ import { ResBase } from '@/lib/res-base';
 import type { ResourceKey, ResourceType } from '@/lib/resource-utils';
 import type { ResImage } from '@/lib/res-image';
 import type { BaseGoods, GoodsEquipment } from '@/goods';
+import type { ResMagicChain } from '@/magic';
 import { KeyCode } from '@/shared/key-code';
 import type { FightingSprite } from './fighting-sprite';
+import type { ResLevelupChain } from './res-levelup-chain';
 import type { WalkingSprite } from './walking-sprite';
 
 export type Direction = typeof KeyCode.Up | typeof KeyCode.Right | typeof KeyCode.Down | typeof KeyCode.Left;
@@ -26,6 +28,8 @@ export interface CharacterResourceProvider {
   getImage(resType: ResourceType, type: number, index: number): ResImage | null;
   getEquipment(type: number, index: number): GoodsEquipment | null;
   getGoods(type: number, index: number): BaseGoods | null;
+  getMagicChain(index: number): ResMagicChain | null;
+  getLevelupChain(index: number): ResLevelupChain | null;
 }
 
 export abstract class Character extends ResBase {

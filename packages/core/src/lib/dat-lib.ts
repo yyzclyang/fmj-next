@@ -15,8 +15,10 @@ import {
   type CharacterResourceProvider,
 } from '@/characters';
 import { BaseGoods, GoodsEquipment, createGoods } from '@/goods';
+import { BaseMagic, ResMagicChain, createMagic, type MagicChainResourceProvider, type MagicResourceProvider } from '@/magic';
+import { ResLevelupChain } from '@/characters/res-levelup-chain';
 
-export class DatLib implements CharacterResourceProvider {
+export class DatLib implements CharacterResourceProvider, MagicResourceProvider, MagicChainResourceProvider {
   private readonly offsets = new Map<string, number>();
   private readonly resourceKeys: ResourceKey[] = [];
   private readonly buffer: Uint8Array;
@@ -58,6 +60,11 @@ export class DatLib implements CharacterResourceProvider {
     return res instanceof ResImage ? res : null;
   }
 
+  getSrs(type: number, index: number): ResSrs | null {
+    const res = this.getRes(ResourceType.SRS, type, index);
+    return res instanceof ResSrs ? res : null;
+  }
+
   getEquipment(type: number, index: number): GoodsEquipment | null {
     const goods = this.getGoods(type, index);
     return goods instanceof GoodsEquipment ? goods : null;
@@ -66,6 +73,21 @@ export class DatLib implements CharacterResourceProvider {
   getGoods(type: number, index: number): BaseGoods | null {
     const res = this.getRes(ResourceType.GRS, type, index);
     return res instanceof BaseGoods ? res : null;
+  }
+
+  getMagic(type: number, index: number): BaseMagic | null {
+    const res = this.getRes(ResourceType.MRS, type, index);
+    return res instanceof BaseMagic ? res : null;
+  }
+
+  getMagicChain(index: number): ResMagicChain | null {
+    const res = this.getRes(ResourceType.MLR, 1, index);
+    return res instanceof ResMagicChain ? res : null;
+  }
+
+  getLevelupChain(index: number): ResLevelupChain | null {
+    const res = this.getRes(ResourceType.MLR, 2, index);
+    return res instanceof ResLevelupChain ? res : null;
   }
 
   private createResource(resType: ResourceType, type: number): ResBase | null {
@@ -80,8 +102,23 @@ export class DatLib implements CharacterResourceProvider {
         return new ResSrs();
       case ResourceType.GRS:
         return createGoods(type);
+      case ResourceType.MRS:
+        return createMagic(type, this);
+      case ResourceType.MLR:
+        return this.createMlr(type);
       default:
         return isImageResourceType(resType) ? new ResImage() : null;
+    }
+  }
+
+  private createMlr(type: number): ResBase | null {
+    switch (type) {
+      case 1:
+        return new ResMagicChain(this);
+      case 2:
+        return new ResLevelupChain();
+      default:
+        return null;
     }
   }
 

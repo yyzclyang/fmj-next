@@ -18,8 +18,9 @@ export class Monster extends FightingCharacter {
     this.type = buf[offset] ?? 0;
     this.index = buf[offset + 1] ?? 0;
     const magicIndex = buf[offset + 0x2f] ?? 0;
-    this.magicChainRef = magicIndex > 0 ? { resType: ResourceType.MLR, type: 1, index: magicIndex } : null;
+    this.magicChain = magicIndex > 0 ? this.resources.getMagicChain(magicIndex) : null;
     this.learntMagicCount = buf[offset + 2] ?? 0;
+    if (this.magicChain) this.magicChain.learnNum = this.learntMagicCount;
     this.buff.addBuff(buf[offset + 3] ?? 0, 0);
     this.atbuff.addBuff(buf[offset + 4] ?? 0, buf[offset + 0x17] ?? 0);
     this.name = readGbkString(buf, offset + 6);

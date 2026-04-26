@@ -1,5 +1,6 @@
 import { DatLib } from '@/lib/dat-lib';
 import { BaseGoods } from '@/goods';
+import { Player } from '@/characters';
 import { GoodsBag } from '@/goods/goods-bag';
 import { Surface } from '@/rendering/surface';
 import { type FrameBuffer, FRAME_HEIGHT, FRAME_WIDTH } from '@/rendering/frame-buffer';
@@ -12,6 +13,7 @@ import { ScreenAnimation } from '@/screens/animation/screen';
 import { ScreenMenu } from '@/screens/menu/screen';
 import { ScreenStack } from '@/screens/screen-stack';
 import { ScreenViewType } from '@/screens/screen-view-type';
+import { ResourceType } from '@/lib/resource-utils';
 import {
   cloneGameState,
   createInitialGameState,
@@ -92,6 +94,9 @@ export class Game {
       eventFlags: [...state.eventFlags],
       scriptVariables: [...(state.scriptVariables ?? [])],
       collectedBoxKeys: [...state.collectedBoxKeys],
+      players: [...(state.players ?? [])],
+      partyActorIds: [...(state.partyActorIds ?? [])],
+      controlActorId: state.controlActorId ?? 0,
       goods: state.goods.map(g => ({ ...g })),
     };
     this.ensureScriptVariableSize();
@@ -130,6 +135,45 @@ export class Game {
 
   useMoney(value: number): void {
     this.state.money -= value;
+  }
+
+  getPlayer(actorId: number): Player | null {
+    const player = this.state.players.find(item => item.index === actorId);
+    if (player) return player;
+
+    const res = this.datLib.getRes(ResourceType.ARS, 1, actorId);
+    if (!(res instanceof Player)) return null;
+    this.state.players.push(res);
+    return res;
+  }
+
+  getControlPlayer(): Player | null {
+    return this.state.controlActorId > 0 ? this.getPlayer(this.state.controlActorId) : null;
+  }
+
+  addActor(actorId: number): Player | null {
+    if (actorId <= 0) return null;
+    const player = this.getPlayer(actorId);
+    if (!player) return null;
+    // Kotlin 版 CREATEACTOR 只从 playerList 去重后追加，控制角色始终是队首。
+    this.state.partyActorIds = this.state.partyActorIds.filter(id => id !== actorId);
+    this.state.partyActorIds.push(actorId);
+    this.state.controlActorId = this.state.partyActorIds[0] ?? 0;
+    return player;
+  }
+
+  deleteActor(actorId: number): void {
+    this.state.partyActorIds = this.state.partyActorIds.filter(id => id !== actorId);
+    this.state.controlActorId = this.state.partyActorIds[0] ?? 0;
+  }
+
+  setControlPlayer(actorId: number): Player | null {
+    if (!this.state.partyActorIds.includes(actorId)) return null;
+    const player = this.getPlayer(actorId);
+    if (!player) return null;
+    this.state.partyActorIds = [actorId, ...this.state.partyActorIds.filter(id => id !== actorId)];
+    this.state.controlActorId = actorId;
+    return player;
   }
 
   playMusic(type: number, index: number): void {

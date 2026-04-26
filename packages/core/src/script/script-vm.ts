@@ -188,7 +188,7 @@ export class ScriptVm {
       case COMMAND.SUB:
         return this.cmdSub(code, start);
       case COMMAND.SETCONTROLID:
-        return this.makeNoopCommand(2);
+        return this.cmdSetControlPlayer(code, start);
       case COMMAND.GUTEVENT:
         return this.makeNoopCommand(4);
       case COMMAND.SETEVENT:
@@ -227,7 +227,7 @@ export class ScriptVm {
       case COMMAND.SETMONEY:
         return this.cmdSetMoney(code, start);
       case COMMAND.LEARNMAGIC:
-        return this.makeNoopCommand(6);
+        return this.cmdLearnMagic(code, start);
       case COMMAND.SALE:
         return this.makeNoopCommand(0);
       case COMMAND.NPCMOVEMOD:
@@ -237,8 +237,9 @@ export class ScriptVm {
       case COMMAND.DELETEGOODS:
         return this.cmdDeleteGoods(code, start);
       case COMMAND.RESUMEACTORHP:
+        return this.cmdResumeActorHp(code, start);
       case COMMAND.ACTORLAYERUP:
-        return this.makeNoopCommand(4);
+        return this.cmdActorLayerUp(code, start);
       case COMMAND.DELALLNPC:
         return {
           len: 0,
@@ -259,10 +260,11 @@ export class ScriptVm {
       case COMMAND.USEGOODS:
         return this.cmdUseGoods(code, start);
       case COMMAND.ATTRIBTEST:
-        return this.makeNoopCommand(10);
+        return this.cmdAttribTest(code, start);
       case COMMAND.ATTRIBSET:
+        return this.cmdAttribSet(code, start);
       case COMMAND.ATTRIBADD:
-        return this.makeNoopCommand(6);
+        return this.cmdAttribAdd(code, start);
       case COMMAND.SHOWGUT:
         return this.cmdShowGut(code, start);
       case COMMAND.USEGOODSNUM:
@@ -447,6 +449,17 @@ export class ScriptVm {
       len: 4,
       execute: () => {
         this.game.subVariable(index, value);
+      },
+    };
+  }
+
+  private cmdSetControlPlayer(code: Uint8Array, start: number): CommandBuilder {
+    const actorId = readUint16(code, start);
+
+    return {
+      len: 2,
+      execute: () => {
+        this.game.mainSceneRuntime?.setControlPlayer(actorId);
       },
     };
   }
@@ -665,6 +678,23 @@ export class ScriptVm {
     };
   }
 
+  private cmdLearnMagic(code: Uint8Array, start: number): CommandBuilder {
+    const actorId = readUint16(code, start);
+    const type = readUint16(code, start + 2);
+    const index = readUint16(code, start + 4);
+
+    return {
+      len: 6,
+      execute: () => {
+        const player = this.game.getPlayer(actorId);
+        const magic = this.game.datLib.getMagic(type, index);
+        if (!player || !magic) return;
+        player.learnMagic(magic);
+        this.game.mainScene?.showTip(`${player.name}学会:${magic.magicName}`);
+      },
+    };
+  }
+
   private cmdNpcMoveMode(code: Uint8Array, start: number): CommandBuilder {
     const id = readUint16(code, start);
     const state = readUint16(code, start + 2);
@@ -673,6 +703,34 @@ export class ScriptVm {
       len: 4,
       execute: () => {
         this.game.mainSceneRuntime?.setNpcMoveMode(id, state);
+      },
+    };
+  }
+
+  private cmdResumeActorHp(code: Uint8Array, start: number): CommandBuilder {
+    const actorId = readUint16(code, start);
+    const value = readUint16(code, start + 2);
+
+    return {
+      len: 4,
+      execute: () => {
+        const player = this.game.getPlayer(actorId);
+        if (!player) return;
+        player.hp = Math.trunc((player.maxHp * value) / 100);
+      },
+    };
+  }
+
+  private cmdActorLayerUp(code: Uint8Array, start: number): CommandBuilder {
+    const actorId = readUint16(code, start);
+    const toLevel = readUint16(code, start + 2);
+
+    return {
+      len: 4,
+      execute: () => {
+        const player = this.game.getPlayer(actorId);
+        if (!player || !player.levelUp(toLevel)) return;
+        this.game.mainScene?.showTip(`${player.name}修行提升`);
       },
     };
   }
@@ -889,6 +947,54 @@ export class ScriptVm {
     };
   }
 
+  private cmdAttribTest(code: Uint8Array, start: number): CommandBuilder {
+    const actorId = readUint16(code, start);
+    const type = readUint16(code, start + 2);
+    const value = readUint16(code, start + 4);
+    const lessAddress = readUint16(code, start + 6);
+    const greaterAddress = readUint16(code, start + 8);
+
+    return {
+      len: 10,
+      execute: process => {
+        const player = this.game.getPlayer(actorId);
+        if (!player) return;
+        const currentValue = player.getAttribute(type);
+        if (currentValue < value) {
+          process.gotoAddress(lessAddress);
+        } else if (currentValue > value) {
+          process.gotoAddress(greaterAddress);
+        }
+      },
+    };
+  }
+
+  private cmdAttribSet(code: Uint8Array, start: number): CommandBuilder {
+    const actorId = readUint16(code, start);
+    const type = readUint16(code, start + 2);
+    const value = readUint16(code, start + 4);
+
+    return {
+      len: 6,
+      execute: () => {
+        this.game.getPlayer(actorId)?.setAttribute(type, value);
+      },
+    };
+  }
+
+  private cmdAttribAdd(code: Uint8Array, start: number): CommandBuilder {
+    const actorId = readUint16(code, start);
+    const type = readUint16(code, start + 2);
+    const value = toSignedUint16(readUint16(code, start + 4));
+
+    return {
+      len: 6,
+      execute: () => {
+        this.game.getPlayer(actorId)?.addAttribute(type, value);
+      },
+    };
+  }
+
   private cmdUseGoodsNum(code: Uint8Array, start: number): CommandBuilder {
     const type = readUint16(code, start);
     const index = readUint16(code, start + 2);
@@ -947,6 +1053,11 @@ function getCStringLength(buf: Uint8Array, start: number): number {
   }
   return end - start + 1;
 }
+
+function toSignedUint16(value: number): number {
+  return value >= 0x8000 ? value - 0x10000 : value;
+}
+
 function mapFacing(faceTo: number): Facing {
   switch (faceTo) {
     case 0:

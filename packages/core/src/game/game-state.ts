@@ -1,3 +1,5 @@
+import type { Player } from '@/characters';
+
 export interface GameGoodsState {
   type: number;
   index: number;
@@ -21,6 +23,9 @@ export interface GameState {
   eventFlags: number[];
   scriptVariables: number[];
   collectedBoxKeys: string[];
+  players: Player[];
+  partyActorIds: number[];
+  controlActorId: number;
   money: number;
   goods: GameGoodsState[];
   sceneName: string;
@@ -39,6 +44,9 @@ export function createInitialGameState(): GameState {
     eventFlags: [],
     scriptVariables: Array.from({ length: SCRIPT_VARIABLE_COUNT }, () => 0),
     collectedBoxKeys: [],
+    players: [],
+    partyActorIds: [],
+    controlActorId: 0,
     money: 0,
     goods: [],
     sceneName: '',
@@ -51,6 +59,8 @@ export function cloneGameState(state: GameState): GameState {
     eventFlags: [...state.eventFlags],
     scriptVariables: [...state.scriptVariables],
     collectedBoxKeys: [...state.collectedBoxKeys],
+    players: [...state.players],
+    partyActorIds: [...state.partyActorIds],
     goods: state.goods.map(g => ({ ...g })),
   };
 }

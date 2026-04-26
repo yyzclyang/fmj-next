@@ -1,5 +1,5 @@
 import type { Game } from '@/game/game';
-import { CharacterState, mapCharacterState, Npc, Player, SceneObj, type WalkingSprite } from '@/characters';
+import { CharacterState, mapCharacterState, Npc, SceneObj, type Player, type WalkingSprite } from '@/characters';
 import { ResImage } from '@/lib/res-image';
 import { ResMap } from '@/lib/res-map';
 import { ResSrs } from '@/lib/res-srs';
@@ -72,6 +72,11 @@ export class MainSceneRuntime {
 
     if (this.game.state.playerMapX > 0 || this.game.state.playerMapY > 0) {
       this.hasPlayerValue = true;
+      const player = this.game.getControlPlayer();
+      if (player) {
+        this.playerActorIdValue = player.index;
+        this.applyVisiblePlayer(player);
+      }
       this.setPlayerMapPosition(this.game.state.playerMapX, this.game.state.playerMapY);
     }
   }
@@ -209,19 +214,12 @@ export class MainSceneRuntime {
   }
 
   createActor(screenActorId: number, screenX: number, screenY: number): void {
-    if (screenActorId < 0) return;
-    const playerRes = this.game.datLib.getRes(ResourceType.ARS, 1, screenActorId);
-    this.playerActorIdValue = screenActorId;
-    if (playerRes instanceof Player) {
-      this.playerWalkingSpriteValue = playerRes.walkingSprite;
-      this.facingValue = playerRes.direction;
-      this.playerStepValue = playerRes.step;
-    } else {
-      this.playerWalkingSpriteValue = null;
-      this.playerStepValue = 0;
-    }
-    this.hasPlayerValue = true;
-    this.setPlayerMapPosition(this.game.state.mapScreenX + screenX, this.game.state.mapScreenY + screenY);
+    if (screenActorId <= 0) return;
+    this.syncVisiblePlayer();
+    const player = this.game.addActor(screenActorId);
+    if (!player) return;
+    this.setResourcePlayerMapPosition(player, this.game.state.mapScreenX + screenX, this.game.state.mapScreenY + screenY);
+    this.refreshVisibleControlPlayer();
   }
 
   createNpc(id: number, resId: number, x: number, y: number): void {
@@ -267,12 +265,20 @@ export class MainSceneRuntime {
   }
 
   deleteActor(id: number): void {
-    if (id === 0 || id === this.playerActorIdValue) {
-      this.hasPlayerValue = false;
-      this.playerWalkingSpriteValue = null;
-      this.playerActorIdValue = 0;
-      this.playerStepValue = 0;
-    }
+    this.syncVisiblePlayer();
+    this.game.deleteActor(id);
+    this.refreshVisibleControlPlayer();
+  }
+
+  setControlPlayer(id: number): void {
+    this.syncVisiblePlayer();
+    const player = this.game.setControlPlayer(id);
+    if (!player) return;
+    this.playerActorIdValue = id;
+    player.mapX = this.playerMapXValue;
+    player.mapY = this.playerMapYValue;
+    this.applyVisiblePlayer(player);
+    this.hasPlayerValue = true;
   }
 
   moveActor(id: number, x: number, y: number): void {
@@ -332,6 +338,7 @@ export class MainSceneRuntime {
     if (id === 0) {
       this.facingValue = facing;
       this.playerStepValue = step;
+      this.syncVisiblePlayer();
       return;
     }
 
@@ -559,10 +566,61 @@ export class MainSceneRuntime {
 
   private setPlayerMapPosition(mapX: number, mapY: number): void {
     const start = this.resolveStartPosition(mapX, mapY);
-    this.playerMapXValue = start.x;
-    this.playerMapYValue = start.y;
-    this.game.state.playerMapX = start.x;
-    this.game.state.playerMapY = start.y;
+    this.setVisiblePlayerMapPosition(start.x, start.y);
+  }
+
+  private setResourcePlayerMapPosition(player: Player, mapX: number, mapY: number): void {
+    if (!this.currentMapValue) {
+      player.mapX = mapX;
+      player.mapY = mapY;
+      return;
+    }
+
+    player.mapX = clamp(mapX, 0, this.currentMapValue.mapWidth - 1);
+    player.mapY = clamp(mapY, 0, this.currentMapValue.mapHeight - 1);
+  }
+
+  private setVisiblePlayerMapPosition(mapX: number, mapY: number): void {
+    this.playerMapXValue = mapX;
+    this.playerMapYValue = mapY;
+    this.game.state.playerMapX = mapX;
+    this.game.state.playerMapY = mapY;
+    const player = this.game.getControlPlayer();
+    if (player) {
+      player.mapX = mapX;
+      player.mapY = mapY;
+    }
+  }
+
+  private applyVisiblePlayer(player: Player): void {
+    this.playerWalkingSpriteValue = player.walkingSprite;
+    this.facingValue = player.direction;
+    this.playerStepValue = player.step;
+  }
+
+  private refreshVisibleControlPlayer(): void {
+    const player = this.game.getControlPlayer();
+    if (!player) {
+      this.hasPlayerValue = false;
+      this.playerWalkingSpriteValue = null;
+      this.playerActorIdValue = 0;
+      this.playerStepValue = 0;
+      return;
+    }
+
+    this.playerActorIdValue = player.index;
+    this.applyVisiblePlayer(player);
+    this.hasPlayerValue = true;
+    this.setVisiblePlayerMapPosition(player.mapX, player.mapY);
+  }
+
+  private syncVisiblePlayer(): void {
+    const player = this.game.getControlPlayer();
+    if (!player) return;
+    player.mapX = this.playerMapXValue;
+    player.mapY = this.playerMapYValue;
+    player.direction = this.facingValue;
+    player.step = this.playerStepValue;
   }
 
   private getActorPosition(id: number): { x: number; y: number } | null {
@@ -601,6 +659,7 @@ export class MainSceneRuntime {
   private setActorFacing(id: number, facing: Facing): void {
     if (id === 0) {
       this.facingValue = facing;
+      this.syncVisiblePlayer();
       return;
     }
 
@@ -613,6 +672,7 @@ export class MainSceneRuntime {
     if (id === 0) {
       this.facingValue = facing;
       this.playerStepValue = (this.playerStepValue + 1) % 4;
+      this.syncVisiblePlayer();
       return;
     }
 

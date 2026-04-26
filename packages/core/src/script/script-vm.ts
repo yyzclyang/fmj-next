@@ -149,7 +149,7 @@ export class ScriptVm {
       case COMMAND.MOVE:
         return this.cmdMove(code, start);
       case COMMAND.ACTORMOVE:
-        return this.makeNoopCommand(12);
+        return this.makeNoopCommand(6);
       case COMMAND.ACTORSPEED:
         return this.makeNoopCommand(4);
       case COMMAND.CALLBACK:
@@ -198,7 +198,7 @@ export class ScriptVm {
       case COMMAND.BUY:
         return this.makeNoopCommand(getCStringLength(code, start));
       case COMMAND.FACETOFACE:
-        return this.makeNoopCommand(4);
+        return this.cmdFaceToFace(code, start);
       case COMMAND.MOVIE:
         return this.cmdMovie(code, start);
       case COMMAND.CHOICE:
@@ -219,7 +219,7 @@ export class ScriptVm {
       case COMMAND.ENTERFIGHT:
         return this.makeNoopCommand(30);
       case COMMAND.DELETEACTOR:
-        return this.makeNoopCommand(2);
+        return this.cmdDeleteActor(code, start);
       case COMMAND.GAINMONEY:
         return this.cmdGainMoney(code, start);
       case COMMAND.USEMONEY:
@@ -231,7 +231,7 @@ export class ScriptVm {
       case COMMAND.SALE:
         return this.makeNoopCommand(0);
       case COMMAND.NPCMOVEMOD:
-        return this.makeNoopCommand(4);
+        return this.cmdNpcMoveMode(code, start);
       case COMMAND.MESSAGE:
         return this.cmdMessage(code, start);
       case COMMAND.DELETEGOODS:
@@ -539,6 +539,18 @@ export class ScriptVm {
     };
   }
 
+  private cmdFaceToFace(code: Uint8Array, start: number): CommandBuilder {
+    const sourceId = readUint16(code, start);
+    const targetId = readUint16(code, start + 2);
+
+    return {
+      len: 4,
+      execute: () => {
+        this.game.mainSceneRuntime?.faceActorToActor(sourceId, targetId);
+      },
+    };
+  }
+
   private cmdMovie(code: Uint8Array, start: number): CommandBuilder {
     const type = readUint16(code, start);
     const index = readUint16(code, start + 2);
@@ -608,6 +620,17 @@ export class ScriptVm {
     };
   }
 
+  private cmdDeleteActor(code: Uint8Array, start: number): CommandBuilder {
+    const actorId = readUint16(code, start);
+
+    return {
+      len: 2,
+      execute: () => {
+        this.game.mainSceneRuntime?.deleteActor(actorId);
+      },
+    };
+  }
+
   private cmdGainMoney(code: Uint8Array, start: number): CommandBuilder {
     const value = readUint32(code, start);
 
@@ -638,6 +661,18 @@ export class ScriptVm {
       len: 4,
       execute: () => {
         this.game.setMoney(value);
+      },
+    };
+  }
+
+  private cmdNpcMoveMode(code: Uint8Array, start: number): CommandBuilder {
+    const id = readUint16(code, start);
+    const state = readUint16(code, start + 2);
+
+    return {
+      len: 4,
+      execute: () => {
+        this.game.mainSceneRuntime?.setNpcMoveMode(id, state);
       },
     };
   }

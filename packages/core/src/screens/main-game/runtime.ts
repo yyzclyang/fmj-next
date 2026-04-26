@@ -1,5 +1,5 @@
 import type { Game } from '@/game/game';
-import { Npc, Player, SceneObj, type WalkingSprite } from '@/characters';
+import { CharacterState, mapCharacterState, Npc, Player, SceneObj, type WalkingSprite } from '@/characters';
 import { ResImage } from '@/lib/res-image';
 import { ResMap } from '@/lib/res-map';
 import { ResSrs } from '@/lib/res-srs';
@@ -22,12 +22,18 @@ export interface SceneObject {
   walkingSprite: WalkingSprite | null;
   direction: Facing;
   step: number;
+  state: CharacterState;
+  delay: number;
+  stateElapsed: number;
+  pauseRemaining: number;
 }
 
 const PLAYER_SCREEN_X = 9;
 const PLAYER_SCREEN_Y = 5;
 const SCRIPT_MOVE_INTERVAL = 100;
 const SCRIPT_POSE_WAIT = 300;
+const NPC_WALK_INTERVAL = 500;
+const ACTIVE_POSE_INTERVAL = 100;
 const MOVIE_BASE_WIDTH = 160;
 const MOVIE_BASE_HEIGHT = 96;
 
@@ -49,6 +55,7 @@ export class MainSceneRuntime {
   private playerMapYValue = 0;
   private hasPlayerValue = false;
   private playerWalkingSpriteValue: WalkingSprite | null = null;
+  private playerActorIdValue = 0;
   private facingValue: Facing = KeyCode.Down;
   private playerStepValue = 0;
   private overlayValue: ScreenOverlay | null = null;
@@ -110,7 +117,13 @@ export class MainSceneRuntime {
   }
 
   update(delta = 0): void {
-    this.scriptProcess?.step(delta);
+    if (this.scriptProcess?.busy) {
+      this.scriptProcess.step(delta);
+      return;
+    }
+
+    // Kotlin 版只在脚本空闲时推进 NPC 自走，避免剧情指令和巡逻同时改位置。
+    this.updateSceneObjects(delta);
   }
 
   move(facing: Facing): void {
@@ -198,6 +211,7 @@ export class MainSceneRuntime {
   createActor(screenActorId: number, screenX: number, screenY: number): void {
     if (screenActorId < 0) return;
     const playerRes = this.game.datLib.getRes(ResourceType.ARS, 1, screenActorId);
+    this.playerActorIdValue = screenActorId;
     if (playerRes instanceof Player) {
       this.playerWalkingSpriteValue = playerRes.walkingSprite;
       this.facingValue = playerRes.direction;
@@ -215,19 +229,29 @@ export class MainSceneRuntime {
     const walkingSprite = npcRes instanceof Npc ? npcRes.walkingSprite : null;
     const direction = npcRes instanceof Npc ? npcRes.direction : KeyCode.Down;
     const step = npcRes instanceof Npc ? npcRes.step : 0;
-    this.sceneObjectsValue.set(id, { id, kind: 'npc', x, y, resId, walkingSprite, direction, step });
+    const state = npcRes instanceof Npc ? npcRes.state : CharacterState.Stop;
+    const delay = npcRes instanceof Npc ? npcRes.delay : 0;
+    this.sceneObjectsValue.set(
+      id,
+      this.createSceneObject({ id, kind: 'npc', x, y, resId, walkingSprite, direction, step, state, delay })
+    );
   }
 
   createBox(id: number, resId: number, x: number, y: number): void {
     const boxRes = this.game.datLib.getRes(ResourceType.ARS, 4, resId);
     const walkingSprite = boxRes instanceof SceneObj ? boxRes.walkingSprite : null;
     const direction = boxRes instanceof SceneObj ? boxRes.direction : KeyCode.Up;
+    const state = boxRes instanceof SceneObj ? boxRes.state : CharacterState.Stop;
+    const delay = boxRes instanceof SceneObj ? boxRes.delay : 0;
     const step = this.game.isBoxCollected(this.getBoxEventKey(x, y, resId))
       ? 2
       : boxRes instanceof SceneObj
         ? boxRes.step
         : 0;
-    this.sceneObjectsValue.set(id, { id, kind: 'box', x, y, resId, walkingSprite, direction, step });
+    this.sceneObjectsValue.set(
+      id,
+      this.createSceneObject({ id, kind: 'box', x, y, resId, walkingSprite, direction, step, state, delay })
+    );
   }
 
   deleteNpc(id: number): void {
@@ -240,6 +264,15 @@ export class MainSceneRuntime {
 
   deleteAllNpc(): void {
     this.sceneObjectsValue.clear();
+  }
+
+  deleteActor(id: number): void {
+    if (id === 0 || id === this.playerActorIdValue) {
+      this.hasPlayerValue = false;
+      this.playerWalkingSpriteValue = null;
+      this.playerActorIdValue = 0;
+      this.playerStepValue = 0;
+    }
   }
 
   moveActor(id: number, x: number, y: number): void {
@@ -267,11 +300,32 @@ export class MainSceneRuntime {
         const pos = this.getActorPosition(id);
         if (!pos || (pos.x === x && pos.y === y)) return false;
         const facing = getFacingToward(pos.x, pos.y, x, y);
+        const nextX = getNextX(pos.x, facing);
+        const nextY = getNextY(pos.y, facing);
+        // Kotlin 的脚本 MOVE 直接调用 walk(d)，不走 NPC 自走的 ICanWalk 碰撞判断。
         this.stepActorPose(id, facing);
-        this.setActorMapPosition(id, getNextX(pos.x, facing), getNextY(pos.y, facing));
+        this.setActorMapPosition(id, nextX, nextY);
         return true;
       },
     };
+  }
+
+  faceActorToActor(sourceId: number, targetId: number): void {
+    const source = this.getActorPosition(sourceId);
+    const target = this.getActorPosition(targetId);
+    if (!source || !target) return;
+    if (source.x === target.x && source.y === target.y) return;
+
+    const facing = getFacingToward(target.x, target.y, source.x, source.y);
+    this.setActorFacing(targetId, facing);
+  }
+
+  setNpcMoveMode(id: number, state: number): void {
+    const obj = this.sceneObjectsValue.get(id);
+    if (!obj) return;
+    obj.state = mapCharacterState(state);
+    obj.stateElapsed = 0;
+    obj.pauseRemaining = obj.delay * 100;
   }
 
   setActorPose(id: number, facing: Facing, step: number): void {
@@ -544,6 +598,17 @@ export class MainSceneRuntime {
     obj.y = y;
   }
 
+  private setActorFacing(id: number, facing: Facing): void {
+    if (id === 0) {
+      this.facingValue = facing;
+      return;
+    }
+
+    const obj = this.sceneObjectsValue.get(id);
+    if (!obj) return;
+    obj.direction = facing;
+  }
+
   private stepActorPose(id: number, facing: Facing): void {
     if (id === 0) {
       this.facingValue = facing;
@@ -555,6 +620,81 @@ export class MainSceneRuntime {
     if (!obj) return;
     obj.direction = facing;
     obj.step = (obj.step + 1) % 4;
+  }
+
+  private updateSceneObjects(delta: number): void {
+    for (const obj of this.sceneObjectsValue.values()) {
+      switch (obj.state) {
+        case CharacterState.Pause:
+          obj.pauseRemaining -= delta;
+          if (obj.pauseRemaining < 0) {
+            obj.state = CharacterState.Walking;
+          }
+          break;
+        case CharacterState.ForceMove:
+        case CharacterState.Walking:
+          this.updateWalkingNpc(obj, delta);
+          break;
+        case CharacterState.Active:
+          this.updateActiveSceneObject(obj, delta);
+          break;
+      }
+    }
+  }
+
+  private updateWalkingNpc(obj: SceneObject, delta: number): void {
+    if (obj.kind !== 'npc') return;
+    obj.stateElapsed += delta;
+    if (obj.stateElapsed < NPC_WALK_INTERVAL) return;
+    obj.stateElapsed = 0;
+
+    if (Math.trunc(Math.random() * 5) === 0) {
+      obj.pauseRemaining = obj.delay * 100;
+      obj.state = CharacterState.Pause;
+      return;
+    }
+
+    if (Math.trunc(Math.random() * 5) === 0) {
+      obj.direction = randomFacing();
+    }
+
+    this.tryStepSceneObject(obj);
+  }
+
+  private updateActiveSceneObject(obj: SceneObject, delta: number): void {
+    obj.stateElapsed += delta;
+    while (obj.stateElapsed >= ACTIVE_POSE_INTERVAL) {
+      obj.stateElapsed -= ACTIVE_POSE_INTERVAL;
+      obj.step = (obj.step + 1) % 4;
+    }
+  }
+
+  private tryStepSceneObject(obj: SceneObject): void {
+    const x = getNextX(obj.x, obj.direction);
+    const y = getNextY(obj.y, obj.direction);
+    if (!this.canSceneObjectStepTo(obj.id, x, y)) return;
+    obj.step = (obj.step + 1) % 4;
+    obj.x = x;
+    obj.y = y;
+  }
+
+  private canSceneObjectStepTo(id: number, x: number, y: number): boolean {
+    if (this.currentMapValue?.canWalk(x, y) !== true) return false;
+    if (this.hasPlayerValue && this.playerMapXValue === x && this.playerMapYValue === y) return false;
+
+    for (const obj of this.sceneObjectsValue.values()) {
+      if (obj.id !== id && obj.x === x && obj.y === y) return false;
+    }
+
+    return true;
+  }
+
+  private createSceneObject(data: Omit<SceneObject, 'stateElapsed' | 'pauseRemaining'>): SceneObject {
+    return {
+      ...data,
+      stateElapsed: 0,
+      pauseRemaining: data.delay * 100,
+    };
   }
 
   private isActorVisible(id: number): boolean {
@@ -614,4 +754,17 @@ function getNextY(y: number, facing: Facing): number {
   if (facing === KeyCode.Up) return y - 1;
   if (facing === KeyCode.Down) return y + 1;
   return y;
+}
+
+function randomFacing(): Facing {
+  switch (Math.trunc(Math.random() * 4)) {
+    case 0:
+      return KeyCode.Up;
+    case 1:
+      return KeyCode.Right;
+    case 2:
+      return KeyCode.Down;
+    default:
+      return KeyCode.Left;
+  }
 }

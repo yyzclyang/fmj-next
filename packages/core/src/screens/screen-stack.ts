@@ -1,27 +1,56 @@
-import { Surface } from '@/rendering/surface';
-import { KeyCode } from '@/shared/key-code';
-import { BaseScreen } from './base-screen';
+import type { Surface } from '@/rendering/surface';
+import type { KeyCode } from '@/shared/key-code';
+import type { BaseScreen } from './base-screen';
 
 export class ScreenStack {
-  private currentScreen: BaseScreen | null = null;
+  private readonly screens: BaseScreen[] = [];
 
-  changeScreen(screen: BaseScreen): void {
-    this.currentScreen = screen;
+  get current(): BaseScreen | null {
+    return this.screens[this.screens.length - 1] ?? null;
+  }
+
+  get isEmpty(): boolean {
+    return this.screens.length === 0;
+  }
+
+  push(screen: BaseScreen): void {
+    this.screens.push(screen);
+    screen.performEnter();
+  }
+
+  pop(): BaseScreen | null {
+    const screen = this.screens.pop() ?? null;
+    screen?.performExit();
+    return screen;
+  }
+
+  replace(screen: BaseScreen): void {
+    this.pop();
+    this.push(screen);
+  }
+
+  clear(): void {
+    while (this.screens.length > 0) {
+      this.pop();
+    }
   }
 
   update(delta: number): void {
-    this.currentScreen?.update(delta);
+    this.current?.performUpdate(delta);
   }
 
   draw(surface: Surface): void {
-    this.currentScreen?.draw(surface);
+    const screens = [...this.screens];
+    for (const screen of screens) {
+      screen.performDraw(surface);
+    }
   }
 
-  keyDown(key: KeyCode): void {
-    this.currentScreen?.onKeyDown(key);
-  }
-
-  keyUp(key: KeyCode): void {
-    this.currentScreen?.onKeyUp(key);
+  onKey(key: KeyCode): boolean | undefined {
+    const screens = [...this.screens];
+    for (let index = screens.length - 1; index >= 0; index -= 1) {
+      if (screens[index]?.dispatchKey(key) !== true) return;
+    }
+    return true;
   }
 }

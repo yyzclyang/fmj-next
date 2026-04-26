@@ -10,7 +10,6 @@ import { ScriptVm } from '@/script/script-vm';
 import { KeyCode } from '@/shared/key-code';
 import { ScreenMainGame } from '@/screens/main-game/screen';
 import { ScreenAnimation } from '@/screens/animation/screen';
-import { ScreenMenu } from '@/screens/menu/screen';
 import { ScreenStack } from '@/screens/screen-stack';
 import { ScreenViewType } from '@/screens/screen-view-type';
 import { ResourceType } from '@/lib/resource-utils';
@@ -35,7 +34,7 @@ export class Game {
   private readonly boxEventMap = new Map<string, number>();
   private pendingBoxEventKey: string | null = null;
   private readonly surface = new Surface(FRAME_WIDTH, FRAME_HEIGHT);
-  private readonly screenStack = new ScreenStack();
+  readonly screenStack = new ScreenStack();
   private readonly host: EngineHost;
 
   constructor(host: EngineHost, datLibBuffer: Uint8Array) {
@@ -57,7 +56,9 @@ export class Game {
   }
 
   start(): void {
-    this.changeScreen(ScreenViewType.SCREEN_DEV_LOGO);
+    this.mainScene = null;
+    this.mainSceneRuntime = null;
+    this.screenStack.replace(new ScreenAnimation(this, ScreenViewType.SCREEN_DEV_LOGO));
     this.draw();
   }
 
@@ -69,19 +70,15 @@ export class Game {
     this.screenStack.draw(this.surface);
   }
 
-  keyDown(key: KeyCode): void {
-    this.screenStack.keyDown(key);
-  }
-
-  keyUp(key: KeyCode): void {
-    this.screenStack.keyUp(key);
+  onKey(key: KeyCode): void {
+    this.screenStack.onKey(key);
   }
 
   startNewGame(): void {
     this.boxEventMap.clear();
     this.pendingBoxEventKey = null;
     this.state = createInitialGameState();
-    this.changeScreen(ScreenViewType.SCREEN_MAIN_GAME);
+    this.replaceWithMainScene();
     this.mainSceneRuntime?.startChapter(STARTUP_CHAPTER_TYPE, STARTUP_CHAPTER_INDEX);
   }
 
@@ -100,7 +97,7 @@ export class Game {
       goods: state.goods.map(g => ({ ...g })),
     };
     this.ensureScriptVariableSize();
-    this.changeScreen(ScreenViewType.SCREEN_MAIN_GAME);
+    this.replaceWithMainScene();
     this.mainSceneRuntime?.startChapter(this.state.scriptType, this.state.scriptIndex);
   }
 
@@ -248,34 +245,10 @@ export class Game {
     this.pendingBoxEventKey = null;
   }
 
-  changeScreen(screenType: ScreenViewType): void {
-    switch (screenType) {
-      case ScreenViewType.SCREEN_DEV_LOGO:
-        this.mainScene = null;
-        this.mainSceneRuntime = null;
-        this.screenStack.changeScreen(new ScreenAnimation(this, screenType));
-        return;
-      case ScreenViewType.SCREEN_GAME_LOGO:
-        this.mainScene = null;
-        this.mainSceneRuntime = null;
-        this.screenStack.changeScreen(new ScreenAnimation(this, screenType));
-        return;
-      case ScreenViewType.SCREEN_GAME_FAIL:
-        this.mainScene = null;
-        this.mainSceneRuntime = null;
-        this.screenStack.changeScreen(new ScreenAnimation(this, screenType));
-        return;
-      case ScreenViewType.SCREEN_MENU:
-        this.mainScene = null;
-        this.mainSceneRuntime = null;
-        this.screenStack.changeScreen(new ScreenMenu(this));
-        return;
-      case ScreenViewType.SCREEN_MAIN_GAME:
-        this.mainSceneRuntime = new MainSceneRuntime(this);
-        this.mainScene = new ScreenMainGame(this, this.mainSceneRuntime);
-        this.screenStack.changeScreen(this.mainScene);
-        return;
-    }
+  private replaceWithMainScene(): void {
+    this.mainSceneRuntime = new MainSceneRuntime(this);
+    this.mainScene = new ScreenMainGame(this, this.mainSceneRuntime);
+    this.screenStack.replace(this.mainScene);
   }
 
   private ensureScriptVariableSize(): void {

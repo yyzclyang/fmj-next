@@ -99,6 +99,14 @@ export class ScreenMainGame extends BaseScreen {
   }
 
   draw(surface: Surface): void {
+    this.drawMainGame(surface);
+  }
+
+  showMessage(text: string, delay?: number): void {
+    this.screenStack.push(new InGameMessageScreen(this.game, this, text, delay ?? TIP_DURATION));
+  }
+
+  private drawMainGame(surface: Surface): void {
     if (this.gut) {
       this.drawGut(surface);
       return;
@@ -130,15 +138,14 @@ export class ScreenMainGame extends BaseScreen {
     this.drawDialogue(surface);
   }
 
-  override onKeyDown(key: KeyCode): void {
+  override onKey(key: KeyCode): boolean | undefined {
     const overlay = this.runtime.overlay;
-    if (overlay?.onKeyDown) {
-      overlay.onKeyDown(key);
-      return;
+    if (overlay) {
+      if (overlay.onKey?.(key) !== true) return;
     }
 
     if (this.gut) {
-      this.handleGutKeyDown();
+      this.handleGutKey(key);
       return;
     }
 
@@ -162,18 +169,12 @@ export class ScreenMainGame extends BaseScreen {
       case KeyCode.Enter:
         this.runtime.interact();
         return;
+      case KeyCode.Cancel:
+        if (this.runtime.canOpenInGameMenu) {
+          this.screenStack.push(new InGameMenuPlaceholderScreen(this.game, this));
+        }
+        return;
     }
-  }
-
-  override onKeyUp(key: KeyCode): void {
-    const overlay = this.runtime.overlay;
-    if (overlay?.onKeyUp) {
-      overlay.onKeyUp(key);
-      return;
-    }
-
-    if (!this.gut) return;
-    this.handleGutKeyUp(key);
   }
 
   showDialogue(text: string, onClose: () => void): void {
@@ -451,14 +452,7 @@ export class ScreenMainGame extends BaseScreen {
     }
   }
 
-  private handleGutKeyDown(): void {
-    const gut = this.gut;
-    if (!gut) return;
-    gut.step = GUT_FAST_STEP;
-    gut.interval = GUT_FAST_INTERVAL;
-  }
-
-  private handleGutKeyUp(key: KeyCode): void {
+  private handleGutKey(key: KeyCode): void {
     const gut = this.gut;
     if (!gut) return;
 
@@ -467,8 +461,8 @@ export class ScreenMainGame extends BaseScreen {
       return;
     }
 
-    gut.step = GUT_DEFAULT_STEP;
-    gut.interval = GUT_DEFAULT_INTERVAL;
+    gut.step = GUT_FAST_STEP;
+    gut.interval = GUT_FAST_INTERVAL;
   }
 
   private closeGut(): void {
@@ -505,6 +499,71 @@ export class ScreenMainGame extends BaseScreen {
       image.draw(surface, getWalkingFrame(facing, step), left, top);
     }
     return true;
+  }
+}
+
+class InGameMenuPlaceholderScreen extends BaseScreen {
+  constructor(
+    game: Game,
+    private readonly host: ScreenMainGame
+  ) {
+    super(game);
+  }
+
+  override draw(surface: Surface): void {
+    const left = 42;
+    const top = 28;
+    const width = 96;
+    const height = 54;
+    surface.fillRect(left, top, width, height, COLOR_BLACK);
+    surface.fillRect(left + 1, top + 1, width - 2, height - 2, COLOR_WHITE);
+    TextRender.drawText(surface, '游戏菜单', left + 8, top + 8);
+    TextRender.drawSelText(surface, '返回', left + 8, top + 28);
+  }
+
+  override onKey(key: KeyCode): boolean | undefined {
+    if (key === KeyCode.Cancel || key === KeyCode.Enter) {
+      this.host.screenStack.pop();
+    }
+    return undefined;
+  }
+}
+
+class InGameMessageScreen extends BaseScreen {
+  private readonly lines: string[];
+  private elapsed = 0;
+
+  constructor(
+    game: Game,
+    private readonly host: ScreenMainGame,
+    text: string,
+    private readonly delay: number
+  ) {
+    super(game);
+    this.lines = wrapTextBlock(text, TIP_TEXT_WIDTH).slice(0, TIP_MAX_LINES);
+  }
+
+  override update(delta: number): void {
+    this.elapsed += delta;
+    if (this.elapsed >= this.delay) {
+      this.host.screenStack.pop();
+    }
+  }
+
+  override draw(surface: Surface): void {
+    const lineCount = Math.max(1, this.lines.length);
+    const height = lineCount * TIP_LINE_GAP + 20;
+    const left = Math.floor((SCREEN_WIDTH - TIP_FRAME_WIDTH) / 2);
+    const top = Math.floor((SCREEN_HEIGHT - height) / 2);
+    drawTipFrame(surface, left, top, height);
+    for (let index = 0; index < lineCount; index += 1) {
+      TextRender.drawText(surface, this.lines[index] ?? '', left + TIP_TEXT_PADDING_X, top + 2 + index * TIP_LINE_GAP);
+    }
+  }
+
+  override onKey(): boolean | undefined {
+    this.host.screenStack.pop();
+    return undefined;
   }
 }
 

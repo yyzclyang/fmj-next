@@ -7,6 +7,7 @@ import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
 import { BaseScreen } from '../base-screen';
 import { ScreenViewType } from '../screen-view-type';
+import { ScreenMenu } from '../menu/screen';
 
 const STARTUP_WIDTH = 160;
 const STARTUP_HEIGHT = 96;
@@ -59,7 +60,7 @@ export class ScreenAnimation extends BaseScreen {
 
   override update(delta: number): void {
     if (this.animation.update(delta)) return;
-    this.game.changeScreen(this.def.nextScreen);
+    this.replaceWithScreen(this.def.nextScreen);
   }
 
   draw(surface: Surface): void {
@@ -69,9 +70,28 @@ export class ScreenAnimation extends BaseScreen {
     this.animation.draw(surface, centerX, centerY);
   }
 
-  override onKeyDown(key: KeyCode): void {
+  override onKey(key: KeyCode): boolean | undefined {
     if (key === KeyCode.Cancel && this.def.skippable) {
-      this.game.changeScreen(ScreenViewType.SCREEN_MENU);
+      this.replaceWithScreen(ScreenViewType.SCREEN_MENU);
+    }
+    return undefined;
+  }
+
+  private replaceWithScreen(screenType: ScreenViewType): void {
+    this.game.mainScene = null;
+    this.game.mainSceneRuntime = null;
+
+    switch (screenType) {
+      case ScreenViewType.SCREEN_DEV_LOGO:
+      case ScreenViewType.SCREEN_GAME_LOGO:
+      case ScreenViewType.SCREEN_GAME_FAIL:
+        this.game.screenStack.replace(new ScreenAnimation(this.game, screenType));
+        return;
+      case ScreenViewType.SCREEN_MENU:
+        this.game.screenStack.replace(new ScreenMenu(this.game));
+        return;
+      default:
+        throw new Error(`ScreenAnimation cannot transition to screen type ${screenType}`);
     }
   }
 }

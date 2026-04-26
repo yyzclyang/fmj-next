@@ -121,6 +121,10 @@ export class MainSceneRuntime {
     return this.overlayValue;
   }
 
+  get canOpenInGameMenu(): boolean {
+    return this.canControlPlayer();
+  }
+
   update(delta = 0): void {
     if (this.scriptProcess?.busy) {
       this.scriptProcess.step(delta);
@@ -371,7 +375,6 @@ export class MainSceneRuntime {
     res.setIteratorNum(5);
     res.start();
 
-    let downKey: KeyCode | null = null;
     let skipped = false;
     const skippable = (params.ctl & 1) === 1;
     const overlayScene = (params.ctl & 2) === 2;
@@ -387,11 +390,8 @@ export class MainSceneRuntime {
       draw: surface => {
         res.draw(surface, x, y);
       },
-      onKeyDown: key => {
-        downKey = key;
-      },
-      onKeyUp: key => {
-        if (skippable && key === downKey) skipped = true;
+      onKey: () => {
+        if (skippable) skipped = true;
       },
     };
     const operation: ScriptOperation = {

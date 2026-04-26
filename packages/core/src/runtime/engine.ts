@@ -47,10 +47,10 @@ export class Engine {
   }
 
   keyDown(key: KeyCode): void {
-    this.game?.keyDown(key);
+    this.game?.onKey(key);
   }
 
   keyUp(key: KeyCode): void {
-    this.game?.keyUp(key);
+    void key;
   }
 }

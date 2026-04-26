@@ -12,6 +12,7 @@ const MAX_STEPS_PER_TICK = 2048;
 export class ScriptProcess {
   private currentIndex = 0;
   private operation: ScriptOperation | null = null;
+  parent: ScriptProcess | null = null;
   running = false;
 
   constructor(

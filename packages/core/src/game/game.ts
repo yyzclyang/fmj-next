@@ -12,7 +12,14 @@ import { ScreenAnimation } from '@/screens/animation/screen';
 import { ScreenMenu } from '@/screens/menu/screen';
 import { ScreenStack } from '@/screens/screen-stack';
 import { ScreenViewType } from '@/screens/screen-view-type';
-import { cloneGameState, createInitialGameState, type GameState } from './game-state';
+import {
+  cloneGameState,
+  createInitialGameState,
+  SCRIPT_LOCAL_VARIABLE_END,
+  SCRIPT_LOCAL_VARIABLE_START,
+  SCRIPT_VARIABLE_COUNT,
+  type GameState,
+} from './game-state';
 
 const STARTUP_CHAPTER_TYPE = 1;
 const STARTUP_CHAPTER_INDEX = 1;
@@ -79,7 +86,15 @@ export class Game {
   applyLoadedState(state: GameState): void {
     this.boxEventMap.clear();
     this.pendingBoxEventKey = null;
-    this.state = state;
+    this.state = {
+      ...createInitialGameState(),
+      ...state,
+      eventFlags: [...state.eventFlags],
+      scriptVariables: [...(state.scriptVariables ?? [])],
+      collectedBoxKeys: [...state.collectedBoxKeys],
+      goods: state.goods.map(g => ({ ...g })),
+    };
+    this.ensureScriptVariableSize();
     this.changeScreen(ScreenViewType.SCREEN_MAIN_GAME);
     this.mainSceneRuntime?.startChapter(this.state.scriptType, this.state.scriptIndex);
   }
@@ -113,6 +128,10 @@ export class Game {
     this.state.money = value;
   }
 
+  useMoney(value: number): void {
+    this.state.money -= value;
+  }
+
   playMusic(type: number, index: number): void {
     this.host.audio.playMusic(`${type}:${index}`);
   }
@@ -124,6 +143,35 @@ export class Game {
   setEvent(eventId: number): void {
     if (this.hasEvent(eventId)) return;
     this.state.eventFlags.push(eventId);
+  }
+
+  clearEvent(eventId: number): void {
+    this.state.eventFlags = this.state.eventFlags.filter(id => id !== eventId);
+  }
+
+  getVariable(index: number): number {
+    return this.state.scriptVariables[index] ?? 0;
+  }
+
+  setVariable(index: number, value: number): void {
+    if (!this.isValidVariableIndex(index)) return;
+    this.state.scriptVariables[index] = value;
+  }
+
+  addVariable(index: number, value: number): void {
+    if (!this.isValidVariableIndex(index)) return;
+    this.state.scriptVariables[index] = (this.state.scriptVariables[index] ?? 0) + value;
+  }
+
+  subVariable(index: number, value: number): void {
+    if (!this.isValidVariableIndex(index)) return;
+    this.state.scriptVariables[index] = (this.state.scriptVariables[index] ?? 0) - value;
+  }
+
+  resetLocalVariables(): void {
+    for (let index = SCRIPT_LOCAL_VARIABLE_START; index < SCRIPT_LOCAL_VARIABLE_END; index += 1) {
+      this.state.scriptVariables[index] = 0;
+    }
   }
 
   rememberBoxEvent(boxKey: string, eventId: number): void {
@@ -184,5 +232,16 @@ export class Game {
         this.screenStack.changeScreen(this.mainScene);
         return;
     }
+  }
+
+  private ensureScriptVariableSize(): void {
+    while (this.state.scriptVariables.length < SCRIPT_VARIABLE_COUNT) {
+      this.state.scriptVariables.push(0);
+    }
+    this.state.scriptVariables = this.state.scriptVariables.slice(0, SCRIPT_VARIABLE_COUNT);
+  }
+
+  private isValidVariableIndex(index: number): boolean {
+    return index >= 0 && index < SCRIPT_VARIABLE_COUNT;
   }
 }

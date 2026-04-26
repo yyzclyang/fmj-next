@@ -4,6 +4,10 @@ export interface GameGoodsState {
   count: number;
 }
 
+export const SCRIPT_VARIABLE_COUNT = 800;
+export const SCRIPT_LOCAL_VARIABLE_START = 200;
+export const SCRIPT_LOCAL_VARIABLE_END = 240;
+
 export interface GameState {
   mapType: number;
   mapIndex: number;
@@ -15,6 +19,7 @@ export interface GameState {
   scriptType: number;
   scriptIndex: number;
   eventFlags: number[];
+  scriptVariables: number[];
   collectedBoxKeys: string[];
   money: number;
   goods: GameGoodsState[];
@@ -32,6 +37,7 @@ export function createInitialGameState(): GameState {
     scriptType: 1,
     scriptIndex: 1,
     eventFlags: [],
+    scriptVariables: Array.from({ length: SCRIPT_VARIABLE_COUNT }, () => 0),
     collectedBoxKeys: [],
     money: 0,
     goods: [],
@@ -43,6 +49,7 @@ export function cloneGameState(state: GameState): GameState {
   return {
     ...state,
     eventFlags: [...state.eventFlags],
+    scriptVariables: [...state.scriptVariables],
     collectedBoxKeys: [...state.collectedBoxKeys],
     goods: state.goods.map(g => ({ ...g })),
   };

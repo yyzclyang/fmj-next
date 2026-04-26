@@ -143,8 +143,27 @@ export class MainSceneRuntime {
     this.game.clearPendingBoxEvent();
     this.game.state.scriptType = type;
     this.game.state.scriptIndex = index;
+    this.game.resetLocalVariables();
     this.scriptProcess = this.game.scriptVm.loadScript(type, index);
     this.scriptProcess.start();
+  }
+
+  callChapter(type: number, index: number, parentProcess: ScriptProcess): void {
+    const childProcess = this.game.scriptVm.loadScript(type, index);
+    childProcess.parent = parentProcess;
+    this.scriptProcess = childProcess;
+    childProcess.start();
+  }
+
+  returnToParentScript(process: ScriptProcess): boolean {
+    if (this.scriptProcess !== process) return false;
+    const parent = process.parent;
+    process.parent = null;
+    process.stop();
+    if (!parent) return true;
+    this.scriptProcess = parent;
+    parent.start();
+    return true;
   }
 
   loadMap(type: number, index: number, screenX: number, screenY: number): void {
@@ -163,6 +182,14 @@ export class MainSceneRuntime {
     this.game.state.mapScreenY = screenY;
     this.game.state.sceneName = mapRes.mapName;
 
+    if (this.hasPlayerValue) {
+      this.setPlayerMapPosition(screenX + PLAYER_SCREEN_X, screenY + PLAYER_SCREEN_Y);
+    }
+  }
+
+  setMapScreenPosition(screenX: number, screenY: number): void {
+    this.game.state.mapScreenX = screenX;
+    this.game.state.mapScreenY = screenY;
     if (this.hasPlayerValue) {
       this.setPlayerMapPosition(screenX + PLAYER_SCREEN_X, screenY + PLAYER_SCREEN_Y);
     }

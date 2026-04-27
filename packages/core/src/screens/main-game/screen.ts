@@ -14,7 +14,7 @@ import {
 import { KeyCode } from '@/shared/key-code';
 import { BaseScreen } from '@/screens/base-screen';
 import { clamp } from '@/shared/math';
-import { InGameMenuScreen } from './menu';
+import { ScreenGameMainMenu } from './menu';
 import { ScriptDialogueScreen, ScriptGutScreen } from './script';
 import {
   drawTipFrame,
@@ -123,7 +123,7 @@ export class ScreenMainGame extends BaseScreen {
         return;
       case KeyCode.Cancel:
         if (this.runtime.canOpenInGameMenu) {
-          this.screenStack.push(new InGameMenuScreen(this.game));
+          this.screenStack.push(new ScreenGameMainMenu(this.game));
         }
         return;
     }

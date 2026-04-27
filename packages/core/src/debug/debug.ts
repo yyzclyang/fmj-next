@@ -1,6 +1,9 @@
 import type { Game } from '@/game/game';
+import { Player } from '@/characters';
 import { BaseGoods } from '@/goods';
 import { ResourceType } from '@/lib/resource-utils';
+
+const DEFAULT_DEBUG_PLAYER_COUNT = 4;
 
 export interface DebugSnapshot {
   money: number;
@@ -23,6 +26,7 @@ export interface DebugSnapshot {
 export interface DebugApi {
   getSnapshot(): DebugSnapshot | null;
   bag: DebugBagApi;
+  player: DebugPlayerApi;
 }
 
 export interface DebugBagApi {
@@ -41,6 +45,29 @@ export interface DebugGoodsItem {
   buyPrice: number;
   sellPrice: number;
   description: string;
+}
+
+export interface DebugPlayerApi {
+  list(): DebugPlayerItem[];
+  listAll(): DebugPlayerItem[];
+  add(ids?: readonly number[]): DebugPlayerItem[];
+}
+
+export interface DebugPlayerItem {
+  index: number;
+  name: string;
+  level: number;
+  hp: number;
+  maxHp: number;
+  mp: number;
+  maxMp: number;
+  attack: number;
+  defend: number;
+  speed: number;
+  lingli: number;
+  luck: number;
+  inParty: boolean;
+  isControl: boolean;
 }
 
 export function createDebugApi(getGame: () => Game | null): DebugApi {
@@ -109,7 +136,67 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         return ok;
       },
     },
+    player: {
+      list() {
+        const game = getGame();
+        const items = game ? listPartyPlayers(game).map(player => toDebugPlayerItem(game, player)) : [];
+        console.table(items);
+        return items;
+      },
+      listAll() {
+        const game = getGame();
+        const items = game ? listAllPlayers(game).map(player => toDebugPlayerItem(game, player)) : [];
+        console.table(items);
+        return items;
+      },
+      add(actorIds?: readonly number[]) {
+        const game = getGame();
+        if (!game) return [];
+        const ids = actorIds ?? listAllPlayerIds(game).slice(0, DEFAULT_DEBUG_PLAYER_COUNT);
+        // 默认批量补人只用于调试多角色菜单，实际入队仍走 Game.addActor。
+        const items = ids.map(id => toDebugPlayerItem(game, addDebugPlayer(game, id)));
+        console.table(items);
+        return items;
+      },
+    },
   };
+}
+
+function listPartyPlayers(game: Game): Player[] {
+  return game.state.partyActorIds.map(id => {
+    const player = game.getPlayer(id);
+    if (!player) throw new Error(`队伍角色不存在: ${id}`);
+    return player;
+  });
+}
+
+function listAllPlayerIds(game: Game): number[] {
+  return game.datLib
+    .listResourceKeys(ResourceType.ARS)
+    .filter(key => key.type === 1)
+    .map(key => key.index);
+}
+
+function listAllPlayers(game: Game): Player[] {
+  return listAllPlayerIds(game).map(id => {
+    const player = findPlayer(game, id);
+    if (!player) throw new Error(`角色资源不存在: ARS 1-${id}`);
+    return player;
+  });
+}
+
+function addDebugPlayer(game: Game, actorId: number): Player {
+  if (!Number.isInteger(actorId) || actorId <= 0) {
+    throw new Error(`角色 id 非法: ${actorId}`);
+  }
+  const player = game.getPlayer(actorId);
+  if (!player) throw new Error(`角色资源不存在: ARS 1-${actorId}`);
+  if (!game.state.partyActorIds.includes(actorId)) {
+    const added = game.addActor(actorId);
+    if (!added) throw new Error(`添加角色失败: ${actorId}`);
+    return added;
+  }
+  return player;
 }
 
 function listAllGoods(game: Game): BaseGoods[] {
@@ -119,6 +206,32 @@ function listAllGoods(game: Game): BaseGoods[] {
     if (goods instanceof BaseGoods) items.push(goods);
   }
   return items;
+}
+
+function findPlayer(game: Game, actorId: number): Player | null {
+  const player = game.state.players.find(item => item.index === actorId);
+  if (player) return player;
+  const res = game.datLib.getRes(ResourceType.ARS, 1, actorId);
+  return res instanceof Player ? res : null;
+}
+
+function toDebugPlayerItem(game: Game, player: Player): DebugPlayerItem {
+  return {
+    index: player.index,
+    name: player.name,
+    level: player.level,
+    hp: player.hp,
+    maxHp: player.maxHp,
+    mp: player.mp,
+    maxMp: player.maxMp,
+    attack: player.attack,
+    defend: player.defend,
+    speed: player.speed,
+    lingli: player.lingli,
+    luck: player.luck,
+    inParty: game.state.partyActorIds.includes(player.index),
+    isControl: game.state.controlActorId === player.index,
+  };
 }
 
 function toDebugGoodsItem(goods: BaseGoods, count: number): DebugGoodsItem {

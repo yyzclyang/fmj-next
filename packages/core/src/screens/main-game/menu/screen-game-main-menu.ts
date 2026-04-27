@@ -11,6 +11,7 @@ import {
   GoodsTudun,
 } from '@/goods';
 import type { Game } from '@/game/game';
+import { type BaseMagic, MagicRestore } from '@/magic';
 import { ResourceType } from '@/lib/resource-utils';
 import type { Surface } from '@/rendering/surface';
 import { TextRender } from '@/rendering/text-render';
@@ -23,12 +24,14 @@ import { ScreenActorWearing } from './screen-actor-wearing';
 import { ScreenChangeEquipment } from './screen-change-equipment';
 import { ScreenDiscardGoods } from './screen-discard-goods';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from './screen-goods-list';
+import { ScreenMagic } from './screen-magic';
 import { ScreenMenuGoods, type GoodsMenuItem } from './screen-menu-goods';
 import { ScreenMenuProperties, type PropertyMenuItem } from './screen-menu-properties';
 import { ScreenMenuSystem } from './screen-menu-system';
 import { getPartyPlayers, ScreenSelectActor } from './screen-select-actor';
 import { ScreenSelectGoodsActor } from './screen-select-goods-actor';
 import { ScreenTakeMedicine } from './screen-take-medicine';
+import { ScreenUseMagic } from './screen-use-magic';
 
 const IN_GAME_MENU_OPTIONS = ['属性', '魔法', '物品', '系统'] as const;
 const MONEY_FRAME_LEFT = 9;
@@ -123,13 +126,14 @@ export class ScreenGameMainMenu extends BaseScreen {
     if (players.length > 1) {
       this.screenStack.push(
         new ScreenSelectActor(this.game, players, {
-          onConfirm: player => this.finishMenuAction(`确认魔法角色:${player.name}`),
+          onConfirm: player => this.openMagicScreenFromActorSelect(player),
           onCancel: () => this.closeSubMenu(),
         })
       );
       return;
     }
-    this.finishMenuAction(`确认魔法角色:${players[0]?.name ?? '无角色'}`);
+    const player = players[0];
+    if (player) this.openMagicScreen(player);
   }
 
   private closeSubMenu(): void {
@@ -145,6 +149,31 @@ export class ScreenGameMainMenu extends BaseScreen {
         this.openChildScreen(new ScreenActorWearing(this.game));
         return;
     }
+  }
+
+  private openMagicScreenFromActorSelect(player: Player): void {
+    const current = this.screenStack.current;
+    if (!(current instanceof ScreenSelectActor)) throw new Error('魔法角色选择页不是当前 Screen');
+    this.screenStack.close(current);
+    this.openMagicScreen(player);
+  }
+
+  private openMagicScreen(player: Player): void {
+    const magics = player.getAllLearntMagics();
+    if (magics.length === 0) return;
+    this.screenStack.push(
+      new ScreenMagic(this.game, magics, player.mp, {
+        onConfirm: magic => this.confirmMagic(player, magic),
+      })
+    );
+  }
+
+  private confirmMagic(player: Player, magic: BaseMagic): void {
+    if (magic instanceof MagicRestore) {
+      this.screenStack.push(new ScreenUseMagic(this.game, magic, player));
+      return;
+    }
+    this.showMenuMessage('此处无法使用!');
   }
 
   private openGoodsList(item: GoodsMenuItem): void {
@@ -199,6 +228,7 @@ export class ScreenGameMainMenu extends BaseScreen {
 
   private equipGoods(goods: BaseGoods): void {
     if (!(goods instanceof GoodsEquipment)) throw new Error('物品菜单选择了非装备物品');
+    // Kotlin 版物品装备分支按可装备人数决定是否弹出角色选择。
     const players = getPartyPlayers(this.game).filter(player => goods.canPlayerUse(player.index));
     if (players.length === 0) {
       this.showMenuMessage('不能装备!');

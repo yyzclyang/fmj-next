@@ -182,6 +182,8 @@ export class ScreenActorWearing extends BaseScreen {
   private openEquipmentList(): void {
     const player = this.players[this.actorIndex];
     if (!player) return;
+    const items = this.getEquipmentList(player);
+    if (items.length === 0) return;
     this.screenStack.push(
       new ScreenGoodsList(this.game, () => this.getEquipmentList(player), ScreenGoodsListMode.Use, {
         onConfirm: item => this.openChangeEquipmentScreen(player, item.goods),

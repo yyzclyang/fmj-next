@@ -7,6 +7,8 @@ export { ScreenGoodsList, ScreenGoodsListMode } from './screen-goods-list';
 export { ScreenMenuGoods } from './screen-menu-goods';
 export { ScreenMenuProperties } from './screen-menu-properties';
 export { ScreenMenuSystem } from './screen-menu-system';
+export { ScreenMagic } from './screen-magic';
 export { ScreenSelectActor } from './screen-select-actor';
 export { ScreenSelectGoodsActor } from './screen-select-goods-actor';
 export { ScreenTakeMedicine } from './screen-take-medicine';
+export { ScreenUseMagic } from './screen-use-magic';

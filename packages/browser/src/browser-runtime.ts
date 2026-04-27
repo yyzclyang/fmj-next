@@ -22,6 +22,11 @@ export class BrowserRuntime {
       addAll: count => this.engine?.debug.bag.addAll(count) ?? [],
       delete: (type, index, count) => this.engine?.debug.bag.delete(type, index, count) ?? false,
     },
+    player: {
+      list: () => this.engine?.debug.player.list() ?? [],
+      listAll: () => this.engine?.debug.player.listAll() ?? [],
+      add: ids => this.engine?.debug.player.add(ids) ?? [],
+    },
   };
   private readonly presenter: CanvasPresenter;
   private readonly host: { readonly saveStore: SaveStore; readonly audio: AudioPort };

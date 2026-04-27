@@ -1,6 +1,4 @@
 import type { Game } from '@/game/game';
-import { ResImage } from '@/lib/res-image';
-import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import { Surface } from '@/rendering/surface';
 import { TextRender } from '@/rendering/text-render';
@@ -16,23 +14,19 @@ import {
 import { KeyCode } from '@/shared/key-code';
 import { BaseScreen } from '@/screens/base-screen';
 import { clamp } from '@/shared/math';
-
-interface DialogueState {
-  pages: string[];
-  pageIndex: number;
-  onClose: () => void;
-}
-
-interface GutState {
-  topImage: ResImage | null;
-  bottomImage: ResImage | null;
-  lines: string[];
-  scrollY: number;
-  step: number;
-  interval: number;
-  elapsed: number;
-  onClose: () => void;
-}
+import { InGameMenuScreen } from './menu';
+import { ScriptDialogueScreen, ScriptGutScreen } from './script';
+import {
+  drawTipFrame,
+  getTextWidth,
+  TIP_FRAME_WIDTH,
+  TIP_LINE_GAP,
+  TIP_MAX_LINES,
+  TIP_TEXT_PADDING_X,
+  TIP_TEXT_TOP_PADDING,
+  TIP_TEXT_WIDTH,
+  wrapTextBlock,
+} from './ui-utils';
 
 interface TipState {
   text: string;
@@ -53,47 +47,11 @@ const NPC_WIDTH = 10;
 const NPC_HEIGHT = 12;
 const BOX_WIDTH = 12;
 const BOX_HEIGHT = 10;
-const GUT_DEFAULT_STEP = 1;
-const GUT_FAST_STEP = 3;
-const GUT_DEFAULT_INTERVAL = 50;
-const GUT_FAST_INTERVAL = 20;
-const GUT_TEXT_SIDE_PADDING = 16;
-const GUT_SECTION_GAP = 6;
-// 对话框先固定在底部区域，后面接正式界面时再替换样式。
-const DIALOG_LEFT = 18;
-const DIALOG_TOP = 110;
-const DIALOG_WIDTH = 284;
-const DIALOG_HEIGHT = 72;
-const DIALOG_TEXT_LEFT = DIALOG_LEFT + 10;
-const DIALOG_TEXT_TOP = DIALOG_TOP + 8;
-const DIALOG_TEXT_WIDTH = DIALOG_WIDTH - 20;
-const DIALOG_PAGE_LINES = 4;
-const DIALOG_LINE_GAP = 16;
-const TIP_FRAME_WIDTH = 240;
-const TIP_TEXT_WIDTH = 224;
-const TIP_TEXT_PADDING_X = 8;
-const TIP_TEXT_TOP_PADDING = 2;
-const TIP_LINE_GAP = 16;
-const TIP_MAX_LINES = 4;
 const TIP_DURATION = 1000;
-const IN_GAME_MENU_OPTIONS = ['属性', '魔法', '物品', '系统'] as const;
-const IN_GAME_MONEY_FRAME_LEFT = 9;
-const IN_GAME_MONEY_FRAME_TOP = 3;
-const IN_GAME_MONEY_FRAME_WIDTH = 93;
-const IN_GAME_MONEY_FRAME_HEIGHT = 22;
-const IN_GAME_MENU_LEFT = 9;
-const IN_GAME_MENU_TOP = 24;
-const IN_GAME_MENU_WIDTH = 38;
-const IN_GAME_MENU_HEIGHT = 70;
-const IN_GAME_MENU_TEXT_LEFT = 12;
-const IN_GAME_MENU_ITEM_TOP = 27;
-const IN_GAME_MENU_LINE_GAP = 16;
 const WALKING_STEP_FRAMES = [0, 1, 2, 1] as const;
 
-// 主场景屏幕层只负责 UI 状态、绘制和输入分发。
+// 主场景只保留地图主画面和入口逻辑，脚本消息、GUT 和菜单都交给子 screen。
 export class ScreenMainGame extends BaseScreen {
-  private dialogue: DialogueState | null = null;
-  private gut: GutState | null = null;
   private tip: TipState | null = null;
 
   constructor(
@@ -104,8 +62,6 @@ export class ScreenMainGame extends BaseScreen {
   }
 
   override update(delta: number): void {
-    this.updateGut(delta);
-    if (this.gut) return;
     this.updateTip(delta);
     this.runtime.update(delta);
   }
@@ -119,11 +75,6 @@ export class ScreenMainGame extends BaseScreen {
   }
 
   private drawMainGame(surface: Surface): void {
-    if (this.gut) {
-      this.drawGut(surface);
-      return;
-    }
-
     const overlay = this.runtime.overlay;
     if (overlay?.coversScreen) {
       surface.drawColor(COLOR_WHITE);
@@ -147,23 +98,12 @@ export class ScreenMainGame extends BaseScreen {
 
   private drawTransientUi(surface: Surface): void {
     this.drawTip(surface);
-    this.drawDialogue(surface);
   }
 
   override onKey(key: KeyCode): boolean | undefined {
     const overlay = this.runtime.overlay;
     if (overlay) {
       if (overlay.onKey?.(key) !== true) return;
-    }
-
-    if (this.gut) {
-      this.handleGutKey(key);
-      return;
-    }
-
-    if (this.dialogue) {
-      this.advanceDialogue();
-      return;
     }
 
     if (this.tip) {
@@ -190,17 +130,12 @@ export class ScreenMainGame extends BaseScreen {
   }
 
   showDialogue(text: string, onClose: () => void): void {
-    const pages = paginateDialogue(text);
-    if (pages.length === 0) {
+    const screen = new ScriptDialogueScreen(this.game, text, onClose);
+    if (screen.isEmpty) {
       onClose();
       return;
     }
-
-    this.dialogue = {
-      pages,
-      pageIndex: 0,
-      onClose,
-    };
+    this.screenStack.push(screen);
   }
 
   showTip(text: string, kind: TipKind = 'message'): void {
@@ -211,30 +146,7 @@ export class ScreenMainGame extends BaseScreen {
   }
 
   showGut(topImageIndex: number, bottomImageIndex: number, text: string, onClose: () => void): void {
-    const topImage = this.loadPicture(topImageIndex);
-    const bottomImage = this.loadPicture(bottomImageIndex);
-    const layout = getGutLayout({
-      topImage,
-      bottomImage,
-      lines: [],
-      scrollY: 0,
-      step: 0,
-      interval: 0,
-      elapsed: 0,
-      onClose,
-    });
-    const lines = wrapTextBlock(text, layout.textWidth);
-
-    this.gut = {
-      topImage,
-      bottomImage,
-      lines,
-      scrollY: layout.textBottom,
-      step: GUT_DEFAULT_STEP,
-      interval: GUT_DEFAULT_INTERVAL,
-      elapsed: 0,
-      onClose,
-    };
+    this.screenStack.push(new ScriptGutScreen(this.game, topImageIndex, bottomImageIndex, text, onClose));
   }
 
   private drawMap(surface: Surface): void {
@@ -372,32 +284,6 @@ export class ScreenMainGame extends BaseScreen {
     );
   }
 
-  private drawGut(surface: Surface): void {
-    const gut = this.gut;
-    if (!gut) return;
-    const layout = getGutLayout(gut);
-
-    surface.drawColor(COLOR_WHITE);
-
-    for (let i = 0; i < gut.lines.length; i += 1) {
-      const top = gut.scrollY + i * 16;
-      if (top + 16 <= layout.textTop || top >= layout.textBottom) {
-        continue;
-      }
-      TextRender.drawText(surface, gut.lines[i] ?? '', layout.textLeft, top);
-    }
-
-    if (layout.textTop > 0) {
-      surface.fillRect(0, 0, SCREEN_WIDTH, layout.textTop, COLOR_WHITE);
-    }
-    if (layout.textBottom < SCREEN_HEIGHT) {
-      surface.fillRect(0, layout.textBottom, SCREEN_WIDTH, SCREEN_HEIGHT - layout.textBottom, COLOR_WHITE);
-    }
-
-    gut.topImage?.draw(surface, 1, layout.topImageLeft, 0);
-    gut.bottomImage?.draw(surface, 1, layout.bottomImageLeft, layout.bottomImageTop);
-  }
-
   private drawTip(surface: Surface): void {
     const tip = this.tip;
     if (!tip) return;
@@ -412,49 +298,6 @@ export class ScreenMainGame extends BaseScreen {
     }
   }
 
-  private drawDialogue(surface: Surface): void {
-    if (!this.dialogue) return;
-
-    surface.fillRect(DIALOG_LEFT, DIALOG_TOP, DIALOG_WIDTH, DIALOG_HEIGHT, COLOR_BLACK);
-    surface.fillRect(DIALOG_LEFT + 1, DIALOG_TOP + 1, DIALOG_WIDTH - 2, DIALOG_HEIGHT - 2, COLOR_WHITE);
-
-    const page = this.dialogue.pages[this.dialogue.pageIndex] ?? '';
-    const lines = page.split('\n');
-    for (let i = 0; i < lines.length; i += 1) {
-      TextRender.drawText(surface, lines[i] ?? '', DIALOG_TEXT_LEFT, DIALOG_TEXT_TOP + i * DIALOG_LINE_GAP);
-    }
-  }
-
-  private advanceDialogue(): void {
-    const dialogue = this.dialogue;
-    if (!dialogue) return;
-
-    if (dialogue.pageIndex + 1 < dialogue.pages.length) {
-      dialogue.pageIndex += 1;
-      return;
-    }
-
-    this.dialogue = null;
-    dialogue.onClose();
-  }
-
-  private updateGut(delta: number): void {
-    const gut = this.gut;
-    if (!gut) return;
-    const layout = getGutLayout(gut);
-
-    gut.elapsed += delta;
-    while (gut.elapsed >= gut.interval) {
-      gut.elapsed -= gut.interval;
-      gut.scrollY -= gut.step;
-    }
-
-    const textBottom = gut.scrollY + gut.lines.length * 16;
-    if (textBottom < layout.textTop) {
-      this.closeGut();
-    }
-  }
-
   private updateTip(delta: number): void {
     const tip = this.tip;
     if (!tip) return;
@@ -462,31 +305,6 @@ export class ScreenMainGame extends BaseScreen {
     if (tip.elapsed >= TIP_DURATION) {
       this.tip = null;
     }
-  }
-
-  private handleGutKey(key: KeyCode): void {
-    const gut = this.gut;
-    if (!gut) return;
-
-    if (key === KeyCode.Cancel) {
-      this.closeGut();
-      return;
-    }
-
-    gut.step = GUT_FAST_STEP;
-    gut.interval = GUT_FAST_INTERVAL;
-  }
-
-  private closeGut(): void {
-    const onClose = this.gut?.onClose;
-    this.gut = null;
-    onClose?.();
-  }
-
-  private loadPicture(index: number): ResImage | null {
-    if (index <= 0) return null;
-    const picRes = this.game.datLib.getRes(ResourceType.PIC, 5, index);
-    return picRes instanceof ResImage ? picRes : null;
   }
 
   private drawWalkingSprite(
@@ -511,58 +329,6 @@ export class ScreenMainGame extends BaseScreen {
       image.draw(surface, getWalkingFrame(facing, step), left, top);
     }
     return true;
-  }
-}
-
-class InGameMenuScreen extends BaseScreen {
-  private currentSelection = 0;
-
-  constructor(game: Game) {
-    super(game);
-  }
-
-  override draw(surface: Surface): void {
-    drawMenuFrame(
-      surface,
-      IN_GAME_MONEY_FRAME_LEFT,
-      IN_GAME_MONEY_FRAME_TOP,
-      IN_GAME_MONEY_FRAME_WIDTH,
-      IN_GAME_MONEY_FRAME_HEIGHT
-    );
-    TextRender.drawText(surface, `金钱:${this.game.state.money}`, IN_GAME_MONEY_FRAME_LEFT + 3, IN_GAME_MONEY_FRAME_TOP + 3);
-    drawMenuFrame(surface, IN_GAME_MENU_LEFT, IN_GAME_MENU_TOP, IN_GAME_MENU_WIDTH, IN_GAME_MENU_HEIGHT);
-    for (let i = 0; i < IN_GAME_MENU_OPTIONS.length; i += 1) {
-      const top = IN_GAME_MENU_ITEM_TOP + i * IN_GAME_MENU_LINE_GAP;
-      const draw = i === this.currentSelection ? TextRender.drawSelText : TextRender.drawText;
-      draw(surface, IN_GAME_MENU_OPTIONS[i] ?? '', IN_GAME_MENU_TEXT_LEFT, top);
-    }
-  }
-
-  override onKey(key: KeyCode): boolean | undefined {
-    switch (key) {
-      case KeyCode.Up:
-        this.moveSelection(-1);
-        return;
-      case KeyCode.Down:
-        this.moveSelection(1);
-        return;
-      case KeyCode.Enter:
-        this.confirmSelection();
-        return;
-      case KeyCode.Cancel:
-        this.close();
-        return;
-    }
-  }
-
-  private moveSelection(step: number): void {
-    const count = IN_GAME_MENU_OPTIONS.length;
-    this.currentSelection = (this.currentSelection + step + count) % count;
-  }
-
-  private confirmSelection(): void {
-    const option = IN_GAME_MENU_OPTIONS[this.currentSelection];
-    console.log(`确认游戏菜单:${option}`);
   }
 }
 
@@ -671,116 +437,4 @@ function getTipLayout(tip: TipState): {
     textTop: top + TIP_TEXT_TOP_PADDING,
     lines: tip.kind === 'information' ? [tip.lines[0] ?? tip.text] : tip.lines,
   };
-}
-
-function drawTipFrame(surface: Surface, left: number, top: number, height: number): void {
-  surface.fillRect(left, top - 2, TIP_FRAME_WIDTH, height + 3, COLOR_BLACK);
-  surface.fillRect(left + 1, top - 1, TIP_FRAME_WIDTH - 3, height - 3, COLOR_WHITE);
-  surface.fillRect(left + TIP_FRAME_WIDTH - 2, top - 2, 2, 3, COLOR_WHITE);
-  surface.fillRect(left, top + height - 2, 4, 2, COLOR_WHITE);
-}
-
-function drawMenuFrame(surface: Surface, left: number, top: number, width: number, height: number): void {
-  surface.fillRect(left, top, width, height, COLOR_WHITE);
-  surface.fillRect(left + 1, top + 1, width - 2, 1, COLOR_BLACK);
-  surface.fillRect(left + 1, top + height - 2, width - 2, 1, COLOR_BLACK);
-  surface.fillRect(left + 1, top + 1, 1, height - 2, COLOR_BLACK);
-  surface.fillRect(left + width - 2, top + 1, 1, height - 2, COLOR_BLACK);
-}
-
-function getTextWidth(text: string): number {
-  let width = 0;
-  for (const char of text) {
-    width += getTextCharWidth(char);
-  }
-  return width;
-}
-
-function getGutLayout(gut: GutState): {
-  topImageLeft: number;
-  bottomImageLeft: number;
-  bottomImageTop: number;
-  textLeft: number;
-  textTop: number;
-  textWidth: number;
-  textBottom: number;
-} {
-  const topImageLeft = gut.topImage ? Math.max(0, Math.floor((SCREEN_WIDTH - gut.topImage.width) / 2)) : 0;
-  const bottomImageTop = gut.bottomImage ? SCREEN_HEIGHT - gut.bottomImage.height : SCREEN_HEIGHT;
-  const bottomImageLeft = gut.bottomImage ? Math.max(0, Math.floor((SCREEN_WIDTH - gut.bottomImage.width) / 2)) : 0;
-  const textTop = (gut.topImage?.height ?? 0) + GUT_SECTION_GAP;
-  const rawTextBottom = bottomImageTop - (gut.bottomImage ? GUT_SECTION_GAP : 0);
-  const textBottom = Math.max(textTop, rawTextBottom);
-
-  return {
-    topImageLeft,
-    bottomImageLeft,
-    bottomImageTop,
-    textLeft: GUT_TEXT_SIDE_PADDING,
-    textTop,
-    textWidth: Math.max(16, SCREEN_WIDTH - GUT_TEXT_SIDE_PADDING * 2),
-    textBottom,
-  };
-}
-
-function paginateDialogue(text: string): string[] {
-  const normalized = text.replace(/\r/g, '').replace(/\0/g, '');
-  if (normalized.length === 0) return [];
-
-  const lines = wrapTextBlock(normalized, DIALOG_TEXT_WIDTH);
-  const pages: string[] = [];
-
-  for (let i = 0; i < lines.length; i += DIALOG_PAGE_LINES) {
-    pages.push(lines.slice(i, i + DIALOG_PAGE_LINES).join('\n'));
-  }
-
-  return pages;
-}
-
-function wrapTextBlock(text: string, maxWidth: number): string[] {
-  const lines: string[] = [];
-  const rawLines = text.split('\n');
-
-  for (const line of rawLines) {
-    const wrapped = wrapTextLine(line, maxWidth);
-    if (wrapped.length === 0) {
-      lines.push('');
-      continue;
-    }
-    lines.push(...wrapped);
-  }
-
-  return lines;
-}
-
-function wrapTextLine(text: string, maxWidth: number): string[] {
-  if (text.length === 0) return [''];
-
-  const lines: string[] = [];
-  let current = '';
-  let width = 0;
-
-  for (const char of text) {
-    const charWidth = getTextCharWidth(char);
-    if (current.length > 0 && width + charWidth > maxWidth) {
-      lines.push(current);
-      current = char;
-      width = charWidth;
-      continue;
-    }
-
-    current += char;
-    width += charWidth;
-  }
-
-  if (current.length > 0) {
-    lines.push(current);
-  }
-
-  return lines;
-}
-
-function getTextCharWidth(char: string): number {
-  const code = char.codePointAt(0) ?? 0;
-  return code < 0x80 ? 8 : 16;
 }

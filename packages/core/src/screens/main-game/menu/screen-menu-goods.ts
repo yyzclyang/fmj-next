@@ -7,12 +7,21 @@ import { drawVerticalMenu, moveSelectionClamp } from './menu-select';
 
 const GOODS_ITEMS = ['使用', '装备', '丢弃'] as const;
 const LINE_GAP = 16;
+type GoodsMenuItem = (typeof GOODS_ITEMS)[number];
+
+export interface ScreenMenuGoodsCallbacks {
+  onConfirm(item: GoodsMenuItem): void;
+  onCancel(): void;
+}
 
 // 物品菜单保留 Kotlin 的三项分流，具体物品列表后续再实现。
 export class ScreenMenuGoods extends BaseScreen {
   private selectedIndex = 0;
 
-  constructor(game: Game) {
+  constructor(
+    game: Game,
+    private readonly callbacks: ScreenMenuGoodsCallbacks
+  ) {
     super(game);
   }
 
@@ -39,7 +48,7 @@ export class ScreenMenuGoods extends BaseScreen {
         this.confirm();
         return;
       case KeyCode.Cancel:
-        this.close();
+        this.callbacks.onCancel();
         return;
     }
   }
@@ -50,7 +59,6 @@ export class ScreenMenuGoods extends BaseScreen {
 
   private confirm(): void {
     const item = GOODS_ITEMS[this.selectedIndex];
-    this.close();
-    console.log(`确认物品菜单:${item}`);
+    this.callbacks.onConfirm(item);
   }
 }

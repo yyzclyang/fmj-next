@@ -8,12 +8,21 @@ import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
 const SYSTEM_ITEMS = ['读入进度', '存储进度', '游戏设置', '结束游戏'] as const;
 const LINE_GAP = 16;
 const TEXT_PADDING = 3;
+type SystemMenuItem = (typeof SYSTEM_ITEMS)[number];
+
+export interface ScreenMenuSystemCallbacks {
+  onConfirm(item: SystemMenuItem): void;
+  onCancel(): void;
+}
 
 // 当前屏幕高度足够展示四项，所以系统菜单不沿用 Kotlin 的滚动箭头。
 export class ScreenMenuSystem extends BaseScreen {
   private selectedIndex = 0;
 
-  constructor(game: Game) {
+  constructor(
+    game: Game,
+    private readonly callbacks: ScreenMenuSystemCallbacks
+  ) {
     super(game);
   }
 
@@ -40,7 +49,7 @@ export class ScreenMenuSystem extends BaseScreen {
         this.confirm();
         return;
       case KeyCode.Cancel:
-        this.close();
+        this.callbacks.onCancel();
         return;
     }
   }
@@ -51,7 +60,6 @@ export class ScreenMenuSystem extends BaseScreen {
 
   private confirm(): void {
     const item = SYSTEM_ITEMS[this.selectedIndex];
-    this.close();
-    console.log(`确认系统菜单:${item}`);
+    this.callbacks.onConfirm(item);
   }
 }

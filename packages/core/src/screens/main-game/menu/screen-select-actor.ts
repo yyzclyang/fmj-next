@@ -9,14 +9,21 @@ import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
 const LINE_GAP = 16;
 const TEXT_PADDING = 3;
 
+export interface ScreenSelectActorCallbacks {
+  onConfirm(player: Player): void;
+  onCancel(): void;
+}
+
 // 多角色使用魔法前先选角色；单角色场景由主菜单直接确认。
 export class ScreenSelectActor extends BaseScreen {
-  private readonly players: Player[];
   private selectedIndex = 0;
 
-  constructor(game: Game) {
+  constructor(
+    game: Game,
+    private readonly players: readonly Player[],
+    private readonly callbacks: ScreenSelectActorCallbacks
+  ) {
     super(game);
-    this.players = getPartyPlayers(game);
   }
 
   override draw(surface: Surface): void {
@@ -42,7 +49,7 @@ export class ScreenSelectActor extends BaseScreen {
         this.confirm();
         return;
       case KeyCode.Cancel:
-        this.close();
+        this.callbacks.onCancel();
         return;
     }
   }
@@ -53,8 +60,10 @@ export class ScreenSelectActor extends BaseScreen {
 
   private confirm(): void {
     const player = this.players[this.selectedIndex];
-    this.close();
-    console.log(`确认魔法角色:${player?.name ?? '无角色'}`);
+    if (!player) {
+      throw new Error('没有可选择的角色');
+    }
+    this.callbacks.onConfirm(player);
   }
 }
 

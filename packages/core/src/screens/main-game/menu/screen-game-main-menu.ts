@@ -69,16 +69,31 @@ export class ScreenGameMainMenu extends BaseScreen {
     const option = IN_GAME_MENU_OPTIONS[this.currentSelection];
     switch (option) {
       case '属性':
-        this.screenStack.push(new ScreenMenuProperties(this.game));
+        this.screenStack.push(
+          new ScreenMenuProperties(this.game, {
+            onConfirm: item => this.finishMenuAction(`确认属性菜单:${item}`),
+            onCancel: () => this.closeSubMenu(),
+          })
+        );
         return;
       case '魔法':
         this.confirmMagicSelection();
         return;
       case '物品':
-        this.screenStack.push(new ScreenMenuGoods(this.game));
+        this.screenStack.push(
+          new ScreenMenuGoods(this.game, {
+            onConfirm: item => this.finishMenuAction(`确认物品菜单:${item}`),
+            onCancel: () => this.closeSubMenu(),
+          })
+        );
         return;
       case '系统':
-        this.screenStack.push(new ScreenMenuSystem(this.game));
+        this.screenStack.push(
+          new ScreenMenuSystem(this.game, {
+            onConfirm: item => this.finishMenuAction(`确认系统菜单:${item}`),
+            onCancel: () => this.closeSubMenu(),
+          })
+        );
         return;
     }
   }
@@ -86,9 +101,23 @@ export class ScreenGameMainMenu extends BaseScreen {
   private confirmMagicSelection(): void {
     const players = getPartyPlayers(this.game);
     if (players.length > 1) {
-      this.screenStack.push(new ScreenSelectActor(this.game));
+      this.screenStack.push(
+        new ScreenSelectActor(this.game, players, {
+          onConfirm: player => this.finishMenuAction(`确认魔法角色:${player.name}`),
+          onCancel: () => this.closeSubMenu(),
+        })
+      );
       return;
     }
-    console.log(`确认魔法角色:${players[0]?.name ?? '无角色'}`);
+    this.finishMenuAction(`确认魔法角色:${players[0]?.name ?? '无角色'}`);
+  }
+
+  private closeSubMenu(): void {
+    this.screenStack.clear();
+  }
+
+  private finishMenuAction(message: string): void {
+    console.log(message);
+    this.close();
   }
 }

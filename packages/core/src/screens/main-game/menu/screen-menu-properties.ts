@@ -7,12 +7,21 @@ import { drawVerticalMenu } from './menu-select';
 
 const PROPERTY_ITEMS = ['状态', '穿戴'] as const;
 const LINE_GAP = 16;
+type PropertyMenuItem = (typeof PROPERTY_ITEMS)[number];
+
+export interface ScreenMenuPropertiesCallbacks {
+  onConfirm(item: PropertyMenuItem): void;
+  onCancel(): void;
+}
 
 // 属性菜单只负责分流，真实状态/穿戴页后续再接入。
 export class ScreenMenuProperties extends BaseScreen {
   private selectedIndex = 0;
 
-  constructor(game: Game) {
+  constructor(
+    game: Game,
+    private readonly callbacks: ScreenMenuPropertiesCallbacks
+  ) {
     super(game);
   }
 
@@ -37,14 +46,13 @@ export class ScreenMenuProperties extends BaseScreen {
         this.confirm();
         return;
       case KeyCode.Cancel:
-        this.close();
+        this.callbacks.onCancel();
         return;
     }
   }
 
   private confirm(): void {
     const item = PROPERTY_ITEMS[this.selectedIndex];
-    this.close();
-    console.log(`确认属性菜单:${item}`);
+    this.callbacks.onConfirm(item);
   }
 }

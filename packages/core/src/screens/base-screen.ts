@@ -6,6 +6,7 @@ import { ScreenStack } from './screen-stack';
 export abstract class BaseScreen {
   readonly screenStack = new ScreenStack();
   protected readonly game: Game;
+  private ownerStack: ScreenStack | null = null;
 
   protected constructor(game: Game) {
     this.game = game;
@@ -25,6 +26,27 @@ export abstract class BaseScreen {
   onEnter(): void {}
 
   onExit(): void {}
+
+  attachOwnerStack(stack: ScreenStack): void {
+    if (this.ownerStack) {
+      throw new Error('Screen 已经挂载到其他 ScreenStack');
+    }
+    this.ownerStack = stack;
+  }
+
+  detachOwnerStack(stack: ScreenStack): void {
+    if (this.ownerStack !== stack) {
+      throw new Error('ScreenStack 解绑了不属于自己的 Screen');
+    }
+    this.ownerStack = null;
+  }
+
+  protected close(): void {
+    if (!this.ownerStack) {
+      throw new Error('未挂载的 Screen 不能关闭');
+    }
+    this.ownerStack.close(this);
+  }
 
   performUpdate(delta: number): void {
     if (!this.screenStack.isEmpty) {

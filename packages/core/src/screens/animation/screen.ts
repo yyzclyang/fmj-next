@@ -85,10 +85,10 @@ export class ScreenAnimation extends BaseScreen {
       case ScreenViewType.SCREEN_DEV_LOGO:
       case ScreenViewType.SCREEN_GAME_LOGO:
       case ScreenViewType.SCREEN_GAME_FAIL:
-        this.game.screenStack.replace(new ScreenAnimation(this.game, screenType));
+        this.game.screenStack.replaceAll(new ScreenAnimation(this.game, screenType));
         return;
       case ScreenViewType.SCREEN_MENU:
-        this.game.screenStack.replace(new ScreenMenu(this.game));
+        this.game.screenStack.replaceAll(new ScreenMenu(this.game));
         return;
       default:
         throw new Error(`ScreenAnimation cannot transition to screen type ${screenType}`);

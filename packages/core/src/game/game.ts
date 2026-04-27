@@ -58,7 +58,7 @@ export class Game {
   start(): void {
     this.mainScene = null;
     this.mainSceneRuntime = null;
-    this.screenStack.replace(new ScreenAnimation(this, ScreenViewType.SCREEN_DEV_LOGO));
+    this.screenStack.replaceAll(new ScreenAnimation(this, ScreenViewType.SCREEN_DEV_LOGO));
     this.draw();
   }
 
@@ -248,7 +248,7 @@ export class Game {
   private replaceWithMainScene(): void {
     this.mainSceneRuntime = new MainSceneRuntime(this);
     this.mainScene = new ScreenMainGame(this, this.mainSceneRuntime);
-    this.screenStack.replace(this.mainScene);
+    this.screenStack.replaceAll(this.mainScene);
   }
 
   private ensureScriptVariableSize(): void {

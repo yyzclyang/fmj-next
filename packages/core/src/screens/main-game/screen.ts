@@ -103,7 +103,7 @@ export class ScreenMainGame extends BaseScreen {
   }
 
   showMessage(text: string, delay?: number): void {
-    this.screenStack.push(new InGameMessageScreen(this.game, this, text, delay ?? TIP_DURATION));
+    this.screenStack.push(new InGameMessageScreen(this.game, text, delay ?? TIP_DURATION));
   }
 
   private drawMainGame(surface: Surface): void {
@@ -171,7 +171,7 @@ export class ScreenMainGame extends BaseScreen {
         return;
       case KeyCode.Cancel:
         if (this.runtime.canOpenInGameMenu) {
-          this.screenStack.push(new InGameMenuPlaceholderScreen(this.game, this));
+          this.screenStack.push(new InGameMenuPlaceholderScreen(this.game));
         }
         return;
     }
@@ -503,10 +503,7 @@ export class ScreenMainGame extends BaseScreen {
 }
 
 class InGameMenuPlaceholderScreen extends BaseScreen {
-  constructor(
-    game: Game,
-    private readonly host: ScreenMainGame
-  ) {
+  constructor(game: Game) {
     super(game);
   }
 
@@ -523,7 +520,7 @@ class InGameMenuPlaceholderScreen extends BaseScreen {
 
   override onKey(key: KeyCode): boolean | undefined {
     if (key === KeyCode.Cancel || key === KeyCode.Enter) {
-      this.host.screenStack.pop();
+      this.close();
     }
     return undefined;
   }
@@ -535,7 +532,6 @@ class InGameMessageScreen extends BaseScreen {
 
   constructor(
     game: Game,
-    private readonly host: ScreenMainGame,
     text: string,
     private readonly delay: number
   ) {
@@ -546,7 +542,7 @@ class InGameMessageScreen extends BaseScreen {
   override update(delta: number): void {
     this.elapsed += delta;
     if (this.elapsed >= this.delay) {
-      this.host.screenStack.pop();
+      this.close();
     }
   }
 
@@ -562,7 +558,7 @@ class InGameMessageScreen extends BaseScreen {
   }
 
   override onKey(): boolean | undefined {
-    this.host.screenStack.pop();
+    this.close();
     return undefined;
   }
 }

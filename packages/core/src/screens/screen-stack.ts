@@ -14,18 +14,33 @@ export class ScreenStack {
   }
 
   push(screen: BaseScreen): void {
+    screen.attachOwnerStack(this);
     this.screens.push(screen);
     screen.performEnter();
   }
 
   pop(): BaseScreen | null {
     const screen = this.screens.pop() ?? null;
-    screen?.performExit();
+    if (!screen) return null;
+    screen.performExit();
+    screen.detachOwnerStack(this);
     return screen;
+  }
+
+  close(screen: BaseScreen): void {
+    if (this.current !== screen) {
+      throw new Error('只能关闭当前栈顶 Screen');
+    }
+    this.pop();
   }
 
   replace(screen: BaseScreen): void {
     this.pop();
+    this.push(screen);
+  }
+
+  replaceAll(screen: BaseScreen): void {
+    this.clear();
     this.push(screen);
   }
 

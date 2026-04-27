@@ -1,3 +1,5 @@
+export { ScreenActorState } from './screen-actor-state';
+export { ScreenActorWearing } from './screen-actor-wearing';
 export { ScreenGameMainMenu } from './screen-game-main-menu';
 export { ScreenMenuGoods } from './screen-menu-goods';
 export { ScreenMenuProperties } from './screen-menu-properties';

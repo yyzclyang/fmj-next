@@ -5,8 +5,10 @@ import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
 import { drawMenuFrame } from '../ui-utils';
 import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
+import { ScreenActorState } from './screen-actor-state';
+import { ScreenActorWearing } from './screen-actor-wearing';
 import { ScreenMenuGoods } from './screen-menu-goods';
-import { ScreenMenuProperties } from './screen-menu-properties';
+import { ScreenMenuProperties, type PropertyMenuItem } from './screen-menu-properties';
 import { ScreenMenuSystem } from './screen-menu-system';
 import { getPartyPlayers, ScreenSelectActor } from './screen-select-actor';
 
@@ -71,7 +73,7 @@ export class ScreenGameMainMenu extends BaseScreen {
       case '属性':
         this.screenStack.push(
           new ScreenMenuProperties(this.game, {
-            onConfirm: item => this.finishMenuAction(`确认属性菜单:${item}`),
+            onConfirm: item => this.openPropertyScreen(item),
             onCancel: () => this.closeSubMenu(),
           })
         );
@@ -114,6 +116,26 @@ export class ScreenGameMainMenu extends BaseScreen {
 
   private closeSubMenu(): void {
     this.screenStack.clear();
+  }
+
+  private openPropertyScreen(item: PropertyMenuItem): void {
+    switch (item) {
+      case '状态':
+        this.closeMenuAndPush(new ScreenActorState(this.game));
+        return;
+      case '穿戴':
+        this.closeMenuAndPush(new ScreenActorWearing(this.game));
+        return;
+    }
+  }
+
+  private closeMenuAndPush(screen: BaseScreen): void {
+    const mainScene = this.game.mainScene;
+    if (!mainScene) {
+      throw new Error('主场景不存在，无法打开三级菜单');
+    }
+    this.close();
+    mainScene.screenStack.push(screen);
   }
 
   private finishMenuAction(message: string): void {

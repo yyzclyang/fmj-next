@@ -7,7 +7,8 @@ import { drawMenuFrame } from '../ui-utils';
 import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
 import { ScreenActorState } from './screen-actor-state';
 import { ScreenActorWearing } from './screen-actor-wearing';
-import { ScreenMenuGoods } from './screen-menu-goods';
+import { ScreenGoodsList, ScreenGoodsListMode } from './screen-goods-list';
+import { ScreenMenuGoods, type GoodsMenuItem } from './screen-menu-goods';
 import { ScreenMenuProperties, type PropertyMenuItem } from './screen-menu-properties';
 import { ScreenMenuSystem } from './screen-menu-system';
 import { getPartyPlayers, ScreenSelectActor } from './screen-select-actor';
@@ -84,7 +85,7 @@ export class ScreenGameMainMenu extends BaseScreen {
       case '物品':
         this.screenStack.push(
           new ScreenMenuGoods(this.game, {
-            onConfirm: item => this.finishMenuAction(`确认物品菜单:${item}`),
+            onConfirm: item => this.openGoodsList(item),
             onCancel: () => this.closeSubMenu(),
           })
         );
@@ -121,21 +122,31 @@ export class ScreenGameMainMenu extends BaseScreen {
   private openPropertyScreen(item: PropertyMenuItem): void {
     switch (item) {
       case '状态':
-        this.closeMenuAndPush(new ScreenActorState(this.game));
+        this.openChildScreen(new ScreenActorState(this.game));
         return;
       case '穿戴':
-        this.closeMenuAndPush(new ScreenActorWearing(this.game));
+        this.openChildScreen(new ScreenActorWearing(this.game));
         return;
     }
   }
 
-  private closeMenuAndPush(screen: BaseScreen): void {
-    const mainScene = this.game.mainScene;
-    if (!mainScene) {
-      throw new Error('主场景不存在，无法打开三级菜单');
-    }
-    this.close();
-    mainScene.screenStack.push(screen);
+  private openGoodsList(item: GoodsMenuItem): void {
+    const list =
+      item === '使用'
+        ? this.game.bag.goodsList
+        : item === '装备'
+          ? this.game.bag.equipList
+          : this.game.bag.allGoodsList;
+    this.openChildScreen(
+      new ScreenGoodsList(this.game, list, ScreenGoodsListMode.Use, {
+        onConfirm: selected => console.log(`确认物品:${item}:${selected.goods.name}`),
+      })
+    );
+  }
+
+  private openChildScreen(screen: BaseScreen): void {
+    this.screenStack.clear();
+    this.screenStack.push(screen);
   }
 
   private finishMenuAction(message: string): void {

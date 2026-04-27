@@ -17,7 +17,7 @@ const STATE_TEXT_LEFT = 41;
 const STATE_START_Y = 4;
 const STATE_LINE_HEIGHT = 19;
 
-// 状态页是属性菜单的终点 screen，进入后不再保留上层菜单链。
+// 状态页挂在主菜单子栈里，退出后会回到一级主菜单。
 export class ScreenActorState extends BaseScreen {
   private readonly players: Player[];
   private currentPlayer = 0;

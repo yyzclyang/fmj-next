@@ -19,6 +19,22 @@ export class BuffMan {
     }
   }
 
+  delBuff(mask: number): void {
+    for (const index of maskToIndexes(mask)) {
+      const buff = this.buffs[index];
+      if (buff && buff.value > 0) buff.value -= 1;
+    }
+  }
+
+  clearBuff(mask: number): void {
+    for (const index of maskToIndexes(mask)) {
+      const buff = this.buffs[index];
+      if (!buff) continue;
+      buff.value = 0;
+      buff.round = 0;
+    }
+  }
+
   static fromRoundAndMask(round: number, mask: number): BuffMan {
     const man = new BuffMan();
     for (const index of maskToIndexes(mask)) {

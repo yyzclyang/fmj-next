@@ -1,4 +1,17 @@
+import type { Player } from '@/characters';
+import {
+  type BaseGoods,
+  GoodsDrama,
+  GoodsEquipment,
+  GoodsHiddenWeapon,
+  GoodsMedicine,
+  GoodsMedicineChg4Ever,
+  GoodsMedicineLife,
+  GoodsStimulant,
+  GoodsTudun,
+} from '@/goods';
 import type { Game } from '@/game/game';
+import { ResourceType } from '@/lib/resource-utils';
 import type { Surface } from '@/rendering/surface';
 import { TextRender } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
@@ -7,11 +20,15 @@ import { drawMenuFrame } from '../ui-utils';
 import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
 import { ScreenActorState } from './screen-actor-state';
 import { ScreenActorWearing } from './screen-actor-wearing';
-import { ScreenGoodsList, ScreenGoodsListMode } from './screen-goods-list';
+import { ScreenChangeEquipment } from './screen-change-equipment';
+import { ScreenDiscardGoods } from './screen-discard-goods';
+import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from './screen-goods-list';
 import { ScreenMenuGoods, type GoodsMenuItem } from './screen-menu-goods';
 import { ScreenMenuProperties, type PropertyMenuItem } from './screen-menu-properties';
 import { ScreenMenuSystem } from './screen-menu-system';
 import { getPartyPlayers, ScreenSelectActor } from './screen-select-actor';
+import { ScreenSelectGoodsActor } from './screen-select-goods-actor';
+import { ScreenTakeMedicine } from './screen-take-medicine';
 
 const IN_GAME_MENU_OPTIONS = ['属性', '魔法', '物品', '系统'] as const;
 const MONEY_FRAME_LEFT = 9;
@@ -131,17 +148,118 @@ export class ScreenGameMainMenu extends BaseScreen {
   }
 
   private openGoodsList(item: GoodsMenuItem): void {
-    const list =
-      item === '使用'
-        ? this.game.bag.goodsList
-        : item === '装备'
-          ? this.game.bag.equipList
-          : this.game.bag.allGoodsList;
     this.openChildScreen(
-      new ScreenGoodsList(this.game, list, ScreenGoodsListMode.Use, {
-        onConfirm: selected => console.log(`确认物品:${item}:${selected.goods.name}`),
+      new ScreenGoodsList(this.game, () => this.getGoodsMenuList(item), ScreenGoodsListMode.Use, {
+        onConfirm: selected => this.confirmGoodsItem(item, selected),
       })
     );
+  }
+
+  private getGoodsMenuList(item: GoodsMenuItem): ScreenGoodsListItem[] {
+    return item === '使用'
+      ? this.game.bag.goodsList
+      : item === '装备'
+        ? this.game.bag.equipList
+        : this.game.bag.allGoodsList;
+  }
+
+  private confirmGoodsItem(item: GoodsMenuItem, selected: ScreenGoodsListItem): void {
+    switch (item) {
+      case '使用':
+        this.useGoods(selected.goods);
+        return;
+      case '装备':
+        this.equipGoods(selected.goods);
+        return;
+      case '丢弃':
+        this.screenStack.push(new ScreenDiscardGoods(this.game, selected.goods));
+        return;
+    }
+  }
+
+  private useGoods(goods: BaseGoods): void {
+    if (goods instanceof GoodsHiddenWeapon || goods instanceof GoodsStimulant) {
+      this.showMenuMessage('战斗中才能使用!');
+      return;
+    }
+    if (goods instanceof GoodsTudun) {
+      this.useTudunGoods();
+      return;
+    }
+    if (goods instanceof GoodsDrama) {
+      this.useDramaGoods(goods);
+      return;
+    }
+    if (isMedicineGoods(goods)) {
+      this.screenStack.push(new ScreenTakeMedicine(this.game, goods));
+      return;
+    }
+    this.showMenuMessage('当前无法使用!');
+  }
+
+  private equipGoods(goods: BaseGoods): void {
+    if (!(goods instanceof GoodsEquipment)) throw new Error('物品菜单选择了非装备物品');
+    const players = getPartyPlayers(this.game).filter(player => goods.canPlayerUse(player.index));
+    if (players.length === 0) {
+      this.showMenuMessage('不能装备!');
+      return;
+    }
+    if (players.length === 1) {
+      this.openGoodsEquipmentScreen(players[0]!, goods);
+      return;
+    }
+    this.screenStack.push(
+      new ScreenSelectGoodsActor(this.game, players, {
+        onConfirm: player => this.confirmGoodsEquipmentActor(player, goods),
+      })
+    );
+  }
+
+  private confirmGoodsEquipmentActor(player: Player, goods: GoodsEquipment): void {
+    if (player.hasEquipment(goods.type, goods.index)) {
+      this.showMenuMessage('已装备!');
+      return;
+    }
+    const current = this.screenStack.current;
+    if (!(current instanceof ScreenSelectGoodsActor)) throw new Error('装备角色选择页不是当前 Screen');
+    this.screenStack.close(current);
+    this.screenStack.push(new ScreenChangeEquipment(this.game, player, goods));
+  }
+
+  private openGoodsEquipmentScreen(player: Player, goods: GoodsEquipment): void {
+    if (player.hasEquipment(goods.type, goods.index)) {
+      this.showMenuMessage('已装备!');
+      return;
+    }
+    this.screenStack.push(new ScreenChangeEquipment(this.game, player, goods));
+  }
+
+  private useDramaGoods(goods: GoodsDrama): void {
+    const gut = this.game.datLib.getRes(ResourceType.GUT, 255, goods.index);
+    if (!gut) {
+      this.showMenuMessage('当前无法使用!');
+      return;
+    }
+    const runtime = this.game.mainSceneRuntime;
+    if (!runtime) throw new Error('主场景运行时不存在，无法使用剧情物品');
+    this.close();
+    runtime.callChapter(255, goods.index);
+  }
+
+  private useTudunGoods(): void {
+    const runtime = this.game.mainSceneRuntime;
+    if (!runtime) throw new Error('主场景运行时不存在，无法使用土遁');
+    if (!runtime.triggerEvent(255)) {
+      this.showMenuMessage('当前无法使用!');
+      return;
+    }
+    this.close();
+  }
+
+  private showMenuMessage(text: string): void {
+    const mainScene = this.game.mainScene;
+    if (!mainScene) throw new Error('主场景不存在，无法显示菜单消息');
+    mainScene.showMessage(text, 1000);
   }
 
   private openChildScreen(screen: BaseScreen): void {
@@ -153,4 +271,8 @@ export class ScreenGameMainMenu extends BaseScreen {
     console.log(message);
     this.close();
   }
+}
+
+function isMedicineGoods(goods: BaseGoods): goods is GoodsMedicine | GoodsMedicineLife | GoodsMedicineChg4Ever {
+  return goods instanceof GoodsMedicine || goods instanceof GoodsMedicineLife || goods instanceof GoodsMedicineChg4Ever;
 }

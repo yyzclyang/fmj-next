@@ -74,7 +74,7 @@ export class ScreenActorState extends BaseScreen {
   }
 }
 
-function drawPlayerState(surface: Surface, player: Player, page: number, smallNumImage: ResImage | null): void {
+export function drawPlayerState(surface: Surface, player: Player, page: number, smallNumImage: ResImage | null): void {
   void page;
   let y = STATE_START_Y;
   surface.fillRect(37, y - 4, 1, STATE_LINE_HEIGHT * 10, COLOR_BLACK);

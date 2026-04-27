@@ -1,4 +1,4 @@
-import type { Player } from '@/characters';
+import { PLAYER_EQUIPMENT_TYPES, type Player } from '@/characters';
 import { GoodsEquipment } from '@/goods';
 import type { Game } from '@/game/game';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
@@ -8,11 +8,11 @@ import { BaseScreen } from '@/screens/base-screen';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
 import { drawMenuFrame, wrapTextBlock } from '../ui-utils';
+import { ScreenChangeEquipment } from './screen-change-equipment';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from './screen-goods-list';
 import { getPartyPlayers } from './screen-select-actor';
 
 const SLOT_NAMES = ['装饰', '装饰', '护腕', '脚蹬', '手持', '身穿', '肩披', '头戴'] as const;
-const SLOT_GOODS_TYPES = [6, 6, 5, 3, 7, 2, 4, 1] as const;
 const SLOT_POSITIONS = [
   { x: 80, y: 20 },
   { x: 60, y: 60 },
@@ -74,7 +74,7 @@ const CHUANDAI_BITMAP = [
   '..................##..',
 ] as const;
 
-// 穿戴页先展示角色装备状态，真正换装列表后续从这里继续接入。
+// 穿戴页展示装备槽位，确认后从同类型物品列表进入换装页。
 export class ScreenActorWearing extends BaseScreen {
   private readonly players: Player[];
   private actorIndex = 0;
@@ -182,16 +182,25 @@ export class ScreenActorWearing extends BaseScreen {
   private openEquipmentList(): void {
     const player = this.players[this.actorIndex];
     if (!player) return;
-    const goodsType = SLOT_GOODS_TYPES[this.currentItem];
-    const list = this.game.bag.equipList.filter(
+    this.screenStack.push(
+      new ScreenGoodsList(this.game, () => this.getEquipmentList(player), ScreenGoodsListMode.Use, {
+        onConfirm: item => this.openChangeEquipmentScreen(player, item.goods),
+      })
+    );
+  }
+
+  private getEquipmentList(player: Player): ScreenGoodsListItem[] {
+    const goodsType = PLAYER_EQUIPMENT_TYPES[this.currentItem];
+    return this.game.bag.equipList.filter(
       (item): item is ScreenGoodsListItem =>
         item.goods instanceof GoodsEquipment && item.goods.type === goodsType && item.goods.canPlayerUse(player.index)
     );
-    this.screenStack.push(
-      new ScreenGoodsList(this.game, list, ScreenGoodsListMode.Use, {
-        onConfirm: item => console.log(`确认更换装备:${player.name}:${item.goods.name}`),
-      })
-    );
+  }
+
+  private openChangeEquipmentScreen(player: Player, goods: ScreenGoodsListItem['goods']): void {
+    if (!(goods instanceof GoodsEquipment)) throw new Error('穿戴页选择了非装备物品');
+    this.screenStack.clear();
+    this.screenStack.push(new ScreenChangeEquipment(this.game, player, goods, this.currentItem));
   }
 }
 

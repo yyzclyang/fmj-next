@@ -170,7 +170,11 @@ export class MainSceneRuntime {
     this.scriptProcess.start();
   }
 
-  callChapter(type: number, index: number, parentProcess: ScriptProcess): void {
+  triggerEvent(eventId: number): boolean {
+    return this.scriptProcess?.triggerEvent(eventId) ?? false;
+  }
+
+  callChapter(type: number, index: number, parentProcess = this.scriptProcess): void {
     const childProcess = this.game.scriptVm.loadScript(type, index);
     childProcess.parent = parentProcess;
     this.scriptProcess = childProcess;

@@ -24,6 +24,8 @@ export interface ScreenGoodsListCallbacks {
   onConfirm(item: ScreenGoodsListItem, index: number): void;
 }
 
+export type ScreenGoodsListSource = readonly ScreenGoodsListItem[] | (() => readonly ScreenGoodsListItem[]);
+
 const LEFT = 10;
 const TOP = 10;
 const WIDTH = 300;
@@ -44,10 +46,11 @@ export class ScreenGoodsList extends BaseScreen {
   private firstDisplayItemIndex = 0;
   private currentItemIndex = 0;
   private descriptionLine = 0;
+  private currentGoodsKey = '';
 
   constructor(
     game: Game,
-    private readonly goodsList: readonly ScreenGoodsListItem[],
+    private readonly goodsListSource: ScreenGoodsListSource,
     private readonly mode: ScreenGoodsListMode,
     private readonly callbacks: ScreenGoodsListCallbacks,
     initialCursorIndex = 0
@@ -57,26 +60,21 @@ export class ScreenGoodsList extends BaseScreen {
   }
 
   override onEnter(): void {
-    if (this.goodsList.length === 0) {
-      this.currentItemIndex = 0;
-      return;
-    }
-    if (this.currentItemIndex >= this.goodsList.length) {
-      this.currentItemIndex = this.goodsList.length - 1;
-    }
-    if (this.currentItemIndex >= ITEM_NUMBER_PER_PAGE) {
-      this.firstDisplayItemIndex = this.currentItemIndex - ITEM_NUMBER_PER_PAGE + 1;
-    }
+    this.syncCursor(this.getGoodsList());
   }
 
   override update(delta: number): void {
     void delta;
-    if (this.goodsList.length === 0) this.close();
+    const list = this.getGoodsList();
+    this.syncCursor(list);
+    if (list.length === 0) this.close();
   }
 
   override draw(surface: Surface): void {
     drawGoodsListFrame(surface);
-    const item = this.goodsList[this.currentItemIndex];
+    const list = this.getGoodsList();
+    this.syncCursor(list);
+    const item = list[this.currentItemIndex];
     if (!item) return;
     this.drawInfo(surface, item);
     drawTriangleCursor(
@@ -84,7 +82,7 @@ export class ScreenGoodsList extends BaseScreen {
       CURSOR_LEFT,
       ITEM_TOP + ITEM_GAP * (this.currentItemIndex - this.firstDisplayItemIndex)
     );
-    this.drawItems(surface);
+    this.drawItems(surface, list);
     this.drawDescription(surface, item.goods);
   }
 
@@ -113,17 +111,18 @@ export class ScreenGoodsList extends BaseScreen {
 
   private drawInfo(surface: Surface, item: ScreenGoodsListItem): void {
     const goods = item.goods;
-    const countText = this.mode === ScreenGoodsListMode.Buy ? `金钱:${this.game.state.money}` : `数量:${item.count}`;
+    const count = this.mode === ScreenGoodsListMode.Buy ? item.count : this.game.getGoodsNum(goods.type, goods.index);
+    const countText = this.mode === ScreenGoodsListMode.Buy ? `金钱:${this.game.state.money}` : `数量:${count}`;
     const price = this.mode === ScreenGoodsListMode.Buy ? goods.buyPrice : goods.sellPrice;
     TextRender.drawText(surface, countText, INFO_LEFT, 20);
     TextRender.drawText(surface, `名称:${goods.name}`, INFO_LEFT, 38);
     TextRender.drawText(surface, `价格:${price}`, INFO_LEFT, 55);
   }
 
-  private drawItems(surface: Surface): void {
-    const end = Math.min(this.firstDisplayItemIndex + ITEM_NUMBER_PER_PAGE, this.goodsList.length);
+  private drawItems(surface: Surface, list: readonly ScreenGoodsListItem[]): void {
+    const end = Math.min(this.firstDisplayItemIndex + ITEM_NUMBER_PER_PAGE, list.length);
     for (let i = this.firstDisplayItemIndex; i < end; i += 1) {
-      const item = this.goodsList[i];
+      const item = list[i];
       if (!item) continue;
       item.goods.image?.draw(surface, 1, ITEM_LEFT, ITEM_TOP + ITEM_GAP * (i - this.firstDisplayItemIndex));
     }
@@ -138,7 +137,9 @@ export class ScreenGoodsList extends BaseScreen {
   }
 
   private showNextItem(): void {
-    if (this.currentItemIndex + 1 >= this.goodsList.length) return;
+    const list = this.getGoodsList();
+    this.syncCursor(list);
+    if (this.currentItemIndex + 1 >= list.length) return;
     this.currentItemIndex += 1;
     if (this.currentItemIndex >= this.firstDisplayItemIndex + ITEM_NUMBER_PER_PAGE) {
       this.firstDisplayItemIndex += 1;
@@ -147,6 +148,7 @@ export class ScreenGoodsList extends BaseScreen {
   }
 
   private showPreviousItem(): void {
+    this.syncCursor(this.getGoodsList());
     if (this.currentItemIndex <= 0) return;
     this.currentItemIndex -= 1;
     if (this.currentItemIndex < this.firstDisplayItemIndex) {
@@ -156,7 +158,9 @@ export class ScreenGoodsList extends BaseScreen {
   }
 
   private pageDescription(step: number): void {
-    const item = this.goodsList[this.currentItemIndex];
+    const list = this.getGoodsList();
+    this.syncCursor(list);
+    const item = list[this.currentItemIndex];
     if (!item) return;
     const lines = wrapTextBlock(`说明:${item.goods.description}`, DESC_WIDTH);
     const maxLine = Math.max(0, lines.length - DESC_LINES);
@@ -164,9 +168,39 @@ export class ScreenGoodsList extends BaseScreen {
   }
 
   private confirm(): void {
-    const item = this.goodsList[this.currentItemIndex];
+    const list = this.getGoodsList();
+    this.syncCursor(list);
+    const item = list[this.currentItemIndex];
     if (!item) return;
     this.callbacks.onConfirm(item, this.currentItemIndex);
+  }
+
+  private getGoodsList(): readonly ScreenGoodsListItem[] {
+    return typeof this.goodsListSource === 'function' ? this.goodsListSource() : this.goodsListSource;
+  }
+
+  private syncCursor(list: readonly ScreenGoodsListItem[]): void {
+    if (list.length === 0) {
+      this.currentItemIndex = 0;
+      this.firstDisplayItemIndex = 0;
+      this.descriptionLine = 0;
+      this.currentGoodsKey = '';
+      return;
+    }
+    if (this.currentItemIndex >= list.length) this.currentItemIndex = list.length - 1;
+    if (this.currentItemIndex < 0) this.currentItemIndex = 0;
+    const maxFirst = Math.max(0, list.length - ITEM_NUMBER_PER_PAGE);
+    if (this.firstDisplayItemIndex > maxFirst) this.firstDisplayItemIndex = maxFirst;
+    if (this.currentItemIndex < this.firstDisplayItemIndex) this.firstDisplayItemIndex = this.currentItemIndex;
+    if (this.currentItemIndex >= this.firstDisplayItemIndex + ITEM_NUMBER_PER_PAGE) {
+      this.firstDisplayItemIndex = this.currentItemIndex - ITEM_NUMBER_PER_PAGE + 1;
+    }
+    const item = list[this.currentItemIndex];
+    const key = item ? `${item.goods.type}:${item.goods.index}` : '';
+    if (key !== this.currentGoodsKey) {
+      this.currentGoodsKey = key;
+      this.descriptionLine = 0;
+    }
   }
 }
 

@@ -1,3 +1,4 @@
+import type { Player } from '@/characters';
 import type { ResSrs } from '@/lib/res-srs';
 import { BaseGoods, type BaseGoodsData } from './base-goods';
 
@@ -24,5 +25,13 @@ export class GoodsMedicine extends BaseGoods {
 
   override effectAll(): boolean {
     return (this.bitMask & 0x10) !== 0;
+  }
+
+  eat(player: Player): boolean {
+    if (!player.isAlive) return false;
+    player.hp = Math.min(player.maxHp, player.hp + this.hp);
+    player.mp = Math.min(player.maxMp, player.mp + this.mp);
+    player.debuff.clearBuff(this.bitMask);
+    return true;
   }
 }

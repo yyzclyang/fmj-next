@@ -10,7 +10,7 @@ export { Monster } from './monster';
 export type { CarryGoods, MonsterData } from './monster';
 export { Npc, mapCharacterState } from './npc';
 export type { NpcData } from './npc';
-export { Player, mapDirection } from './player';
+export { PLAYER_EQUIPMENT_TYPES, Player, mapDirection } from './player';
 export type { PlayerData } from './player';
 export { ResLevelUpChain } from './res-level-up-chain';
 export type { ResLevelUpChainData } from './res-level-up-chain';

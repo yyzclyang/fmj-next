@@ -1,3 +1,4 @@
+import type { Player } from '@/characters';
 import { BaseGoods, type BaseGoodsData } from './base-goods';
 
 export interface GoodsMedicineChg4EverData extends BaseGoodsData {
@@ -28,5 +29,23 @@ export class GoodsMedicineChg4Ever extends BaseGoods {
     this.lingli = data.lingli;
     this.speed = data.speed;
     this.luck = data.luck;
+  }
+
+  eat(player: Player): boolean {
+    player.totalMaxMp += this.mpMax;
+    player.totalMaxHp += this.hpMax;
+    player.totalDefend += this.defend;
+    player.totalAttack += this.attack;
+    player.totalLingli += this.lingli;
+    player.totalSpeed += this.speed;
+    player.totalLuck += this.luck;
+    player.maxMp = player.totalMaxMp;
+    player.maxHp = player.totalMaxHp;
+    player.defend = player.totalDefend;
+    player.attack = player.totalAttack;
+    player.lingli = player.totalLingli;
+    player.speed = player.totalSpeed;
+    player.luck = player.totalLuck;
+    return true;
   }
 }

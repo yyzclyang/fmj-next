@@ -8,7 +8,7 @@ import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
 const SYSTEM_ITEMS = ['读入进度', '存储进度', '游戏设置', '结束游戏'] as const;
 const LINE_GAP = 16;
 const TEXT_PADDING = 3;
-type SystemMenuItem = (typeof SYSTEM_ITEMS)[number];
+export type SystemMenuItem = (typeof SYSTEM_ITEMS)[number];
 
 export interface ScreenMenuSystemCallbacks {
   onConfirm(item: SystemMenuItem): void;

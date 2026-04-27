@@ -27,7 +27,8 @@ import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from '
 import { ScreenMagic } from './screen-magic';
 import { ScreenMenuGoods, type GoodsMenuItem } from './screen-menu-goods';
 import { ScreenMenuProperties, type PropertyMenuItem } from './screen-menu-properties';
-import { ScreenMenuSystem } from './screen-menu-system';
+import { ScreenMenuSystem, type SystemMenuItem } from './screen-menu-system';
+import { SaveLoadOperation, ScreenSaveLoadGame } from './screen-save-load-game';
 import { getPartyPlayers, ScreenSelectActor } from './screen-select-actor';
 import { ScreenSelectGoodsActor } from './screen-select-goods-actor';
 import { ScreenTakeMedicine } from './screen-take-medicine';
@@ -113,7 +114,7 @@ export class ScreenGameMainMenu extends BaseScreen {
       case '系统':
         this.screenStack.push(
           new ScreenMenuSystem(this.game, {
-            onConfirm: item => this.finishMenuAction(`确认系统菜单:${item}`),
+            onConfirm: item => this.openSystemScreen(item),
             onCancel: () => this.closeSubMenu(),
           })
         );
@@ -147,6 +148,21 @@ export class ScreenGameMainMenu extends BaseScreen {
         return;
       case '穿戴':
         this.openChildScreen(new ScreenActorWearing(this.game));
+        return;
+    }
+  }
+
+  private openSystemScreen(item: SystemMenuItem): void {
+    switch (item) {
+      case '读入进度':
+        this.openChildScreen(new ScreenSaveLoadGame(this.game, SaveLoadOperation.Load));
+        return;
+      case '存储进度':
+        this.openChildScreen(new ScreenSaveLoadGame(this.game, SaveLoadOperation.Save, () => this.close()));
+        return;
+      case '游戏设置':
+      case '结束游戏':
+        this.finishMenuAction(`确认系统菜单:${item}`);
         return;
     }
   }

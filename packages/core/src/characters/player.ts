@@ -8,6 +8,11 @@ import type { ResLevelUpChain } from './res-level-up-chain';
 
 export const PLAYER_EQUIPMENT_TYPES = [6, 6, 5, 3, 7, 2, 4, 1] as const;
 
+export interface PlayerMagicKey {
+  readonly type: number;
+  readonly index: number;
+}
+
 export interface PlayerData extends FightingCharacterData {
   readonly headImage: ResImage | null;
   readonly levelUpChain: ResLevelUpChain | null;
@@ -59,6 +64,15 @@ export class Player extends FightingCharacter {
 
   learnMagic(magic: BaseMagic): void {
     this.privateLearntMagics.push(magic);
+  }
+
+  getPrivateLearntMagicKeys(): PlayerMagicKey[] {
+    return this.privateLearntMagics.map(magic => ({ type: magic.type, index: magic.index }));
+  }
+
+  restorePrivateLearntMagics(magics: readonly BaseMagic[]): void {
+    this.privateLearntMagics.length = 0;
+    this.privateLearntMagics.push(...magics);
   }
 
   setLevel(level: number): void {

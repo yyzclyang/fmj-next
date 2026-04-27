@@ -7,6 +7,7 @@ import { COLOR_WHITE } from '@/rendering/color';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
 import { BaseScreen } from '../base-screen';
+import { SaveLoadOperation, ScreenSaveLoadGame } from '../main-game/menu/screen-save-load-game';
 
 // 菜单底图来自 PIC 2:14，对应原版启动菜单画面。
 const MENU_PIC_TYPE = 2;
@@ -81,6 +82,8 @@ export class ScreenMenu extends BaseScreen {
         this.game.startNewGame();
         return;
       case 1:
+        // 开始菜单读档和游戏内系统菜单共用同一套存档页。
+        this.screenStack.push(new ScreenSaveLoadGame(this.game, SaveLoadOperation.Load));
         return;
       default:
         return;

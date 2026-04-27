@@ -1,6 +1,7 @@
 import { DatLib } from '@/lib/dat-lib';
-import { BaseGoods } from '@/goods';
+import { BaseGoods, GoodsEquipment } from '@/goods';
 import { Player } from '@/characters';
+import type { BuffState } from '@/characters';
 import { GoodsBag } from '@/goods/goods-bag';
 import { Surface } from '@/rendering/surface';
 import { type FrameBuffer, FRAME_HEIGHT, FRAME_WIDTH } from '@/rendering/frame-buffer';
@@ -21,6 +22,18 @@ import {
   SCRIPT_VARIABLE_COUNT,
   type GameState,
 } from './game-state';
+import {
+  createSavePayload,
+  decodeSavePayload,
+  encodeSavePayload,
+  getSaveSlotKey,
+  SAVE_SLOT_COUNT,
+  toLoadedGameState,
+  type SaveGamePayload,
+  type SavePlayerState,
+  type SaveResourceRef,
+  type SaveSlotSummary,
+} from './save-game';
 
 const STARTUP_CHAPTER_TYPE = 1;
 const STARTUP_CHAPTER_INDEX = 1;
@@ -39,7 +52,6 @@ export class Game {
 
   constructor(host: EngineHost, datLibBuffer: Uint8Array) {
     this.host = host;
-    void this.host;
     this.datLib = new DatLib(datLibBuffer);
   }
 
@@ -53,6 +65,24 @@ export class Game {
 
   getStateSnapshot(): GameState {
     return cloneGameState(this.state);
+  }
+
+  getSaveSlotSummary(slot: number): SaveSlotSummary | null {
+    return this.readSavePayload(slot)?.summary ?? null;
+  }
+
+  saveSlot(slot: number): SaveSlotSummary {
+    this.assertSaveSlot(slot);
+    const payload = createSavePayload(this.state, slot);
+    this.host.saveStore.write(getSaveSlotKey(slot), encodeSavePayload(payload));
+    return payload.summary;
+  }
+
+  loadSlot(slot: number): boolean {
+    const payload = this.readSavePayload(slot);
+    if (!payload) return false;
+    this.applyLoadedState(toLoadedGameState(payload), payload.state.players ?? []);
+    return true;
   }
 
   start(): void {
@@ -82,7 +112,7 @@ export class Game {
     this.mainSceneRuntime?.startChapter(STARTUP_CHAPTER_TYPE, STARTUP_CHAPTER_INDEX);
   }
 
-  applyLoadedState(state: GameState): void {
+  applyLoadedState(state: GameState, playerSnapshots: readonly SavePlayerState[] = []): void {
     this.boxEventMap.clear();
     this.pendingBoxEventKey = null;
     this.state = {
@@ -97,6 +127,7 @@ export class Game {
       goods: state.goods.map(g => ({ ...g })),
     };
     this.ensureScriptVariableSize();
+    this.restorePlayerSnapshots(playerSnapshots);
     this.replaceWithMainScene();
     this.mainSceneRuntime?.startChapter(this.state.scriptType, this.state.scriptIndex);
   }
@@ -260,5 +291,82 @@ export class Game {
 
   private isValidVariableIndex(index: number): boolean {
     return index >= 0 && index < SCRIPT_VARIABLE_COUNT;
+  }
+
+  private readSavePayload(slot: number): SaveGamePayload | null {
+    this.assertSaveSlot(slot);
+    const data = this.host.saveStore.read(getSaveSlotKey(slot));
+    return data ? decodeSavePayload(data) : null;
+  }
+
+  private assertSaveSlot(slot: number): void {
+    if (!Number.isInteger(slot) || slot < 0 || slot >= SAVE_SLOT_COUNT) {
+      throw new Error(`存档槽位非法: ${slot}`);
+    }
+  }
+
+  private restorePlayerSnapshots(snapshots: readonly SavePlayerState[]): void {
+    for (const snapshot of snapshots) {
+      const player = this.getPlayer(snapshot.index);
+      if (!player) throw new Error(`读档角色资源不存在: ${snapshot.index}`);
+      this.restorePlayerSnapshot(player, snapshot);
+    }
+  }
+
+  private restorePlayerSnapshot(player: Player, snapshot: SavePlayerState): void {
+    player.level = snapshot.level;
+    player.learntMagicCount = snapshot.learntMagicCount;
+    if (player.magicChain) player.magicChain.learnNum = snapshot.magicChainLearnNum;
+    player.maxHp = snapshot.maxHp;
+    player.hp = snapshot.hp;
+    player.maxMp = snapshot.maxMp;
+    player.mp = snapshot.mp;
+    player.attack = snapshot.attack;
+    player.defend = snapshot.defend;
+    player.speed = snapshot.speed;
+    player.lingli = snapshot.lingli;
+    player.luck = snapshot.luck;
+    player.currentExp = snapshot.currentExp;
+    player.totalMaxHp = snapshot.totalMaxHp;
+    player.totalMaxMp = snapshot.totalMaxMp;
+    player.totalAttack = snapshot.totalAttack;
+    player.totalDefend = snapshot.totalDefend;
+    player.totalSpeed = snapshot.totalSpeed;
+    player.totalLingli = snapshot.totalLingli;
+    player.totalLuck = snapshot.totalLuck;
+    this.restorePlayerEquipment(player, snapshot.equipment);
+    player.restorePrivateLearntMagics(snapshot.privateMagics.map(ref => this.getSaveMagic(ref)));
+    restoreBuffs(player.buff.buffs, snapshot.buff);
+    restoreBuffs(player.debuff.buffs, snapshot.debuff);
+    restoreBuffs(player.atbuff.buffs, snapshot.atbuff);
+  }
+
+  private restorePlayerEquipment(player: Player, equipmentRefs: readonly (SaveResourceRef | null)[]): void {
+    for (let i = 0; i < player.equipment.length; i += 1) {
+      const ref = equipmentRefs[i] ?? null;
+      player.equipment[i] = ref ? this.getSaveEquipment(ref) : null;
+    }
+  }
+
+  private getSaveEquipment(ref: SaveResourceRef): GoodsEquipment {
+    const goods = this.datLib.getEquipment(ref.type, ref.index);
+    if (!goods) throw new Error(`读档装备资源不存在: GRS ${ref.type}-${ref.index}`);
+    return goods;
+  }
+
+  private getSaveMagic(ref: SaveResourceRef) {
+    const magic = this.datLib.getMagic(ref.type, ref.index);
+    if (!magic) throw new Error(`读档魔法资源不存在: MRS ${ref.type}-${ref.index}`);
+    return magic;
+  }
+}
+
+function restoreBuffs(target: BuffState[], source: readonly BuffState[]): void {
+  for (let i = 0; i < target.length; i += 1) {
+    const buff = target[i];
+    const saved = source[i];
+    if (!buff) continue;
+    buff.value = saved?.value ?? 0;
+    buff.round = saved?.round ?? 0;
   }
 }

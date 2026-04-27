@@ -76,6 +76,18 @@ const TIP_TEXT_TOP_PADDING = 2;
 const TIP_LINE_GAP = 16;
 const TIP_MAX_LINES = 4;
 const TIP_DURATION = 1000;
+const IN_GAME_MENU_OPTIONS = ['属性', '魔法', '物品', '系统'] as const;
+const IN_GAME_MONEY_FRAME_LEFT = 9;
+const IN_GAME_MONEY_FRAME_TOP = 3;
+const IN_GAME_MONEY_FRAME_WIDTH = 93;
+const IN_GAME_MONEY_FRAME_HEIGHT = 22;
+const IN_GAME_MENU_LEFT = 9;
+const IN_GAME_MENU_TOP = 24;
+const IN_GAME_MENU_WIDTH = 38;
+const IN_GAME_MENU_HEIGHT = 70;
+const IN_GAME_MENU_TEXT_LEFT = 12;
+const IN_GAME_MENU_ITEM_TOP = 27;
+const IN_GAME_MENU_LINE_GAP = 16;
 const WALKING_STEP_FRAMES = [0, 1, 2, 1] as const;
 
 // 主场景屏幕层只负责 UI 状态、绘制和输入分发。
@@ -171,7 +183,7 @@ export class ScreenMainGame extends BaseScreen {
         return;
       case KeyCode.Cancel:
         if (this.runtime.canOpenInGameMenu) {
-          this.screenStack.push(new InGameMenuPlaceholderScreen(this.game));
+          this.screenStack.push(new InGameMenuScreen(this.game));
         }
         return;
     }
@@ -502,27 +514,55 @@ export class ScreenMainGame extends BaseScreen {
   }
 }
 
-class InGameMenuPlaceholderScreen extends BaseScreen {
+class InGameMenuScreen extends BaseScreen {
+  private currentSelection = 0;
+
   constructor(game: Game) {
     super(game);
   }
 
   override draw(surface: Surface): void {
-    const left = 42;
-    const top = 28;
-    const width = 96;
-    const height = 54;
-    surface.fillRect(left, top, width, height, COLOR_BLACK);
-    surface.fillRect(left + 1, top + 1, width - 2, height - 2, COLOR_WHITE);
-    TextRender.drawText(surface, '游戏菜单', left + 8, top + 8);
-    TextRender.drawSelText(surface, '返回', left + 8, top + 28);
+    drawMenuFrame(
+      surface,
+      IN_GAME_MONEY_FRAME_LEFT,
+      IN_GAME_MONEY_FRAME_TOP,
+      IN_GAME_MONEY_FRAME_WIDTH,
+      IN_GAME_MONEY_FRAME_HEIGHT
+    );
+    TextRender.drawText(surface, `金钱:${this.game.state.money}`, IN_GAME_MONEY_FRAME_LEFT + 3, IN_GAME_MONEY_FRAME_TOP + 3);
+    drawMenuFrame(surface, IN_GAME_MENU_LEFT, IN_GAME_MENU_TOP, IN_GAME_MENU_WIDTH, IN_GAME_MENU_HEIGHT);
+    for (let i = 0; i < IN_GAME_MENU_OPTIONS.length; i += 1) {
+      const top = IN_GAME_MENU_ITEM_TOP + i * IN_GAME_MENU_LINE_GAP;
+      const draw = i === this.currentSelection ? TextRender.drawSelText : TextRender.drawText;
+      draw(surface, IN_GAME_MENU_OPTIONS[i] ?? '', IN_GAME_MENU_TEXT_LEFT, top);
+    }
   }
 
   override onKey(key: KeyCode): boolean | undefined {
-    if (key === KeyCode.Cancel || key === KeyCode.Enter) {
-      this.close();
+    switch (key) {
+      case KeyCode.Up:
+        this.moveSelection(-1);
+        return;
+      case KeyCode.Down:
+        this.moveSelection(1);
+        return;
+      case KeyCode.Enter:
+        this.confirmSelection();
+        return;
+      case KeyCode.Cancel:
+        this.close();
+        return;
     }
-    return undefined;
+  }
+
+  private moveSelection(step: number): void {
+    const count = IN_GAME_MENU_OPTIONS.length;
+    this.currentSelection = (this.currentSelection + step + count) % count;
+  }
+
+  private confirmSelection(): void {
+    const option = IN_GAME_MENU_OPTIONS[this.currentSelection];
+    console.log(`确认游戏菜单:${option}`);
   }
 }
 
@@ -638,6 +678,14 @@ function drawTipFrame(surface: Surface, left: number, top: number, height: numbe
   surface.fillRect(left + 1, top - 1, TIP_FRAME_WIDTH - 3, height - 3, COLOR_WHITE);
   surface.fillRect(left + TIP_FRAME_WIDTH - 2, top - 2, 2, 3, COLOR_WHITE);
   surface.fillRect(left, top + height - 2, 4, 2, COLOR_WHITE);
+}
+
+function drawMenuFrame(surface: Surface, left: number, top: number, width: number, height: number): void {
+  surface.fillRect(left, top, width, height, COLOR_WHITE);
+  surface.fillRect(left + 1, top + 1, width - 2, 1, COLOR_BLACK);
+  surface.fillRect(left + 1, top + height - 2, width - 2, 1, COLOR_BLACK);
+  surface.fillRect(left + 1, top + 1, 1, height - 2, COLOR_BLACK);
+  surface.fillRect(left + width - 2, top + 1, 1, height - 2, COLOR_BLACK);
 }
 
 function getTextWidth(text: string): number {

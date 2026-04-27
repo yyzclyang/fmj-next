@@ -21,7 +21,8 @@ export interface ScreenGoodsListItem {
 }
 
 export interface ScreenGoodsListCallbacks {
-  onConfirm(item: ScreenGoodsListItem, index: number): void;
+  onConfirm(item: ScreenGoodsListItem, index: number, screen: ScreenGoodsList): void;
+  onCancel?(): void;
 }
 
 export type ScreenGoodsListSource = readonly ScreenGoodsListItem[] | (() => readonly ScreenGoodsListItem[]);
@@ -67,7 +68,7 @@ export class ScreenGoodsList extends BaseScreen {
     void delta;
     const list = this.getGoodsList();
     this.syncCursor(list);
-    if (list.length === 0) this.close();
+    if (list.length === 0) this.cancel();
   }
 
   override draw(surface: Surface): void {
@@ -104,7 +105,7 @@ export class ScreenGoodsList extends BaseScreen {
         this.confirm();
         return;
       case KeyCode.Cancel:
-        this.close();
+        this.cancel();
         return;
     }
   }
@@ -172,7 +173,12 @@ export class ScreenGoodsList extends BaseScreen {
     this.syncCursor(list);
     const item = list[this.currentItemIndex];
     if (!item) return;
-    this.callbacks.onConfirm(item, this.currentItemIndex);
+    this.callbacks.onConfirm(item, this.currentItemIndex, this);
+  }
+
+  private cancel(): void {
+    this.close();
+    this.callbacks.onCancel?.();
   }
 
   private getGoodsList(): readonly ScreenGoodsListItem[] {

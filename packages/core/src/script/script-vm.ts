@@ -1,6 +1,7 @@
 import type { Game } from '@/game/game';
 import { ResGut } from '@/lib/res-gut';
 import { ResourceType, readGbkString, readUint16, readUint32 } from '@/lib/resource-utils';
+import { createScriptBuyGoodsScreen, createScriptSaleGoodsScreen } from '@/screens/main-game/script';
 import { KeyCode } from '@/shared/key-code';
 import { ScriptProcess } from './script-process';
 
@@ -196,7 +197,7 @@ export class ScriptVm {
       case COMMAND.CLREVENT:
         return this.cmdClearEvent(code, start);
       case COMMAND.BUY:
-        return this.makeNoopCommand(getCStringLength(code, start));
+        return this.cmdBuy(code, start);
       case COMMAND.FACETOFACE:
         return this.cmdFaceToFace(code, start);
       case COMMAND.MOVIE:
@@ -229,7 +230,7 @@ export class ScriptVm {
       case COMMAND.LEARNMAGIC:
         return this.cmdLearnMagic(code, start);
       case COMMAND.SALE:
-        return this.makeNoopCommand(0);
+        return this.cmdSale();
       case COMMAND.NPCMOVEMOD:
         return this.cmdNpcMoveMode(code, start);
       case COMMAND.MESSAGE:
@@ -552,6 +553,39 @@ export class ScriptVm {
     };
   }
 
+  private cmdBuy(code: Uint8Array, start: number): CommandBuilder {
+    const len = getCStringLength(code, start);
+    const goodsKeys: Array<{ type: number; index: number }> = [];
+
+    // BUY 参数是以 index=0 结束的 [index,type] 列表，Kotlin 也是按这个顺序解析。
+    for (let i = 0; i < len - 1; i += 2) {
+      const index = code[start + i] ?? 0;
+      if (index === 0) break;
+      const type = code[start + i + 1] ?? 0;
+      goodsKeys.push({ type, index });
+    }
+
+    return {
+      len,
+      execute: process => {
+        const scene = this.game.mainScene;
+        if (!scene) throw new Error('主场景不存在，无法打开买入菜单');
+        const items = [];
+        for (const { type, index } of goodsKeys) {
+          const goods = this.game.datLib.getGoods(type, index);
+          if (!goods) throw new Error(`BUY 指令引用了不存在的物品 type=${type}, index=${index}`);
+          items.push({ goods, count: this.game.getGoodsNum(type, index) });
+        }
+        process.pause();
+        scene.screenStack.push(
+          createScriptBuyGoodsScreen(this.game, items, () => {
+            process.start();
+          })
+        );
+      },
+    };
+  }
+
   private cmdFaceToFace(code: Uint8Array, start: number): CommandBuilder {
     const sourceId = readUint16(code, start);
     const targetId = readUint16(code, start + 2);
@@ -691,6 +725,22 @@ export class ScriptVm {
         if (!player || !magic) return;
         player.learnMagic(magic);
         this.game.mainScene?.showTip(`${player.name}学会:${magic.magicName}`);
+      },
+    };
+  }
+
+  private cmdSale(): CommandBuilder {
+    return {
+      len: 0,
+      execute: process => {
+        const scene = this.game.mainScene;
+        if (!scene) throw new Error('主场景不存在，无法打开卖出菜单');
+        process.pause();
+        scene.screenStack.push(
+          createScriptSaleGoodsScreen(this.game, () => {
+            process.start();
+          })
+        );
       },
     };
   }

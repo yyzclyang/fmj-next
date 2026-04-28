@@ -46,14 +46,15 @@ const YES_TEXT_LEFT = 45;
 const NO_TEXT_LEFT = 93;
 const OPTION_TEXT_TOP = 53;
 
-// 存读档页先接轻量 GameState 存档，完整脚本/NPC 状态后续补齐。
+// 存读档页只负责槽位交互，实际持久化边界由 Game 统一校验。
 export class ScreenSaveLoadGame extends BaseScreen {
   private selectedIndex = 0;
 
   constructor(
     game: Game,
     private readonly operation: SaveLoadOperation,
-    private readonly onComplete?: () => void
+    private readonly onComplete?: () => void,
+    private readonly onCancel?: () => void
   ) {
     super(game);
   }
@@ -77,6 +78,7 @@ export class ScreenSaveLoadGame extends BaseScreen {
         return;
       case KeyCode.Cancel:
         this.close();
+        this.onCancel?.();
         return;
     }
   }
@@ -117,6 +119,7 @@ export class ScreenSaveLoadGame extends BaseScreen {
 
   private saveSelectedSlot(): void {
     this.game.saveSlot(this.selectedIndex);
+    this.close();
     this.onComplete?.();
     this.showMessage('已存档');
     console.log(`保存进度:${this.selectedIndex + 1}`);

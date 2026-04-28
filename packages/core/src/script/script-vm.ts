@@ -1,6 +1,7 @@
 import type { Game } from '@/game/game';
 import { ResGut } from '@/lib/res-gut';
 import { ResourceType, readGbkString, readUint16, readUint32 } from '@/lib/resource-utils';
+import { SaveLoadOperation, ScreenSaveLoadGame } from '@/screens/main-game/menu/screen-save-load-game';
 import { createScriptBuyGoodsScreen, createScriptSaleGoodsScreen } from '@/screens/main-game/script';
 import { KeyCode } from '@/shared/key-code';
 import { ScriptProcess } from './script-process';
@@ -285,11 +286,13 @@ export class ScriptVm {
       case COMMAND.TIMEMSG:
         return this.cmdTimedMessage(code, start);
       case COMMAND.DISABLESAVE:
+        return this.cmdSetSaveDisabled(true);
       case COMMAND.ENABLESAVE:
+        return this.cmdSetSaveDisabled(false);
       case COMMAND.GAMESAVE:
-        return this.makeNoopCommand(0);
+        return this.cmdGameSave();
       case COMMAND.SETEVENTTIMER:
-        return this.makeNoopCommand(4);
+        return this.cmdSetEventTimer(code, start);
       case COMMAND.ENABLESHOWPOS:
       case COMMAND.DISABLESHOWPOS:
         return this.makeNoopCommand(0);
@@ -821,6 +824,55 @@ export class ScriptVm {
         scene.showDialogue(text, () => {
           process.start();
         });
+      },
+    };
+  }
+
+  private cmdSetSaveDisabled(disabled: boolean): CommandBuilder {
+    return {
+      len: 0,
+      execute: () => {
+        this.game.setSaveDisabled(disabled);
+      },
+    };
+  }
+
+  private cmdGameSave(): CommandBuilder {
+    return {
+      len: 0,
+      execute: process => {
+        const scene = this.game.mainScene;
+        if (!scene) throw new Error('主场景不存在，无法打开脚本存档页');
+        if (this.game.state.disableSave) {
+          scene.showMessage('当前不能存档');
+          return;
+        }
+        if (process.parent) {
+          scene.showMessage('副本中不能存档');
+          return;
+        }
+        // 脚本存档点会先暂停当前指令，存档快照记录的是下一条指令的位置。
+        process.pauseForSave();
+        scene.screenStack.push(
+          new ScreenSaveLoadGame(
+            this.game,
+            SaveLoadOperation.Save,
+            () => process.start(),
+            () => process.start()
+          )
+        );
+      },
+    };
+  }
+
+  private cmdSetEventTimer(code: Uint8Array, start: number): CommandBuilder {
+    const eventId = readUint16(code, start);
+    const timer = readUint16(code, start + 2);
+
+    return {
+      len: 4,
+      execute: process => {
+        process.setTimer(timer, eventId);
       },
     };
   }

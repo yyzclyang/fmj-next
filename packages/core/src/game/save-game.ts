@@ -4,6 +4,7 @@ import {
   type GameState,
 } from './game-state';
 import type { BuffState, Player } from '@/characters';
+import type { MainSceneRuntimeSnapshot } from '@/screens/main-game/runtime';
 
 export const SAVE_SLOT_COUNT = 5;
 
@@ -27,7 +28,7 @@ export interface SaveGamePayload {
   state: SaveGameState;
 }
 
-interface SaveGameState {
+export interface SaveGameState {
   mapType: number;
   mapIndex: number;
   mapScreenX: number;
@@ -45,6 +46,7 @@ interface SaveGameState {
   money: number;
   goods: GameGoodsState[];
   sceneName: string;
+  mainScene: MainSceneRuntimeSnapshot | null;
 }
 
 export interface SaveResourceRef {
@@ -85,7 +87,11 @@ export function getSaveSlotKey(slot: number): string {
   return `${SAVE_KEY_PREFIX}${slot}`;
 }
 
-export function createSavePayload(state: GameState, slot: number): SaveGamePayload {
+export function createSavePayload(
+  state: GameState,
+  slot: number,
+  mainScene: MainSceneRuntimeSnapshot | null
+): SaveGamePayload {
   return {
     version: SAVE_VERSION,
     summary: {
@@ -114,6 +120,7 @@ export function createSavePayload(state: GameState, slot: number): SaveGamePaylo
       money: state.money,
       goods: state.goods.map(goods => ({ ...goods })),
       sceneName: state.sceneName,
+      mainScene,
     },
   };
 }

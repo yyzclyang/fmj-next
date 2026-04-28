@@ -5,7 +5,7 @@ import { ResMap } from '@/lib/res-map';
 import { ResSrs } from '@/lib/res-srs';
 import { ResourceType } from '@/lib/resource-utils';
 import type { ScreenOverlay } from '@/screens/screen-overlay';
-import type { ScriptOperation, ScriptProcess } from '@/script/script-process';
+import type { ScriptOperation, ScriptProcess, ScriptProcessSnapshot } from '@/script/script-process';
 import { MAP_VIEW_TILE_HEIGHT, MAP_VIEW_TILE_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
 import { clamp } from '@/shared/math';
@@ -26,6 +26,29 @@ export interface SceneObject {
   delay: number;
   stateElapsed: number;
   pauseRemaining: number;
+}
+
+export interface SceneObjectSnapshot {
+  id: number;
+  kind: SceneObjectKind;
+  x: number;
+  y: number;
+  resId: number;
+  direction: Facing;
+  step: number;
+  state: CharacterState;
+  delay: number;
+  stateElapsed: number;
+  pauseRemaining: number;
+}
+
+export interface MainSceneRuntimeSnapshot {
+  scriptProcess: ScriptProcessSnapshot | null;
+  sceneObjects: SceneObjectSnapshot[];
+  hasPlayer: boolean;
+  playerActorId: number;
+  playerFacing: Facing;
+  playerStep: number;
 }
 
 const PLAYER_SCREEN_X = 9;
@@ -125,14 +148,49 @@ export class MainSceneRuntime {
     return this.canControlPlayer();
   }
 
+  getSaveBlockedMessage(): string | null {
+    if (this.scriptProcess?.parent) return '副本中不能存档';
+    if (this.scriptProcess?.running || this.scriptProcess?.hasOperation) return '当前不能存档';
+    return null;
+  }
+
+  createSnapshot(): MainSceneRuntimeSnapshot {
+    const blockedMessage = this.getSaveBlockedMessage();
+    if (blockedMessage) throw new Error(blockedMessage);
+    return {
+      scriptProcess: this.scriptProcess?.createSnapshot() ?? null,
+      sceneObjects: [...this.sceneObjectsValue.values()].map(obj => this.createSceneObjectSnapshot(obj)),
+      hasPlayer: this.hasPlayerValue,
+      playerActorId: this.playerActorIdValue,
+      playerFacing: this.facingValue,
+      playerStep: this.playerStepValue,
+    };
+  }
+
+  restoreSnapshot(snapshot: MainSceneRuntimeSnapshot): void {
+    this.sceneObjectsValue.clear();
+    for (const obj of snapshot.sceneObjects) {
+      this.sceneObjectsValue.set(obj.id, this.restoreSceneObject(obj));
+    }
+    this.restoreVisiblePlayer(snapshot);
+    this.scriptProcess = null;
+    if (snapshot.scriptProcess) {
+      this.scriptProcess = this.game.scriptVm.loadScript(this.game.state.scriptType, this.game.state.scriptIndex);
+      this.scriptProcess.restoreSnapshot(snapshot.scriptProcess);
+    }
+  }
+
   update(delta = 0): void {
-    if (this.scriptProcess?.busy) {
-      this.scriptProcess.step(delta);
+    const process = this.scriptProcess;
+    if (process?.busy) {
+      process.step(delta);
+      process.timerStep(delta);
       return;
     }
 
     // Kotlin 版只在脚本空闲时推进 NPC 自走，避免剧情指令和巡逻同时改位置。
     this.updateSceneObjects(delta);
+    process?.timerStep(delta);
   }
 
   move(facing: Facing): void {
@@ -759,6 +817,60 @@ export class MainSceneRuntime {
       stateElapsed: 0,
       pauseRemaining: data.delay * 100,
     };
+  }
+
+  private createSceneObjectSnapshot(obj: SceneObject): SceneObjectSnapshot {
+    return {
+      id: obj.id,
+      kind: obj.kind,
+      x: obj.x,
+      y: obj.y,
+      resId: obj.resId,
+      direction: obj.direction,
+      step: obj.step,
+      state: obj.state,
+      delay: obj.delay,
+      stateElapsed: obj.stateElapsed,
+      pauseRemaining: obj.pauseRemaining,
+    };
+  }
+
+  private restoreSceneObject(snapshot: SceneObjectSnapshot): SceneObject {
+    const resType = snapshot.kind === 'npc' ? 2 : 4;
+    const res = this.game.datLib.getRes(ResourceType.ARS, resType, snapshot.resId);
+    let walkingSprite: WalkingSprite | null = null;
+    if (snapshot.kind === 'npc') {
+      if (!(res instanceof Npc)) throw new Error(`读档 NPC 资源不存在: ARS 2-${snapshot.resId}`);
+      walkingSprite = res.walkingSprite;
+    } else {
+      if (!(res instanceof SceneObj)) throw new Error(`读档场景物件资源不存在: ARS 4-${snapshot.resId}`);
+      walkingSprite = res.walkingSprite;
+    }
+    return {
+      ...snapshot,
+      walkingSprite,
+    };
+  }
+
+  private restoreVisiblePlayer(snapshot: MainSceneRuntimeSnapshot): void {
+    if (!snapshot.hasPlayer) {
+      this.hasPlayerValue = false;
+      this.playerWalkingSpriteValue = null;
+      this.playerActorIdValue = 0;
+      this.playerStepValue = 0;
+      return;
+    }
+
+    const actorId = snapshot.playerActorId || this.game.state.controlActorId;
+    const player = this.game.getPlayer(actorId);
+    if (!player) throw new Error(`读档控制角色资源不存在: ${actorId}`);
+    this.hasPlayerValue = true;
+    this.playerActorIdValue = actorId;
+    this.playerWalkingSpriteValue = player.walkingSprite;
+    this.facingValue = snapshot.playerFacing;
+    this.playerStepValue = snapshot.playerStep;
+    this.setVisiblePlayerMapPosition(this.game.state.playerMapX, this.game.state.playerMapY);
+    this.syncVisiblePlayer();
   }
 
   private isActorVisible(id: number): boolean {

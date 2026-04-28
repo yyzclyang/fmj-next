@@ -157,9 +157,15 @@ export class ScreenGameMainMenu extends BaseScreen {
       case '读入进度':
         this.openChildScreen(new ScreenSaveLoadGame(this.game, SaveLoadOperation.Load));
         return;
-      case '存储进度':
+      case '存储进度': {
+        const blockedMessage = this.game.getSaveBlockedMessage();
+        if (blockedMessage) {
+          this.showMenuMessage(blockedMessage);
+          return;
+        }
         this.openChildScreen(new ScreenSaveLoadGame(this.game, SaveLoadOperation.Save, () => this.close()));
         return;
+      }
       case '游戏设置':
       case '结束游戏':
         this.finishMenuAction(`确认系统菜单:${item}`);

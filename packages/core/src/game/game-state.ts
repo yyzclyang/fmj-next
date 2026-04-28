@@ -29,6 +29,7 @@ export interface GameState {
   money: number;
   goods: GameGoodsState[];
   sceneName: string;
+  disableSave: boolean;
 }
 
 export function createInitialGameState(): GameState {
@@ -50,6 +51,7 @@ export function createInitialGameState(): GameState {
     money: 0,
     goods: [],
     sceneName: '',
+    disableSave: false,
   };
 }
 

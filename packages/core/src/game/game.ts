@@ -6,7 +6,7 @@ import { GoodsBag } from '@/goods/goods-bag';
 import { Surface } from '@/rendering/surface';
 import { type FrameBuffer, FRAME_HEIGHT, FRAME_WIDTH } from '@/rendering/frame-buffer';
 import type { EngineHost } from '@/runtime/engine-host';
-import { MainSceneRuntime } from '@/screens/main-game/runtime';
+import { MainSceneRuntime, type MainSceneRuntimeSnapshot } from '@/screens/main-game/runtime';
 import { ScriptVm } from '@/script/script-vm';
 import { KeyCode } from '@/shared/key-code';
 import { ScreenMainGame } from '@/screens/main-game/screen';
@@ -73,7 +73,10 @@ export class Game {
 
   saveSlot(slot: number): SaveSlotSummary {
     this.assertSaveSlot(slot);
-    const payload = createSavePayload(this.state, slot);
+    this.assertCanSaveGame();
+    const runtimeSnapshot = this.mainSceneRuntime?.createSnapshot() ?? null;
+    if (!runtimeSnapshot) throw new Error('主场景不存在，无法存档');
+    const payload = createSavePayload(this.state, slot, runtimeSnapshot);
     this.host.saveStore.write(getSaveSlotKey(slot), encodeSavePayload(payload));
     return payload.summary;
   }
@@ -81,7 +84,7 @@ export class Game {
   loadSlot(slot: number): boolean {
     const payload = this.readSavePayload(slot);
     if (!payload) return false;
-    this.applyLoadedState(toLoadedGameState(payload), payload.state.players ?? []);
+    this.applyLoadedState(toLoadedGameState(payload), payload.state.players ?? [], payload.state.mainScene ?? null);
     return true;
   }
 
@@ -112,7 +115,11 @@ export class Game {
     this.mainSceneRuntime?.startChapter(STARTUP_CHAPTER_TYPE, STARTUP_CHAPTER_INDEX);
   }
 
-  applyLoadedState(state: GameState, playerSnapshots: readonly SavePlayerState[] = []): void {
+  applyLoadedState(
+    state: GameState,
+    playerSnapshots: readonly SavePlayerState[] = [],
+    runtimeSnapshot: MainSceneRuntimeSnapshot | null = null
+  ): void {
     this.boxEventMap.clear();
     this.pendingBoxEventKey = null;
     this.state = {
@@ -125,11 +132,16 @@ export class Game {
       partyActorIds: [...(state.partyActorIds ?? [])],
       controlActorId: state.controlActorId ?? 0,
       goods: state.goods.map(g => ({ ...g })),
+      disableSave: false,
     };
     this.ensureScriptVariableSize();
     this.restorePlayerSnapshots(playerSnapshots);
     this.replaceWithMainScene();
-    this.mainSceneRuntime?.startChapter(this.state.scriptType, this.state.scriptIndex);
+    if (runtimeSnapshot) {
+      this.mainSceneRuntime?.restoreSnapshot(runtimeSnapshot);
+    } else {
+      this.mainSceneRuntime?.startChapter(this.state.scriptType, this.state.scriptIndex);
+    }
   }
 
   gainGoods(type: number, index: number, count = 1): BaseGoods | null {
@@ -221,6 +233,15 @@ export class Game {
     this.state.eventFlags = this.state.eventFlags.filter(id => id !== eventId);
   }
 
+  setSaveDisabled(disabled: boolean): void {
+    this.state.disableSave = disabled;
+  }
+
+  getSaveBlockedMessage(): string | null {
+    if (this.state.disableSave) return '当前不能存档';
+    return this.mainSceneRuntime?.getSaveBlockedMessage() ?? '主场景不存在，无法存档';
+  }
+
   getVariable(index: number): number {
     return this.state.scriptVariables[index] ?? 0;
   }
@@ -303,6 +324,11 @@ export class Game {
     if (!Number.isInteger(slot) || slot < 0 || slot >= SAVE_SLOT_COUNT) {
       throw new Error(`存档槽位非法: ${slot}`);
     }
+  }
+
+  private assertCanSaveGame(): void {
+    const blockedMessage = this.getSaveBlockedMessage();
+    if (blockedMessage) throw new Error(blockedMessage);
   }
 
   private restorePlayerSnapshots(snapshots: readonly SavePlayerState[]): void {

@@ -30,6 +30,9 @@ export class BrowserRuntime {
     script: {
       start: (type, index, offset) => this.engine?.debug.script.start(type, index, offset) ?? false,
     },
+    combat: {
+      start: monsterIds => this.engine?.debug.combat.start(monsterIds) ?? false,
+    },
   };
   private readonly presenter: CanvasPresenter;
   private readonly host: { readonly saveStore: SaveStore; readonly audio: AudioPort };

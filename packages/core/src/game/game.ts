@@ -1,4 +1,5 @@
 import { DatLib } from '@/lib/dat-lib';
+import { CombatRuntime } from '@/combat';
 import { BaseGoods, GoodsEquipment } from '@/goods';
 import { Player } from '@/characters';
 import type { BuffState } from '@/characters';
@@ -11,6 +12,7 @@ import { ScriptVm } from '@/script/script-vm';
 import { KeyCode } from '@/shared/key-code';
 import { ScreenMainGame } from '@/screens/main-game/screen';
 import { ScreenAnimation } from '@/screens/animation/screen';
+import { ScreenMenu } from '@/screens/menu/screen';
 import { ScreenStack } from '@/screens/screen-stack';
 import { ScreenViewType } from '@/screens/screen-view-type';
 import { ResourceType } from '@/lib/resource-utils';
@@ -40,6 +42,7 @@ const STARTUP_CHAPTER_INDEX = 1;
 
 export class Game {
   readonly datLib: DatLib;
+  readonly combat = new CombatRuntime(this);
   readonly scriptVm = new ScriptVm(this);
   state: GameState = createInitialGameState();
   mainScene: ScreenMainGame | null = null;
@@ -91,6 +94,7 @@ export class Game {
   start(): void {
     this.mainScene = null;
     this.mainSceneRuntime = null;
+    this.combat.reset();
     this.screenStack.replaceAll(new ScreenAnimation(this, ScreenViewType.SCREEN_DEV_LOGO));
     this.draw();
   }
@@ -110,9 +114,16 @@ export class Game {
   startNewGame(): void {
     this.boxEventMap.clear();
     this.pendingBoxEventKey = null;
+    this.combat.reset();
     this.state = createInitialGameState();
     this.replaceWithMainScene();
     this.mainSceneRuntime?.startChapter(STARTUP_CHAPTER_TYPE, STARTUP_CHAPTER_INDEX);
+  }
+
+  returnToMenu(): void {
+    this.mainScene = null;
+    this.mainSceneRuntime = null;
+    this.screenStack.replaceAll(new ScreenMenu(this));
   }
 
   applyLoadedState(
@@ -122,6 +133,7 @@ export class Game {
   ): void {
     this.boxEventMap.clear();
     this.pendingBoxEventKey = null;
+    this.combat.reset();
     this.state = {
       ...createInitialGameState(),
       ...state,

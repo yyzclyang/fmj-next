@@ -1,5 +1,5 @@
 export { Engine } from './runtime/engine';
-export type { DebugApi, DebugGoodsItem, DebugPlayerItem, DebugSnapshot } from './debug/debug';
+export type { DebugApi, DebugCombatApi, DebugGoodsItem, DebugPlayerItem, DebugSnapshot } from './debug/debug';
 export type { GameState } from './game/game-state';
 export type { AudioPort, SaveStore } from './runtime/engine-host';
 export { FRAME_HEIGHT, FRAME_WIDTH } from './rendering/frame-buffer';

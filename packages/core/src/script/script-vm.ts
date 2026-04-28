@@ -217,14 +217,15 @@ export class ScriptVm {
       case COMMAND.GAINGOODS:
         return this.cmdGainGoods(code, start);
       case COMMAND.INITFIGHT:
-        return this.makeNoopCommand(22);
+        return this.cmdInitFight(code, start);
       case COMMAND.FIGHTENABLE:
+        return this.cmdFightEnable();
       case COMMAND.FIGHTDISENABLE:
-        return this.makeNoopCommand(0);
+        return this.cmdFightDisable();
       case COMMAND.CREATENPC:
         return this.cmdCreateNpc(code, start);
       case COMMAND.ENTERFIGHT:
-        return this.makeNoopCommand(30);
+        return this.cmdEnterFight(code, start);
       case COMMAND.DELETEACTOR:
         return this.cmdDeleteActor(code, start);
       case COMMAND.GAINMONEY:
@@ -657,6 +658,70 @@ export class ScriptVm {
         if (goods) {
           this.game.mainSceneRuntime?.collectFacingBox();
         }
+      },
+    };
+  }
+
+  private cmdInitFight(code: Uint8Array, start: number): CommandBuilder {
+    const monsterTypes = Array.from({ length: 8 }, (_, i) => readUint16(code, start + i * 2));
+    const scrb = readUint16(code, start + 16);
+    const scrl = readUint16(code, start + 18);
+    const scrr = readUint16(code, start + 20);
+
+    return {
+      len: 22,
+      execute: () => {
+        const runtime = this.game.mainSceneRuntime;
+        if (!runtime) throw new Error('主场景运行时不存在，无法初始化战斗');
+        runtime.initFight({ monsterTypes, scrb, scrl, scrr });
+      },
+    };
+  }
+
+  private cmdFightEnable(): CommandBuilder {
+    return {
+      len: 0,
+      execute: () => {
+        const runtime = this.game.mainSceneRuntime;
+        if (!runtime) throw new Error('主场景运行时不存在，无法开启战斗');
+        runtime.fightEnable();
+      },
+    };
+  }
+
+  private cmdFightDisable(): CommandBuilder {
+    return {
+      len: 0,
+      execute: () => {
+        const runtime = this.game.mainSceneRuntime;
+        if (!runtime) throw new Error('主场景运行时不存在，无法关闭战斗');
+        runtime.fightDisable();
+      },
+    };
+  }
+
+  private cmdEnterFight(code: Uint8Array, start: number): CommandBuilder {
+    const roundMax = readUint16(code, start);
+    const monsterTypes = [readUint16(code, start + 2), readUint16(code, start + 4), readUint16(code, start + 6)];
+    const background = {
+      scrb: readUint16(code, start + 8),
+      scrl: readUint16(code, start + 10),
+      scrr: readUint16(code, start + 12),
+    };
+    const eventRounds = [readUint16(code, start + 14), readUint16(code, start + 16), readUint16(code, start + 18)];
+    const eventIds = [readUint16(code, start + 20), readUint16(code, start + 22), readUint16(code, start + 24)];
+    const lossAddress = readUint16(code, start + 26);
+    const winAddress = readUint16(code, start + 28);
+
+    return {
+      len: 30,
+      execute: process => {
+        const runtime = this.game.mainSceneRuntime;
+        if (!runtime) throw new Error('主场景运行时不存在，无法进入战斗');
+        runtime.enterFight(
+          { roundMax, monsterTypes, background, eventRounds, eventIds, lossAddress, winAddress },
+          process
+        );
       },
     };
   }

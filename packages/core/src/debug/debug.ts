@@ -28,6 +28,7 @@ export interface DebugApi {
   bag: DebugBagApi;
   player: DebugPlayerApi;
   script: DebugScriptApi;
+  combat: DebugCombatApi;
 }
 
 export interface DebugBagApi {
@@ -56,6 +57,10 @@ export interface DebugPlayerApi {
 
 export interface DebugScriptApi {
   start(type: number, index: number, offset?: number): boolean;
+}
+
+export interface DebugCombatApi {
+  start(monsterIds?: readonly number[]): boolean;
 }
 
 export interface DebugPlayerItem {
@@ -178,6 +183,27 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         return true;
       },
     },
+    combat: {
+      start(monsterIds?: readonly number[]) {
+        const game = getGame();
+        const runtime = game?.mainSceneRuntime ?? null;
+        if (!game || !runtime) throw new Error('主场景运行时不存在，无法调试进入战斗');
+        const ids = monsterIds ?? listAllMonsterIds(game).slice(0, 1);
+        if (ids.length === 0) throw new Error('没有可用的怪物 ARS 3-*');
+        const scrb = getFirstCombatBackgroundIndex(game);
+        runtime.startDebugCombat({
+          roundMax: 0,
+          monsterTypes: ids,
+          background: { scrb, scrl: 0, scrr: 0 },
+          eventRounds: [0, 0, 0],
+          eventIds: [0, 0, 0],
+          lossAddress: 0,
+          winAddress: 0,
+        });
+        console.debug(`已进入调试战斗 monster=${ids.join(',')} bg=${scrb}`);
+        return true;
+      },
+    },
   };
 }
 
@@ -194,6 +220,19 @@ function listAllPlayerIds(game: Game): number[] {
     .listResourceKeys(ResourceType.ARS)
     .filter(key => key.type === 1)
     .map(key => key.index);
+}
+
+function listAllMonsterIds(game: Game): number[] {
+  return game.datLib
+    .listResourceKeys(ResourceType.ARS)
+    .filter(key => key.type === 3)
+    .map(key => key.index);
+}
+
+function getFirstCombatBackgroundIndex(game: Game): number {
+  const key = game.datLib.listResourceKeys(ResourceType.PIC).find(item => item.type === 4);
+  if (!key) throw new Error('没有可用的战斗背景 PIC 4-*');
+  return key.index;
 }
 
 function listAllPlayers(game: Game): Player[] {

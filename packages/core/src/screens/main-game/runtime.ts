@@ -1,4 +1,5 @@
 import type { Game } from '@/game/game';
+import type { CombatEnterFightParams, CombatInitFightParams, CombatRuntimeSnapshot } from '@/combat';
 import { CharacterState, mapCharacterState, Npc, SceneObj, type Player, type WalkingSprite } from '@/characters';
 import { ResImage } from '@/lib/res-image';
 import { ResMap } from '@/lib/res-map';
@@ -9,6 +10,7 @@ import type { ScriptOperation, ScriptProcess, ScriptProcessSnapshot } from '@/sc
 import { MAP_VIEW_TILE_HEIGHT, MAP_VIEW_TILE_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
 import { clamp } from '@/shared/math';
+import { ScreenCombat } from './combat/screen-combat';
 
 export type Facing = typeof KeyCode.Up | typeof KeyCode.Down | typeof KeyCode.Left | typeof KeyCode.Right;
 export type SceneObjectKind = 'npc' | 'box';
@@ -44,6 +46,7 @@ export interface SceneObjectSnapshot {
 
 export interface MainSceneRuntimeSnapshot {
   scriptProcess: ScriptProcessSnapshot | null;
+  combat: CombatRuntimeSnapshot | null;
   sceneObjects: SceneObjectSnapshot[];
   hasPlayer: boolean;
   playerActorId: number;
@@ -159,6 +162,7 @@ export class MainSceneRuntime {
     if (blockedMessage) throw new Error(blockedMessage);
     return {
       scriptProcess: this.scriptProcess?.createSnapshot() ?? null,
+      combat: this.game.combat.createSnapshot(),
       sceneObjects: [...this.sceneObjectsValue.values()].map(obj => this.createSceneObjectSnapshot(obj)),
       hasPlayer: this.hasPlayerValue,
       playerActorId: this.playerActorIdValue,
@@ -168,6 +172,7 @@ export class MainSceneRuntime {
   }
 
   restoreSnapshot(snapshot: MainSceneRuntimeSnapshot): void {
+    this.game.combat.restoreSnapshot(snapshot.combat);
     this.sceneObjectsValue.clear();
     for (const obj of snapshot.sceneObjects) {
       this.sceneObjectsValue.set(obj.id, this.restoreSceneObject(obj));
@@ -249,6 +254,43 @@ export class MainSceneRuntime {
     childProcess.parent = parentProcess;
     this.scriptProcess = childProcess;
     childProcess.start();
+  }
+
+  initFight(params: CombatInitFightParams): void {
+    this.game.combat.initFight(params);
+  }
+
+  fightEnable(): void {
+    this.game.combat.fightEnable();
+  }
+
+  fightDisable(): void {
+    this.game.combat.fightDisable();
+  }
+
+  enterFight(params: CombatEnterFightParams, process: ScriptProcess): void {
+    const scene = this.game.mainScene;
+    if (!scene) throw new Error('主场景不存在，无法进入战斗');
+    if (this.scriptProcess !== process) throw new Error('只有当前脚本进程可以启动战斗');
+    process.pause();
+    const session = this.game.combat.enterFight(params, result => {
+      if (result === 'win') {
+        process.gotoAddress(params.winAddress);
+      } else if (result === 'loss') {
+        process.gotoAddress(params.lossAddress);
+      }
+      process.start();
+    });
+    scene.screenStack.push(new ScreenCombat(this.game, session));
+  }
+
+  startDebugCombat(params: CombatEnterFightParams): void {
+    const scene = this.game.mainScene;
+    if (!scene) throw new Error('主场景不存在，无法调试进入战斗');
+    const session = this.game.combat.enterFight(params, result => {
+      if (result === 'loss') scene.showMessage('战斗失败');
+    });
+    scene.screenStack.push(new ScreenCombat(this.game, session, { allowDebugWin: true }));
   }
 
   returnToParentScript(process: ScriptProcess): boolean {
@@ -562,8 +604,21 @@ export class MainSceneRuntime {
 
   private triggerMapEvent(x: number, y: number): void {
     const eventId = this.currentMapValue?.getEventNum(x, y) ?? 0;
-    if (eventId <= 0) return;
+    if (eventId <= 0) {
+      this.tryStartRandomCombat();
+      return;
+    }
     this.scriptProcess?.triggerEvent(eventId + 40);
+  }
+
+  private tryStartRandomCombat(): void {
+    const scene = this.game.mainScene;
+    if (!scene) throw new Error('主场景不存在，无法进入随机战斗');
+    const session = this.game.combat.startRandomFight(result => {
+      if (result === 'loss') this.game.returnToMenu();
+    });
+    if (!session) return;
+    scene.screenStack.push(new ScreenCombat(this.game, session));
   }
 
   private canControlPlayer(): boolean {

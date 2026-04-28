@@ -228,6 +228,18 @@ export class MainSceneRuntime {
     this.scriptProcess.start();
   }
 
+  startChapterAtOffset(type: number, index: number, offset: number): void {
+    if (!Number.isInteger(offset) || offset < 0) throw new Error(`脚本偏移非法: ${offset}`);
+    this.scriptProcess?.stop();
+    this.overlayValue = null;
+    this.game.clearPendingBoxEvent();
+    this.game.state.scriptType = type;
+    this.game.state.scriptIndex = index;
+    this.game.resetLocalVariables();
+    this.scriptProcess = this.game.scriptVm.loadScript(type, index);
+    this.scriptProcess.startAtOffset(offset);
+  }
+
   triggerEvent(eventId: number): boolean {
     return this.scriptProcess?.triggerEvent(eventId) ?? false;
   }

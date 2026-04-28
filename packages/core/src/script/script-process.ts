@@ -129,6 +129,15 @@ export class ScriptProcess {
     this.currentIndex = target;
   }
 
+  startAtOffset(offset: number): void {
+    const target = this.addressIndexMap.get(offset);
+    if (target == null) throw new Error(`脚本偏移不存在: ${offset}`);
+    this.currentIndex = target;
+    this.operation = null;
+    this.resumeOnRestore = false;
+    this.running = true;
+  }
+
   triggerEvent(eventId: number): boolean {
     if (this.operation) return false;
     if (eventId < 1 || eventId > this.eventIndex.length) return false;

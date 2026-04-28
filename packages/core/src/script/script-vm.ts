@@ -2,7 +2,12 @@ import type { Game } from '@/game/game';
 import { ResGut } from '@/lib/res-gut';
 import { ResourceType, readGbkString, readUint16, readUint32 } from '@/lib/resource-utils';
 import { SaveLoadOperation, ScreenSaveLoadGame } from '@/screens/main-game/menu/screen-save-load-game';
-import { createScriptBuyGoodsScreen, createScriptSaleGoodsScreen } from '@/screens/main-game/script';
+import {
+  createScriptBuyGoodsScreen,
+  createScriptSaleGoodsScreen,
+  ScriptChoiceScreen,
+  ScriptMenuScreen,
+} from '@/screens/main-game/script';
 import { KeyCode } from '@/shared/key-code';
 import { ScriptProcess } from './script-process';
 
@@ -204,7 +209,7 @@ export class ScriptVm {
       case COMMAND.MOVIE:
         return this.cmdMovie(code, start);
       case COMMAND.CHOICE:
-        return this.cmdChoiceNoop(code, start);
+        return this.cmdChoice(code, start);
       case COMMAND.CREATEBOX:
         return this.cmdCreateBox(code, start);
       case COMMAND.DELETEBOX:
@@ -274,7 +279,7 @@ export class ScriptVm {
       case COMMAND.RANDRADE:
         return this.cmdRandRate(code, start);
       case COMMAND.MENU:
-        return this.makeNoopCommand(2 + getCStringLength(code, start + 2));
+        return this.cmdMenu(code, start);
       case COMMAND.TESTMONEY:
         return this.cmdTestMoney(code, start);
       case COMMAND.CALLCHAPTER:
@@ -805,10 +810,27 @@ export class ScriptVm {
     };
   }
 
-  private cmdChoiceNoop(code: Uint8Array, start: number): CommandBuilder {
+  private cmdChoice(code: Uint8Array, start: number): CommandBuilder {
     const firstChoiceLength = getCStringLength(code, start);
     const secondChoiceLength = getCStringLength(code, start + firstChoiceLength);
-    return this.makeNoopCommand(firstChoiceLength + secondChoiceLength + 2);
+    const firstChoice = readGbkString(code, start);
+    const secondChoice = readGbkString(code, start + firstChoiceLength);
+    const address = readUint16(code, start + firstChoiceLength + secondChoiceLength);
+
+    return {
+      len: firstChoiceLength + secondChoiceLength + 2,
+      execute: process => {
+        const scene = this.game.mainScene;
+        if (!scene) throw new Error('主场景不存在，无法打开脚本选择框');
+        process.pause();
+        scene.screenStack.push(
+          new ScriptChoiceScreen(this.game, firstChoice, secondChoice, selectedIndex => {
+            if (selectedIndex === 1) process.gotoAddress(address);
+            process.start();
+          })
+        );
+      },
+    };
   }
 
   private cmdTimedMessage(code: Uint8Array, start: number): CommandBuilder {
@@ -873,6 +895,29 @@ export class ScriptVm {
       len: 4,
       execute: process => {
         process.setTimer(timer, eventId);
+      },
+    };
+  }
+
+  private cmdMenu(code: Uint8Array, start: number): CommandBuilder {
+    const variableIndex = readUint16(code, start);
+    const textLength = getCStringLength(code, start + 2);
+    const items = readGbkString(code, start + 2)
+      .split(' ')
+      .filter(item => item.length > 0);
+
+    return {
+      len: 2 + textLength,
+      execute: process => {
+        const scene = this.game.mainScene;
+        if (!scene) throw new Error('主场景不存在，无法打开脚本菜单');
+        process.pause();
+        scene.screenStack.push(
+          new ScriptMenuScreen(this.game, items, value => {
+            this.game.setVariable(variableIndex, value);
+            process.start();
+          })
+        );
       },
     };
   }

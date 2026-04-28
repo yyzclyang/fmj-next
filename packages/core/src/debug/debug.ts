@@ -27,6 +27,7 @@ export interface DebugApi {
   getSnapshot(): DebugSnapshot | null;
   bag: DebugBagApi;
   player: DebugPlayerApi;
+  script: DebugScriptApi;
 }
 
 export interface DebugBagApi {
@@ -51,6 +52,10 @@ export interface DebugPlayerApi {
   list(): DebugPlayerItem[];
   listAll(): DebugPlayerItem[];
   add(ids?: readonly number[]): DebugPlayerItem[];
+}
+
+export interface DebugScriptApi {
+  start(type: number, index: number, offset?: number): boolean;
 }
 
 export interface DebugPlayerItem {
@@ -157,6 +162,20 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         const items = ids.map(id => toDebugPlayerItem(game, addDebugPlayer(game, id)));
         console.table(items);
         return items;
+      },
+    },
+    script: {
+      start(type: number, index: number, offset?: number) {
+        const runtime = getGame()?.mainSceneRuntime ?? null;
+        if (!runtime) throw new Error('主场景运行时不存在，无法调试启动脚本');
+        if (offset == null) {
+          runtime.startChapter(type, index);
+          console.debug(`已启动脚本 GUT ${type}-${index}`);
+        } else {
+          runtime.startChapterAtOffset(type, index, offset);
+          console.debug(`已启动脚本 GUT ${type}-${index} offset=${offset}`);
+        }
+        return true;
       },
     },
   };

@@ -29,4 +29,13 @@ export class Monster extends FightingCharacter {
     this.stealGoods = data.stealGoods;
     this.dropGoods = data.dropGoods;
   }
+
+  // 偷取库存属于怪物战斗状态，成功一次只扣一件，和 Kotlin mCarryGoods1[2] 对齐。
+  tryStealGoods(): BaseGoods | null {
+    const carry = this.stealGoods;
+    if (!carry || carry.count <= 0) return null;
+    if (Math.random() < 0.2) return null;
+    carry.count -= 1;
+    return carry.goods;
+  }
 }

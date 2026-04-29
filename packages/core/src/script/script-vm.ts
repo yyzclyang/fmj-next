@@ -307,8 +307,9 @@ export class ScriptVm {
       case COMMAND.TESTGOODSNUM:
         return this.cmdTestGoodsNum(code, start);
       case COMMAND.SETFIGHTMISS:
+        return this.cmdSetFightMiss(code, start);
       case COMMAND.SETARMSTOSS:
-        return this.makeNoopCommand(2);
+        return this.cmdSetArmsToss(code, start);
       default:
         throw new Error(`Unsupported script opcode ${opcode}`);
     }
@@ -960,6 +961,26 @@ export class ScriptVm {
       len: 4,
       execute: process => {
         process.setTimer(timer, eventId);
+      },
+    };
+  }
+
+  private cmdSetFightMiss(code: Uint8Array, start: number): CommandBuilder {
+    const enabled = readUint16(code, start) === 1;
+    return {
+      len: 2,
+      execute: () => {
+        this.game.state.allowFightMiss = enabled;
+      },
+    };
+  }
+
+  private cmdSetArmsToss(code: Uint8Array, start: number): CommandBuilder {
+    const enabled = readUint16(code, start) === 1;
+    return {
+      len: 2,
+      execute: () => {
+        this.game.state.allowTossArm = enabled;
       },
     };
   }

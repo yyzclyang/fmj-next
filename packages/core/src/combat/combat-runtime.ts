@@ -4,8 +4,10 @@ import type { BaseGoods } from '@/goods';
 import { Bitmap } from '@/rendering/bitmap';
 import { COLOR_BLACK } from '@/rendering/color';
 import { clearFrameBuffer, createFrameBuffer } from '@/rendering/frame-buffer';
+import { Surface } from '@/rendering/surface';
 import { ResourceType } from '@/lib/resource-utils';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
+import type { CombatAction } from './combat-actions';
 
 export interface CombatBackgroundIds {
   readonly scrb: number;
@@ -27,9 +29,10 @@ export interface CombatEnterFightParams {
   readonly winAddress: number;
 }
 
-export type CombatFinishResult = 'win' | 'loss' | 'maxRound';
+export type CombatFinishResult = 'win' | 'loss' | 'maxRound' | 'flee';
 
 type CombatFinishCallback = (result: CombatFinishResult) => void;
+type CombatRoundEventCallback = (eventId: number) => void;
 
 export interface CombatGoodsAward {
   readonly goods: BaseGoods;
@@ -64,10 +67,12 @@ export class CombatSession {
   constructor(
     private readonly runtime: CombatRuntime,
     readonly params: CombatEnterFightParams,
+    readonly isRandomFight: boolean,
     players: readonly Player[],
     monsters: readonly Monster[],
     background: Bitmap | null,
-    private readonly onFinish: CombatFinishCallback
+    private readonly onFinish: CombatFinishCallback,
+    private readonly onRoundEvent: CombatRoundEventCallback | null
   ) {
     this.players = [...players];
     this.monsters = [...monsters];
@@ -87,6 +92,18 @@ export class CombatSession {
 
   notifyFinish(result: CombatFinishResult): void {
     this.onFinish(result);
+  }
+
+  triggerRoundEvent(eventId: number): void {
+    this.onRoundEvent?.(eventId);
+  }
+
+  getLastPlayerActions(): Map<number, CombatAction> {
+    return this.runtime.getLastPlayerActions();
+  }
+
+  rememberPlayerAction(index: number, action: CombatAction): void {
+    this.runtime.rememberPlayerAction(index, action);
   }
 }
 
@@ -108,6 +125,7 @@ export class CombatRuntime {
   private randomFightConfig: CombatInitFightParams | null = null;
   private randomFightEnabled = false;
   private activeSession: CombatSession | null = null;
+  private readonly lastPlayerActions = new Map<number, CombatAction>();
 
   constructor(private readonly game: Game) {}
 
@@ -115,6 +133,7 @@ export class CombatRuntime {
     if (this.activeSession) throw new Error('战斗中不能重置战斗运行时');
     this.randomFightConfig = null;
     this.randomFightEnabled = false;
+    this.lastPlayerActions.clear();
   }
 
   createSnapshot(): CombatRuntimeSnapshot {
@@ -146,8 +165,20 @@ export class CombatRuntime {
     this.randomFightConfig = null;
   }
 
-  enterFight(params: CombatEnterFightParams, onFinish: CombatFinishCallback): CombatSession {
-    return this.createSession(params, onFinish);
+  getLastPlayerActions(): Map<number, CombatAction> {
+    return new Map(this.lastPlayerActions);
+  }
+
+  rememberPlayerAction(index: number, action: CombatAction): void {
+    this.lastPlayerActions.set(index, action);
+  }
+
+  enterFight(
+    params: CombatEnterFightParams,
+    onFinish: CombatFinishCallback,
+    onRoundEvent: CombatRoundEventCallback | null = null
+  ): CombatSession {
+    return this.createSession(params, false, onFinish, onRoundEvent);
   }
 
   startRandomFight(onFinish: CombatFinishCallback): CombatSession | null {
@@ -169,16 +200,32 @@ export class CombatRuntime {
         lossAddress: 0,
         winAddress: 0,
       },
-      onFinish
+      true,
+      onFinish,
+      null
     );
   }
 
-  private createSession(params: CombatEnterFightParams, onFinish: CombatFinishCallback): CombatSession {
+  private createSession(
+    params: CombatEnterFightParams,
+    isRandomFight: boolean,
+    onFinish: CombatFinishCallback,
+    onRoundEvent: CombatRoundEventCallback | null
+  ): CombatSession {
     if (this.activeSession) throw new Error('战斗已经开始，不能重复进入');
     const monsters = this.loadMonsters(params.monsterTypes);
     if (monsters.length === 0) throw new Error('战斗没有有效怪物');
     const players = this.loadPlayers();
-    const session = new CombatSession(this, params, players, monsters, this.createBackground(params.background), onFinish);
+    const session = new CombatSession(
+      this,
+      params,
+      isRandomFight,
+      players,
+      monsters,
+      this.createBackground(params.background),
+      onFinish,
+      onRoundEvent
+    );
     this.prepareFighters(session);
     this.activeSession = session;
     return session;
@@ -188,7 +235,18 @@ export class CombatRuntime {
     if (this.activeSession !== session) throw new Error('结束了不属于当前运行时的战斗');
     if (result === 'win') session.settleWin();
     this.activeSession = null;
+    this.recoverPlayersAfterFight(session.players);
     session.notifyFinish(result);
+  }
+
+  private recoverPlayersAfterFight(players: readonly Player[]): void {
+    for (const player of players) {
+      if (player.hp <= 0) player.hp = 1;
+      if (player.mp <= 0) player.mp = 1;
+      player.hp += Math.trunc((player.maxHp - player.hp) / 10);
+      player.mp += Math.trunc(player.maxMp / 5);
+      if (player.mp > player.maxMp) player.mp = player.maxMp;
+    }
   }
 
   private loadPlayers(): Player[] {
@@ -218,12 +276,15 @@ export class CombatRuntime {
       const pos = PLAYER_POS[Math.min(i, PLAYER_POS.length - 1)]!;
       const sprite = player.fightingSprite;
       if (!sprite) throw new Error(`角色缺少战斗图: ${player.name}`);
+      player.debuff.clearBuff(0xff);
       sprite.setCombatPos(pos.x, pos.y);
       sprite.currentFrame = player.hp <= 0 ? 12 : player.hp < player.maxHp / 4 ? 11 : 1;
     });
 
     session.monsters.forEach((monster, i) => {
       monster.hp = monster.maxHp;
+      monster.mp = monster.maxMp;
+      monster.debuff.clearBuff(0xff);
       const sprite = monster.fightingSprite;
       if (!sprite) throw new Error(`怪物缺少战斗图: ${monster.name}`);
       const posIndex = session.monsters.length === 1 ? 1 : i;
@@ -237,12 +298,29 @@ export class CombatRuntime {
   }
 
   private createBackground(ids: CombatBackgroundIds): Bitmap | null {
-    if (ids.scrb <= 0) return null;
-    const bg = this.game.datLib.getImage(ResourceType.PIC, 4, ids.scrb);
-    if (!bg) throw new Error(`战斗背景资源不存在: PIC 4-${ids.scrb}`);
-    const bitmap = bg.getBitmap(0);
-    if (!bitmap) throw new Error(`战斗背景没有可绘制位图: PIC 4-${ids.scrb}`);
-    return scaleBitmap(bitmap, SCREEN_WIDTH, SCREEN_HEIGHT);
+    if (ids.scrb <= 0 && ids.scrl <= 0 && ids.scrr <= 0) return null;
+    const pixels = createFrameBuffer();
+    clearFrameBuffer(pixels, COLOR_BLACK);
+    const surface = new Surface(SCREEN_WIDTH, SCREEN_HEIGHT, pixels);
+
+    if (ids.scrb > 0) {
+      const bg = this.game.datLib.getImage(ResourceType.PIC, 4, ids.scrb);
+      if (!bg) throw new Error(`战斗背景资源不存在: PIC 4-${ids.scrb}`);
+      const bitmap = bg.getBitmap(0);
+      if (!bitmap) throw new Error(`战斗背景没有可绘制位图: PIC 4-${ids.scrb}`);
+      surface.drawBitmap(scaleBitmap(bitmap, SCREEN_WIDTH, SCREEN_HEIGHT), 0, 0);
+    }
+    if (ids.scrl > 0) {
+      const left = this.game.datLib.getImage(ResourceType.PIC, 4, ids.scrl);
+      if (!left) throw new Error(`战斗左侧背景资源不存在: PIC 4-${ids.scrl}`);
+      left.draw(surface, 1, 0, SCREEN_HEIGHT - left.height);
+    }
+    if (ids.scrr > 0) {
+      const right = this.game.datLib.getImage(ResourceType.PIC, 4, ids.scrr);
+      if (!right) throw new Error(`战斗右侧背景资源不存在: PIC 4-${ids.scrr}`);
+      right.draw(surface, 1, SCREEN_WIDTH - right.width, 0);
+    }
+    return new Bitmap(SCREEN_WIDTH, SCREEN_HEIGHT, pixels);
   }
 
   settleWin(session: CombatSession): CombatWinSettlement {

@@ -30,6 +30,8 @@ export interface GameState {
   goods: GameGoodsState[];
   sceneName: string;
   disableSave: boolean;
+  allowFightMiss: boolean;
+  allowTossArm: boolean;
 }
 
 export function createInitialGameState(): GameState {
@@ -52,6 +54,8 @@ export function createInitialGameState(): GameState {
     goods: [],
     sceneName: '',
     disableSave: false,
+    allowFightMiss: false,
+    allowTossArm: true,
   };
 }
 

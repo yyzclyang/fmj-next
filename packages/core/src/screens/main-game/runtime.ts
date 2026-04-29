@@ -273,14 +273,21 @@ export class MainSceneRuntime {
     if (!scene) throw new Error('主场景不存在，无法进入战斗');
     if (this.scriptProcess !== process) throw new Error('只有当前脚本进程可以启动战斗');
     process.pause();
-    const session = this.game.combat.enterFight(params, result => {
-      if (result === 'win') {
-        process.gotoAddress(params.winAddress);
-      } else if (result === 'loss') {
-        process.gotoAddress(params.lossAddress);
+    const session = this.game.combat.enterFight(
+      params,
+      result => {
+        if (result === 'win') {
+          process.gotoAddress(params.winAddress);
+        } else if (result === 'loss') {
+          process.gotoAddress(params.lossAddress);
+        }
+        process.start();
+      },
+      eventId => {
+        if (!process.triggerEvent(eventId)) return;
+        process.step(0);
       }
-      process.start();
-    });
+    );
     scene.screenStack.push(new ScreenCombat(this.game, session));
   }
 

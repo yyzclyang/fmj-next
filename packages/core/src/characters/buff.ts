@@ -6,6 +6,10 @@ export interface BuffState {
 export class BuffMan {
   readonly buffs: BuffState[] = Array.from({ length: 8 }, () => ({ value: 0, round: 0 }));
 
+  hasBuff(mask: number): boolean {
+    return maskToIndexes(mask).some(index => (this.buffs[index]?.value ?? 0) > 0);
+  }
+
   addBuff(mask: number, round: number): void {
     for (const index of maskToIndexes(mask)) {
       const buff = this.buffs[index];
@@ -33,6 +37,20 @@ export class BuffMan {
       buff.value = 0;
       buff.round = 0;
     }
+  }
+
+  decay(): void {
+    for (let i = 0; i <= 3; i += 1) this.decayOne(i, 0);
+    for (let i = 5; i <= 7; i += 1) this.decayOne(i, 1);
+  }
+
+  private decayOne(index: number, mode: 0 | 1): void {
+    const buff = this.buffs[index];
+    if (!buff || buff.round <= 0) return;
+    buff.round -= 1;
+    if (buff.round > 0) return;
+    if (mode === 0) buff.value -= 1;
+    else buff.value = 0;
   }
 
   static fromRoundAndMask(round: number, mask: number): BuffMan {

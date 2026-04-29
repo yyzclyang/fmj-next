@@ -47,6 +47,8 @@ export interface SaveGameState {
   goods: GameGoodsState[];
   sceneName: string;
   mainScene: MainSceneRuntimeSnapshot | null;
+  allowFightMiss: boolean;
+  allowTossArm: boolean;
 }
 
 export interface SaveResourceRef {
@@ -121,6 +123,8 @@ export function createSavePayload(
       goods: state.goods.map(goods => ({ ...goods })),
       sceneName: state.sceneName,
       mainScene,
+      allowFightMiss: state.allowFightMiss,
+      allowTossArm: state.allowTossArm,
     },
   };
 }
@@ -200,5 +204,7 @@ export function toLoadedGameState(payload: SaveGamePayload): GameState {
     money: state.money,
     goods: state.goods.map(goods => ({ ...goods })),
     sceneName: state.sceneName,
+    allowFightMiss: state.allowFightMiss ?? false,
+    allowTossArm: state.allowTossArm ?? true,
   };
 }

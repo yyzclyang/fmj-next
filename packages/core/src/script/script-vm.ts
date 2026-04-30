@@ -101,7 +101,7 @@ type CommandBuilder = {
 
 type Facing = typeof KeyCode.Up | typeof KeyCode.Down | typeof KeyCode.Left | typeof KeyCode.Right;
 
-// 当前只迁移有明确运行时语义的脚本指令；菜单、战斗等依赖子系统的指令后续补齐。
+// 按 Kotlin ScriptVM 指令表迁移；个别基线自身也未落地的指令在对应 cmd 中保留兼容降级说明。
 export class ScriptVm {
   constructor(private readonly game: Game) {}
 
@@ -150,15 +150,15 @@ export class ScriptVm {
       case COMMAND.DELETENPC:
         return this.cmdDeleteNpc(code, start);
       case COMMAND.MAPEVENT:
-        return this.makeNoopCommand(2);
+        return this.cmdMapEvent(code, start);
       case COMMAND.ACTOREVENT:
-        return this.makeNoopCommand(4);
+        return this.cmdActorEvent(code, start);
       case COMMAND.MOVE:
         return this.cmdMove(code, start);
       case COMMAND.ACTORMOVE:
-        return this.makeNoopCommand(6);
+        return this.cmdActorMove(code, start);
       case COMMAND.ACTORSPEED:
-        return this.makeNoopCommand(4);
+        return this.cmdActorSpeed(code, start);
       case COMMAND.CALLBACK:
         return {
           len: 0,
@@ -177,17 +177,17 @@ export class ScriptVm {
       case COMMAND.STARTCHAPTER:
         return this.cmdStartChapter(code, start);
       case COMMAND.SCREENR:
-        return this.makeNoopCommand(1);
+        return this.cmdScreenRed(code, start);
       case COMMAND.SCREENS:
         return this.cmdSetMapScreen(code, start);
       case COMMAND.SCREENA:
-        return this.makeNoopCommand(1);
+        return this.cmdScreenAlpha(code, start);
       case COMMAND.EVENT:
         return this.cmdEvent(code, start);
       case COMMAND.MONEY:
         return this.cmdSetMoney(code, start);
       case COMMAND.GAMEOVER:
-        return this.makeNoopCommand(0);
+        return this.cmdGameOver();
       case COMMAND.IFCMP:
         return this.cmdIfCmp(code, start);
       case COMMAND.ADD:
@@ -197,7 +197,7 @@ export class ScriptVm {
       case COMMAND.SETCONTROLID:
         return this.cmdSetControlPlayer(code, start);
       case COMMAND.GUTEVENT:
-        return this.makeNoopCommand(4);
+        return this.cmdGutEvent(code, start);
       case COMMAND.SETEVENT:
         return this.cmdSetEvent(code, start);
       case COMMAND.CLREVENT:
@@ -264,7 +264,7 @@ export class ScriptVm {
       case COMMAND.SHOWSCENENAME:
         return this.cmdShowSceneName();
       case COMMAND.SHOWSCREEN:
-        return this.makeNoopCommand(0);
+        return this.cmdShowScreen();
       case COMMAND.USEGOODS:
         return this.cmdUseGoods(code, start);
       case COMMAND.ATTRIBTEST:
@@ -300,8 +300,9 @@ export class ScriptVm {
       case COMMAND.SETEVENTTIMER:
         return this.cmdSetEventTimer(code, start);
       case COMMAND.ENABLESHOWPOS:
+        return this.cmdSetShowPosition(true);
       case COMMAND.DISABLESHOWPOS:
-        return this.makeNoopCommand(0);
+        return this.cmdSetShowPosition(false);
       case COMMAND.SETTO:
         return this.cmdSetTo(code, start);
       case COMMAND.TESTGOODSNUM:
@@ -365,6 +366,30 @@ export class ScriptVm {
     };
   }
 
+  private cmdMapEvent(code: Uint8Array, start: number): CommandBuilder {
+    const eventId = readUint16(code, start);
+
+    return {
+      len: 2,
+      execute: () => {
+        // Kotlin 与 C 基线都没有落地该指令；保留解析和兼容执行，避免破坏脚本流。
+        void eventId;
+      },
+    };
+  }
+
+  private cmdActorEvent(code: Uint8Array, start: number): CommandBuilder {
+    const actorId = readUint16(code, start);
+    const eventId = readUint16(code, start + 2);
+
+    return {
+      len: 4,
+      execute: () => {
+        this.game.mainSceneRuntime?.setActorEvent(actorId, eventId);
+      },
+    };
+  }
+
   private cmdMove(code: Uint8Array, start: number): CommandBuilder {
     const actorId = readUint16(code, start);
     const x = readUint16(code, start + 2);
@@ -380,6 +405,22 @@ export class ScriptVm {
           return;
         }
         process.wait(operation);
+      },
+    };
+  }
+
+  private cmdActorMove(code: Uint8Array, start: number): CommandBuilder {
+    return this.cmdMove(code, start);
+  }
+
+  private cmdActorSpeed(code: Uint8Array, start: number): CommandBuilder {
+    const actorId = readUint16(code, start);
+    const speed = readUint16(code, start + 2);
+
+    return {
+      len: 4,
+      execute: () => {
+        this.game.mainSceneRuntime?.setActorMoveInterval(actorId, speed);
       },
     };
   }
@@ -475,6 +516,24 @@ export class ScriptVm {
     };
   }
 
+  private cmdGutEvent(code: Uint8Array, start: number): CommandBuilder {
+    const gutId = readUint16(code, start);
+    const eventId = readUint16(code, start + 2);
+
+    return {
+      len: 4,
+      execute: process => {
+        const runtime = this.game.mainSceneRuntime;
+        if (!runtime) return;
+        process.pause();
+        const child = runtime.callChapter(1, gutId, process);
+        if (!child.triggerEvent(eventId)) {
+          runtime.returnToParentScript(child);
+        }
+      },
+    };
+  }
+
   private cmdSetTo(code: Uint8Array, start: number): CommandBuilder {
     const sourceIndex = readUint16(code, start);
     const targetIndex = readUint16(code, start + 2);
@@ -488,6 +547,7 @@ export class ScriptVm {
   }
 
   private cmdSay(code: Uint8Array, start: number): CommandBuilder {
+    const headImageIndex = readUint16(code, start);
     const len = getCStringLength(code, start + 2);
     const text = readGbkString(code, start + 2);
 
@@ -497,9 +557,13 @@ export class ScriptVm {
         const scene = this.game.mainScene;
         if (!scene || text.length === 0) return;
         process.pause();
-        scene.showDialogue(text, () => {
-          process.start();
-        });
+        scene.showDialogue(
+          text,
+          () => {
+            process.start();
+          },
+          headImageIndex
+        );
       },
     };
   }
@@ -524,6 +588,28 @@ export class ScriptVm {
       len: 4,
       execute: () => {
         this.game.mainSceneRuntime?.setMapScreenPosition(screenX, screenY);
+      },
+    };
+  }
+
+  private cmdScreenRed(code: Uint8Array, start: number): CommandBuilder {
+    const red = code[start] ?? 0;
+
+    return {
+      len: 1,
+      execute: () => {
+        this.game.state.screenRed = red;
+      },
+    };
+  }
+
+  private cmdScreenAlpha(code: Uint8Array, start: number): CommandBuilder {
+    const alpha = code[start] ?? 0;
+
+    return {
+      len: 1,
+      execute: () => {
+        this.game.state.screenAlpha = alpha;
       },
     };
   }
@@ -786,6 +872,16 @@ export class ScriptVm {
     };
   }
 
+  private cmdGameOver(): CommandBuilder {
+    return {
+      len: 0,
+      execute: process => {
+        process.stop();
+        this.game.returnToMenu();
+      },
+    };
+  }
+
   private cmdLearnMagic(code: Uint8Array, start: number): CommandBuilder {
     const actorId = readUint16(code, start);
     const type = readUint16(code, start + 2);
@@ -900,6 +996,7 @@ export class ScriptVm {
   }
 
   private cmdTimedMessage(code: Uint8Array, start: number): CommandBuilder {
+    const duration = readUint16(code, start);
     const len = getCStringLength(code, start + 2);
     const text = readGbkString(code, start + 2);
 
@@ -909,7 +1006,7 @@ export class ScriptVm {
         const scene = this.game.mainScene;
         if (!scene || text.length === 0) return;
         process.pause();
-        scene.showDialogue(text, () => {
+        scene.showTimedMessage(text, duration * 10, () => {
           process.start();
         });
       },
@@ -961,6 +1058,15 @@ export class ScriptVm {
       len: 4,
       execute: process => {
         process.setTimer(timer, eventId);
+      },
+    };
+  }
+
+  private cmdSetShowPosition(enabled: boolean): CommandBuilder {
+    return {
+      len: 0,
+      execute: () => {
+        this.game.state.showPosition = enabled;
       },
     };
   }
@@ -1146,6 +1252,15 @@ export class ScriptVm {
     };
   }
 
+  private cmdShowScreen(): CommandBuilder {
+    return {
+      len: 0,
+      execute: () => {
+        this.game.mainSceneRuntime?.showScreen();
+      },
+    };
+  }
+
   private cmdShowGut(code: Uint8Array, start: number): CommandBuilder {
     const topImageIndex = readUint16(code, start);
     const bottomImageIndex = readUint16(code, start + 2);
@@ -1261,20 +1376,6 @@ export class ScriptVm {
           process.gotoAddress(greaterAddress);
         }
       },
-    };
-  }
-
-  private makeNoopCommand(len: number): CommandBuilder {
-    return {
-      len,
-      execute: () => {},
-    };
-  }
-
-  private makeTextNoopCommand(code: Uint8Array, start: number, dataOffset: number): CommandBuilder {
-    return {
-      len: dataOffset + getCStringLength(code, start + dataOffset),
-      execute: () => {},
     };
   }
 }

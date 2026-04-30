@@ -1,5 +1,5 @@
 import type { Game } from '@/game/game';
-import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
+import { COLOR_BLACK, COLOR_WHITE, type Color } from '@/rendering/color';
 import { Surface } from '@/rendering/surface';
 import { TextRender } from '@/rendering/text-render';
 import type { WalkingSprite } from '@/characters';
@@ -15,7 +15,7 @@ import { KeyCode } from '@/shared/key-code';
 import { BaseScreen } from '@/screens/base-screen';
 import { clamp } from '@/shared/math';
 import { ScreenGameMainMenu } from './menu';
-import { ScriptDialogueScreen, ScriptGutScreen } from './script';
+import { ScriptDialogueScreen, ScriptGutScreen, ScriptTimedMessageScreen } from './script';
 import {
   drawTipFrame,
   getTextWidth,
@@ -68,6 +68,12 @@ export class ScreenMainGame extends BaseScreen {
 
   draw(surface: Surface): void {
     this.drawMainGame(surface);
+  }
+
+  override performDraw(surface: Surface): void {
+    this.draw(surface);
+    this.screenStack.draw(surface);
+    this.drawScreenFilter(surface);
   }
 
   showMessage(text: string, delay?: number): void {
@@ -129,8 +135,8 @@ export class ScreenMainGame extends BaseScreen {
     }
   }
 
-  showDialogue(text: string, onClose: () => void): void {
-    const screen = new ScriptDialogueScreen(this.game, text, onClose);
+  showDialogue(text: string, onClose: () => void, headImageIndex = 0): void {
+    const screen = new ScriptDialogueScreen(this.game, text, onClose, headImageIndex);
     if (screen.isEmpty) {
       onClose();
       return;
@@ -143,6 +149,10 @@ export class ScreenMainGame extends BaseScreen {
     const lines = wrapTextBlock(text, textWidth).slice(0, TIP_MAX_LINES);
     if (lines.length === 0) return;
     this.tip = { text, kind, lines, elapsed: 0 };
+  }
+
+  showTimedMessage(text: string, delay: number, onClose: () => void): void {
+    this.screenStack.push(new ScriptTimedMessageScreen(this.game, text, delay, onClose));
   }
 
   showGut(topImageIndex: number, bottomImageIndex: number, text: string, onClose: () => void): void {
@@ -275,13 +285,20 @@ export class ScreenMainGame extends BaseScreen {
     const mapName = this.game.state.sceneName || this.runtime.currentMap?.mapName || 'Map';
     TextRender.drawText(surface, mapName, MAP_INFO_LEFT, MAP_INFO_TOP);
 
-    if (!this.runtime.hasPlayer) return;
+    if (!this.runtime.hasPlayer || !this.game.state.showPosition) return;
     TextRender.drawText(
       surface,
       `${this.runtime.playerMapX},${this.runtime.playerMapY}`,
       MAP_INFO_LEFT,
       MAP_INFO_TOP + MAP_INFO_LINE_GAP
     );
+  }
+
+  private drawScreenFilter(surface: Surface): void {
+    const alpha = this.game.state.screenAlpha;
+    if (alpha <= 0) return;
+    const color: Color = [this.game.state.screenRed, 0, 0, 255];
+    surface.blendColor(color, alpha);
   }
 
   private drawTip(surface: Surface): void {

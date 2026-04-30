@@ -22,6 +22,19 @@ export class Surface {
     fillFrameRect(this.buffer, x, y, width, height, color);
   }
 
+  blendColor(color: Color, opacity: number): void {
+    const alpha = Math.max(0, Math.min(255, Math.trunc(opacity)));
+    if (alpha <= 0) return;
+
+    const inverse = 255 - alpha;
+    for (let offset = 0; offset < this.buffer.length; offset += 4) {
+      this.buffer[offset] = Math.trunc(((this.buffer[offset] ?? 0) * inverse + color[0] * alpha) / 255);
+      this.buffer[offset + 1] = Math.trunc(((this.buffer[offset + 1] ?? 0) * inverse + color[1] * alpha) / 255);
+      this.buffer[offset + 2] = Math.trunc(((this.buffer[offset + 2] ?? 0) * inverse + color[2] * alpha) / 255);
+      this.buffer[offset + 3] = 255;
+    }
+  }
+
   drawBitmap(bitmap: Bitmap, left: number, top: number): void {
     for (let y = 0; y < bitmap.height; y += 1) {
       const py = top + y;

@@ -1,8 +1,4 @@
-import {
-  createInitialGameState,
-  type GameGoodsState,
-  type GameState,
-} from './game-state';
+import { createInitialGameState, type GameGoodsState, type GameState } from './game-state';
 import type { BuffState, Player } from '@/characters';
 import type { MainSceneRuntimeSnapshot } from '@/screens/main-game/runtime';
 
@@ -49,6 +45,9 @@ export interface SaveGameState {
   mainScene: MainSceneRuntimeSnapshot | null;
   allowFightMiss: boolean;
   allowTossArm: boolean;
+  showPosition?: boolean;
+  screenRed?: number;
+  screenAlpha?: number;
 }
 
 export interface SaveResourceRef {
@@ -125,6 +124,9 @@ export function createSavePayload(
       mainScene,
       allowFightMiss: state.allowFightMiss,
       allowTossArm: state.allowTossArm,
+      showPosition: state.showPosition,
+      screenRed: state.screenRed,
+      screenAlpha: state.screenAlpha,
     },
   };
 }
@@ -206,5 +208,8 @@ export function toLoadedGameState(payload: SaveGamePayload): GameState {
     sceneName: state.sceneName,
     allowFightMiss: state.allowFightMiss ?? false,
     allowTossArm: state.allowTossArm ?? true,
+    showPosition: state.showPosition ?? false,
+    screenRed: state.screenRed ?? 0,
+    screenAlpha: state.screenAlpha ?? 0,
   };
 }

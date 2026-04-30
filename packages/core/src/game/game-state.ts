@@ -32,6 +32,9 @@ export interface GameState {
   disableSave: boolean;
   allowFightMiss: boolean;
   allowTossArm: boolean;
+  showPosition: boolean;
+  screenRed: number;
+  screenAlpha: number;
 }
 
 export function createInitialGameState(): GameState {
@@ -56,6 +59,9 @@ export function createInitialGameState(): GameState {
     disableSave: false,
     allowFightMiss: false,
     allowTossArm: true,
+    showPosition: false,
+    screenRed: 0,
+    screenAlpha: 0,
   };
 }
 

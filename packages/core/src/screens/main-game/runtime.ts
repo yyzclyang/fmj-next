@@ -17,6 +17,7 @@ export type SceneObjectKind = 'npc' | 'box';
 
 export interface SceneObject {
   id: number;
+  eventId: number;
   kind: SceneObjectKind;
   x: number;
   y: number;
@@ -32,6 +33,7 @@ export interface SceneObject {
 
 export interface SceneObjectSnapshot {
   id: number;
+  eventId?: number;
   kind: SceneObjectKind;
   x: number;
   y: number;
@@ -44,10 +46,16 @@ export interface SceneObjectSnapshot {
   pauseRemaining: number;
 }
 
+export interface ActorMoveIntervalSnapshot {
+  id: number;
+  interval: number;
+}
+
 export interface MainSceneRuntimeSnapshot {
   scriptProcess: ScriptProcessSnapshot | null;
   combat: CombatRuntimeSnapshot | null;
   sceneObjects: SceneObjectSnapshot[];
+  actorMoveIntervals?: ActorMoveIntervalSnapshot[];
   hasPlayer: boolean;
   playerActorId: number;
   playerFacing: Facing;
@@ -85,6 +93,7 @@ export class MainSceneRuntime {
   private facingValue: Facing = KeyCode.Down;
   private playerStepValue = 0;
   private overlayValue: ScreenOverlay | null = null;
+  private readonly actorMoveIntervals = new Map<number, number>();
 
   constructor(private readonly game: Game) {
     if (this.game.state.mapType > 0 && this.game.state.mapIndex > 0) {
@@ -164,6 +173,7 @@ export class MainSceneRuntime {
       scriptProcess: this.scriptProcess?.createSnapshot() ?? null,
       combat: this.game.combat.createSnapshot(),
       sceneObjects: [...this.sceneObjectsValue.values()].map(obj => this.createSceneObjectSnapshot(obj)),
+      actorMoveIntervals: [...this.actorMoveIntervals].map(([id, interval]) => ({ id, interval })),
       hasPlayer: this.hasPlayerValue,
       playerActorId: this.playerActorIdValue,
       playerFacing: this.facingValue,
@@ -176,6 +186,10 @@ export class MainSceneRuntime {
     this.sceneObjectsValue.clear();
     for (const obj of snapshot.sceneObjects) {
       this.sceneObjectsValue.set(obj.id, this.restoreSceneObject(obj));
+    }
+    this.actorMoveIntervals.clear();
+    for (const item of snapshot.actorMoveIntervals ?? []) {
+      this.actorMoveIntervals.set(item.id, item.interval);
     }
     this.restoreVisiblePlayer(snapshot);
     this.scriptProcess = null;
@@ -249,11 +263,12 @@ export class MainSceneRuntime {
     return this.scriptProcess?.triggerEvent(eventId) ?? false;
   }
 
-  callChapter(type: number, index: number, parentProcess = this.scriptProcess): void {
+  callChapter(type: number, index: number, parentProcess = this.scriptProcess): ScriptProcess {
     const childProcess = this.game.scriptVm.loadScript(type, index);
     childProcess.parent = parentProcess;
     this.scriptProcess = childProcess;
     childProcess.start();
+    return childProcess;
   }
 
   initFight(params: CombatInitFightParams): void {
@@ -327,6 +342,7 @@ export class MainSceneRuntime {
     this.currentMapValue = mapRes;
     this.tileSetValue = this.loadTileSet(mapRes);
     this.sceneObjectsValue.clear();
+    this.actorMoveIntervals.clear();
     this.game.clearPendingBoxEvent();
     this.game.state.mapType = type;
     this.game.state.mapIndex = index;
@@ -352,7 +368,11 @@ export class MainSceneRuntime {
     this.syncVisiblePlayer();
     const player = this.game.addActor(screenActorId);
     if (!player) return;
-    this.setResourcePlayerMapPosition(player, this.game.state.mapScreenX + screenX, this.game.state.mapScreenY + screenY);
+    this.setResourcePlayerMapPosition(
+      player,
+      this.game.state.mapScreenX + screenX,
+      this.game.state.mapScreenY + screenY
+    );
     this.refreshVisibleControlPlayer();
   }
 
@@ -365,7 +385,19 @@ export class MainSceneRuntime {
     const delay = npcRes instanceof Npc ? npcRes.delay : 0;
     this.sceneObjectsValue.set(
       id,
-      this.createSceneObject({ id, kind: 'npc', x, y, resId, walkingSprite, direction, step, state, delay })
+      this.createSceneObject({
+        id,
+        eventId: id,
+        kind: 'npc',
+        x,
+        y,
+        resId,
+        walkingSprite,
+        direction,
+        step,
+        state,
+        delay,
+      })
     );
   }
 
@@ -382,20 +414,35 @@ export class MainSceneRuntime {
         : 0;
     this.sceneObjectsValue.set(
       id,
-      this.createSceneObject({ id, kind: 'box', x, y, resId, walkingSprite, direction, step, state, delay })
+      this.createSceneObject({
+        id,
+        eventId: id,
+        kind: 'box',
+        x,
+        y,
+        resId,
+        walkingSprite,
+        direction,
+        step,
+        state,
+        delay,
+      })
     );
   }
 
   deleteNpc(id: number): void {
     this.sceneObjectsValue.delete(id);
+    this.actorMoveIntervals.delete(id);
   }
 
   deleteBox(id: number): void {
     this.sceneObjectsValue.delete(id);
+    this.actorMoveIntervals.delete(id);
   }
 
   deleteAllNpc(): void {
     this.sceneObjectsValue.clear();
+    this.actorMoveIntervals.clear();
   }
 
   deleteActor(id: number): void {
@@ -430,12 +477,13 @@ export class MainSceneRuntime {
   createMoveActorOperation(id: number, x: number, y: number): ScriptOperation | null {
     const actor = this.getActorPosition(id);
     if (!actor) return null;
-    let elapsed = SCRIPT_MOVE_INTERVAL;
+    const moveInterval = this.getActorMoveInterval(id);
+    let elapsed = moveInterval;
 
     return {
       update: delta => {
         elapsed += delta;
-        if (elapsed < SCRIPT_MOVE_INTERVAL) return true;
+        if (elapsed < moveInterval) return true;
         elapsed = 0;
         const pos = this.getActorPosition(id);
         if (!pos || (pos.x === x && pos.y === y)) return false;
@@ -448,6 +496,20 @@ export class MainSceneRuntime {
         return true;
       },
     };
+  }
+
+  setActorEvent(actorId: number, eventId: number): void {
+    const obj = this.sceneObjectsValue.get(actorId);
+    if (!obj) return;
+    obj.eventId = eventId;
+  }
+
+  setActorMoveInterval(actorId: number, speed: number): void {
+    if (speed <= 0) {
+      this.actorMoveIntervals.delete(actorId);
+      return;
+    }
+    this.actorMoveIntervals.set(actorId, Math.max(20, Math.trunc(speed)));
   }
 
   faceActorToActor(sourceId: number, targetId: number): void {
@@ -529,6 +591,10 @@ export class MainSceneRuntime {
     };
 
     process.wait(this.withOverlay(operation, overlay));
+  }
+
+  showScreen(): void {
+    this.overlayValue = null;
   }
 
   openBox(id: number): void {
@@ -649,7 +715,7 @@ export class MainSceneRuntime {
       } else {
         this.game.clearPendingBoxEvent();
       }
-      const triggered = this.scriptProcess?.triggerEvent(obj.id) ?? false;
+      const triggered = this.scriptProcess?.triggerEvent(obj.eventId) ?? false;
       if (!triggered) {
         this.game.clearPendingBoxEvent();
       }
@@ -900,9 +966,14 @@ export class MainSceneRuntime {
     };
   }
 
+  private getActorMoveInterval(id: number): number {
+    return this.actorMoveIntervals.get(id) ?? SCRIPT_MOVE_INTERVAL;
+  }
+
   private createSceneObjectSnapshot(obj: SceneObject): SceneObjectSnapshot {
     return {
       id: obj.id,
+      eventId: obj.eventId,
       kind: obj.kind,
       x: obj.x,
       y: obj.y,
@@ -929,6 +1000,7 @@ export class MainSceneRuntime {
     }
     return {
       ...snapshot,
+      eventId: snapshot.eventId ?? snapshot.id,
       walkingSprite,
     };
   }

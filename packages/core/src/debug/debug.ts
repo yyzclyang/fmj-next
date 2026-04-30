@@ -5,6 +5,20 @@ import { BaseGoods } from '@/goods';
 import { ResourceType } from '@/lib/resource-utils';
 
 const DEFAULT_DEBUG_PLAYER_COUNT = 4;
+const DEBUG_PLAYER_INCREASE_KEYS = [
+  'id',
+  'level',
+  'hp',
+  'maxHp',
+  'mp',
+  'maxMp',
+  'attack',
+  'defend',
+  'speed',
+  'lingli',
+  'luck',
+  'currentExp',
+] as const;
 
 export interface DebugSnapshot {
   money: number;
@@ -38,6 +52,7 @@ export interface DebugBagApi {
   add(type: number, index: number, count?: number): DebugGoodsItem | null;
   addAll(count?: number): DebugGoodsItem[];
   delete(type: number, index: number, count?: number): boolean;
+  addMoney(value: number): number;
 }
 
 export interface DebugGoodsItem {
@@ -54,6 +69,22 @@ export interface DebugPlayerApi {
   list(): DebugPlayerItem[];
   listAll(): DebugPlayerItem[];
   add(ids?: readonly number[]): DebugPlayerItem[];
+  increase(input: DebugPlayerIncreaseInput): DebugPlayerItem | null;
+}
+
+export interface DebugPlayerIncreaseInput {
+  id?: number;
+  level?: number;
+  hp?: number;
+  maxHp?: number;
+  mp?: number;
+  maxMp?: number;
+  attack?: number;
+  defend?: number;
+  speed?: number;
+  lingli?: number;
+  luck?: number;
+  currentExp?: number;
 }
 
 export interface DebugScriptApi {
@@ -152,6 +183,7 @@ export interface DebugPlayerItem {
   speed: number;
   lingli: number;
   luck: number;
+  currentExp: number;
   inParty: boolean;
   isControl: boolean;
 }
@@ -221,6 +253,13 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         console.debug(ok ? `已删除道具 ${type}-${index} x${count}` : `删除道具失败 ${type}-${index} x${count}`);
         return ok;
       },
+      addMoney(value: number) {
+        const game = getGame();
+        if (!game) return 0;
+        game.setMoney(game.state.money + assertDebugInt(value, 'money'));
+        console.debug(`当前金钱:${game.state.money}`);
+        return game.state.money;
+      },
     },
     player: {
       list() {
@@ -243,6 +282,15 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         const items = ids.map(id => toDebugPlayerItem(game, addDebugPlayer(game, id)));
         console.table(items);
         return items;
+      },
+      increase(input: DebugPlayerIncreaseInput) {
+        const game = getGame();
+        if (!game) return null;
+        const player = resolveDebugPlayer(game, input);
+        applyDebugPlayerIncrease(player, input);
+        const item = toDebugPlayerItem(game, player);
+        console.table([item]);
+        return item;
       },
     },
     script: {
@@ -300,7 +348,7 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
 
 function normalizeCombatStartOptions(input?: readonly number[] | DebugCombatStartOptions): DebugCombatStartOptions {
   if (!input) return {};
-  return Array.isArray(input) ? { monsterIds: input } : input;
+  return isDebugNumberArray(input) ? { monsterIds: input } : input;
 }
 
 // 调试战斗允许一次性搭好队伍、背包和战斗开关，方便复现 Kotlin 对照场景。
@@ -321,7 +369,10 @@ function resolveCombatBackground(game: Game, input?: DebugCombatBackgroundInput)
   if (input == null) return { scrb: getFirstCombatBackgroundIndex(game), scrl: 0, scrr: 0 };
   if (typeof input === 'number') return { scrb: assertDebugNonNegativeInt(input, 'background'), scrl: 0, scrr: 0 };
   return {
-    scrb: input.scrb == null ? getFirstCombatBackgroundIndex(game) : assertDebugNonNegativeInt(input.scrb, 'background.scrb'),
+    scrb:
+      input.scrb == null
+        ? getFirstCombatBackgroundIndex(game)
+        : assertDebugNonNegativeInt(input.scrb, 'background.scrb'),
     scrl: input.scrl == null ? 0 : assertDebugNonNegativeInt(input.scrl, 'background.scrl'),
     scrr: input.scrr == null ? 0 : assertDebugNonNegativeInt(input.scrr, 'background.scrr'),
   };
@@ -346,12 +397,40 @@ function applyDebugPlayerState(game: Game, input: DebugCombatPlayerStateInput): 
   applyDebugBuff(player.atbuff, input.atbuffMask, input.atbuffRound, 'atbuff');
 }
 
-function applyDebugBuff(
-  buff: Player['buff'],
-  mask: number | undefined,
-  round: number | undefined,
-  name: string
-): void {
+function resolveDebugPlayer(game: Game, input: DebugPlayerIncreaseInput): Player {
+  assertDebugObject(input, 'player.increase');
+  assertDebugKnownKeys(input, DEBUG_PLAYER_INCREASE_KEYS, 'player.increase');
+  const actorId = input.id ?? (game.state.controlActorId || game.state.partyActorIds[0]);
+  if (!actorId) throw new Error('没有可调整属性的当前角色，请传入 id');
+  const player = game.getPlayer(assertDebugPositiveInt(actorId, 'id'));
+  if (!player) throw new Error(`角色资源不存在: ARS 1-${actorId}`);
+  return player;
+}
+
+// 这里复用脚本 ATTRIBADD 的字段编号，方便调试结果和 Kotlin 行为对照。
+function applyDebugPlayerIncrease(player: Player, input: DebugPlayerIncreaseInput): void {
+  let applied = false;
+  applied = addDebugPlayerAttribute(player, 0, input.level, 'level') || applied;
+  applied = addDebugPlayerAttribute(player, 1, input.attack, 'attack') || applied;
+  applied = addDebugPlayerAttribute(player, 2, input.defend, 'defend') || applied;
+  applied = addDebugPlayerAttribute(player, 3, input.speed, 'speed') || applied;
+  applied = addDebugPlayerAttribute(player, 4, input.hp, 'hp') || applied;
+  applied = addDebugPlayerAttribute(player, 5, input.mp, 'mp') || applied;
+  applied = addDebugPlayerAttribute(player, 6, input.currentExp, 'currentExp') || applied;
+  applied = addDebugPlayerAttribute(player, 7, input.lingli, 'lingli') || applied;
+  applied = addDebugPlayerAttribute(player, 8, input.luck, 'luck') || applied;
+  applied = addDebugPlayerAttribute(player, 10, input.maxHp, 'maxHp') || applied;
+  applied = addDebugPlayerAttribute(player, 11, input.maxMp, 'maxMp') || applied;
+  if (!applied) throw new Error('player.increase 至少需要一个属性增量');
+}
+
+function addDebugPlayerAttribute(player: Player, type: number, value: number | undefined, name: string): boolean {
+  if (value == null) return false;
+  player.addAttribute(type, assertDebugInt(value, name));
+  return true;
+}
+
+function applyDebugBuff(buff: Player['buff'], mask: number | undefined, round: number | undefined, name: string): void {
   if (mask == null) return;
   const value = assertDebugNonNegativeInt(mask, `${name}Mask`);
   buff.clearBuff(0xff);
@@ -366,20 +445,34 @@ function addDebugGoods(game: Game, input: DebugCombatGoodsInput): void {
   if (!goods) throw new Error(`调试战斗物品不存在: GRS ${type}-${index}`);
 }
 
+function isDebugNumberArray(value: unknown): value is readonly number[] {
+  return Array.isArray(value);
+}
+
+function assertDebugObject(value: unknown, name: string): void {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${name} 参数必须是对象`);
+}
+
+function assertDebugKnownKeys(value: object, allowed: readonly string[], name: string): void {
+  for (const key of Object.keys(value)) {
+    if (!allowed.includes(key)) throw new Error(`${name} 不支持字段: ${key}`);
+  }
+}
+
 function assertDebugInt(value: number, name: string): number {
-  if (!Number.isInteger(value)) throw new Error(`调试战斗参数 ${name} 必须是整数: ${value}`);
+  if (!Number.isInteger(value)) throw new Error(`调试参数 ${name} 必须是整数: ${value}`);
   return value;
 }
 
 function assertDebugNonNegativeInt(value: number, name: string): number {
   const intValue = assertDebugInt(value, name);
-  if (intValue < 0) throw new Error(`调试战斗参数 ${name} 不能小于 0: ${value}`);
+  if (intValue < 0) throw new Error(`调试参数 ${name} 不能小于 0: ${value}`);
   return intValue;
 }
 
 function assertDebugPositiveInt(value: number, name: string): number {
   const intValue = assertDebugInt(value, name);
-  if (intValue <= 0) throw new Error(`调试战斗参数 ${name} 必须大于 0: ${value}`);
+  if (intValue <= 0) throw new Error(`调试参数 ${name} 必须大于 0: ${value}`);
   return intValue;
 }
 
@@ -489,6 +582,7 @@ function toDebugPlayerItem(game: Game, player: Player): DebugPlayerItem {
     speed: player.speed,
     lingli: player.lingli,
     luck: player.luck,
+    currentExp: player.currentExp,
     inParty: game.state.partyActorIds.includes(player.index),
     isControl: game.state.controlActorId === player.index,
   };

@@ -21,11 +21,13 @@ export class BrowserRuntime {
       add: (type, index, count) => this.engine?.debug.bag.add(type, index, count) ?? null,
       addAll: count => this.engine?.debug.bag.addAll(count) ?? [],
       delete: (type, index, count) => this.engine?.debug.bag.delete(type, index, count) ?? false,
+      addMoney: value => this.engine?.debug.bag.addMoney(value) ?? 0,
     },
     player: {
       list: () => this.engine?.debug.player.list() ?? [],
       listAll: () => this.engine?.debug.player.listAll() ?? [],
       add: ids => this.engine?.debug.player.add(ids) ?? [],
+      increase: input => this.engine?.debug.player.increase(input) ?? null,
     },
     script: {
       start: (type, index, offset) => this.engine?.debug.script.start(type, index, offset) ?? false,

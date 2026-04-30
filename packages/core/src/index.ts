@@ -11,6 +11,7 @@ export type {
   DebugCombatStartOptions,
   DebugGoodsItem,
   DebugPlayerItem,
+  DebugPlayerIncreaseInput,
   DebugSnapshot,
 } from './debug/debug';
 export type { GameState } from './game/game-state';

@@ -19,6 +19,7 @@ import { useGoodsFromBag } from './combat-action-utils';
 import { createThrowGoodsSelection, createUseGoodsSelection, type CombatGoodsActionSelection } from './combat-goods-actions';
 import { CombatGoodsMenu } from './combat-goods-menu';
 import { CombatInputHandler } from './combat-input';
+import { CombatLossAnimation } from './combat-loss-animation';
 import { CombatMagicMenu } from './combat-magic-menu';
 import { CombatMenuController } from './combat-menu-controller';
 import { canSelectCoopTarget, createCoopPlayerAction } from './combat-coop-actions';
@@ -56,6 +57,7 @@ export class ScreenCombat extends BaseScreen {
   private readonly magicMenu: CombatMagicMenu;
   private readonly menuController: CombatMenuController;
   private successScreen: ScreenCombatSuccess | null = null;
+  private lossAnimation: CombatLossAnimation | null = null;
   private phase: CombatPhase = 'selectAction';
   private currentPlayerIndex = 0;
   private targetIndex = 0;
@@ -199,6 +201,10 @@ export class ScreenCombat extends BaseScreen {
   }
 
   override update(delta: number): void {
+    if (this.lossAnimation) {
+      if (!this.lossAnimation.update(delta)) this.finish('loss');
+      return;
+    }
     if (this.successScreen?.update(delta)) {
       this.finish('win');
       return;
@@ -225,7 +231,7 @@ export class ScreenCombat extends BaseScreen {
       phase: this.phase,
       autoAttack: this.autoAttack,
       successScreen: this.successScreen,
-      animation: this.actionQueue.currentAnimation,
+      animation: this.lossAnimation ?? this.actionQueue.currentAnimation,
       actionIconIndex: this.actionIconIndex,
       miscIndex: this.miscIndex,
       combatGoodsIndex: this.combatGoodsIndex,
@@ -243,6 +249,7 @@ export class ScreenCombat extends BaseScreen {
       this.successScreen.skip();
       return;
     }
+    if (this.lossAnimation) return;
 
     if (this.options.allowDebugWin && key === KeyCode.PageDown) {
       this.startSuccess();
@@ -426,7 +433,7 @@ export class ScreenCombat extends BaseScreen {
       this.startSuccess();
       return;
     }
-    this.finish(result.result);
+    this.finishOrStartLoss(result.result);
   }
 
   private finishRound(): void {
@@ -436,7 +443,7 @@ export class ScreenCombat extends BaseScreen {
       return;
     }
     if (result.kind === 'finish') {
-      this.finish(result.result);
+      this.finishOrStartLoss(result.result);
       return;
     }
 
@@ -452,6 +459,23 @@ export class ScreenCombat extends BaseScreen {
   private startSuccess(): void {
     this.phase = 'success';
     this.successScreen = new ScreenCombatSuccess(this.game, this.session.settleWin());
+  }
+
+  private finishOrStartLoss(result: CombatFinishResult): void {
+    if (result === 'loss' && this.session.isRandomFight) {
+      this.startLossAnimation();
+      return;
+    }
+    this.finish(result);
+  }
+
+  private startLossAnimation(): void {
+    if (this.lossAnimation) return;
+    this.actionQueue.clearAndRestoreItems();
+    this.autoAttack = false;
+    this.messageElapsed = 0;
+    this.phase = 'performing';
+    this.lossAnimation = new CombatLossAnimation(this.game);
   }
 
   private finish(result: CombatFinishResult): void {

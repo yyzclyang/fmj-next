@@ -5,3 +5,4 @@ export * from './combat-physical-animation';
 export * from './combat-cast-animation';
 export * from './combat-coop-animation';
 export * from './combat-flee-animation';
+export * from './combat-loss-animation';

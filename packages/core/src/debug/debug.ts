@@ -1,5 +1,6 @@
 import type { Game } from '@/game/game';
-import { Player } from '@/characters';
+import { Monster, Player } from '@/characters';
+import type { CombatBackgroundIds, CombatEnterFightParams } from '@/combat/combat-runtime';
 import { BaseGoods } from '@/goods';
 import { ResourceType } from '@/lib/resource-utils';
 
@@ -59,8 +60,83 @@ export interface DebugScriptApi {
   start(type: number, index: number, offset?: number): boolean;
 }
 
+export type DebugCombatBackgroundInput =
+  | number
+  | {
+      scrb?: number;
+      scrl?: number;
+      scrr?: number;
+    };
+
+export interface DebugCombatGoodsInput {
+  type: number;
+  index: number;
+  count?: number;
+}
+
+export interface DebugCombatPlayerStateInput {
+  id: number;
+  hp?: number;
+  mp?: number;
+  buffMask?: number;
+  buffRound?: number;
+  debuffMask?: number;
+  debuffRound?: number;
+  atbuffMask?: number;
+  atbuffRound?: number;
+}
+
+export interface DebugCombatStartOptions {
+  monsterIds?: readonly number[];
+  background?: DebugCombatBackgroundInput;
+  roundMax?: number;
+  eventRounds?: readonly number[];
+  eventIds?: readonly number[];
+  lossAddress?: number;
+  winAddress?: number;
+  playerIds?: readonly number[];
+  playerStates?: readonly DebugCombatPlayerStateInput[];
+  goods?: readonly DebugCombatGoodsInput[];
+  allowFightMiss?: boolean;
+  allowTossArm?: boolean;
+}
+
 export interface DebugCombatApi {
-  start(monsterIds?: readonly number[]): boolean;
+  listMonsters(): DebugCombatMonsterItem[];
+  listBackgrounds(): DebugCombatBackgroundItem[];
+  start(options?: readonly number[] | DebugCombatStartOptions): boolean;
+}
+
+export interface DebugCombatMonsterItem {
+  index: number;
+  name: string;
+  level: number;
+  hp: number;
+  mp: number;
+  attack: number;
+  defend: number;
+  speed: number;
+  lingli: number;
+  luck: number;
+  iq: number;
+  exp: number;
+  money: number;
+  stealGoods: DebugCarryGoodsItem | null;
+  dropGoods: DebugCarryGoodsItem | null;
+}
+
+export interface DebugCarryGoodsItem {
+  type: number;
+  index: number;
+  count: number;
+  name: string;
+}
+
+export interface DebugCombatBackgroundItem {
+  index: number;
+  width: number;
+  height: number;
+  frames: number;
 }
 
 export interface DebugPlayerItem {
@@ -184,27 +260,134 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
       },
     },
     combat: {
-      start(monsterIds?: readonly number[]) {
+      listMonsters() {
+        const game = getGame();
+        const items = game ? listAllMonsters(game).map(toDebugCombatMonsterItem) : [];
+        console.table(items);
+        return items;
+      },
+      listBackgrounds() {
+        const game = getGame();
+        const items = game ? listAllCombatBackgrounds(game) : [];
+        console.table(items);
+        return items;
+      },
+      start(input?: readonly number[] | DebugCombatStartOptions) {
         const game = getGame();
         const runtime = game?.mainSceneRuntime ?? null;
         if (!game || !runtime) throw new Error('主场景运行时不存在，无法调试进入战斗');
-        const ids = monsterIds ?? listAllMonsterIds(game).slice(0, 1);
+        const options = normalizeCombatStartOptions(input);
+        const ids = resolveDebugMonsterIds(game, options.monsterIds);
         if (ids.length === 0) throw new Error('没有可用的怪物 ARS 3-*');
-        const scrb = getFirstCombatBackgroundIndex(game);
-        runtime.startDebugCombat({
-          roundMax: 0,
+        const background = resolveCombatBackground(game, options.background);
+        const params: CombatEnterFightParams = {
+          roundMax: assertDebugNonNegativeInt(options.roundMax ?? 0, 'roundMax'),
           monsterTypes: ids,
-          background: { scrb, scrl: 0, scrr: 0 },
-          eventRounds: [0, 0, 0],
-          eventIds: [0, 0, 0],
-          lossAddress: 0,
-          winAddress: 0,
-        });
-        console.debug(`已进入调试战斗 monster=${ids.join(',')} bg=${scrb}`);
+          background,
+          eventRounds: toCombatTriple(options.eventRounds, 'eventRounds'),
+          eventIds: toCombatTriple(options.eventIds, 'eventIds'),
+          lossAddress: assertDebugNonNegativeInt(options.lossAddress ?? 0, 'lossAddress'),
+          winAddress: assertDebugNonNegativeInt(options.winAddress ?? 0, 'winAddress'),
+        };
+        applyDebugCombatSetup(game, options);
+        runtime.startDebugCombat(params);
+        console.debug(`已进入调试战斗 monster=${ids.join(',')} bg=${background.scrb}`);
         return true;
       },
     },
   };
+}
+
+function normalizeCombatStartOptions(input?: readonly number[] | DebugCombatStartOptions): DebugCombatStartOptions {
+  if (!input) return {};
+  return Array.isArray(input) ? { monsterIds: input } : input;
+}
+
+// 调试战斗允许一次性搭好队伍、背包和战斗开关，方便复现 Kotlin 对照场景。
+function applyDebugCombatSetup(game: Game, options: DebugCombatStartOptions): void {
+  if (options.allowFightMiss != null) game.state.allowFightMiss = options.allowFightMiss;
+  if (options.allowTossArm != null) game.state.allowTossArm = options.allowTossArm;
+  for (const id of options.playerIds ?? []) addDebugPlayer(game, id);
+  for (const state of options.playerStates ?? []) applyDebugPlayerState(game, state);
+  for (const item of options.goods ?? []) addDebugGoods(game, item);
+}
+
+function resolveDebugMonsterIds(game: Game, input?: readonly number[]): number[] {
+  const ids = input ?? listAllMonsterIds(game).slice(0, 1);
+  return ids.map((id, i) => assertDebugPositiveInt(id, `monsterIds[${i}]`));
+}
+
+function resolveCombatBackground(game: Game, input?: DebugCombatBackgroundInput): CombatBackgroundIds {
+  if (input == null) return { scrb: getFirstCombatBackgroundIndex(game), scrl: 0, scrr: 0 };
+  if (typeof input === 'number') return { scrb: assertDebugNonNegativeInt(input, 'background'), scrl: 0, scrr: 0 };
+  return {
+    scrb: input.scrb == null ? getFirstCombatBackgroundIndex(game) : assertDebugNonNegativeInt(input.scrb, 'background.scrb'),
+    scrl: input.scrl == null ? 0 : assertDebugNonNegativeInt(input.scrl, 'background.scrl'),
+    scrr: input.scrr == null ? 0 : assertDebugNonNegativeInt(input.scrr, 'background.scrr'),
+  };
+}
+
+function toCombatTriple(values: readonly number[] | undefined, name: string): [number, number, number] {
+  if (!values) return [0, 0, 0];
+  if (values.length > 3) throw new Error(`${name} 最多只能配置 3 项`);
+  return [
+    values[0] == null ? 0 : assertDebugNonNegativeInt(values[0], `${name}[0]`),
+    values[1] == null ? 0 : assertDebugNonNegativeInt(values[1], `${name}[1]`),
+    values[2] == null ? 0 : assertDebugNonNegativeInt(values[2], `${name}[2]`),
+  ];
+}
+
+function applyDebugPlayerState(game: Game, input: DebugCombatPlayerStateInput): void {
+  const player = addDebugPlayer(game, input.id);
+  if (input.hp != null) player.hp = clampDebugInt(input.hp, 'hp', 0, player.maxHp);
+  if (input.mp != null) player.mp = clampDebugInt(input.mp, 'mp', 0, player.maxMp);
+  applyDebugBuff(player.buff, input.buffMask, input.buffRound, 'buff');
+  applyDebugBuff(player.debuff, input.debuffMask, input.debuffRound, 'debuff');
+  applyDebugBuff(player.atbuff, input.atbuffMask, input.atbuffRound, 'atbuff');
+}
+
+function applyDebugBuff(
+  buff: Player['buff'],
+  mask: number | undefined,
+  round: number | undefined,
+  name: string
+): void {
+  if (mask == null) return;
+  const value = assertDebugNonNegativeInt(mask, `${name}Mask`);
+  buff.clearBuff(0xff);
+  if (value !== 0) buff.addBuff(value, round == null ? 99 : assertDebugNonNegativeInt(round, `${name}Round`));
+}
+
+function addDebugGoods(game: Game, input: DebugCombatGoodsInput): void {
+  const type = assertDebugPositiveInt(input.type, 'goods.type');
+  const index = assertDebugPositiveInt(input.index, 'goods.index');
+  const count = assertDebugPositiveInt(input.count ?? 1, 'goods.count');
+  const goods = game.bag.addGoods(type, index, count);
+  if (!goods) throw new Error(`调试战斗物品不存在: GRS ${type}-${index}`);
+}
+
+function assertDebugInt(value: number, name: string): number {
+  if (!Number.isInteger(value)) throw new Error(`调试战斗参数 ${name} 必须是整数: ${value}`);
+  return value;
+}
+
+function assertDebugNonNegativeInt(value: number, name: string): number {
+  const intValue = assertDebugInt(value, name);
+  if (intValue < 0) throw new Error(`调试战斗参数 ${name} 不能小于 0: ${value}`);
+  return intValue;
+}
+
+function assertDebugPositiveInt(value: number, name: string): number {
+  const intValue = assertDebugInt(value, name);
+  if (intValue <= 0) throw new Error(`调试战斗参数 ${name} 必须大于 0: ${value}`);
+  return intValue;
+}
+
+function clampDebugInt(value: number, name: string, min: number, max: number): number {
+  const intValue = assertDebugInt(value, name);
+  if (intValue < min) return min;
+  if (intValue > max) return max;
+  return intValue;
 }
 
 function listPartyPlayers(game: Game): Player[] {
@@ -227,6 +410,25 @@ function listAllMonsterIds(game: Game): number[] {
     .listResourceKeys(ResourceType.ARS)
     .filter(key => key.type === 3)
     .map(key => key.index);
+}
+
+function listAllMonsters(game: Game): Monster[] {
+  return listAllMonsterIds(game).map(id => {
+    const monster = game.datLib.getRes(ResourceType.ARS, 3, id);
+    if (!(monster instanceof Monster)) throw new Error(`怪物资源不存在: ARS 3-${id}`);
+    return monster;
+  });
+}
+
+function listAllCombatBackgrounds(game: Game): DebugCombatBackgroundItem[] {
+  return game.datLib
+    .listResourceKeys(ResourceType.PIC)
+    .filter(key => key.type === 4)
+    .map(key => {
+      const image = game.datLib.getImage(ResourceType.PIC, 4, key.index);
+      if (!image) throw new Error(`战斗背景资源不存在: PIC 4-${key.index}`);
+      return { index: key.index, width: image.width, height: image.height, frames: image.number };
+    });
 }
 
 function getFirstCombatBackgroundIndex(game: Game): number {
@@ -301,5 +503,34 @@ function toDebugGoodsItem(goods: BaseGoods, count: number): DebugGoodsItem {
     buyPrice: goods.buyPrice,
     sellPrice: goods.sellPrice,
     description: goods.description,
+  };
+}
+
+function toDebugCombatMonsterItem(monster: Monster): DebugCombatMonsterItem {
+  return {
+    index: monster.index,
+    name: monster.name,
+    level: monster.level,
+    hp: monster.maxHp,
+    mp: monster.maxMp,
+    attack: monster.attack,
+    defend: monster.defend,
+    speed: monster.speed,
+    lingli: monster.lingli,
+    luck: monster.luck,
+    iq: monster.iq,
+    exp: monster.exp,
+    money: monster.money,
+    stealGoods: monster.stealGoods ? toDebugCarryGoodsItem(monster.stealGoods.goods, monster.stealGoods.count) : null,
+    dropGoods: monster.dropGoods ? toDebugCarryGoodsItem(monster.dropGoods.goods, monster.dropGoods.count) : null,
+  };
+}
+
+function toDebugCarryGoodsItem(goods: BaseGoods, count: number): DebugCarryGoodsItem {
+  return {
+    type: goods.type,
+    index: goods.index,
+    count,
+    name: goods.name,
   };
 }

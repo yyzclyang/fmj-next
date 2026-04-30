@@ -31,7 +31,9 @@ export class BrowserRuntime {
       start: (type, index, offset) => this.engine?.debug.script.start(type, index, offset) ?? false,
     },
     combat: {
-      start: monsterIds => this.engine?.debug.combat.start(monsterIds) ?? false,
+      listMonsters: () => this.engine?.debug.combat.listMonsters() ?? [],
+      listBackgrounds: () => this.engine?.debug.combat.listBackgrounds() ?? [],
+      start: options => this.engine?.debug.combat.start(options) ?? false,
     },
   };
   private readonly presenter: CanvasPresenter;

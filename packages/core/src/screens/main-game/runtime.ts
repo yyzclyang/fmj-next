@@ -294,9 +294,16 @@ export class MainSceneRuntime {
   startDebugCombat(params: CombatEnterFightParams): void {
     const scene = this.game.mainScene;
     if (!scene) throw new Error('主场景不存在，无法调试进入战斗');
-    const session = this.game.combat.enterFight(params, result => {
-      if (result === 'loss') scene.showMessage('战斗失败');
-    });
+    const session = this.game.combat.enterFight(
+      params,
+      result => {
+        console.debug(`调试战斗结束: ${result} win=${params.winAddress} loss=${params.lossAddress}`);
+        if (result === 'loss') scene.showMessage('战斗失败');
+      },
+      eventId => {
+        console.debug(`调试战斗回合事件: ${eventId}`);
+      }
+    );
     scene.screenStack.push(new ScreenCombat(this.game, session, { allowDebugWin: true }));
   }
 

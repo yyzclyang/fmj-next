@@ -42,7 +42,7 @@ export function createRaiseAnimations(
     const hpDiff = fighter.hp - snapshot.hp;
     const buffMask = getDebuffDiffMask(snapshot, fighter);
     if (hpDiff === 0 && buffMask === 0) continue;
-    res.push(new RaiseCombatAnimation(game, sprite.combatX, sprite.combatY - Math.trunc(sprite.height / 2), hpDiff, buffMask));
+    res.push(new RaiseCombatAnimation(game, sprite.combatX, sprite.combatY, hpDiff, buffMask));
   }
   return res;
 }

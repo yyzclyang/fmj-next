@@ -21,7 +21,7 @@ export function isMissed(game: Game, attacker: FightingCharacter, target: Fighti
 export function createMissAnimation(game: Game, fighter: FightingCharacter): CombatActionAnimation {
   const sprite = fighter.fightingSprite;
   if (!sprite) throw new Error(`战斗 Miss 动画缺少角色图: ${fighter.name}`);
-  return new MissCombatAnimation(game, sprite.combatX, sprite.combatY - Math.trunc(sprite.height / 2));
+  return new MissCombatAnimation(game, sprite.combatX, sprite.combatY);
 }
 
 export function getAnimationPoint(targets: readonly FightingCharacter[], _isAll: boolean): CombatPoint {

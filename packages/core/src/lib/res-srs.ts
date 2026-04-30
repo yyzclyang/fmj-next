@@ -93,6 +93,19 @@ export class ResSrs extends ResBase {
     }
   }
 
+  // 战斗动画按 Kotlin 的绝对锚点绘制：首帧坐标只是资源内部原点。
+  drawAbsolutely(surface: Surface, x: number, y: number): void {
+    const base = this.frameHeaders[0];
+    if (!base) return;
+
+    for (const frame of this.showList) {
+      const header = this.frameHeaders[frame.index];
+      const image = this.images[header?.imageIndex ?? -1];
+      if (!header || !image) continue;
+      image.draw(surface, 1, header.x - base.x + x, header.y - base.y + y);
+    }
+  }
+
   setIteratorNum(count: number): void {
     this.iteratorCount = Math.max(1, count);
   }

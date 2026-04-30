@@ -136,7 +136,7 @@ export class RaiseCombatAnimation implements CombatActionAnimation {
       drawSignedSmallNum(surface, this.signImage, this.smallNumImage, this.hpDiff, this.x, this.y + this.dy);
       return;
     }
-    this.srsList[0]?.draw(surface, this.x, this.y);
+    this.srsList[0]?.drawAbsolutely(surface, this.x, this.y);
   }
 }
 

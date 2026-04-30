@@ -70,7 +70,7 @@ export class CastCombatAnimation implements CombatActionAnimation {
 
   draw(surface: Surface): void {
     if (this.stage === 'ani') {
-      this.options.srs?.draw(surface, this.options.srsPoint.x, this.options.srsPoint.y);
+      this.options.srs?.drawAbsolutely(surface, this.options.srsPoint.x, this.options.srsPoint.y);
       return;
     }
     if (this.stage === 'raise') {

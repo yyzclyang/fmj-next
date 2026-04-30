@@ -120,7 +120,7 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
     actors,
     targets,
     srs: action.magic?.magicAni ?? ctx.game.datLib.getSrs(2, 240),
-    srsPoint: getAnimationPoint(targets, action.targetAll),
+    srsPoint: action.targetAll ? { x: 0, y: 0 } : getAnimationPoint(targets, false),
     raises: [...createRaiseAnimations(ctx.game, before, [...targets, ...actors]), ...misses],
   }));
 }

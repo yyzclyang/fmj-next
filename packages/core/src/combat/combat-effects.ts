@@ -1,5 +1,6 @@
 import { Monster, Player, type FightingCharacter } from '@/characters';
 import { GoodsHiddenWeapon } from '@/goods';
+import type { MagicDamageFormula } from '@/game/game-profile';
 import { type BaseMagic, MagicAttack, MagicAuxiliary, MagicEnhance, MagicRestore } from '@/magic';
 import {
   BUFF_INDEX_DU,
@@ -94,9 +95,14 @@ export function spendMagicMp(actor: FightingCharacter, magic: BaseMagic): boolea
   return true;
 }
 
-export function applyMagicAttack(actor: FightingCharacter, magic: MagicAttack, target: FightingCharacter): void {
-  applyHpMagicEffect(actor, target, calcHpMagicEffect(actor, target, magic.affectHp));
-  applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.affectMp));
+export function applyMagicAttack(
+  actor: FightingCharacter,
+  magic: MagicAttack,
+  target: FightingCharacter,
+  formula: MagicDamageFormula = 'original'
+): void {
+  applyHpMagicEffect(actor, target, calcHpMagicEffect(actor, target, magic.affectHp, formula));
+  applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.affectMp, formula));
   applyCombatBuff(target, makeAttackBuff(magic.buffMask & 0x0f, (magic.buffMask >> 4) & 0x0f), target.luck);
   applyAttributeMagicEffect(target, -magic.attackPercent, -magic.defendPercent, -magic.speedPercent, 0);
 }
@@ -128,30 +134,64 @@ function getBuffValue(actor: FightingCharacter, index: number): number {
   return actor.debuff.buffs[index]?.value ?? 0;
 }
 
-function calcHpMagicEffect(src: FightingCharacter, dst: FightingCharacter, base: number): number {
+function calcHpMagicEffect(
+  src: FightingCharacter,
+  dst: FightingCharacter,
+  base: number,
+  formula: MagicDamageFormula
+): number {
   if (base === 0 || dst.hp <= 0) return 0;
   if (base < 0) {
     const rate = dst.level <= 8 ? 1 : dst.level <= 16 ? 2 : 3;
     return -Math.min(dst.hp, Math.abs(base) * rate);
   }
+  return formula === 'simplified'
+    ? calcHpMagicEffectSimplified(src, dst, base)
+    : calcHpMagicEffectOriginal(src, dst, base);
+}
+
+function calcHpMagicEffectOriginal(src: FightingCharacter, dst: FightingCharacter, base: number): number {
   let damage = base;
   damage += src.lingli * (damage >> 6);
   damage -= dst.lingli * (damage >> 6);
   if (damage > 0) damage += (Math.trunc(Math.random() * 1000) % damage) >> 4;
-  return Math.min(dst.hp, Math.max(0, damage));
+  if (damage > dst.hp) damage = dst.hp;
+  // Kotlin 原版会保留被目标灵力修正成负数的结果，后续按吸收效果处理。
+  return Math.max(damage, damage > 0 ? 1 : damage);
 }
 
-function calcMpMagicEffect(src: FightingCharacter, dst: FightingCharacter, base: number): number {
+function calcHpMagicEffectSimplified(src: FightingCharacter, dst: FightingCharacter, base: number): number {
+  const damage = Math.max(0, base + Math.trunc((base * (src.lingli - dst.lingli)) / 100));
+  return Math.min(dst.hp, damage);
+}
+
+function calcMpMagicEffect(
+  src: FightingCharacter,
+  dst: FightingCharacter,
+  base: number,
+  formula: MagicDamageFormula
+): number {
   if (base === 0 || dst.mp <= 0) return 0;
   if (base < 0) {
     const rate = dst.level <= 8 ? 1 : dst.level <= 16 ? 2 : 3;
     return -Math.min(dst.mp, Math.abs(base) * rate);
   }
+  return formula === 'simplified'
+    ? calcMpMagicEffectSimplified(src, dst, base)
+    : calcMpMagicEffectOriginal(src, dst, base);
+}
+
+function calcMpMagicEffectOriginal(src: FightingCharacter, dst: FightingCharacter, base: number): number {
   let damage = base;
   damage -= src.lingli * (damage >> 6);
   damage += dst.lingli * (damage >> 6);
   if (damage > 0) damage += (Math.trunc(Math.random() * 1000) % damage) >> 4;
   return Math.min(dst.mp, Math.max(0, damage));
+}
+
+function calcMpMagicEffectSimplified(src: FightingCharacter, dst: FightingCharacter, base: number): number {
+  const damage = Math.max(0, base + Math.trunc((base * (src.lingli - dst.lingli)) / 100));
+  return Math.min(dst.mp, damage);
 }
 
 function applyHpMagicEffect(actor: FightingCharacter, target: FightingCharacter, effect: number): void {

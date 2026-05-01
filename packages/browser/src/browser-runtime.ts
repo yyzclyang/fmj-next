@@ -1,10 +1,11 @@
-import { Engine, KeyCode, type AudioPort, type DebugApi, type GameProfile, type SaveStore } from '@fmj-next/core';
+import { Engine, KeyCode, type AudioPort, type DebugApi, type EngineHost, type GameProfile, type SaveStore } from '@fmj-next/core';
 import { CanvasPresenter } from './canvas-presenter';
 
 export interface BrowserRuntimeOptions {
   readonly canvas: HTMLCanvasElement;
   readonly saveStore: SaveStore;
   readonly audio: AudioPort;
+  readonly requestExit?: () => void;
   readonly speed?: number;
 }
 
@@ -40,7 +41,7 @@ export class BrowserRuntime {
     },
   };
   private readonly presenter: CanvasPresenter;
-  private readonly host: { readonly saveStore: SaveStore; readonly audio: AudioPort };
+  private readonly host: EngineHost;
   private engine: Engine | null = null;
   private speed: number;
   private rafId: number | null = null;
@@ -51,6 +52,7 @@ export class BrowserRuntime {
     this.host = {
       saveStore: options.saveStore,
       audio: options.audio,
+      requestExit: options.requestExit,
     };
     this.speed = options.speed ?? 1;
   }

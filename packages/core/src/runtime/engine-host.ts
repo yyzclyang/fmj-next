@@ -12,4 +12,5 @@ export interface AudioPort {
 export interface EngineHost {
   readonly saveStore: SaveStore;
   readonly audio: AudioPort;
+  requestExit?(): void;
 }

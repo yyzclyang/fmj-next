@@ -118,7 +118,12 @@ export class Game {
     this.boxEventMap.clear();
     this.pendingBoxEventKey = null;
     this.combat.reset();
+    const previousVariables = this.profile.compat?.preserveScriptVariablesOnNewGame ? this.state.scriptVariables : null;
     this.state = createInitialGameState();
+    if (previousVariables) {
+      this.state.scriptVariables = [...previousVariables];
+      this.ensureScriptVariableSize();
+    }
     this.replaceWithMainScene();
     this.mainSceneRuntime?.startChapter(STARTUP_CHAPTER_TYPE, STARTUP_CHAPTER_INDEX);
   }
@@ -127,6 +132,10 @@ export class Game {
     this.mainScene = null;
     this.mainSceneRuntime = null;
     this.screenStack.replaceAll(new ScreenMenu(this));
+  }
+
+  requestExit(): void {
+    this.host.requestExit?.();
   }
 
   applyLoadedState(
@@ -279,6 +288,7 @@ export class Game {
   }
 
   resetLocalVariables(): void {
+    if (this.profile.compat?.preserveLocalVariablesOnChapterStart) return;
     for (let index = SCRIPT_LOCAL_VARIABLE_START; index < SCRIPT_LOCAL_VARIABLE_END; index += 1) {
       this.state.scriptVariables[index] = 0;
     }

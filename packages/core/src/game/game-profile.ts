@@ -1,3 +1,5 @@
+export type MagicDamageFormula = 'original' | 'simplified';
+
 export interface GameCompatOptions {
   readonly mainMenuSelectorOffset?: {
     readonly x: number;
@@ -5,6 +7,11 @@ export interface GameCompatOptions {
   };
   readonly suppressGainMoneyTip?: boolean;
   readonly suppressSceneNameTip?: boolean;
+  readonly ignoreSetFightMiss?: boolean;
+  readonly preserveScriptVariablesOnNewGame?: boolean;
+  readonly preserveLocalVariablesOnChapterStart?: boolean;
+  readonly blankCombatBackground?: boolean;
+  readonly magicDamageFormula?: MagicDamageFormula;
 }
 
 export interface GameProfile {

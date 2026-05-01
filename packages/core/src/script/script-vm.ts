@@ -1076,6 +1076,7 @@ export class ScriptVm {
     return {
       len: 2,
       execute: () => {
+        if (this.game.profile.compat?.ignoreSetFightMiss) return;
         this.game.state.allowFightMiss = enabled;
       },
     };

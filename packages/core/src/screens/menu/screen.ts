@@ -79,6 +79,11 @@ export class ScreenMenu extends BaseScreen {
       return;
     }
 
+    if (key === KeyCode.Cancel) {
+      this.game.requestExit();
+      return;
+    }
+
     if (key !== KeyCode.Enter) return;
 
     switch (this.currentSelection) {

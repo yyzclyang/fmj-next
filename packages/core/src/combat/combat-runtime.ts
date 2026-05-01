@@ -2,7 +2,7 @@ import type { Game } from '@/game/game';
 import { Monster, Player } from '@/characters';
 import type { BaseGoods } from '@/goods';
 import { Bitmap } from '@/rendering/bitmap';
-import { COLOR_BLACK } from '@/rendering/color';
+import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import { clearFrameBuffer, createFrameBuffer } from '@/rendering/frame-buffer';
 import { Surface } from '@/rendering/surface';
 import { ResourceType } from '@/lib/resource-utils';
@@ -299,6 +299,7 @@ export class CombatRuntime {
 
   private createBackground(ids: CombatBackgroundIds): Bitmap | null {
     if (ids.scrb <= 0 && ids.scrl <= 0 && ids.scrr <= 0) return null;
+    if (this.game.profile.compat?.blankCombatBackground) return createSolidBackground(COLOR_WHITE);
     const pixels = createFrameBuffer();
     clearFrameBuffer(pixels, COLOR_BLACK);
     const surface = new Surface(SCREEN_WIDTH, SCREEN_HEIGHT, pixels);
@@ -402,8 +403,12 @@ function scaleBitmap(src: Bitmap, width: number, height: number): Bitmap {
 }
 
 function createEmptyBackground(): Bitmap {
+  return createSolidBackground(COLOR_BLACK);
+}
+
+function createSolidBackground(color: number): Bitmap {
   const pixels = createFrameBuffer();
-  clearFrameBuffer(pixels, COLOR_BLACK);
+  clearFrameBuffer(pixels, color);
   return new Bitmap(SCREEN_WIDTH, SCREEN_HEIGHT, pixels);
 }
 

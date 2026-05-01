@@ -61,27 +61,44 @@ async function bootstrap(): Promise<void> {
         </select>
       </label>
     </div>
-    <canvas id="screen" style="width:320px;height:192px;border:1px solid #111;image-rendering:pixelated;"></canvas>
+    <div style="position:relative;width:322px;height:194px;">
+      <canvas id="screen" style="width:320px;height:192px;border:1px solid #111;image-rendering:pixelated;"></canvas>
+      <div id="exit-status" style="display:none;position:absolute;inset:1px;align-items:center;justify-content:center;background:rgba(0,0,0,.72);color:#fff;font:16px sans-serif;">
+        已退出
+      </div>
+    </div>
   `;
 
   const canvas = root.querySelector<HTMLCanvasElement>('#screen');
+  const exitStatus = root.querySelector<HTMLDivElement>('#exit-status');
   const gameSelect = root.querySelector<HTMLSelectElement>('#game-select');
   const speedSelect = root.querySelector<HTMLSelectElement>('#speed-select');
-  if (!canvas || !gameSelect || !speedSelect) {
+  if (!canvas || !exitStatus || !gameSelect || !speedSelect) {
     throw new Error('Missing runtime UI');
   }
+  const screenCanvas = canvas;
+  const statusOverlay = exitStatus;
 
-  const runtime = createBrowserRuntime({
-    canvas,
+  let runtime: ReturnType<typeof createBrowserRuntime> | null = null;
+  function setExited(exited: boolean): void {
+    if (exited) runtime?.dispose();
+    screenCanvas.style.opacity = exited ? '0.45' : '1';
+    statusOverlay.style.display = exited ? 'flex' : 'none';
+  }
+
+  runtime = createBrowserRuntime({
+    canvas: screenCanvas,
     saveStore: webSaveStore,
     audio: webAudioPort,
+    requestExit: () => setExited(true),
     speed: 1,
   });
   window.fmjDebug = runtime.debug;
 
   async function start(gameId: GameId): Promise<void> {
+    setExited(false);
     const datLib = await loadDatLib(gameId);
-    runtime.start({ datLib, profile: gameProfiles[gameId] });
+    runtime?.start({ datLib, profile: gameProfiles[gameId] });
   }
 
   await start(gameSelect.value as GameId);
@@ -97,19 +114,19 @@ async function bootstrap(): Promise<void> {
   window.addEventListener('keydown', event => {
     const key = mapKeyboard(event.code);
     if (key == null) return;
-    runtime.keyDown(key);
+    runtime?.keyDown(key);
     event.preventDefault();
   });
 
   window.addEventListener('keyup', event => {
     const key = mapKeyboard(event.code);
     if (key == null) return;
-    runtime.keyUp(key);
+    runtime?.keyUp(key);
     event.preventDefault();
   });
 
   window.addEventListener('beforeunload', () => {
-    runtime.dispose();
+    runtime?.dispose();
   });
 }
 

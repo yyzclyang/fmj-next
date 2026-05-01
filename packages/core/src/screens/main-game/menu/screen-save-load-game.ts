@@ -46,9 +46,15 @@ const YES_TEXT_LEFT = 45;
 const NO_TEXT_LEFT = 93;
 const OPTION_TEXT_TOP = 53;
 
+interface SaveSlotView {
+  readonly summary: SaveSlotSummary | null;
+  readonly corrupt: boolean;
+}
+
 // 存读档页只负责槽位交互，实际持久化边界由 Game 统一校验。
 export class ScreenSaveLoadGame extends BaseScreen {
   private selectedIndex = 0;
+  private message: string | null = null;
 
   constructor(
     game: Game,
@@ -63,9 +69,15 @@ export class ScreenSaveLoadGame extends BaseScreen {
     surface.drawColor(COLOR_WHITE);
     this.drawTitle(surface);
     this.drawSlots(surface);
+    if (this.message) this.drawMessage(surface, this.message);
   }
 
   override onKey(key: KeyCode): boolean | undefined {
+    if (this.message) {
+      this.message = null;
+      return;
+    }
+
     switch (key) {
       case KeyCode.Up:
         this.moveSelection(-1);
@@ -84,6 +96,7 @@ export class ScreenSaveLoadGame extends BaseScreen {
   }
 
   private moveSelection(step: number): void {
+    this.message = null;
     this.selectedIndex = moveSelectionWrap(this.selectedIndex, step, SAVE_SLOT_COUNT);
   }
 
@@ -95,22 +108,28 @@ export class ScreenSaveLoadGame extends BaseScreen {
   private drawSlots(surface: Surface): void {
     for (let i = 0; i < SAVE_SLOT_COUNT; i += 1) {
       const top = SLOT_TOP + i * SLOT_HEIGHT;
-      const summary = this.game.getSaveSlotSummary(i);
+      const slot = this.getSlotView(i);
       drawMenuFrame(surface, SLOT_LEFT, top, SLOT_WIDTH, SLOT_HEIGHT);
       TextRender.drawText(surface, `${i + 1}.`, SLOT_NUMBER_LEFT, top + SLOT_TEXT_TOP_OFFSET);
       const draw = i === this.selectedIndex ? TextRender.drawSelText : TextRender.drawText;
-      this.drawHeads(surface, summary, top);
-      draw(surface, this.getSlotText(summary), this.getSlotTextLeft(summary), top + SLOT_TEXT_TOP_OFFSET);
+      this.drawHeads(surface, slot.summary, top);
+      draw(surface, this.getSlotText(slot), this.getSlotTextLeft(slot.summary), top + SLOT_TEXT_TOP_OFFSET);
     }
   }
 
   private confirm(): void {
     if (this.operation === SaveLoadOperation.Load) {
-      if (!this.game.loadSlot(this.selectedIndex)) return;
+      try {
+        if (!this.game.loadSlot(this.selectedIndex)) return;
+      } catch (error) {
+        this.message = this.getErrorMessage(error, '存档损坏');
+        return;
+      }
       console.log(`读取进度:${this.selectedIndex + 1}`);
       return;
     }
-    if (this.game.getSaveSlotSummary(this.selectedIndex)) {
+    const slot = this.getSlotView(this.selectedIndex);
+    if (slot.summary) {
       this.screenStack.push(new ScreenOverwriteSaveConfirm(this.game, () => this.saveSelectedSlot()));
       return;
     }
@@ -118,7 +137,12 @@ export class ScreenSaveLoadGame extends BaseScreen {
   }
 
   private saveSelectedSlot(): void {
-    this.game.saveSlot(this.selectedIndex);
+    try {
+      this.game.saveSlot(this.selectedIndex);
+    } catch (error) {
+      this.message = this.getErrorMessage(error, '存档失败');
+      return;
+    }
     this.close();
     this.onComplete?.();
     this.showMessage('已存档');
@@ -129,10 +153,19 @@ export class ScreenSaveLoadGame extends BaseScreen {
     return this.operation === SaveLoadOperation.Load ? '读取进度' : '保存进度';
   }
 
-  private getSlotText(summary: SaveSlotSummary | null): string {
-    if (!summary) return EMPTY_SAVE_TEXT;
-    const sceneName = summary.sceneName || '未命名';
-    return fitText(sceneName, SCREEN_WIDTH - this.getSlotTextLeft(summary) - 25);
+  private getSlotView(slot: number): SaveSlotView {
+    try {
+      return { summary: this.game.getSaveSlotSummary(slot), corrupt: false };
+    } catch {
+      return { summary: null, corrupt: true };
+    }
+  }
+
+  private getSlotText(slot: SaveSlotView): string {
+    if (slot.corrupt) return '存档损坏';
+    if (!slot.summary) return EMPTY_SAVE_TEXT;
+    const sceneName = slot.summary.sceneName || '未命名';
+    return fitText(sceneName, SCREEN_WIDTH - this.getSlotTextLeft(slot.summary) - 25);
   }
 
   private getSlotTextLeft(summary: SaveSlotSummary | null): number {
@@ -145,6 +178,15 @@ export class ScreenSaveLoadGame extends BaseScreen {
       const image = this.game.datLib.getImage(ResourceType.PIC, 1, summary.partyActorIds[i] ?? 0);
       image?.draw(surface, 7, HEAD_LEFT + HEAD_GAP * i, top + HEAD_TOP_OFFSET);
     }
+  }
+
+  private drawMessage(surface: Surface, text: string): void {
+    drawMenuFrame(surface, MESSAGE_BOX_LEFT, MESSAGE_BOX_TOP, MESSAGE_BOX_WIDTH, MESSAGE_BOX_HEIGHT);
+    TextRender.drawText(surface, fitText(text, MESSAGE_BOX_WIDTH - 12), MESSAGE_TEXT_LEFT, MESSAGE_TEXT_TOP);
+  }
+
+  private getErrorMessage(error: unknown, fallback: string): string {
+    return error instanceof Error ? error.message : fallback;
   }
 
   private showMessage(text: string): void {

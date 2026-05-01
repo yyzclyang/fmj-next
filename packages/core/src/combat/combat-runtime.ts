@@ -2,7 +2,7 @@ import type { Game } from '@/game/game';
 import { Monster, Player } from '@/characters';
 import type { BaseGoods } from '@/goods';
 import { Bitmap } from '@/rendering/bitmap';
-import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
+import { COLOR_BLACK, COLOR_WHITE, type Color } from '@/rendering/color';
 import { clearFrameBuffer, createFrameBuffer } from '@/rendering/frame-buffer';
 import { Surface } from '@/rendering/surface';
 import { ResourceType } from '@/lib/resource-utils';
@@ -406,7 +406,7 @@ function createEmptyBackground(): Bitmap {
   return createSolidBackground(COLOR_BLACK);
 }
 
-function createSolidBackground(color: number): Bitmap {
+function createSolidBackground(color: Color): Bitmap {
   const pixels = createFrameBuffer();
   clearFrameBuffer(pixels, color);
   return new Bitmap(SCREEN_WIDTH, SCREEN_HEIGHT, pixels);

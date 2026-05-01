@@ -3,6 +3,7 @@ import type { BuffState, Player } from '@/characters';
 import type { MainSceneRuntimeSnapshot } from '@/screens/main-game/runtime';
 
 export const SAVE_SLOT_COUNT = 5;
+export const CORRUPT_SAVE_MESSAGE = '存档损坏';
 
 const SAVE_VERSION = 1;
 const SAVE_KEY_PREFIX = 'fmj-save-';
@@ -42,6 +43,7 @@ export interface SaveGameState {
   money: number;
   goods: GameGoodsState[];
   sceneName: string;
+  disableSave?: boolean;
   mainScene: MainSceneRuntimeSnapshot | null;
   allowFightMiss: boolean;
   allowTossArm: boolean;
@@ -57,6 +59,11 @@ export interface SaveResourceRef {
 
 export interface SavePlayerState {
   index: number;
+  state?: number;
+  direction?: number;
+  step?: number;
+  mapX?: number;
+  mapY?: number;
   level: number;
   learntMagicCount: number;
   magicChainLearnNum: number;
@@ -121,6 +128,7 @@ export function createSavePayload(
       money: state.money,
       goods: state.goods.map(goods => ({ ...goods })),
       sceneName: state.sceneName,
+      disableSave: state.disableSave,
       mainScene,
       allowFightMiss: state.allowFightMiss,
       allowTossArm: state.allowTossArm,
@@ -134,6 +142,11 @@ export function createSavePayload(
 function createPlayerState(player: Player): SavePlayerState {
   return {
     index: player.index,
+    state: player.state,
+    direction: player.direction,
+    step: player.step,
+    mapX: player.mapX,
+    mapY: player.mapY,
     level: player.level,
     learntMagicCount: player.learntMagicCount,
     magicChainLearnNum: player.magicChain?.learnNum ?? 0,
@@ -171,11 +184,16 @@ export function encodeSavePayload(payload: SaveGamePayload): Uint8Array {
 }
 
 export function decodeSavePayload(data: Uint8Array): SaveGamePayload {
-  const payload = JSON.parse(textDecoder.decode(data)) as Partial<SaveGamePayload>;
-  if (payload.version !== SAVE_VERSION || !payload.summary || !payload.state) {
-    throw new Error('存档数据版本不兼容');
+  let payload: unknown;
+  try {
+    payload = JSON.parse(textDecoder.decode(data)) as unknown;
+  } catch {
+    throw new Error(CORRUPT_SAVE_MESSAGE);
   }
-  return payload as SaveGamePayload;
+  if (!isSavePayloadShape(payload)) {
+    throw new Error(CORRUPT_SAVE_MESSAGE);
+  }
+  return payload;
 }
 
 export function toLoadedGameState(payload: SaveGamePayload): GameState {
@@ -200,10 +218,55 @@ export function toLoadedGameState(payload: SaveGamePayload): GameState {
     money: state.money,
     goods: state.goods.map(goods => ({ ...goods })),
     sceneName: state.sceneName,
+    disableSave: state.disableSave ?? false,
     allowFightMiss: state.allowFightMiss ?? false,
     allowTossArm: state.allowTossArm ?? true,
     showPosition: state.showPosition ?? false,
     screenRed: state.screenRed ?? 0,
     screenAlpha: state.screenAlpha ?? 0,
   };
+}
+
+function isSavePayloadShape(value: unknown): value is SaveGamePayload {
+  if (!isRecord(value)) return false;
+  if (value.version !== SAVE_VERSION || !isRecord(value.summary) || !isRecord(value.state)) return false;
+  const summary = value.summary;
+  const state = value.state;
+  return (
+    typeof summary.slot === 'number' &&
+    typeof summary.sceneName === 'string' &&
+    isNumberArray(summary.partyActorIds) &&
+    isStringArray(summary.partyNames) &&
+    typeof summary.money === 'number' &&
+    typeof summary.savedAt === 'string' &&
+    isNumberArray(state.eventFlags) &&
+    isNumberArray(state.scriptVariables) &&
+    isStringArray(state.collectedBoxKeys) &&
+    Array.isArray(state.players) &&
+    isNumberArray(state.partyActorIds) &&
+    isGoodsArray(state.goods)
+  );
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isNumberArray(value: unknown): value is number[] {
+  return Array.isArray(value) && value.every(item => typeof item === 'number');
+}
+
+function isStringArray(value: unknown): value is string[] {
+  return Array.isArray(value) && value.every(item => typeof item === 'string');
+}
+
+function isGoodsArray(value: unknown): value is GameGoodsState[] {
+  return Array.isArray(value) && value.every(item => {
+    if (!isRecord(item)) return false;
+    return (
+      typeof item.type === 'number' &&
+      typeof item.index === 'number' &&
+      typeof item.count === 'number'
+    );
+  });
 }

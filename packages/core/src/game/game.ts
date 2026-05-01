@@ -1,7 +1,7 @@
 import { DatLib } from '@/lib/dat-lib';
 import { CombatRuntime } from '@/combat';
 import { BaseGoods, GoodsEquipment } from '@/goods';
-import { Player } from '@/characters';
+import { CharacterState, Player } from '@/characters';
 import type { BuffState } from '@/characters';
 import { GoodsBag } from '@/goods/goods-bag';
 import { Surface } from '@/rendering/surface';
@@ -27,6 +27,7 @@ import {
 import { DEFAULT_GAME_PROFILE, type GameProfile } from './game-profile';
 import {
   createSavePayload,
+  CORRUPT_SAVE_MESSAGE,
   decodeSavePayload,
   encodeSavePayload,
   getSaveSlotKey,
@@ -90,7 +91,11 @@ export class Game {
   loadSlot(slot: number): boolean {
     const payload = this.readSavePayload(slot);
     if (!payload) return false;
-    this.applyLoadedState(toLoadedGameState(payload), payload.state.players ?? [], payload.state.mainScene ?? null);
+    try {
+      this.applyLoadedState(toLoadedGameState(payload), payload.state.players ?? [], payload.state.mainScene ?? null);
+    } catch {
+      throw new Error(CORRUPT_SAVE_MESSAGE);
+    }
     return true;
   }
 
@@ -343,8 +348,13 @@ export class Game {
 
   private readSavePayload(slot: number): SaveGamePayload | null {
     this.assertSaveSlot(slot);
-    const data = this.host.saveStore.read(getSaveSlotKey(slot));
-    return data ? decodeSavePayload(data) : null;
+    try {
+      const data = this.host.saveStore.read(getSaveSlotKey(slot));
+      if (!data) return null;
+      return decodeSavePayload(data);
+    } catch {
+      throw new Error(CORRUPT_SAVE_MESSAGE);
+    }
   }
 
   private assertSaveSlot(slot: number): void {
@@ -367,6 +377,11 @@ export class Game {
   }
 
   private restorePlayerSnapshot(player: Player, snapshot: SavePlayerState): void {
+    player.state = restoreSavedCharacterState(snapshot.state, player.state);
+    player.direction = restoreSavedDirection(snapshot.direction, player.direction);
+    player.step = snapshot.step ?? player.step;
+    player.mapX = snapshot.mapX ?? player.mapX;
+    player.mapY = snapshot.mapY ?? player.mapY;
     player.level = snapshot.level;
     player.learntMagicCount = snapshot.learntMagicCount;
     if (player.magicChain) player.magicChain.learnNum = snapshot.magicChainLearnNum;
@@ -421,5 +436,30 @@ function restoreBuffs(target: BuffState[], source: readonly BuffState[]): void {
     if (!buff) continue;
     buff.value = saved?.value ?? 0;
     buff.round = saved?.round ?? 0;
+  }
+}
+
+function restoreSavedCharacterState(value: number | undefined, fallback: Player['state']): Player['state'] {
+  switch (value) {
+    case CharacterState.Stop:
+    case CharacterState.ForceMove:
+    case CharacterState.Walking:
+    case CharacterState.Pause:
+    case CharacterState.Active:
+      return value;
+    default:
+      return fallback;
+  }
+}
+
+function restoreSavedDirection(value: number | undefined, fallback: Player['direction']): Player['direction'] {
+  switch (value) {
+    case KeyCode.Up:
+    case KeyCode.Down:
+    case KeyCode.Left:
+    case KeyCode.Right:
+      return value;
+    default:
+      return fallback;
   }
 }

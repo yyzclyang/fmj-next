@@ -1246,6 +1246,7 @@ export class ScriptVm {
       execute: () => {
         const scene = this.game.mainScene;
         const name = this.game.state.sceneName.trim();
+        if (this.game.profile.compat?.suppressSceneNameTip) return;
         if (!scene || name.length === 0) return;
         scene.showTip(name, 'information');
       },

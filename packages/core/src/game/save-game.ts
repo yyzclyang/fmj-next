@@ -115,7 +115,7 @@ export function createSavePayload(
       eventFlags: [...state.eventFlags],
       scriptVariables: [...state.scriptVariables],
       collectedBoxKeys: [...state.collectedBoxKeys],
-      players: state.partyActorIds.map(id => createPlayerState(getPartyPlayer(state, id))),
+      players: state.players.map(createPlayerState),
       partyActorIds: [...state.partyActorIds],
       controlActorId: state.controlActorId,
       money: state.money,
@@ -129,12 +129,6 @@ export function createSavePayload(
       screenAlpha: state.screenAlpha,
     },
   };
-}
-
-function getPartyPlayer(state: GameState, actorId: number): Player {
-  const player = state.players.find(item => item.index === actorId);
-  if (!player) throw new Error(`存档队伍角色不存在: ${actorId}`);
-  return player;
 }
 
 function createPlayerState(player: Player): SavePlayerState {

@@ -95,8 +95,8 @@ export function spendMagicMp(actor: FightingCharacter, magic: BaseMagic): boolea
 }
 
 export function applyMagicAttack(actor: FightingCharacter, magic: MagicAttack, target: FightingCharacter): void {
-  applyHpMagicEffect(actor, target, calcMagicEffect(actor, target, magic.affectHp, target.hp));
-  applyMpMagicEffect(actor, target, calcMagicEffect(actor, target, magic.affectMp, target.mp));
+  applyHpMagicEffect(actor, target, calcHpMagicEffect(actor, target, magic.affectHp));
+  applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.affectMp));
   applyCombatBuff(target, makeAttackBuff(magic.buffMask & 0x0f, (magic.buffMask >> 4) & 0x0f), target.luck);
   applyAttributeMagicEffect(target, -magic.attackPercent, -magic.defendPercent, -magic.speedPercent, 0);
 }
@@ -128,15 +128,30 @@ function getBuffValue(actor: FightingCharacter, index: number): number {
   return actor.debuff.buffs[index]?.value ?? 0;
 }
 
-// 攻击型和吸收型魔法共用同一套灵力差值公式，先和 Kotlin 简化分支保持一致。
-function calcMagicEffect(src: FightingCharacter, dst: FightingCharacter, base: number, limit: number): number {
-  if (base === 0 || limit <= 0) return 0;
+function calcHpMagicEffect(src: FightingCharacter, dst: FightingCharacter, base: number): number {
+  if (base === 0 || dst.hp <= 0) return 0;
   if (base < 0) {
     const rate = dst.level <= 8 ? 1 : dst.level <= 16 ? 2 : 3;
-    return -Math.min(limit, Math.abs(base) * rate);
+    return -Math.min(dst.hp, Math.abs(base) * rate);
   }
-  const value = Math.max(0, base + Math.trunc((base * (src.lingli - dst.lingli)) / 100));
-  return Math.min(limit, value);
+  let damage = base;
+  damage += src.lingli * (damage >> 6);
+  damage -= dst.lingli * (damage >> 6);
+  if (damage > 0) damage += (Math.trunc(Math.random() * 1000) % damage) >> 4;
+  return Math.min(dst.hp, Math.max(0, damage));
+}
+
+function calcMpMagicEffect(src: FightingCharacter, dst: FightingCharacter, base: number): number {
+  if (base === 0 || dst.mp <= 0) return 0;
+  if (base < 0) {
+    const rate = dst.level <= 8 ? 1 : dst.level <= 16 ? 2 : 3;
+    return -Math.min(dst.mp, Math.abs(base) * rate);
+  }
+  let damage = base;
+  damage -= src.lingli * (damage >> 6);
+  damage += dst.lingli * (damage >> 6);
+  if (damage > 0) damage += (Math.trunc(Math.random() * 1000) % damage) >> 4;
+  return Math.min(dst.mp, Math.max(0, damage));
 }
 
 function applyHpMagicEffect(actor: FightingCharacter, target: FightingCharacter, effect: number): void {

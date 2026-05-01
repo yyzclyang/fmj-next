@@ -21,10 +21,16 @@ function mapKeyboard(code: string): KeyCode | null {
       return KeyCode.Left;
     case 'ArrowRight':
       return KeyCode.Right;
+    case 'PageUp':
+      return KeyCode.PageUp;
+    case 'PageDown':
+      return KeyCode.PageDown;
     case 'Enter':
       return KeyCode.Enter;
     case 'Escape':
       return KeyCode.Cancel;
+    case 'KeyR':
+      return KeyCode.Repeat;
     default:
       return null;
   }
@@ -75,7 +81,7 @@ async function bootstrap(): Promise<void> {
 
   async function start(gameId: GameId): Promise<void> {
     const datLib = await loadDatLib(gameId);
-    runtime.start({ datLib });
+    runtime.start({ datLib, profile: gameProfiles[gameId] });
   }
 
   await start(gameSelect.value as GameId);

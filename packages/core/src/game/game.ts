@@ -24,6 +24,7 @@ import {
   SCRIPT_VARIABLE_COUNT,
   type GameState,
 } from './game-state';
+import { DEFAULT_GAME_PROFILE, type GameProfile } from './game-profile';
 import {
   createSavePayload,
   decodeSavePayload,
@@ -52,9 +53,11 @@ export class Game {
   private readonly surface = new Surface(FRAME_WIDTH, FRAME_HEIGHT);
   readonly screenStack = new ScreenStack();
   private readonly host: EngineHost;
+  readonly profile: GameProfile;
 
-  constructor(host: EngineHost, datLibBuffer: Uint8Array) {
+  constructor(host: EngineHost, datLibBuffer: Uint8Array, profile: GameProfile = DEFAULT_GAME_PROFILE) {
     this.host = host;
+    this.profile = profile;
     this.datLib = new DatLib(datLibBuffer);
   }
 
@@ -178,7 +181,9 @@ export class Game {
 
   gainMoney(value: number): void {
     this.state.money += value;
-    this.mainScene?.showTip(`获得金钱:${value}`);
+    if (!this.profile.compat?.suppressGainMoneyTip) {
+      this.mainScene?.showTip(`获得金钱:${value}`);
+    }
   }
 
   setMoney(value: number): void {

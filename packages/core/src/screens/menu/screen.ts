@@ -55,10 +55,14 @@ export class ScreenMenu extends BaseScreen {
   draw(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
     this.menuImage.draw(surface, 1, this.left, this.top);
+    const selectorOffset = this.game.profile.compat?.mainMenuSelectorOffset ?? {
+      x: FMJ_SELECTOR_OFFSET_X,
+      y: FMJ_SELECTOR_OFFSET_Y,
+    };
     this.selectors[this.currentSelection]?.draw(
       surface,
-      this.left + FMJ_SELECTOR_OFFSET_X,
-      Math.floor(this.top / 2) + FMJ_SELECTOR_OFFSET_Y
+      this.left + selectorOffset.x,
+      Math.floor(this.top / 2) + selectorOffset.y
     );
   }
 

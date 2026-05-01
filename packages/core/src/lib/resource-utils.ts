@@ -54,5 +54,5 @@ export function readInt16(buf: Uint8Array, start: number): number {
 
 export function readInt8(buf: Uint8Array, start: number): number {
   const value = buf[start] ?? 0;
-  return value >= 0x80 ? 0x7f : value;
+  return value >= 0x80 ? value - 0x100 : value;
 }

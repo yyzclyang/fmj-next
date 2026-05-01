@@ -331,10 +331,14 @@ export class Player extends FightingCharacter {
     this.lingli = this.totalLingli;
     this.speed = this.totalSpeed;
     this.luck = this.totalLuck;
-    if (!(equipment instanceof GoodsWeapon)) {
-      if (sign > 0) this.buff.addBuff(equipment.bitEffect, 0);
-      else this.buff.delBuff(equipment.bitEffect);
+    if (equipment instanceof GoodsWeapon) {
+      this.atbuff.clearBuff(0xff);
+      if (sign > 0) this.atbuff.addBuff(equipment.bitEffect, equipment.sumRound);
+      return;
     }
+
+    if (sign > 0) this.buff.addBuff(equipment.bitEffect, 0);
+    else this.buff.delBuff(equipment.bitEffect);
   }
 }
 

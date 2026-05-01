@@ -1,5 +1,6 @@
 import { createDebugApi } from '@/debug/debug';
 import { Game } from '@/game/game';
+import type { GameProfile } from '@/game/game-profile';
 import type { GameState } from '@/game/game-state';
 import { createFrameBuffer, type FrameBuffer } from '@/rendering/frame-buffer';
 import { FIXED_STEP_MS } from '@/shared/constants';
@@ -8,6 +9,7 @@ import type { EngineHost } from './engine-host';
 
 export interface BootOptions {
   readonly datLib: Uint8Array;
+  readonly profile?: GameProfile;
 }
 
 export class Engine {
@@ -27,7 +29,7 @@ export class Engine {
 
   boot(options: BootOptions): void {
     this.accumulatorMs = 0;
-    this.game = new Game(this.host, options.datLib);
+    this.game = new Game(this.host, options.datLib, options.profile);
     this.game.start();
   }
 

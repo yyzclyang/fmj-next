@@ -1,5 +1,6 @@
 import type { MagicAttackAction, MagicHelpAction, SpecialMagicAction } from '@/combat/combat-actions';
 import { applyMagicAttack, applyMagicHelp, spendMagicMp } from '@/combat/combat-effects';
+import type { Player } from '@/characters';
 import { MagicAuxiliary } from '@/magic';
 import { CastCombatAnimation, StaticCombatAnimation, type CombatActionAnimation } from './combat-animations';
 import {
@@ -19,10 +20,12 @@ export function prepareRolledBackMagicAction(
 ): PreparedCombatAction {
   if (action.kind === 'magicAttack') {
     const targets = action.targets.filter(target => target.isAlive);
-    if (targets.length === 0) return noPreparedAction();
-    return prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target: targets[0]! });
+    if (targets.length > 0) return prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target: targets[0]! });
   }
-  return prepareNopAction(ctx, action.actor);
+  const target = ctx.session.players.includes(action.actor as Player)
+    ? getFirstAliveMonster(ctx.session.monsters)
+    : ctx.session.players.find(player => player.isAlive) ?? null;
+  return target ? prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target }) : prepareNopAction(ctx, action.actor);
 }
 
 export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: MagicAttackAction): PreparedCombatAction {

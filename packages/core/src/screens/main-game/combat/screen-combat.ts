@@ -8,7 +8,7 @@ import {
   type PlayerTargetMode,
 } from '@/combat/combat-actions';
 import type { CombatFinishResult, CombatSession } from '@/combat/combat-runtime';
-import { Player, type Monster } from '@/characters';
+import type { Monster, Player } from '@/characters';
 import type { Game } from '@/game/game';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
@@ -294,8 +294,7 @@ export class ScreenCombat extends BaseScreen {
     this.actionQueue.clearAndRestoreItems();
     this.actionQueue.push(action);
     for (const actor of action.actors) {
-      const index = this.session.players.indexOf(actor);
-      if (index >= 0) this.rememberPlayerAction(index, action);
+      this.rememberPlayerAction(actor, action);
     }
     this.startPerforming();
   }
@@ -357,7 +356,7 @@ export class ScreenCombat extends BaseScreen {
 
   private confirmPlayerAction(action: CombatAction, remember = true): void {
     this.actionQueue.push(action);
-    if (remember) this.rememberPlayerAction(this.currentPlayerIndex, action);
+    if (remember && this.currentPlayer) this.rememberPlayerAction(this.currentPlayer, action);
     const nextIndex = getNextAlivePlayerIndex(this.session.players, this.currentPlayerIndex);
     if (nextIndex < 0) {
       this.startPerforming();
@@ -408,7 +407,8 @@ export class ScreenCombat extends BaseScreen {
     for (const item of actions) {
       this.actionQueue.push(item.action);
       for (const index of item.rememberIndexes) {
-        this.rememberPlayerAction(index, item.action);
+        const player = this.session.players[index];
+        if (player) this.rememberPlayerAction(player, item.action);
       }
     }
     if (this.actionQueue.length > 0) this.startPerforming();
@@ -516,10 +516,9 @@ export class ScreenCombat extends BaseScreen {
     return this.session.players[this.playerTargetIndex] ?? null;
   }
 
-  private rememberPlayerAction(index: number, action: CombatAction): void {
-    if (index < 0) throw new Error('记录重复动作时角色索引无效');
-    this.lastPlayerActions.set(index, action);
-    this.session.rememberPlayerAction(index, action);
+  private rememberPlayerAction(player: Player, action: CombatAction): void {
+    this.lastPlayerActions.set(player.index, action);
+    this.session.rememberPlayerAction(player.index, action);
   }
 
   private triggerRoundEventOnce(): void {

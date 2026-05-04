@@ -38,8 +38,7 @@ export function createRepeatedCoopAction(options: {
 }): QueuedCoopAction | null {
   const first = options.alivePlayers[0];
   if (!first) return null;
-  const firstIndex = options.players.indexOf(first);
-  const firstAction = options.lastPlayerActions.get(firstIndex);
+  const firstAction = options.lastPlayerActions.get(first.index);
   if (firstAction?.kind !== 'coop' || options.alivePlayers.length < 2) return null;
   const action = createCoopAction(options.alivePlayers, options.monster, options.monsters, firstAction.targetAll);
   return { action, rememberIndexes: options.alivePlayers.map(player => options.players.indexOf(player)).filter(index => index >= 0) };

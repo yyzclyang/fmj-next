@@ -102,8 +102,8 @@ export class CombatSession {
     return this.runtime.getLastPlayerActions();
   }
 
-  rememberPlayerAction(index: number, action: CombatAction): void {
-    this.runtime.rememberPlayerAction(index, action);
+  rememberPlayerAction(playerId: number, action: CombatAction): void {
+    this.runtime.rememberPlayerAction(playerId, action);
   }
 }
 
@@ -127,6 +127,7 @@ export class CombatRuntime {
   private randomFightEnabled = false;
   private randomEncounterRate = DEFAULT_RANDOM_ENCOUNTER_RATE;
   private activeSession: CombatSession | null = null;
+  // 重复行动按角色资源 id 记录，避免队伍站位变化后串用别人的动作。
   private readonly lastPlayerActions = new Map<number, CombatAction>();
 
   constructor(private readonly game: Game) {}
@@ -177,8 +178,8 @@ export class CombatRuntime {
     return new Map(this.lastPlayerActions);
   }
 
-  rememberPlayerAction(index: number, action: CombatAction): void {
-    this.lastPlayerActions.set(index, action);
+  rememberPlayerAction(playerId: number, action: CombatAction): void {
+    this.lastPlayerActions.set(playerId, action);
   }
 
   enterFight(

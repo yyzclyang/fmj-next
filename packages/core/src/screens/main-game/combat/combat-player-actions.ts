@@ -135,13 +135,22 @@ export function createRepeatedPlayerActions(options: {
     const index = options.players.indexOf(player);
     const action = createRepeatAction({
       player,
-      lastAction: options.lastPlayerActions.get(index),
+      lastAction: options.lastPlayerActions.get(player.index),
       monster,
       players: options.players,
       monsters: options.monsters,
       bag: options.bag,
-    });
-    if (action) res.push({ action, rememberIndexes: [index] });
+    }) ?? createRepeatFallbackAction(player, monster, options.monsters, options.players);
+    res.push({ action, rememberIndexes: [index] });
   }
   return res;
+}
+
+function createRepeatFallbackAction(
+  player: Player,
+  monster: Monster | null,
+  monsters: readonly Monster[],
+  players: readonly Player[]
+): CombatAction {
+  return monster ? createPlayerAttackAction(player, monster, monsters, players) : { kind: 'defend', actor: player };
 }

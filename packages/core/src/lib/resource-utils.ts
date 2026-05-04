@@ -54,5 +54,6 @@ export function readInt16(buf: Uint8Array, start: number): number {
 
 export function readInt8(buf: Uint8Array, start: number): number {
   const value = buf[start] ?? 0;
-  return value >= 0x80 ? value - 0x100 : value;
+  // 资源用最高位表示负向属性，低 7 位是幅值，不是通用二补码 int8。
+  return value >= 0x80 ? 0x80 - value : value;
 }

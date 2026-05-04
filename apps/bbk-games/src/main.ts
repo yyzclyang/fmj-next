@@ -60,6 +60,9 @@ async function bootstrap(): Promise<void> {
           <option value="3">3x</option>
         </select>
       </label>
+      <label>本地 LIB：
+        <input id="local-lib-input" type="file" accept=".lib,.LIB,.dat,.DAT" />
+      </label>
     </div>
     <div style="position:relative;width:322px;height:194px;">
       <canvas id="screen" style="width:320px;height:192px;border:1px solid #111;image-rendering:pixelated;"></canvas>
@@ -73,11 +76,13 @@ async function bootstrap(): Promise<void> {
   const exitStatus = root.querySelector<HTMLDivElement>('#exit-status');
   const gameSelect = root.querySelector<HTMLSelectElement>('#game-select');
   const speedSelect = root.querySelector<HTMLSelectElement>('#speed-select');
-  if (!canvas || !exitStatus || !gameSelect || !speedSelect) {
+  const localLibInput = root.querySelector<HTMLInputElement>('#local-lib-input');
+  if (!canvas || !exitStatus || !gameSelect || !speedSelect || !localLibInput) {
     throw new Error('Missing runtime UI');
   }
   const screenCanvas = canvas;
   const statusOverlay = exitStatus;
+  const gameControl = gameSelect;
 
   let runtime: ReturnType<typeof createBrowserRuntime> | null = null;
   function setExited(exited: boolean): void {
@@ -101,10 +106,26 @@ async function bootstrap(): Promise<void> {
     runtime?.start({ datLib, profile: gameProfiles[gameId] });
   }
 
+  async function startLocal(file: File): Promise<void> {
+    setExited(false);
+    const baseProfile = gameProfiles[gameControl.value as GameId];
+    const datLib = new Uint8Array(await file.arrayBuffer());
+    runtime?.start({
+      datLib,
+      profile: { ...baseProfile, id: `local:${file.name}:${file.size}`, title: file.name },
+    });
+  }
+
   await start(gameSelect.value as GameId);
 
   gameSelect.addEventListener('change', async () => {
     await start(gameSelect.value as GameId);
+  });
+
+  localLibInput.addEventListener('change', async () => {
+    const file = localLibInput.files?.[0];
+    if (!file) return;
+    await startLocal(file);
   });
 
   speedSelect.addEventListener('change', () => {

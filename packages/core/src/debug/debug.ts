@@ -6,7 +6,6 @@ import { ResourceType } from '@/lib/resource-utils';
 
 const DEFAULT_DEBUG_PLAYER_COUNT = 4;
 const DEBUG_PLAYER_INCREASE_KEYS = [
-  'id',
   'level',
   'hp',
   'maxHp',
@@ -69,11 +68,10 @@ export interface DebugPlayerApi {
   list(): DebugPlayerItem[];
   listAll(): DebugPlayerItem[];
   add(ids?: readonly number[]): DebugPlayerItem[];
-  increase(input: DebugPlayerIncreaseInput): DebugPlayerItem | null;
+  increase(actorIds: readonly number[], input: DebugPlayerIncreaseInput): DebugPlayerItem[];
 }
 
 export interface DebugPlayerIncreaseInput {
-  id?: number;
   level?: number;
   hp?: number;
   maxHp?: number;
@@ -136,6 +134,7 @@ export interface DebugCombatApi {
   listMonsters(): DebugCombatMonsterItem[];
   listBackgrounds(): DebugCombatBackgroundItem[];
   start(options?: readonly number[] | DebugCombatStartOptions): boolean;
+  setEncounterRate(rate?: number | null): number;
 }
 
 export interface DebugCombatMonsterItem {
@@ -283,14 +282,14 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         console.table(items);
         return items;
       },
-      increase(input: DebugPlayerIncreaseInput) {
+      increase(actorIds: readonly number[], input: DebugPlayerIncreaseInput) {
         const game = getGame();
-        if (!game) return null;
-        const player = resolveDebugPlayer(game, input);
-        applyDebugPlayerIncrease(player, input);
-        const item = toDebugPlayerItem(game, player);
-        console.table([item]);
-        return item;
+        if (!game) return [];
+        const players = resolveDebugPlayers(game, actorIds, input);
+        for (const player of players) applyDebugPlayerIncrease(player, input);
+        const items = players.map(player => toDebugPlayerItem(game, player));
+        console.table(items);
+        return items;
       },
     },
     script: {
@@ -341,6 +340,14 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         runtime.startDebugCombat(params);
         console.debug(`已进入调试战斗 monster=${ids.join(',')} bg=${background.scrb}`);
         return true;
+      },
+      setEncounterRate(rate?: number | null) {
+        const game = getGame();
+        if (!game) return 0;
+        const nextRate = rate == null ? null : assertDebugRate(rate, 'encounterRate');
+        const currentRate = game.combat.setRandomEncounterRate(nextRate);
+        console.debug(`当前遇敌几率:${currentRate}`);
+        return currentRate;
       },
     },
   };
@@ -397,14 +404,17 @@ function applyDebugPlayerState(game: Game, input: DebugCombatPlayerStateInput): 
   applyDebugBuff(player.atbuff, input.atbuffMask, input.atbuffRound, 'atbuff');
 }
 
-function resolveDebugPlayer(game: Game, input: DebugPlayerIncreaseInput): Player {
+function resolveDebugPlayers(game: Game, actorIds: readonly number[], input: DebugPlayerIncreaseInput): Player[] {
+  if (!Array.isArray(actorIds)) throw new Error('player.increase 第一个参数必须是角色 id 数组');
   assertDebugObject(input, 'player.increase');
   assertDebugKnownKeys(input, DEBUG_PLAYER_INCREASE_KEYS, 'player.increase');
-  const actorId = input.id ?? (game.state.controlActorId || game.state.partyActorIds[0]);
-  if (!actorId) throw new Error('没有可调整属性的当前角色，请传入 id');
-  const player = game.getPlayer(assertDebugPositiveInt(actorId, 'id'));
-  if (!player) throw new Error(`角色资源不存在: ARS 1-${actorId}`);
-  return player;
+  const ids = actorIds.length === 0 ? listAllPlayerIds(game) : actorIds;
+  return ids.map((id, i) => {
+    const actorId = assertDebugPositiveInt(id, `actorIds[${i}]`);
+    const player = game.getPlayer(actorId);
+    if (!player) throw new Error(`角色资源不存在: ARS 1-${actorId}`);
+    return player;
+  });
 }
 
 // 这里复用脚本 ATTRIBADD 的字段编号，方便调试结果和 Kotlin 行为对照。
@@ -474,6 +484,12 @@ function assertDebugPositiveInt(value: number, name: string): number {
   const intValue = assertDebugInt(value, name);
   if (intValue <= 0) throw new Error(`调试参数 ${name} 必须大于 0: ${value}`);
   return intValue;
+}
+
+function assertDebugRate(value: number, name: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error(`调试参数 ${name} 必须是数字: ${value}`);
+  if (value < 0 || value > 1) throw new Error(`调试参数 ${name} 必须在 0 到 1 之间: ${value}`);
+  return value;
 }
 
 function clampDebugInt(value: number, name: string, min: number, max: number): number {

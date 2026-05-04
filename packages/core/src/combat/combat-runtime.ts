@@ -108,6 +108,7 @@ export class CombatSession {
 }
 
 const MAX_COMBAT_PLAYERS = 3;
+const DEFAULT_RANDOM_ENCOUNTER_RATE = 1 / 20;
 const PLAYER_POS = [
   { x: 186, y: 148 },
   { x: 218, y: 144 },
@@ -124,6 +125,7 @@ export class CombatRuntime {
   private readonly random = Math.random;
   private randomFightConfig: CombatInitFightParams | null = null;
   private randomFightEnabled = false;
+  private randomEncounterRate = DEFAULT_RANDOM_ENCOUNTER_RATE;
   private activeSession: CombatSession | null = null;
   private readonly lastPlayerActions = new Map<number, CombatAction>();
 
@@ -133,6 +135,7 @@ export class CombatRuntime {
     if (this.activeSession) throw new Error('战斗中不能重置战斗运行时');
     this.randomFightConfig = null;
     this.randomFightEnabled = false;
+    this.randomEncounterRate = DEFAULT_RANDOM_ENCOUNTER_RATE;
     this.lastPlayerActions.clear();
   }
 
@@ -165,6 +168,11 @@ export class CombatRuntime {
     this.randomFightConfig = null;
   }
 
+  setRandomEncounterRate(rate: number | null): number {
+    this.randomEncounterRate = rate ?? DEFAULT_RANDOM_ENCOUNTER_RATE;
+    return this.randomEncounterRate;
+  }
+
   getLastPlayerActions(): Map<number, CombatAction> {
     return new Map(this.lastPlayerActions);
   }
@@ -184,7 +192,7 @@ export class CombatRuntime {
   startRandomFight(onFinish: CombatFinishCallback): CombatSession | null {
     const config = this.randomFightConfig;
     if (!this.randomFightEnabled || !config || config.monsterTypes.length === 0) return null;
-    if (Math.trunc(this.random() * 20) !== 0) return null;
+    if (this.random() >= this.randomEncounterRate) return null;
     const count = Math.trunc(this.random() * 3) + 1;
     const monsterTypes = Array.from({ length: count }, () => {
       const index = Math.trunc(this.random() * config.monsterTypes.length);
@@ -300,28 +308,28 @@ export class CombatRuntime {
   private createBackground(ids: CombatBackgroundIds): Bitmap | null {
     if (ids.scrb <= 0 && ids.scrl <= 0 && ids.scrr <= 0) return null;
     if (this.game.profile.compat?.blankCombatBackground) return createSolidBackground(COLOR_WHITE);
-    const pixels = createFrameBuffer();
+    const bg = this.game.datLib.getImage(ResourceType.PIC, 4, ids.scrb);
+    if (!bg) throw new Error(`战斗背景资源不存在: PIC 4-${ids.scrb}`);
+    const bitmap = bg.getBitmap(0);
+    if (!bitmap) throw new Error(`战斗背景没有可绘制位图: PIC 4-${ids.scrb}`);
+    const width = Math.max(bitmap.width, Math.floor(SCREEN_WIDTH / 2));
+    const height = Math.max(bitmap.height, Math.floor(SCREEN_HEIGHT / 2));
+    const pixels = new Uint8ClampedArray(width * height * 4);
     clearFrameBuffer(pixels, COLOR_BLACK);
-    const surface = new Surface(SCREEN_WIDTH, SCREEN_HEIGHT, pixels);
+    const surface = new Surface(width, height, pixels);
 
-    if (ids.scrb > 0) {
-      const bg = this.game.datLib.getImage(ResourceType.PIC, 4, ids.scrb);
-      if (!bg) throw new Error(`战斗背景资源不存在: PIC 4-${ids.scrb}`);
-      const bitmap = bg.getBitmap(0);
-      if (!bitmap) throw new Error(`战斗背景没有可绘制位图: PIC 4-${ids.scrb}`);
-      surface.drawBitmap(scaleBitmap(bitmap, SCREEN_WIDTH, SCREEN_HEIGHT), 0, 0);
-    }
+    surface.drawBitmap(bitmap, 0, 0);
     if (ids.scrl > 0) {
       const left = this.game.datLib.getImage(ResourceType.PIC, 4, ids.scrl);
       if (!left) throw new Error(`战斗左侧背景资源不存在: PIC 4-${ids.scrl}`);
-      left.draw(surface, 1, 0, SCREEN_HEIGHT - left.height);
+      left.draw(surface, 1, 0, height - left.height);
     }
     if (ids.scrr > 0) {
       const right = this.game.datLib.getImage(ResourceType.PIC, 4, ids.scrr);
       if (!right) throw new Error(`战斗右侧背景资源不存在: PIC 4-${ids.scrr}`);
-      right.draw(surface, 1, SCREEN_WIDTH - right.width, 0);
+      right.draw(surface, 1, width - right.width, 0);
     }
-    return new Bitmap(SCREEN_WIDTH, SCREEN_HEIGHT, pixels);
+    return scaleBitmap(new Bitmap(width, height, pixels), SCREEN_WIDTH, SCREEN_HEIGHT);
   }
 
   settleWin(session: CombatSession): CombatWinSettlement {

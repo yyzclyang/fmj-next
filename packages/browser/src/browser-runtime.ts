@@ -29,7 +29,7 @@ export class BrowserRuntime {
       list: () => this.engine?.debug.player.list() ?? [],
       listAll: () => this.engine?.debug.player.listAll() ?? [],
       add: ids => this.engine?.debug.player.add(ids) ?? [],
-      increase: input => this.engine?.debug.player.increase(input) ?? null,
+      increase: (actorIds, input) => this.engine?.debug.player.increase(actorIds, input) ?? [],
     },
     script: {
       start: (type, index, offset) => this.engine?.debug.script.start(type, index, offset) ?? false,
@@ -38,6 +38,7 @@ export class BrowserRuntime {
       listMonsters: () => this.engine?.debug.combat.listMonsters() ?? [],
       listBackgrounds: () => this.engine?.debug.combat.listBackgrounds() ?? [],
       start: options => this.engine?.debug.combat.start(options) ?? false,
+      setEncounterRate: rate => this.engine?.debug.combat.setEncounterRate(rate) ?? 0,
     },
   };
   private readonly presenter: CanvasPresenter;

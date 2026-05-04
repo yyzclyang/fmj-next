@@ -774,8 +774,7 @@ export class MainSceneRuntime {
   }
 
   private setPlayerMapPosition(mapX: number, mapY: number): void {
-    const start = this.resolveStartPosition(mapX, mapY);
-    this.setVisiblePlayerMapPosition(start.x, start.y);
+    this.setVisiblePlayerMapPosition(mapX, mapY);
   }
 
   private setResourcePlayerMapPosition(player: Player, mapX: number, mapY: number): void {
@@ -1034,32 +1033,6 @@ export class MainSceneRuntime {
     return screenX >= 0 && screenX < MAP_VIEW_TILE_WIDTH && screenY >= 0 && screenY < MAP_VIEW_TILE_HEIGHT;
   }
 
-  private resolveStartPosition(x: number, y: number): { x: number; y: number } {
-    if (!this.currentMapValue) {
-      return { x, y };
-    }
-
-    if (this.currentMapValue.canPlayerWalk(x, y)) {
-      return { x, y };
-    }
-
-    for (let radius = 1; radius <= 8; radius += 1) {
-      for (let dy = -radius; dy <= radius; dy += 1) {
-        for (let dx = -radius; dx <= radius; dx += 1) {
-          const nextX = x + dx;
-          const nextY = y + dy;
-          if (this.currentMapValue.canPlayerWalk(nextX, nextY)) {
-            return { x: nextX, y: nextY };
-          }
-        }
-      }
-    }
-
-    return {
-      x: clamp(x, 0, this.currentMapValue.mapWidth - 1),
-      y: clamp(y, 0, this.currentMapValue.mapHeight - 1),
-    };
-  }
 }
 
 function shouldCenterMovie(x: number, y: number): boolean {

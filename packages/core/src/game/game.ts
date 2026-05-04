@@ -270,7 +270,8 @@ export class Game {
 
   getSaveBlockedMessage(): string | null {
     if (this.state.disableSave) return '当前不能存档';
-    return this.mainSceneRuntime?.getSaveBlockedMessage() ?? '主场景不存在，无法存档';
+    if (!this.mainSceneRuntime) return '主场景不存在，无法存档';
+    return this.mainSceneRuntime.getSaveBlockedMessage();
   }
 
   getVariable(index: number): number {

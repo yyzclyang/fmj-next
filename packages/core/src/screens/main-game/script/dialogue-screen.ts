@@ -21,20 +21,23 @@ const DIALOG_LEFT = 18;
 const DIALOG_WIDTH = 284;
 const DIALOG_TOP = 110;
 const DIALOG_HEIGHT = 72;
-const DIALOG_WITH_HEAD_TOP = 100;
-const DIALOG_WITH_HEAD_HEIGHT = 82;
-const DIALOG_TEXT_LEFT = DIALOG_LEFT + 10;
-const DIALOG_TEXT_TOP = DIALOG_TOP + 8;
-const DIALOG_TEXT_WIDTH = DIALOG_WIDTH - 20;
-const DIALOG_HEAD_LEFT = DIALOG_LEFT + 8;
-const DIALOG_HEAD_TEXT_LEFT = DIALOG_LEFT + 30;
-const DIALOG_HEAD_TEXT_WIDTH = DIALOG_WIDTH - 40;
-const DIALOG_PAGE_LINES = 4;
-const DIALOG_LINE_GAP = 16;
+const DIALOG_HEAD_LEFT = 13;
+const DIALOG_HEAD_TOP = 46 + Math.floor((SCREEN_HEIGHT - 96) / 2);
+const DIALOG_TEXT_LEFT = 28;
+const DIALOG_HEAD_TEXT_LEFT = 48;
+const DIALOG_TEXT_RIGHT = 290;
+const DIALOG_TEXT_TOPS = [116, 132, 152] as const;
+const DIALOG_PAGE_LINES = 3;
+
+interface DialogueLineLayout {
+  left: number;
+  top: number;
+  width: number;
+}
 
 // 脚本类 screen 把“关闭 UI 后恢复脚本”收在自身生命周期里。
 export class ScriptDialogueScreen extends BaseScreen {
-  private readonly pages: string[];
+  private readonly pages: string[][];
   private readonly headImage: ResImage | null;
   private pageIndex = 0;
 
@@ -46,7 +49,7 @@ export class ScriptDialogueScreen extends BaseScreen {
   ) {
     super(game);
     this.headImage = loadHeadImage(game, headImageIndex);
-    this.pages = paginateDialogue(text, this.headImage ? DIALOG_HEAD_TEXT_WIDTH : DIALOG_TEXT_WIDTH);
+    this.pages = paginateDialogue(text, getDialogueLineLayouts(this.headImage));
   }
 
   get isEmpty(): boolean {
@@ -62,10 +65,11 @@ export class ScriptDialogueScreen extends BaseScreen {
       this.headImage.draw(surface, 1, DIALOG_HEAD_LEFT, layout.headTop);
     }
 
-    const page = this.pages[this.pageIndex] ?? '';
-    const lines = page.split('\n');
-    for (let i = 0; i < lines.length; i += 1) {
-      TextRender.drawText(surface, lines[i] ?? '', layout.textLeft, layout.textTop + i * DIALOG_LINE_GAP);
+    const page = this.pages[this.pageIndex] ?? [];
+    for (let i = 0; i < page.length; i += 1) {
+      const lineLayout = layout.lines[i];
+      if (!lineLayout) continue;
+      TextRender.drawText(surface, page[i] ?? '', lineLayout.left, lineLayout.top);
     }
   }
 
@@ -132,18 +136,64 @@ export class ScriptTimedMessageScreen extends BaseScreen {
   }
 }
 
-function paginateDialogue(text: string, width: number): string[] {
+function paginateDialogue(text: string, lineLayouts: readonly DialogueLineLayout[]): string[][] {
   const normalized = text.replace(/\r/g, '').replace(/\0/g, '');
   if (normalized.length === 0) return [];
 
-  const lines = wrapTextBlock(normalized, width);
-  const pages: string[] = [];
+  const pages: string[][] = [];
+  let page: string[] = [];
 
-  for (let i = 0; i < lines.length; i += DIALOG_PAGE_LINES) {
-    pages.push(lines.slice(i, i + DIALOG_PAGE_LINES).join('\n'));
+  function pushLine(line: string): void {
+    if (page.length >= DIALOG_PAGE_LINES) {
+      pages.push(page);
+      page = [];
+    }
+    page.push(line);
   }
 
+  for (const rawLine of normalized.split('\n')) {
+    if (rawLine.length === 0) {
+      pushLine('');
+      continue;
+    }
+
+    let rest = rawLine;
+    while (rest.length > 0) {
+      if (page.length >= DIALOG_PAGE_LINES) {
+        pages.push(page);
+        page = [];
+      }
+      const lineLayout = lineLayouts[page.length];
+      const split = splitTextByWidth(rest, lineLayout?.width ?? DIALOG_TEXT_RIGHT - DIALOG_TEXT_LEFT);
+      pushLine(split.line);
+      rest = split.rest;
+    }
+  }
+
+  if (page.length > 0) pages.push(page);
   return pages;
+}
+
+function splitTextByWidth(text: string, maxWidth: number): { line: string; rest: string } {
+  let width = 0;
+  let end = 0;
+
+  for (const char of text) {
+    const charWidth = getDialogueCharWidth(char);
+    if (end > 0 && width + charWidth > maxWidth) break;
+    width += charWidth;
+    end += char.length;
+  }
+
+  return {
+    line: text.slice(0, end),
+    rest: text.slice(end),
+  };
+}
+
+function getDialogueCharWidth(char: string): number {
+  const code = char.codePointAt(0) ?? 0;
+  return code < 0x80 ? 8 : 16;
 }
 
 function loadHeadImage(game: Game, index: number): ResImage | null {
@@ -155,25 +205,48 @@ function loadHeadImage(game: Game, index: number): ResImage | null {
 function getDialogueLayout(headImage: ResImage | null): {
   top: number;
   height: number;
-  textLeft: number;
-  textTop: number;
+  lines: DialogueLineLayout[];
   headTop: number;
 } {
+  const lines = getDialogueLineLayouts(headImage);
   if (!headImage) {
     return {
       top: DIALOG_TOP,
       height: DIALOG_HEIGHT,
-      textLeft: DIALOG_TEXT_LEFT,
-      textTop: DIALOG_TEXT_TOP,
+      lines,
       headTop: DIALOG_TOP,
     };
   }
 
   return {
-    top: DIALOG_WITH_HEAD_TOP,
-    height: DIALOG_WITH_HEAD_HEIGHT,
-    textLeft: DIALOG_HEAD_TEXT_LEFT,
-    textTop: DIALOG_WITH_HEAD_TOP + 16,
-    headTop: DIALOG_WITH_HEAD_TOP + Math.max(4, Math.floor((DIALOG_WITH_HEAD_HEIGHT - headImage.height) / 2)),
+    top: DIALOG_TOP,
+    height: DIALOG_HEIGHT,
+    lines,
+    headTop: DIALOG_HEAD_TOP,
   };
+}
+
+function getDialogueLineLayouts(headImage: ResImage | null): DialogueLineLayout[] {
+  const defaultWidth = DIALOG_TEXT_RIGHT - DIALOG_TEXT_LEFT;
+  if (!headImage) {
+    return createDialogueLineLayouts([
+      { left: DIALOG_TEXT_LEFT, width: defaultWidth },
+      { left: DIALOG_TEXT_LEFT, width: defaultWidth },
+      { left: DIALOG_TEXT_LEFT, width: defaultWidth },
+    ]);
+  }
+
+  return createDialogueLineLayouts([
+    { left: DIALOG_HEAD_TEXT_LEFT, width: DIALOG_TEXT_RIGHT - DIALOG_HEAD_TEXT_LEFT },
+    { left: DIALOG_HEAD_TEXT_LEFT, width: DIALOG_TEXT_RIGHT - DIALOG_HEAD_TEXT_LEFT },
+    { left: DIALOG_TEXT_LEFT, width: defaultWidth },
+  ]);
+}
+
+function createDialogueLineLayouts(lines: Array<{ left: number; width: number }>): DialogueLineLayout[] {
+  return lines.map((line, index) => ({
+    left: line.left,
+    top: DIALOG_TEXT_TOPS[index] ?? DIALOG_TEXT_TOPS[DIALOG_TEXT_TOPS.length - 1],
+    width: line.width,
+  }));
 }

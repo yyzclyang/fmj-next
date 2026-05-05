@@ -20,9 +20,8 @@ interface GutState {
 }
 
 const GUT_DEFAULT_STEP = 1;
-const GUT_FAST_STEP = 3;
 const GUT_DEFAULT_INTERVAL = 50;
-const GUT_FAST_INTERVAL = 20;
+const GUT_KEY_SCROLL_STEP = 8;
 const GUT_TEXT_SIDE_PADDING = 16;
 const GUT_SECTION_GAP = 6;
 
@@ -101,8 +100,8 @@ export class ScriptGutScreen extends BaseScreen {
       this.closeWithScriptResume();
       return;
     }
-    this.gut.step = GUT_FAST_STEP;
-    this.gut.interval = GUT_FAST_INTERVAL;
+    this.gut.scrollY -= GUT_KEY_SCROLL_STEP;
+    this.gut.elapsed = 0;
   }
 
   private closeWithScriptResume(): void {

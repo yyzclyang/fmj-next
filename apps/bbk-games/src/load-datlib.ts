@@ -26,7 +26,7 @@ export async function loadRemoteGameLib(manifest: GameLibManifest): Promise<Load
   return { manifest: normalizedManifest, datLib };
 }
 
-export async function loadLocalGameLib(file: File, baseManifest?: GameLibManifest): Promise<LoadedGameLib> {
+export async function loadLocalGameLib(file: File): Promise<LoadedGameLib> {
   const datLib = new Uint8Array(await file.arrayBuffer());
   const sha256 = await createDatLibSha256(datLib);
   const manifest = normalizeManifest({
@@ -34,7 +34,7 @@ export async function loadLocalGameLib(file: File, baseManifest?: GameLibManifes
     url: '',
     sha256,
     scopeId: createDefaultSaveScopeId(sha256),
-    compat: baseManifest?.compat ?? null,
+    compat: null,
   });
 
   return { manifest, datLib };

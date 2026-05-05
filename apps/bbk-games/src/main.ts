@@ -109,7 +109,7 @@ async function bootstrap(): Promise<void> {
   async function startLocal(file: File): Promise<void> {
     const requestId = ++startRequestId;
     setExited(false);
-    const loaded = await loadLocalGameLib(file, gameLibManifests[getSelectedGameId()]);
+    const loaded = await loadLocalGameLib(file);
     if (requestId !== startRequestId) return;
     startLoadedGameLib(loaded);
   }

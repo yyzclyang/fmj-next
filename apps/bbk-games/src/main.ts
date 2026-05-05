@@ -1,7 +1,7 @@
 import { createBrowserRuntime } from '@fmj-next/browser';
-import { KeyCode, type DebugApi } from '@fmj-next/core';
-import { gameProfiles, type GameId } from './game-profiles';
-import { loadDatLib } from './load-datlib';
+import { KeyCode, type DebugApi, type GameProfile } from '@fmj-next/core';
+import { gameLibManifests, type GameId, type GameLibManifest } from './game-profiles';
+import { loadLocalGameLib, loadRemoteGameLib, type LoadedGameLib } from './load-datlib';
 import { webAudioPort } from './web-audio-port';
 import { webSaveStore } from './web-save-store';
 
@@ -42,15 +42,10 @@ async function bootstrap(): Promise<void> {
     throw new Error('Missing #app root');
   }
 
-  const gameOptions = Object.entries(gameProfiles)
-    .map(([id, profile]) => `<option value="${id}">${profile.title}</option>`)
-    .join('');
-
   root.innerHTML = `
     <div style="display:flex;gap:12px;align-items:center;margin-bottom:12px;">
       <label>游戏：
         <select id="game-select">
-          ${gameOptions}
         </select>
       </label>
       <label>倍速：
@@ -83,6 +78,7 @@ async function bootstrap(): Promise<void> {
   const screenCanvas = canvas;
   const statusOverlay = exitStatus;
   const gameControl = gameSelect;
+  renderGameOptions(gameControl);
 
   let runtime: ReturnType<typeof createBrowserRuntime> | null = null;
   function setExited(exited: boolean): void {
@@ -100,26 +96,66 @@ async function bootstrap(): Promise<void> {
   });
   window.fmjDebug = runtime.debug;
 
+  let startRequestId = 0;
+
   async function start(gameId: GameId): Promise<void> {
+    const requestId = ++startRequestId;
     setExited(false);
-    const datLib = await loadDatLib(gameId);
-    runtime?.start({ datLib, profile: gameProfiles[gameId] });
+    const loaded = await loadRemoteGameLib(gameLibManifests[gameId]);
+    if (requestId !== startRequestId) return;
+    startLoadedGameLib(loaded);
   }
 
   async function startLocal(file: File): Promise<void> {
+    const requestId = ++startRequestId;
     setExited(false);
-    const baseProfile = gameProfiles[gameControl.value as GameId];
-    const datLib = new Uint8Array(await file.arrayBuffer());
+    const loaded = await loadLocalGameLib(file, gameLibManifests[getSelectedGameId()]);
+    if (requestId !== startRequestId) return;
+    startLoadedGameLib(loaded);
+  }
+
+  function startLoadedGameLib(loaded: LoadedGameLib): void {
+    webSaveStore.setSaveContext({
+      scopeId: loaded.manifest.scopeId,
+      sha256: loaded.manifest.sha256,
+    });
     runtime?.start({
-      datLib,
-      profile: { ...baseProfile, id: `local:${file.name}:${file.size}`, title: file.name },
+      datLib: loaded.datLib,
+      profile: createRuntimeProfile(loaded.manifest),
     });
   }
 
-  await start(gameSelect.value as GameId);
+  function createRuntimeProfile(manifest: GameLibManifest): GameProfile {
+    return {
+      id: manifest.scopeId,
+      title: manifest.name,
+      compat: manifest.compat ?? undefined,
+    };
+  }
+
+  function renderGameOptions(select: HTMLSelectElement): void {
+    select.replaceChildren(
+      ...gameLibManifests.map((manifest, index) => {
+        const option = document.createElement('option');
+        option.value = String(index);
+        option.textContent = manifest.name;
+        return option;
+      })
+    );
+  }
+
+  function getSelectedGameId(): GameId {
+    const gameId = Number(gameControl.value);
+    if (!Number.isInteger(gameId) || gameId < 0 || gameId >= gameLibManifests.length) {
+      throw new Error(`游戏选择非法: ${gameControl.value}`);
+    }
+    return gameId;
+  }
+
+  await start(getSelectedGameId());
 
   gameSelect.addEventListener('change', async () => {
-    await start(gameSelect.value as GameId);
+    await start(getSelectedGameId());
   });
 
   localLibInput.addEventListener('change', async () => {

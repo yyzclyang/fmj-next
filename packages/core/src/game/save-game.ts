@@ -6,7 +6,6 @@ export const SAVE_SLOT_COUNT = 5;
 export const CORRUPT_SAVE_MESSAGE = '存档损坏';
 
 const SAVE_VERSION = 1;
-const SAVE_KEY_PREFIX = 'fmj-save-';
 const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
 
@@ -89,10 +88,6 @@ export interface SavePlayerState {
   buff: BuffState[];
   debuff: BuffState[];
   atbuff: BuffState[];
-}
-
-export function getSaveSlotKey(slot: number): string {
-  return `${SAVE_KEY_PREFIX}${slot}`;
 }
 
 export function createSavePayload(

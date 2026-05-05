@@ -1,6 +1,6 @@
 export interface SaveStore {
-  read(key: string): Uint8Array | null;
-  write(key: string, value: Uint8Array): void;
+  read(slot: number): Uint8Array | null;
+  write(slot: number, value: Uint8Array): void;
 }
 
 export interface AudioPort {

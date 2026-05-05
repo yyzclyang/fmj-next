@@ -30,7 +30,6 @@ import {
   CORRUPT_SAVE_MESSAGE,
   decodeSavePayload,
   encodeSavePayload,
-  getSaveSlotKey,
   SAVE_SLOT_COUNT,
   toLoadedGameState,
   type SaveGamePayload,
@@ -84,7 +83,7 @@ export class Game {
     const runtimeSnapshot = this.mainSceneRuntime?.createSnapshot() ?? null;
     if (!runtimeSnapshot) throw new Error('主场景不存在，无法存档');
     const payload = createSavePayload(this.state, slot, runtimeSnapshot);
-    this.host.saveStore.write(getSaveSlotKey(slot), encodeSavePayload(payload));
+    this.host.saveStore.write(slot, encodeSavePayload(payload));
     return payload.summary;
   }
 
@@ -350,7 +349,7 @@ export class Game {
   private readSavePayload(slot: number): SaveGamePayload | null {
     this.assertSaveSlot(slot);
     try {
-      const data = this.host.saveStore.read(getSaveSlotKey(slot));
+      const data = this.host.saveStore.read(slot);
       if (!data) return null;
       return decodeSavePayload(data);
     } catch {

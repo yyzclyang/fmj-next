@@ -1,0 +1,47 @@
+@import 'normalize.css';
+@import './styles/tailwind.css';
+
+:root {
+  --paper: #f4ead7;
+  --paper-deep: #e3d1b0;
+  --ink: #17241d;
+  --muted: #6d765d;
+  --line: rgba(23, 36, 29, 0.18);
+  --line-strong: rgba(23, 36, 29, 0.38);
+  --panel: #fff8ea;
+  --rail: #c8b37f;
+  --accent: #b54428;
+  --sans: var(--font-sans);
+  --mono: var(--font-mono);
+  color: var(--ink);
+  background: var(--paper);
+  font-family: var(--sans);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@layer base {
+  body {
+    @apply m-0 min-w-80;
+    background:
+      linear-gradient(90deg, rgba(23, 36, 29, 0.05) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(23, 36, 29, 0.05) 1px, transparent 1px),
+      linear-gradient(180deg, var(--paper) 0%, var(--paper-deep) 100%);
+    background-size:
+      24px 24px,
+      24px 24px,
+      auto;
+  }
+
+  button,
+  select,
+  input {
+    font: inherit;
+  }
+
+  #root {
+    @apply min-h-svh;
+  }
+}

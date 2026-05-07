@@ -5,14 +5,29 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "check": "tsc --noEmit && vite build --mode check"
+    "build": "tsc -b && vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@fmj-next/browser": "workspace:*",
-    "@fmj-next/core": "workspace:*"
+    "@fmj-next/core": "workspace:*",
+    "normalize.css": "8.0.1",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
   },
   "devDependencies": {
-    "vite": "8.0.9"
+    "@babel/core": "7.29.0",
+    "@rolldown/plugin-babel": "0.2.3",
+    "@tailwindcss/vite": "4.2.4",
+    "@types/babel__core": "7.20.5",
+    "@types/node": "24.12.2",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.1",
+    "babel-plugin-react-compiler": "1.0.0",
+    "globals": "17.6.0",
+    "prettier-plugin-tailwindcss": "0.8.0",
+    "tailwindcss": "4.2.4",
+    "vite": "^8.0.1"
   }
 }

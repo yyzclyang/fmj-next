@@ -1,0 +1,6 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Trebuchet MS', 'Microsoft YaHei UI', sans-serif;
+  --font-mono: 'Courier New', 'Microsoft YaHei UI', monospace;
+}

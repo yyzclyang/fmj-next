@@ -1,6 +1,6 @@
 import type { AudioPort } from '@fmj-next/core';
 
-export const webAudioPort: AudioPort = {
+export const audio: AudioPort = {
   playMusic(id) {
     console.debug('[audio] playMusic', id);
   },

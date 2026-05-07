@@ -6,7 +6,7 @@ const CORRUPT_SAVE_MESSAGE = '存档损坏';
 const LIB_SHA256_PATTERN = /^[0-9a-f]{64}$/;
 const SAVE_SCOPE_ID_PATTERN = /^[A-Za-z0-9-]+$/;
 
-interface WebSaveStore extends SaveStore {
+interface Save extends SaveStore {
   setSaveContext(context: SaveContext): void;
 }
 
@@ -71,7 +71,7 @@ function isByteArray(value: unknown): value is number[] {
   return Array.isArray(value) && value.every(item => Number.isInteger(item) && item >= 0 && item <= 255);
 }
 
-export const webSaveStore: WebSaveStore = {
+export const webSaveStore: Save = {
   setSaveContext(context) {
     const sha256 = context.sha256.toLowerCase();
     if (!LIB_SHA256_PATTERN.test(sha256)) throw new Error(`LIB SHA-256 非法: ${context.sha256}`);

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { createBrowserRuntime, type BrowserRuntime } from '@fmj-next/browser';
-import { KeyCode, type DebugApi, type GameProfile } from '@fmj-next/core';
-import { gameLibManifests, type GameId, type GameLibManifest } from './game-profiles';
-import { loadLocalGameLib, loadRemoteGameLib, type LoadedGameLib } from './load-datlib';
-import { webAudioPort } from './web-audio-port';
-import { webSaveStore } from './web-save-store';
+import { KeyCode, type DebugApi, type GameCompatOptions, type GameProfile } from '@fmj-next/core';
+import { getBbkGames, type BbkGame, type BbkGameLib } from '@/apis/game';
+import { loadLocalGameLib, loadRemoteGameLib, type GameLibManifest, type LoadedGameLib } from '@/utils/lib';
+import { audio } from '@/utils/audio';
+import { webSaveStore } from '@/utils/save';
 import './App.css';
 
 declare global {
@@ -17,16 +17,22 @@ const runtimeSpeeds = [1, 2, 3] as const;
 
 type RuntimeStatus = 'loading' | 'ready' | 'exited' | 'error';
 
+interface SelectedGameLib {
+  readonly id: string;
+  readonly lib: BbkGameLib;
+}
+
 function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const runtimeRef = useRef<BrowserRuntime | null>(null);
   const requestIdRef = useRef(0);
-  const [selectedGameId, setSelectedGameId] = useState<GameId>(0);
+  const [games, setGames] = useState<readonly BbkGame[]>([]);
+  const [selectedGameLibId, setSelectedGameLibId] = useState('');
   const [speed, setSpeed] = useState(1);
   const [status, setStatus] = useState<RuntimeStatus>('loading');
   const [errorText, setErrorText] = useState<string | null>(null);
-  const [activeTitle, setActiveTitle] = useState(gameLibManifests[0]?.name ?? '未选择');
-  const [activeSource, setActiveSource] = useState('内置资源');
+  const [activeTitle, setActiveTitle] = useState('载入游戏列表');
+  const [activeSource, setActiveSource] = useState('接口资源');
 
   const overlayText = getOverlayText(status, errorText);
 
@@ -38,7 +44,7 @@ function App() {
       sha256: loaded.manifest.sha256,
     });
     runtime.start({
-      datLib: loaded.datLib,
+      datLib: loaded.lib,
       profile: createRuntimeProfile(loaded.manifest),
     });
     setActiveTitle(loaded.manifest.name);
@@ -48,17 +54,16 @@ function App() {
   }, []);
 
   const startRemoteGame = useCallback(
-    async (gameId: GameId) => {
+    async (manifest: GameLibManifest) => {
       const requestId = ++requestIdRef.current;
-      const manifest = getGameManifest(gameId);
       setStatus('loading');
       setErrorText(null);
       setActiveTitle(manifest.name);
-      setActiveSource('内置资源');
+      setActiveSource('远程资源');
       try {
         const loaded = await loadRemoteGameLib(manifest);
         if (requestId !== requestIdRef.current) return;
-        startLoadedGameLib(loaded, '内置资源');
+        startLoadedGameLib(loaded, '远程资源');
       } catch (error) {
         if (requestId !== requestIdRef.current) return;
         setStatus('error');
@@ -67,6 +72,28 @@ function App() {
     },
     [startLoadedGameLib]
   );
+
+  const loadRemoteGameList = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
+    setStatus('loading');
+    setErrorText(null);
+    setActiveTitle('载入游戏列表');
+    setActiveSource('接口资源');
+    try {
+      const page = await getBbkGames();
+      if (requestId !== requestIdRef.current) return;
+      const selected = getFirstGameLib(page.list);
+      setGames(page.list);
+      setSelectedGameLibId(selected.id);
+      void startRemoteGame(selected.lib);
+    } catch (error) {
+      if (requestId !== requestIdRef.current) return;
+      setGames([]);
+      setSelectedGameLibId('');
+      setStatus('error');
+      setErrorText(getErrorMessage(error));
+    }
+  }, [startRemoteGame]);
 
   const startLocalGame = useCallback(
     async (file: File) => {
@@ -98,7 +125,7 @@ function App() {
     const runtime = createBrowserRuntime({
       canvas,
       saveStore: webSaveStore,
-      audio: webAudioPort,
+      audio: audio,
       requestExit: () => {
         runtimeRef.current?.dispose();
         setStatus('exited');
@@ -107,14 +134,14 @@ function App() {
     });
     runtimeRef.current = runtime;
     window.fmjDebug = runtime.debug;
-    void startRemoteGame(selectedGameId);
+    void loadRemoteGameList();
     return () => {
       requestIdRef.current++;
       runtime.dispose();
       if (window.fmjDebug === runtime.debug) delete window.fmjDebug;
       runtimeRef.current = null;
     };
-  }, []);
+  }, [loadRemoteGameList]);
 
   useEffect(() => {
     runtimeRef.current?.setSpeed(speed);
@@ -147,12 +174,12 @@ function App() {
 
   const handleGameChange = useCallback(
     (event: ChangeEvent<HTMLSelectElement>) => {
-      const gameId = Number(event.currentTarget.value);
-      getGameManifest(gameId);
-      setSelectedGameId(gameId);
-      void startRemoteGame(gameId);
+      const id = event.currentTarget.value;
+      const lib = getGameLib(games, id);
+      setSelectedGameLibId(id);
+      void startRemoteGame(lib);
     },
-    [startRemoteGame]
+    [games, startRemoteGame]
   );
 
   const handleSpeedChange = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
@@ -180,11 +207,15 @@ function App() {
         <div className="flex flex-wrap items-end justify-end gap-2.5 max-[720px]:justify-stretch" aria-label="游戏控制">
           <label className="control-field">
             <span>游戏</span>
-            <select value={selectedGameId} onChange={handleGameChange}>
-              {gameLibManifests.map((manifest, index) => (
-                <option key={manifest.scopeId} value={index}>
-                  {manifest.name}
-                </option>
+            <select value={selectedGameLibId} onChange={handleGameChange} disabled={games.length === 0}>
+              {games.map(game => (
+                <optgroup key={game.id} label={game.name}>
+                  {game.libs.map(lib => (
+                    <option key={lib.id} value={createGameLibSelectId(game.id, lib.id)}>
+                      {lib.name}
+                    </option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </label>
@@ -199,7 +230,7 @@ function App() {
             </select>
           </label>
           <label className="file-button">
-            <input type="file" accept=".lib,.LIB,.dat,.DAT" onChange={handleLocalLibChange} />
+            <input type="file" accept=".lib,.LIB,.gam,.GAM" onChange={handleLocalLibChange} />
             <span>本地 LIB</span>
           </label>
         </div>
@@ -250,14 +281,33 @@ function createRuntimeProfile(manifest: GameLibManifest): GameProfile {
   return {
     id: manifest.scopeId,
     title: manifest.name,
-    compat: manifest.compat ?? undefined,
+    compat: parseEngineOptions(manifest.engineOptions) ?? undefined,
   };
 }
 
-function getGameManifest(gameId: GameId): GameLibManifest {
-  const manifest = gameLibManifests[gameId];
-  if (!manifest) throw new Error(`游戏选择非法: ${gameId}`);
-  return manifest;
+function parseEngineOptions(value: string): GameCompatOptions | null {
+  if (!value) return null;
+  return JSON.parse(value) as GameCompatOptions;
+}
+
+function getFirstGameLib(games: readonly BbkGame[]): SelectedGameLib {
+  for (const game of games) {
+    const lib = game.libs[0];
+    if (lib) return { id: createGameLibSelectId(game.id, lib.id), lib };
+  }
+  throw new Error('游戏列表为空');
+}
+
+function getGameLib(games: readonly BbkGame[], id: string): BbkGameLib {
+  for (const game of games) {
+    const lib = game.libs.find(item => createGameLibSelectId(game.id, item.id) === id);
+    if (lib) return lib;
+  }
+  throw new Error(`游戏选择非法: ${id}`);
+}
+
+function createGameLibSelectId(gameId: number, libId: number): string {
+  return `${gameId}:${libId}`;
 }
 
 function getErrorMessage(error: unknown): string {

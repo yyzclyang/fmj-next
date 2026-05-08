@@ -8,9 +8,6 @@ import { BaseScreen } from '../base-screen';
 import { ScreenViewType } from '../screen-view-type';
 import { ScreenMenu } from '../menu/screen';
 
-const STARTUP_WIDTH = 160;
-const STARTUP_HEIGHT = 96;
-
 interface ScreenAnimationDef {
   readonly resourceIndex: number;
   readonly nextScreen: ScreenViewType;
@@ -64,8 +61,8 @@ export class ScreenAnimation extends BaseScreen {
 
   draw(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
-    const centerX = Math.floor((SCREEN_WIDTH - STARTUP_WIDTH) / 2);
-    const centerY = Math.floor((SCREEN_HEIGHT - STARTUP_HEIGHT) / 2);
+    const centerX = Math.floor((SCREEN_WIDTH - 160 /* 启动画面宽度。 */) / 2);
+    const centerY = Math.floor((SCREEN_HEIGHT - 96 /* 启动画面高度。 */) / 2);
     this.animation.draw(surface, centerX, centerY);
   }
 

@@ -13,10 +13,6 @@ import { SaveLoadOperation, ScreenSaveLoadGame } from '../main-game/menu/screen-
 const MENU_PIC_TYPE = 2;
 const MENU_PIC_INDEX = 14;
 
-// 启动菜单的 6 个选项共用一组 SRS 光标动画资源。
-const SELECTOR_START_INDEX = 250;
-const SELECTOR_END_INDEX = 255;
-
 // 主菜单直接复用原版菜单底图和光标动画。
 export class ScreenMenu extends BaseScreen {
   private readonly menuImage: ResImage;
@@ -102,7 +98,7 @@ export class ScreenMenu extends BaseScreen {
   private loadSelectors(): ResSrs[] {
     const selectors: ResSrs[] = [];
 
-    for (let index = SELECTOR_START_INDEX; index <= SELECTOR_END_INDEX; index += 1) {
+    for (let index = 250 /* 光标动画起始资源。 */; index <= 255 /* 光标动画结束资源。 */; index += 1) {
       const res = this.game.datLib.getSrs(1, index);
       if (!res) continue;
       selectors.push(res);

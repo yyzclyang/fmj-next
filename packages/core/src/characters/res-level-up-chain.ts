@@ -1,8 +1,6 @@
 import { ResBase } from '@/lib/res-base';
 import { readUint16 } from '@/lib/resource-utils';
 
-const LEVEL_BYTES = 20;
-
 export interface ResLevelUpChainData {
   readonly type: number;
   readonly index: number;
@@ -70,7 +68,7 @@ export class ResLevelUpChain extends ResBase {
 
   private getLevelOffset(level: number, fieldOffset: number): number | null {
     if (level < 1 || level > this.maxLevel) return null;
-    const offset = (level - 1) * LEVEL_BYTES + fieldOffset;
+    const offset = (level - 1) * 20 /* 每级升级数据 20 字节。 */ + fieldOffset;
     return offset < this.levelData.length ? offset : null;
   }
 

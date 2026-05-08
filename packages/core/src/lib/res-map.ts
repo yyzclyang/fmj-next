@@ -1,10 +1,5 @@
 import { ResBase } from './res-base';
 
-const PLAYER_WALK_MARGIN_LEFT = 4;
-const PLAYER_WALK_MARGIN_RIGHT = 4;
-const PLAYER_WALK_MARGIN_TOP = 3;
-const PLAYER_WALK_MARGIN_BOTTOM = 2;
-
 export interface ResMapData {
   readonly type: number;
   readonly index: number;
@@ -43,10 +38,10 @@ export class ResMap extends ResBase {
   canPlayerWalk(x: number, y: number): boolean {
     return (
       this.canWalk(x, y) &&
-      x >= PLAYER_WALK_MARGIN_LEFT &&
-      x < this.mapWidth - PLAYER_WALK_MARGIN_RIGHT &&
-      y >= PLAYER_WALK_MARGIN_TOP &&
-      y < this.mapHeight - PLAYER_WALK_MARGIN_BOTTOM
+      x >= 4 /* 左侧保留 4 格。 */ &&
+      x < this.mapWidth - 4 /* 右侧保留 4 格。 */ &&
+      y >= 3 /* 顶部保留 3 格。 */ &&
+      y < this.mapHeight - 2 /* 底部保留 2 格。 */
     );
   }
 

@@ -37,9 +37,6 @@ import {
   type SaveSlotSummary,
 } from './save-game';
 
-const STARTUP_CHAPTER_TYPE = 1;
-const STARTUP_CHAPTER_INDEX = 1;
-
 export class Game {
   readonly datLib: DatLib;
   readonly combat = new CombatRuntime(this);
@@ -123,7 +120,7 @@ export class Game {
     this.combat.reset();
     this.state = createInitialGameState();
     this.replaceWithMainScene();
-    this.mainSceneRuntime?.startChapter(STARTUP_CHAPTER_TYPE, STARTUP_CHAPTER_INDEX);
+    this.mainSceneRuntime?.startChapter(1 /* 开场章节类型。 */, 1 /* 开场章节索引。 */);
   }
 
   returnToMenu(): void {

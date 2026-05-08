@@ -51,7 +51,7 @@ export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: Magi
       misses.push(createMissAnimation(ctx.game, target));
       continue;
     }
-    applyMagicAttack(action.actor, action.magic, target, ctx.game.profile.compat?.magicDamageFormula);
+    applyMagicAttack(action.actor, action.magic, target, ctx.game.engineOptions.magicDamageFormula);
   }
   const animation = new CastCombatAnimation({
     actor: action.actor,

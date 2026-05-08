@@ -17,10 +17,6 @@ const MENU_PIC_INDEX = 14;
 const SELECTOR_START_INDEX = 250;
 const SELECTOR_END_INDEX = 255;
 
-// 光标动画相对菜单底图左上角的位置偏移。
-const DEFAULT_SELECTOR_OFFSET_X = 0;
-const DEFAULT_SELECTOR_OFFSET_Y = 24;
-
 // 主菜单直接复用原版菜单底图和光标动画。
 export class ScreenMenu extends BaseScreen {
   private readonly menuImage: ResImage;
@@ -55,10 +51,7 @@ export class ScreenMenu extends BaseScreen {
   draw(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
     this.menuImage.draw(surface, 1, this.left, this.top);
-    const selectorOffset = this.game.profile.compat?.mainMenuSelectorOffset ?? {
-      x: DEFAULT_SELECTOR_OFFSET_X,
-      y: DEFAULT_SELECTOR_OFFSET_Y,
-    };
+    const selectorOffset = this.game.engineOptions.mainMenuSelectorOffset ?? { x: 0, y: 0 };
     this.selectors[this.currentSelection]?.draw(
       surface,
       this.left + selectorOffset.x,

@@ -1,6 +1,6 @@
 import { Monster, Player, type FightingCharacter } from '@/characters';
 import { GoodsHiddenWeapon } from '@/goods';
-import type { MagicDamageFormula } from '@/game/game-profile';
+import type { MagicDamageFormula } from '@/game/game-engine-options';
 import { type BaseMagic, MagicAttack, MagicAuxiliary, MagicEnhance, MagicRestore } from '@/magic';
 import {
   BUFF_INDEX_DU,

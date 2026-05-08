@@ -2,7 +2,7 @@ import type { Game } from '@/game/game';
 import { Monster, Player } from '@/characters';
 import type { BaseGoods } from '@/goods';
 import { Bitmap } from '@/rendering/bitmap';
-import { COLOR_BLACK, COLOR_WHITE, type Color } from '@/rendering/color';
+import { COLOR_BLACK, type Color } from '@/rendering/color';
 import { clearFrameBuffer, createFrameBuffer } from '@/rendering/frame-buffer';
 import { Surface } from '@/rendering/surface';
 import { ResourceType } from '@/lib/resource-utils';
@@ -308,7 +308,6 @@ export class CombatRuntime {
 
   private createBackground(ids: CombatBackgroundIds): Bitmap | null {
     if (ids.scrb <= 0 && ids.scrl <= 0 && ids.scrr <= 0) return null;
-    if (this.game.profile.compat?.blankCombatBackground) return createSolidBackground(COLOR_WHITE);
     const bg = this.game.datLib.getImage(ResourceType.PIC, 4, ids.scrb);
     if (!bg) throw new Error(`战斗背景资源不存在: PIC 4-${ids.scrb}`);
     const bitmap = bg.getBitmap(0);

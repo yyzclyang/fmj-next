@@ -98,7 +98,7 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
           misses.push(createMissAnimation(ctx.game, target));
           continue;
         }
-        applyMagicAttack(actor, action.magic, target, ctx.game.profile.compat?.magicDamageFormula);
+        applyMagicAttack(actor, action.magic, target, ctx.game.engineOptions.magicDamageFormula);
       }
     }
     ctx.setMessage(`${actors[0]!.name}等施展${action.magic.magicName}`);

@@ -24,7 +24,7 @@ import {
   SCRIPT_VARIABLE_COUNT,
   type GameState,
 } from './game-state';
-import { DEFAULT_GAME_PROFILE, type GameProfile } from './game-profile';
+import type { GameEngineOptions } from './game-engine-options';
 import {
   createSavePayload,
   CORRUPT_SAVE_MESSAGE,
@@ -53,11 +53,11 @@ export class Game {
   private readonly surface = new Surface(FRAME_WIDTH, FRAME_HEIGHT);
   readonly screenStack = new ScreenStack();
   private readonly host: EngineHost;
-  readonly profile: GameProfile;
+  readonly engineOptions: GameEngineOptions;
 
-  constructor(host: EngineHost, datLibBuffer: Uint8Array, profile: GameProfile = DEFAULT_GAME_PROFILE) {
+  constructor(host: EngineHost, datLibBuffer: Uint8Array, engineOptions: GameEngineOptions = {}) {
     this.host = host;
-    this.profile = profile;
+    this.engineOptions = engineOptions;
     this.datLib = new DatLib(datLibBuffer);
   }
 
@@ -122,12 +122,7 @@ export class Game {
     this.boxEventMap.clear();
     this.pendingBoxEventKey = null;
     this.combat.reset();
-    const previousVariables = this.profile.compat?.preserveScriptVariablesOnNewGame ? this.state.scriptVariables : null;
     this.state = createInitialGameState();
-    if (previousVariables) {
-      this.state.scriptVariables = [...previousVariables];
-      this.ensureScriptVariableSize();
-    }
     this.replaceWithMainScene();
     this.mainSceneRuntime?.startChapter(STARTUP_CHAPTER_TYPE, STARTUP_CHAPTER_INDEX);
   }
@@ -194,9 +189,7 @@ export class Game {
 
   gainMoney(value: number): void {
     this.state.money += value;
-    if (!this.profile.compat?.suppressGainMoneyTip) {
-      this.mainScene?.showTip(`获得金钱:${value}`);
-    }
+    this.mainScene?.showTip(`获得金钱:${value}`);
   }
 
   setMoney(value: number): void {
@@ -293,7 +286,6 @@ export class Game {
   }
 
   resetLocalVariables(): void {
-    if (this.profile.compat?.preserveLocalVariablesOnChapterStart) return;
     for (let index = SCRIPT_LOCAL_VARIABLE_START; index < SCRIPT_LOCAL_VARIABLE_END; index += 1) {
       this.state.scriptVariables[index] = 0;
     }

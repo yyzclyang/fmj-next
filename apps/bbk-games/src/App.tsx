@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { createBrowserRuntime, type BrowserRuntime } from '@fmj-next/browser';
-import { KeyCode, type DebugApi, type GameCompatOptions, type GameProfile } from '@fmj-next/core';
+import { KeyCode, type DebugApi, type GameEngineOptions } from '@fmj-next/core';
 import { getBbkGames, type BbkGame, type BbkGameLib } from '@/apis/game';
 import { loadLocalGameLib, loadRemoteGameLib, type GameLibManifest, type LoadedGameLib } from '@/utils/lib';
 import { audio } from '@/utils/audio';
@@ -44,8 +44,8 @@ function App() {
       sha256: loaded.manifest.sha256,
     });
     runtime.start({
-      datLib: loaded.lib,
-      profile: createRuntimeProfile(loaded.manifest),
+      lib: loaded.lib,
+      engineOptions: parseEngineOptions(loaded.manifest.engineOptions) ?? {},
     });
     setActiveTitle(loaded.manifest.name);
     setActiveSource(source);
@@ -54,14 +54,14 @@ function App() {
   }, []);
 
   const startRemoteGame = useCallback(
-    async (manifest: GameLibManifest) => {
+    async (gameLib: BbkGameLib) => {
       const requestId = ++requestIdRef.current;
       setStatus('loading');
       setErrorText(null);
-      setActiveTitle(manifest.name);
+      setActiveTitle(gameLib.name);
       setActiveSource('远程资源');
       try {
-        const loaded = await loadRemoteGameLib(manifest);
+        const loaded = await loadRemoteGameLib(gameLib);
         if (requestId !== requestIdRef.current) return;
         startLoadedGameLib(loaded, '远程资源');
       } catch (error) {
@@ -277,17 +277,9 @@ function mapKeyboard(code: string): KeyCode | null {
   }
 }
 
-function createRuntimeProfile(manifest: GameLibManifest): GameProfile {
-  return {
-    id: manifest.scopeId,
-    title: manifest.name,
-    compat: parseEngineOptions(manifest.engineOptions) ?? undefined,
-  };
-}
-
-function parseEngineOptions(value: string): GameCompatOptions | null {
+function parseEngineOptions(value: string): GameEngineOptions | null {
   if (!value) return null;
-  return JSON.parse(value) as GameCompatOptions;
+  return JSON.parse(value) as GameEngineOptions;
 }
 
 function getFirstGameLib(games: readonly BbkGame[]): SelectedGameLib {

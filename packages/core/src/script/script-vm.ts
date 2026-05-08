@@ -11,6 +11,8 @@ import {
 import { KeyCode } from '@/shared/key-code';
 import { ScriptProcess } from './script-process';
 
+const IGNORE_SET_FIGHT_MISS = false;
+
 const COMMAND = {
   MUSIC: 0,
   LOADMAP: 1,
@@ -1076,7 +1078,7 @@ export class ScriptVm {
     return {
       len: 2,
       execute: () => {
-        if (this.game.profile.compat?.ignoreSetFightMiss) return;
+        if (IGNORE_SET_FIGHT_MISS) return;
         this.game.state.allowFightMiss = enabled;
       },
     };
@@ -1247,7 +1249,6 @@ export class ScriptVm {
       execute: () => {
         const scene = this.game.mainScene;
         const name = this.game.state.sceneName.trim();
-        if (this.game.profile.compat?.suppressSceneNameTip) return;
         if (!scene || name.length === 0) return;
         scene.showTip(name, 'information');
       },

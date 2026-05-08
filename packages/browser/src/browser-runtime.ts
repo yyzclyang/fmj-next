@@ -1,4 +1,4 @@
-import { Engine, KeyCode, type AudioPort, type DebugApi, type EngineHost, type GameProfile, type SaveStore } from '@fmj-next/core';
+import { Engine, KeyCode, type AudioPort, type DebugApi, type EngineHost, type GameEngineOptions, type SaveStore } from '@fmj-next/core';
 import { CanvasPresenter } from './canvas-presenter';
 
 export interface BrowserRuntimeOptions {
@@ -10,8 +10,8 @@ export interface BrowserRuntimeOptions {
 }
 
 export interface BrowserRuntimeStartOptions {
-  readonly datLib: Uint8Array;
-  readonly profile?: GameProfile;
+  readonly lib: Uint8Array;
+  readonly engineOptions?: GameEngineOptions;
 }
 
 export class BrowserRuntime {
@@ -61,7 +61,7 @@ export class BrowserRuntime {
   start(options: BrowserRuntimeStartOptions): void {
     this.stopLoop();
     this.engine = new Engine(this.host);
-    this.engine.boot({ datLib: options.datLib, profile: options.profile });
+    this.engine.boot({ lib: options.lib, engineOptions: options.engineOptions });
     this.presenter.present(this.engine.frameBuffer);
     this.lastTimestamp = null;
     this.rafId = requestAnimationFrame(this.loop);

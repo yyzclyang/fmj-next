@@ -22,9 +22,6 @@ export class ResLevelUpChain extends ResBase {
     this.levelData = data.levelData;
   }
 
-  // 升级链资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
-  setData(): void {}
-
   getMaxHp(level: number): number {
     return this.readLevelUint16(level, 0);
   }

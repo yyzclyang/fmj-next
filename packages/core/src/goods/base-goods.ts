@@ -38,9 +38,6 @@ export abstract class BaseGoods extends ResBase {
     this.eventId = data.eventId;
   }
 
-  // 道具资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
-  setData(): void {}
-
   canPlayerUse(playerId: number): boolean {
     return playerId >= 1 && playerId <= 4 && (this.enable & (1 << (playerId - 1))) !== 0;
   }

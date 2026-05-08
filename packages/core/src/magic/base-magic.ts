@@ -31,7 +31,4 @@ export abstract class BaseMagic extends ResBase {
     this.magicName = data.magicName;
     this.magicDescription = data.magicDescription;
   }
-
-  // 魔法资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
-  setData(): void {}
 }

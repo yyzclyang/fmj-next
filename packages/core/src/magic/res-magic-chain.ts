@@ -23,9 +23,6 @@ export class ResMagicChain extends ResBase {
     this.magics = data.magics;
   }
 
-  // 魔法链资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
-  setData(): void {}
-
   getMagic(index: number): BaseMagic | null {
     return this.magics[index] ?? null;
   }

@@ -34,9 +34,6 @@ export class ResMap extends ResBase {
     this.data = data.data;
   }
 
-  // 地图资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
-  setData(): void {}
-
   canWalk(x: number, y: number): boolean {
     const index = this.getCellOffset(x, y);
     if (index < 0) return false;

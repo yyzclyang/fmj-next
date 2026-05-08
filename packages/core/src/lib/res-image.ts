@@ -39,9 +39,6 @@ export class ResImage extends ResBase {
     return this.resourceBytesCount;
   }
 
-  // 图片资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
-  setData(): void {}
-
   getBitmap(index: number): Bitmap | null {
     const bitmap = this.bitmaps[index] ?? null;
     return bitmap?.copy() ?? null;

@@ -50,9 +50,6 @@ export class ResSrs extends ResBase {
     this.images = data.images;
   }
 
-  // 动画资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
-  setData(): void {}
-
   start(): void {
     if (this.frameHeaders.length === 0) return;
     this.showList = [this.createFrame(0)];

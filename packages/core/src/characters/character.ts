@@ -47,7 +47,4 @@ export abstract class Character extends ResBase {
     this.mapY = data.mapY;
     this.walkingSprite = data.walkingSprite;
   }
-
-  // 角色资源由 DatLib 构造；保留空实现只是为了兼容 ResBase 体系。
-  setData(): void {}
 }

@@ -12,7 +12,6 @@ import {
 } from '@/goods';
 import type { Game } from '@/game/game';
 import { type BaseMagic, MagicRestore } from '@/magic';
-import { ResourceType } from '@/lib/resource-utils';
 import type { Surface } from '@/rendering/surface';
 import { TextRender } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
@@ -287,7 +286,7 @@ export class ScreenGameMainMenu extends BaseScreen {
   }
 
   private useDramaGoods(goods: GoodsDrama): void {
-    const gut = this.game.datLib.getRes(ResourceType.GUT, 255, goods.index);
+    const gut = this.game.datLib.getGut(255, goods.index);
     if (!gut) {
       this.showMenuMessage('当前无法使用!');
       return;

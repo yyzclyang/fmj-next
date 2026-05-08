@@ -8,7 +8,6 @@ import {
   mapCharacterState,
   mapDirection,
   type CarryGoods,
-  type Character,
   type CharacterData,
   type FightingCharacterData,
   type MonsterData,
@@ -19,24 +18,20 @@ import { KeyCode } from '@/shared/key-code';
 import type { DatLib } from '../dat-lib';
 import { ResourceType, readGbkString, readUint16 } from '../resource-utils';
 
-export function parseCharacterResource(
-  datLib: DatLib,
-  buffer: Uint8Array,
-  type: number,
-  offset: number
-): Character | null {
-  switch (type) {
-    case 1:
-      return createPlayer(datLib, buffer, offset);
-    case 2:
-      return createNpc(datLib, buffer, offset);
-    case 3:
-      return createMonster(datLib, buffer, offset);
-    case 4:
-      return createSceneObj(datLib, buffer, offset);
-    default:
-      return null;
-  }
+export function parsePlayerResource(datLib: DatLib, buffer: Uint8Array, offset: number): Player {
+  return createPlayer(datLib, buffer, offset);
+}
+
+export function parseNpcResource(datLib: DatLib, buffer: Uint8Array, offset: number): Npc {
+  return createNpc(datLib, buffer, offset);
+}
+
+export function parseMonsterResource(datLib: DatLib, buffer: Uint8Array, offset: number): Monster {
+  return createMonster(datLib, buffer, offset);
+}
+
+export function parseSceneObjResource(datLib: DatLib, buffer: Uint8Array, offset: number): SceneObj {
+  return createSceneObj(datLib, buffer, offset);
 }
 
 function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Player {
@@ -81,7 +76,7 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
     luck,
     fightingSprite: datLib.createFightingSprite(ResourceType.PIC, index),
     headImage: index > 0 ? datLib.getImage(ResourceType.PIC, 1, index) : null,
-    levelUpChain: datLib.getLevelupChain(index),
+    levelUpChain: datLib.getLevelUpChain(index),
     currentExp: readUint16(buffer, offset + 0x32),
     equipment,
     totalMaxHp: maxHp,

@@ -1,6 +1,6 @@
 import type { Game } from '@/game/game';
-import { ResImage } from '@/lib/res-image';
-import { ResSrs } from '@/lib/res-srs';
+import type { ResImage } from '@/lib/res-image';
+import type { ResSrs } from '@/lib/res-srs';
 import { ResourceType } from '@/lib/resource-utils';
 import { Surface } from '@/rendering/surface';
 import { COLOR_WHITE } from '@/rendering/color';
@@ -27,8 +27,8 @@ export class ScreenMenu extends BaseScreen {
 
   constructor(game: Game) {
     super(game);
-    const image = this.game.datLib.getRes(ResourceType.PIC, MENU_PIC_TYPE, MENU_PIC_INDEX);
-    if (!(image instanceof ResImage)) {
+    const image = this.game.datLib.getImage(ResourceType.PIC, MENU_PIC_TYPE, MENU_PIC_INDEX);
+    if (!image) {
       throw new Error(`Missing menu background PIC ${MENU_PIC_TYPE}:${MENU_PIC_INDEX}`);
     }
 
@@ -51,7 +51,7 @@ export class ScreenMenu extends BaseScreen {
   draw(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
     this.menuImage.draw(surface, 1, this.left, this.top);
-    const selectorOffset = this.game.engineOptions.mainMenuSelectorOffset ?? { x: 0, y: 0 };
+    const selectorOffset = this.game.engineOptions.mainMenuSelectorOffset ?? { x: 0, y: 24 };
     this.selectors[this.currentSelection]?.draw(
       surface,
       this.left + selectorOffset.x,
@@ -103,8 +103,8 @@ export class ScreenMenu extends BaseScreen {
     const selectors: ResSrs[] = [];
 
     for (let index = SELECTOR_START_INDEX; index <= SELECTOR_END_INDEX; index += 1) {
-      const res = this.game.datLib.getRes(ResourceType.SRS, 1, index);
-      if (!(res instanceof ResSrs)) continue;
+      const res = this.game.datLib.getSrs(1, index);
+      if (!res) continue;
       selectors.push(res);
     }
 

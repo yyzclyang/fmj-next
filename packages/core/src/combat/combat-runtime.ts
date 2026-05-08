@@ -1,5 +1,5 @@
 import type { Game } from '@/game/game';
-import { Monster, Player } from '@/characters';
+import type { Monster, Player } from '@/characters';
 import type { BaseGoods } from '@/goods';
 import { Bitmap } from '@/rendering/bitmap';
 import { COLOR_BLACK, type Color } from '@/rendering/color';
@@ -289,8 +289,8 @@ export class CombatRuntime {
     return monsterTypes
       .filter(type => type > 0)
       .map(index => {
-        const res = this.game.datLib.getRes(ResourceType.ARS, 3, index);
-        if (!(res instanceof Monster)) throw new Error(`战斗怪物资源不存在: ARS 3-${index}`);
+        const res = this.game.datLib.getMonster(index);
+        if (!res) throw new Error(`战斗怪物资源不存在: ARS 3-${index}`);
         return res;
       });
   }

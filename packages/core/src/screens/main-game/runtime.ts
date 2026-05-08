@@ -1,9 +1,8 @@
 import type { Game } from '@/game/game';
 import type { CombatEnterFightParams, CombatInitFightParams, CombatRuntimeSnapshot } from '@/combat';
-import { CharacterState, mapCharacterState, Npc, SceneObj, type Player, type WalkingSprite } from '@/characters';
-import { ResImage } from '@/lib/res-image';
-import { ResMap } from '@/lib/res-map';
-import { ResSrs } from '@/lib/res-srs';
+import { CharacterState, mapCharacterState, type Player, type WalkingSprite } from '@/characters';
+import type { ResImage } from '@/lib/res-image';
+import type { ResMap } from '@/lib/res-map';
 import { ResourceType } from '@/lib/resource-utils';
 import type { ScreenOverlay } from '@/screens/screen-overlay';
 import type { ScriptOperation, ScriptProcess, ScriptProcessSnapshot } from '@/script/script-process';
@@ -334,8 +333,8 @@ export class MainSceneRuntime {
   }
 
   loadMap(type: number, index: number, screenX: number, screenY: number): void {
-    const mapRes = this.game.datLib.getRes(ResourceType.MAP, type, index);
-    if (!(mapRes instanceof ResMap)) {
+    const mapRes = this.game.datLib.getMap(type, index);
+    if (!mapRes) {
       throw new Error(`Missing map ${type}:${index}`);
     }
 
@@ -377,12 +376,12 @@ export class MainSceneRuntime {
   }
 
   createNpc(id: number, resId: number, x: number, y: number): void {
-    const npcRes = this.game.datLib.getRes(ResourceType.ARS, 2, resId);
-    const walkingSprite = npcRes instanceof Npc ? npcRes.walkingSprite : null;
-    const direction = npcRes instanceof Npc ? npcRes.direction : KeyCode.Down;
-    const step = npcRes instanceof Npc ? npcRes.step : 0;
-    const state = npcRes instanceof Npc ? npcRes.state : CharacterState.Stop;
-    const delay = npcRes instanceof Npc ? npcRes.delay : 0;
+    const npcRes = this.game.datLib.getNpc(resId);
+    const walkingSprite = npcRes?.walkingSprite ?? null;
+    const direction = npcRes?.direction ?? KeyCode.Down;
+    const step = npcRes?.step ?? 0;
+    const state = npcRes?.state ?? CharacterState.Stop;
+    const delay = npcRes?.delay ?? 0;
     this.sceneObjectsValue.set(
       id,
       this.createSceneObject({
@@ -402,16 +401,14 @@ export class MainSceneRuntime {
   }
 
   createBox(id: number, resId: number, x: number, y: number): void {
-    const boxRes = this.game.datLib.getRes(ResourceType.ARS, 4, resId);
-    const walkingSprite = boxRes instanceof SceneObj ? boxRes.walkingSprite : null;
-    const direction = boxRes instanceof SceneObj ? boxRes.direction : KeyCode.Up;
-    const state = boxRes instanceof SceneObj ? boxRes.state : CharacterState.Stop;
-    const delay = boxRes instanceof SceneObj ? boxRes.delay : 0;
+    const boxRes = this.game.datLib.getSceneObj(resId);
+    const walkingSprite = boxRes?.walkingSprite ?? null;
+    const direction = boxRes?.direction ?? KeyCode.Up;
+    const state = boxRes?.state ?? CharacterState.Stop;
+    const delay = boxRes?.delay ?? 0;
     const step = this.game.isBoxCollected(this.getBoxEventKey(x, y, resId))
       ? 2
-      : boxRes instanceof SceneObj
-        ? boxRes.step
-        : 0;
+      : (boxRes?.step ?? 0);
     this.sceneObjectsValue.set(
       id,
       this.createSceneObject({
@@ -561,8 +558,8 @@ export class MainSceneRuntime {
   }
 
   playMovie(params: MovieParams, process: ScriptProcess): void {
-    const res = this.game.datLib.getRes(ResourceType.SRS, params.type, params.index);
-    if (!(res instanceof ResSrs)) return;
+    const res = this.game.datLib.getSrs(params.type, params.index);
+    if (!res) return;
 
     res.setIteratorNum(5);
     res.start();
@@ -769,8 +766,7 @@ export class MainSceneRuntime {
   }
 
   private loadTileSet(map: ResMap): ResImage | null {
-    const tileRes = this.game.datLib.getRes(ResourceType.TIL, 1, map.tilIndex);
-    return tileRes instanceof ResImage ? tileRes : null;
+    return this.game.datLib.getImage(ResourceType.TIL, 1, map.tilIndex);
   }
 
   private setPlayerMapPosition(mapX: number, mapY: number): void {
@@ -987,14 +983,14 @@ export class MainSceneRuntime {
   }
 
   private restoreSceneObject(snapshot: SceneObjectSnapshot): SceneObject {
-    const resType = snapshot.kind === 'npc' ? 2 : 4;
-    const res = this.game.datLib.getRes(ResourceType.ARS, resType, snapshot.resId);
     let walkingSprite: WalkingSprite | null = null;
     if (snapshot.kind === 'npc') {
-      if (!(res instanceof Npc)) throw new Error(`读档 NPC 资源不存在: ARS 2-${snapshot.resId}`);
+      const res = this.game.datLib.getNpc(snapshot.resId);
+      if (!res) throw new Error(`读档 NPC 资源不存在: ARS 2-${snapshot.resId}`);
       walkingSprite = res.walkingSprite;
     } else {
-      if (!(res instanceof SceneObj)) throw new Error(`读档场景物件资源不存在: ARS 4-${snapshot.resId}`);
+      const res = this.game.datLib.getSceneObj(snapshot.resId);
+      if (!res) throw new Error(`读档场景物件资源不存在: ARS 4-${snapshot.resId}`);
       walkingSprite = res.walkingSprite;
     }
     return {

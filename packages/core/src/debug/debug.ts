@@ -1,7 +1,7 @@
 import type { Game } from '@/game/game';
-import { Monster, Player } from '@/characters';
+import type { Monster, Player } from '@/characters';
 import type { CombatBackgroundIds, CombatEnterFightParams } from '@/combat/combat-runtime';
-import { BaseGoods } from '@/goods';
+import type { BaseGoods } from '@/goods';
 import { ResourceType } from '@/lib/resource-utils';
 
 const DEFAULT_DEBUG_PLAYER_COUNT = 4;
@@ -523,8 +523,8 @@ function listAllMonsterIds(game: Game): number[] {
 
 function listAllMonsters(game: Game): Monster[] {
   return listAllMonsterIds(game).map(id => {
-    const monster = game.datLib.getRes(ResourceType.ARS, 3, id);
-    if (!(monster instanceof Monster)) throw new Error(`怪物资源不存在: ARS 3-${id}`);
+    const monster = game.datLib.getMonster(id);
+    if (!monster) throw new Error(`怪物资源不存在: ARS 3-${id}`);
     return monster;
   });
 }
@@ -571,8 +571,8 @@ function addDebugPlayer(game: Game, actorId: number): Player {
 function listAllGoods(game: Game): BaseGoods[] {
   const items: BaseGoods[] = [];
   for (const key of game.datLib.listResourceKeys(ResourceType.GRS)) {
-    const goods = game.datLib.getRes(key.resType, key.type, key.index);
-    if (goods instanceof BaseGoods) items.push(goods);
+    const goods = game.datLib.getGoods(key.type, key.index);
+    if (goods) items.push(goods);
   }
   return items;
 }
@@ -580,8 +580,7 @@ function listAllGoods(game: Game): BaseGoods[] {
 function findPlayer(game: Game, actorId: number): Player | null {
   const player = game.state.players.find(item => item.index === actorId);
   if (player) return player;
-  const res = game.datLib.getRes(ResourceType.ARS, 1, actorId);
-  return res instanceof Player ? res : null;
+  return game.datLib.getPlayer(actorId);
 }
 
 function toDebugPlayerItem(game: Game, player: Player): DebugPlayerItem {

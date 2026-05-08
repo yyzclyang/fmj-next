@@ -1,5 +1,5 @@
 import type { Game } from '@/game/game';
-import { ResImage } from '@/lib/res-image';
+import type { ResImage } from '@/lib/res-image';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
@@ -112,8 +112,7 @@ export class ScriptGutScreen extends BaseScreen {
 
 function loadPicture(game: Game, index: number): ResImage | null {
   if (index <= 0) return null;
-  const picRes = game.datLib.getRes(ResourceType.PIC, 5, index);
-  return picRes instanceof ResImage ? picRes : null;
+  return game.datLib.getImage(ResourceType.PIC, 5, index);
 }
 
 function getGutLayout(gut: GutState): {

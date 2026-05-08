@@ -1,6 +1,6 @@
 import type { Game } from '@/game/game';
-import { ResGut } from '@/lib/res-gut';
-import { ResourceType, readGbkString, readUint16, readUint32 } from '@/lib/resource-utils';
+import type { ResGut } from '@/lib/res-gut';
+import { readGbkString, readUint16, readUint32 } from '@/lib/resource-utils';
 import { SaveLoadOperation, ScreenSaveLoadGame } from '@/screens/main-game/menu/screen-save-load-game';
 import {
   createScriptBuyGoodsScreen,
@@ -108,8 +108,8 @@ export class ScriptVm {
   constructor(private readonly game: Game) {}
 
   loadScript(type: number, index: number): ScriptProcess {
-    const res = this.game.datLib.getRes(ResourceType.GUT, type, index);
-    if (!(res instanceof ResGut)) {
+    const res = this.game.datLib.getGut(type, index);
+    if (!res) {
       return new ScriptProcess([], [], new Map<number, number>(), 0);
     }
 

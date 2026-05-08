@@ -1,5 +1,5 @@
 import type { Game } from '@/game/game';
-import { ResImage } from '@/lib/res-image';
+import type { ResImage } from '@/lib/res-image';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
@@ -198,8 +198,7 @@ function getDialogueCharWidth(char: string): number {
 
 function loadHeadImage(game: Game, index: number): ResImage | null {
   if (index <= 0) return null;
-  const res = game.datLib.getRes(ResourceType.PIC, 1, index);
-  return res instanceof ResImage ? res : null;
+  return game.datLib.getImage(ResourceType.PIC, 1, index);
 }
 
 function getDialogueLayout(headImage: ResImage | null): {

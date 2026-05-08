@@ -1,6 +1,5 @@
 import type { Game } from '@/game/game';
-import { ResSrs } from '@/lib/res-srs';
-import { ResourceType } from '@/lib/resource-utils';
+import type { ResSrs } from '@/lib/res-srs';
 import { Surface } from '@/rendering/surface';
 import { COLOR_WHITE } from '@/rendering/color';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
@@ -48,8 +47,8 @@ export class ScreenAnimation extends BaseScreen {
     }
     this.def = def;
 
-    const resource = this.game.datLib.getRes(ResourceType.SRS, 1, this.def.resourceIndex);
-    if (!(resource instanceof ResSrs)) {
+    const resource = this.game.datLib.getSrs(1, this.def.resourceIndex);
+    if (!resource) {
       throw new Error(`Missing SRS animation 1:${this.def.resourceIndex}`);
     }
 

@@ -15,7 +15,6 @@ import { ScreenAnimation } from '@/screens/animation/screen';
 import { ScreenMenu } from '@/screens/menu/screen';
 import { ScreenStack } from '@/screens/screen-stack';
 import { ScreenViewType } from '@/screens/screen-view-type';
-import { ResourceType } from '@/lib/resource-utils';
 import {
   cloneGameState,
   createInitialGameState,
@@ -204,8 +203,8 @@ export class Game {
     const player = this.state.players.find(item => item.index === actorId);
     if (player) return player;
 
-    const res = this.datLib.getRes(ResourceType.ARS, 1, actorId);
-    if (!(res instanceof Player)) return null;
+    const res = this.datLib.getPlayer(actorId);
+    if (!res) return null;
     this.state.players.push(res);
     return res;
   }

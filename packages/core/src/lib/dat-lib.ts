@@ -1,7 +1,20 @@
-import { FightingSprite, ResLevelUpChain, WalkingSprite } from '@/characters';
-import { BaseGoods, GoodsEquipment } from '@/goods';
-import { BaseMagic, ResMagicChain } from '@/magic';
-import { parseCharacterResource } from './parse/parse-character';
+import {
+  FightingSprite,
+  WalkingSprite,
+  type Monster,
+  type Npc,
+  type Player,
+  type ResLevelUpChain,
+  type SceneObj,
+} from '@/characters';
+import { GoodsEquipment, type BaseGoods } from '@/goods';
+import type { BaseMagic, ResMagicChain } from '@/magic';
+import {
+  parseMonsterResource,
+  parseNpcResource,
+  parsePlayerResource,
+  parseSceneObjResource,
+} from './parse/parse-character';
 import { parseGoodsResource } from './parse/parse-goods';
 import { parseGutResource } from './parse/parse-gut';
 import { parseImageResource } from './parse/parse-image';
@@ -9,9 +22,10 @@ import { parseLevelUpChainResource } from './parse/parse-level-up-chain';
 import { parseMagicChainResource, parseMagicResource } from './parse/parse-magic';
 import { parseMapResource } from './parse/parse-map';
 import { parseSrsResource } from './parse/parse-srs';
-import { ResBase } from './res-base';
-import { isImageResourceType, ResImage } from './res-image';
-import { ResSrs } from './res-srs';
+import type { ResGut } from './res-gut';
+import { isImageResourceType, type ResImage } from './res-image';
+import type { ResMap } from './res-map';
+import type { ResSrs } from './res-srs';
 import { ResourceType, serializeResourceKey, type ResourceKey } from './resource-utils';
 
 export class DatLib {
@@ -24,50 +38,9 @@ export class DatLib {
     this.loadOffsets();
   }
 
-  getRes(resType: ResourceType, type: number, index: number): ResBase | null {
-    // TODO: 后续给角色、道具等资源使用方补明确方法，减少直接依赖通用 getRes。
-    const offset = this.offsets.get(serializeResourceKey({ resType, type, index })) ?? null;
-    if (offset == null) return null;
-
-    if (resType === ResourceType.MRS) {
-      return parseMagicResource(this, this.buffer, type, offset);
-    }
-
-    if (resType === ResourceType.GRS) {
-      return parseGoodsResource(this, this.buffer, type, offset);
-    }
-
-    if (resType === ResourceType.GUT) {
-      return parseGutResource(this.buffer, offset);
-    }
-
-    if (resType === ResourceType.MAP) {
-      return parseMapResource(this.buffer, offset);
-    }
-
-    if (resType === ResourceType.SRS) {
-      return parseSrsResource(this.buffer, offset);
-    }
-
-    if (isImageResourceType(resType)) {
-      return parseImageResource(this.buffer, offset, { resType, type, index });
-    }
-
-    if (resType === ResourceType.ARS) {
-      return parseCharacterResource(this, this.buffer, type, offset);
-    }
-
-    if (resType === ResourceType.MLR) {
-      if (type === 1) return parseMagicChainResource(this, this.buffer, offset);
-      if (type === 2) return parseLevelUpChainResource(this.buffer, offset);
-      return null;
-    }
-
-    return null;
-  }
-
   listResourceKeys(resType?: ResourceType): ResourceKey[] {
-    const res = resType == null ? [...this.resourceKeys] : this.resourceKeys.filter(key => key.resType === resType);
+    const res =
+      resType === undefined ? [...this.resourceKeys] : this.resourceKeys.filter(key => key.resType === resType);
     return res.sort((a, b) => a.resType - b.resType || a.type - b.type || a.index - b.index);
   }
 
@@ -82,13 +55,44 @@ export class DatLib {
   }
 
   getImage(resType: ResourceType, type: number, index: number): ResImage | null {
-    const res = this.getRes(resType, type, index);
-    return res instanceof ResImage ? res : null;
+    if (!isImageResourceType(resType)) return null;
+    const offset = this.getOffset(resType, type, index);
+    return offset === null ? null : parseImageResource(this.buffer, offset, { resType, type, index });
   }
 
   getSrs(type: number, index: number): ResSrs | null {
-    const res = this.getRes(ResourceType.SRS, type, index);
-    return res instanceof ResSrs ? res : null;
+    const offset = this.getOffset(ResourceType.SRS, type, index);
+    return offset === null ? null : parseSrsResource(this.buffer, offset);
+  }
+
+  getGut(type: number, index: number): ResGut | null {
+    const offset = this.getOffset(ResourceType.GUT, type, index);
+    return offset === null ? null : parseGutResource(this.buffer, offset);
+  }
+
+  getMap(type: number, index: number): ResMap | null {
+    const offset = this.getOffset(ResourceType.MAP, type, index);
+    return offset === null ? null : parseMapResource(this.buffer, offset);
+  }
+
+  getPlayer(index: number): Player | null {
+    const offset = this.getOffset(ResourceType.ARS, 1, index);
+    return offset === null ? null : parsePlayerResource(this, this.buffer, offset);
+  }
+
+  getNpc(index: number): Npc | null {
+    const offset = this.getOffset(ResourceType.ARS, 2, index);
+    return offset === null ? null : parseNpcResource(this, this.buffer, offset);
+  }
+
+  getMonster(index: number): Monster | null {
+    const offset = this.getOffset(ResourceType.ARS, 3, index);
+    return offset === null ? null : parseMonsterResource(this, this.buffer, offset);
+  }
+
+  getSceneObj(index: number): SceneObj | null {
+    const offset = this.getOffset(ResourceType.ARS, 4, index);
+    return offset === null ? null : parseSceneObjResource(this, this.buffer, offset);
   }
 
   getEquipment(type: number, index: number): GoodsEquipment | null {
@@ -97,23 +101,27 @@ export class DatLib {
   }
 
   getGoods(type: number, index: number): BaseGoods | null {
-    const res = this.getRes(ResourceType.GRS, type, index);
-    return res instanceof BaseGoods ? res : null;
+    const offset = this.getOffset(ResourceType.GRS, type, index);
+    return offset === null ? null : parseGoodsResource(this, this.buffer, type, offset);
   }
 
   getMagic(type: number, index: number): BaseMagic | null {
-    const res = this.getRes(ResourceType.MRS, type, index);
-    return res instanceof BaseMagic ? res : null;
+    const offset = this.getOffset(ResourceType.MRS, type, index);
+    return offset === null ? null : parseMagicResource(this, this.buffer, type, offset);
   }
 
   getMagicChain(index: number): ResMagicChain | null {
-    const res = this.getRes(ResourceType.MLR, 1, index);
-    return res instanceof ResMagicChain ? res : null;
+    const offset = this.getOffset(ResourceType.MLR, 1, index);
+    return offset === null ? null : parseMagicChainResource(this, this.buffer, offset);
   }
 
-  getLevelupChain(index: number): ResLevelUpChain | null {
-    const res = this.getRes(ResourceType.MLR, 2, index);
-    return res instanceof ResLevelUpChain ? res : null;
+  getLevelUpChain(index: number): ResLevelUpChain | null {
+    const offset = this.getOffset(ResourceType.MLR, 2, index);
+    return offset === null ? null : parseLevelUpChainResource(this.buffer, offset);
+  }
+
+  private getOffset(resType: ResourceType, type: number, index: number): number | null {
+    return this.offsets.get(serializeResourceKey({ resType, type, index })) ?? null;
   }
 
   private loadOffsets(): void {

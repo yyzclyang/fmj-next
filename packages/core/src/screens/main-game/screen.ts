@@ -132,7 +132,24 @@ export class ScreenMainGame extends BaseScreen {
           this.screenStack.push(new ScreenGameMainMenu(this.game));
         }
         return;
+      case KeyCode.Search:
+        this.callFunctionChapter(6);
+        return;
+      case KeyCode.Insert:
+        this.callFunctionChapter(7);
+        return;
+      case KeyCode.Modify:
+        this.callFunctionChapter(8);
+        return;
+      case KeyCode.Delete:
+        this.callFunctionChapter(9);
+        return;
     }
+  }
+
+  private callFunctionChapter(index: number): void {
+    if (!this.runtime.canOpenInGameMenu) return;
+    this.runtime.callChapter(0, index);
   }
 
   showDialogue(text: string, onClose: () => void, headImageIndex = 0): void {

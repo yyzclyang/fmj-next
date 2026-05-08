@@ -8,6 +8,10 @@ export const KeyCode = {
   Enter: 7,
   Cancel: 8,
   Repeat: 9,
+  Search: 10,
+  Insert: 11,
+  Modify: 12,
+  Delete: 13,
 } as const;
 
 export type KeyCode = (typeof KeyCode)[keyof typeof KeyCode];

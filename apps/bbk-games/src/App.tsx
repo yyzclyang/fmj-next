@@ -272,6 +272,18 @@ function mapKeyboard(code: string): KeyCode | null {
       return KeyCode.Cancel;
     case 'KeyR':
       return KeyCode.Repeat;
+    case 'Digit1':
+    case 'Numpad1':
+      return KeyCode.Search;
+    case 'Digit2':
+    case 'Numpad2':
+      return KeyCode.Insert;
+    case 'Digit3':
+    case 'Numpad3':
+      return KeyCode.Modify;
+    case 'Digit4':
+    case 'Numpad4':
+      return KeyCode.Delete;
     default:
       return null;
   }

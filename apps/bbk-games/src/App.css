@@ -42,8 +42,10 @@
   }
 
   .screen-frame {
-    @apply relative grid aspect-[320/192] border border-[var(--ink)] bg-[#020604];
-    width: min(960px, calc(100vw - 32px));
+    @apply relative grid border border-[var(--ink)] bg-[#020604];
+    box-sizing: content-box;
+    width: 320px;
+    height: 192px;
     box-shadow:
       0 18px 50px rgba(18, 24, 20, 0.18),
       0 0 0 8px var(--rail);
@@ -55,7 +57,9 @@
   }
 
   .game-screen {
-    @apply block h-full w-full;
+    @apply block;
+    width: 320px;
+    height: 192px;
     image-rendering: pixelated;
   }
 
@@ -69,7 +73,6 @@
 
   @media (max-width: 720px) {
     .screen-frame {
-      width: calc(100vw - 20px);
       box-shadow:
         0 12px 30px rgba(18, 24, 20, 0.16),
         0 0 0 5px var(--rail);

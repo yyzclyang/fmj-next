@@ -7,6 +7,7 @@ export {
   type CombatGoodsAward,
   type CombatInitFightParams,
   type CombatLevelUpAward,
+  type CombatLevelUpStats,
   type CombatRuntimeSnapshot,
   type CombatWinSettlement,
 } from './combat-runtime';

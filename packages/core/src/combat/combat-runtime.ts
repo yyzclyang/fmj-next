@@ -39,11 +39,26 @@ export interface CombatGoodsAward {
   readonly count: number;
 }
 
+export interface CombatLevelUpStats {
+  readonly hp: number;
+  readonly mp: number;
+  readonly maxHp: number;
+  readonly maxMp: number;
+  readonly attack: number;
+  readonly defend: number;
+  readonly speed: number;
+  readonly lingli: number;
+  readonly luck: number;
+}
+
 export interface CombatLevelUpAward {
   readonly player: Player;
   readonly previousLevel: number;
+  readonly currentLevel: number;
   readonly oldMagicCount: number;
   readonly newMagicCount: number;
+  readonly previousStats: CombatLevelUpStats;
+  readonly currentStats: CombatLevelUpStats;
 }
 
 export interface CombatWinSettlement {
@@ -355,19 +370,28 @@ export class CombatRuntime {
         continue;
       }
       if (player.level >= chain.maxLevel) continue;
-      const nextExp = chain.getNextLevelExp(player.level);
-      const totalExp = player.currentExp + exp;
-      if (totalExp < nextExp) {
-        player.currentExp = totalExp;
-        continue;
+      let currentExp = player.currentExp + exp;
+      while (player.level < chain.maxLevel) {
+        const nextExp = chain.getNextLevelExp(player.level);
+        if (nextExp <= 0 || currentExp < nextExp) break;
+
+        const previousLevel = player.level;
+        const oldMagicCount = chain.getLearnMagicCount(previousLevel);
+        const previousStats = captureLevelUpStats(player);
+        if (!player.levelUp(previousLevel + 1)) break;
+        currentExp -= nextExp;
+
+        res.push({
+          player,
+          previousLevel,
+          currentLevel: player.level,
+          oldMagicCount,
+          newMagicCount: chain.getLearnMagicCount(player.level),
+          previousStats,
+          currentStats: captureLevelUpStats(player),
+        });
       }
-      const previousLevel = player.level;
-      const oldMagicCount = chain.getLearnMagicCount(previousLevel);
-      const newMagicCount = chain.getLearnMagicCount(previousLevel + 1);
-      player.currentExp = totalExp - nextExp;
-      if (player.levelUp(previousLevel + 1)) {
-        res.push({ player, previousLevel, oldMagicCount, newMagicCount });
-      }
+      player.currentExp = currentExp;
     }
     return res;
   }
@@ -388,6 +412,20 @@ export class CombatRuntime {
     }
     return res;
   }
+}
+
+function captureLevelUpStats(player: Player): CombatLevelUpStats {
+  return {
+    hp: player.hp,
+    mp: player.mp,
+    maxHp: player.maxHp,
+    maxMp: player.maxMp,
+    attack: player.attack,
+    defend: player.defend,
+    speed: player.speed,
+    lingli: player.lingli,
+    luck: player.luck,
+  };
 }
 
 function scaleBitmap(src: Bitmap, width: number, height: number): Bitmap {

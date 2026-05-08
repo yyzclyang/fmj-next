@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'reac
 import { createBrowserRuntime, type BrowserRuntime } from '@fmj-next/browser';
 import { KeyCode, type DebugApi, type GameEngineOptions } from '@fmj-next/core';
 import { getBbkGames, type BbkGame, type BbkGameLib } from '@/apis/game';
-import { loadLocalGameLib, loadRemoteGameLib, type GameLibManifest, type LoadedGameLib } from '@/utils/lib';
+import { loadLocalGameLib, loadRemoteGameLib, type LoadedGameLib } from '@/utils/lib';
 import { audio } from '@/utils/audio';
 import { webSaveStore } from '@/utils/save';
 import './App.css';

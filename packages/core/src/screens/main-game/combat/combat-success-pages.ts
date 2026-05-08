@@ -81,8 +81,8 @@ class LevelUpPage implements SuccessPage {
     const top = Math.floor((SCREEN_HEIGHT - LEVEL_FRAME_HEIGHT) / 2);
     const info = this.infoImage;
     const player = this.award.player;
-    const chain = player.levelUpChain;
-    if (!chain) return;
+    const oldStats = this.award.previousStats;
+    const newStats = this.award.currentStats;
 
     if (info) {
       const infoLeft = Math.floor((SCREEN_WIDTH - info.width) / 2);
@@ -94,13 +94,13 @@ class LevelUpPage implements SuccessPage {
 
     drawPanel(surface, left, top, LEVEL_FRAME_WIDTH, LEVEL_FRAME_HEIGHT);
     TextRender.drawText(surface, player.name, LEVEL_TEXT_LEFT, LEVEL_TEXT_TOP);
-    drawLevelLine(surface, this.smallNumImage, '生命', player.hp, chain.getMaxHp(this.award.previousLevel), player.maxHp, 1);
-    drawLevelLine(surface, this.smallNumImage, '真气', player.mp, chain.getMaxMp(this.award.previousLevel), player.maxMp, 2);
-    drawLevelLine(surface, this.smallNumImage, '攻击', 0, chain.getAttack(this.award.previousLevel), player.attack, 3);
-    drawLevelLine(surface, this.smallNumImage, '防御', 0, chain.getDefend(this.award.previousLevel), player.defend, 4);
-    drawLevelLine(surface, this.smallNumImage, '身法', 0, chain.getSpeed(this.award.previousLevel), player.speed, 5);
-    drawLevelLine(surface, this.smallNumImage, '灵力', 0, chain.getLingli(this.award.previousLevel), player.lingli, 6);
-    drawLevelLine(surface, this.smallNumImage, '幸运', 0, chain.getLuck(this.award.previousLevel), player.luck, 7);
+    drawLevelLine(surface, this.smallNumImage, '生命', newStats.hp, oldStats.maxHp, newStats.maxHp, 1);
+    drawLevelLine(surface, this.smallNumImage, '真气', newStats.mp, oldStats.maxMp, newStats.maxMp, 2);
+    drawLevelLine(surface, this.smallNumImage, '攻击', 0, oldStats.attack, newStats.attack, 3);
+    drawLevelLine(surface, this.smallNumImage, '防御', 0, oldStats.defend, newStats.defend, 4);
+    drawLevelLine(surface, this.smallNumImage, '身法', 0, oldStats.speed, newStats.speed, 5);
+    drawLevelLine(surface, this.smallNumImage, '灵力', 0, oldStats.lingli, newStats.lingli, 6);
+    drawLevelLine(surface, this.smallNumImage, '幸运', 0, oldStats.luck, newStats.luck, 7);
   }
 }
 
@@ -153,27 +153,26 @@ function drawLevelInfoNumbers(
   left: number,
   top: number
 ): void {
-  const player = award.player;
-  const chain = player.levelUpChain;
-  if (!chain) return;
-  drawSmallNum(surface, smallNumImage, player.hp, left + 37, top + 9);
-  drawSmallNum(surface, smallNumImage, chain.getMaxHp(award.previousLevel), left + 56, top + 9);
-  drawSmallNum(surface, smallNumImage, player.maxHp, left + 86, top + 9);
-  drawSmallNum(surface, smallNumImage, player.maxHp, left + 105, top + 9);
-  drawSmallNum(surface, smallNumImage, player.mp, left + 37, top + 21);
-  drawSmallNum(surface, smallNumImage, chain.getMaxMp(award.previousLevel), left + 56, top + 21);
-  drawSmallNum(surface, smallNumImage, player.maxMp, left + 86, top + 21);
-  drawSmallNum(surface, smallNumImage, player.maxMp, left + 105, top + 21);
-  drawSmallNum(surface, smallNumImage, chain.getAttack(award.previousLevel), left + 47, top + 33);
-  drawSmallNum(surface, smallNumImage, player.attack, left + 96, top + 33);
-  drawSmallNum(surface, smallNumImage, chain.getDefend(award.previousLevel), left + 47, top + 45);
-  drawSmallNum(surface, smallNumImage, player.defend, left + 96, top + 45);
-  drawSmallNum(surface, smallNumImage, chain.getSpeed(award.previousLevel), left + 47, top + 57);
-  drawSmallNum(surface, smallNumImage, player.speed, left + 96, top + 57);
-  drawSmallNum(surface, smallNumImage, chain.getLingli(award.previousLevel), left + 47, top + 69);
-  drawSmallNum(surface, smallNumImage, player.lingli, left + 96, top + 69);
-  drawSmallNum(surface, smallNumImage, chain.getLuck(award.previousLevel), left + 47, top + 81);
-  drawSmallNum(surface, smallNumImage, player.luck, left + 96, top + 81);
+  const oldStats = award.previousStats;
+  const newStats = award.currentStats;
+  drawSmallNum(surface, smallNumImage, newStats.hp, left + 37, top + 9);
+  drawSmallNum(surface, smallNumImage, oldStats.maxHp, left + 56, top + 9);
+  drawSmallNum(surface, smallNumImage, newStats.maxHp, left + 86, top + 9);
+  drawSmallNum(surface, smallNumImage, newStats.maxHp, left + 105, top + 9);
+  drawSmallNum(surface, smallNumImage, newStats.mp, left + 37, top + 21);
+  drawSmallNum(surface, smallNumImage, oldStats.maxMp, left + 56, top + 21);
+  drawSmallNum(surface, smallNumImage, newStats.maxMp, left + 86, top + 21);
+  drawSmallNum(surface, smallNumImage, newStats.maxMp, left + 105, top + 21);
+  drawSmallNum(surface, smallNumImage, oldStats.attack, left + 47, top + 33);
+  drawSmallNum(surface, smallNumImage, newStats.attack, left + 96, top + 33);
+  drawSmallNum(surface, smallNumImage, oldStats.defend, left + 47, top + 45);
+  drawSmallNum(surface, smallNumImage, newStats.defend, left + 96, top + 45);
+  drawSmallNum(surface, smallNumImage, oldStats.speed, left + 47, top + 57);
+  drawSmallNum(surface, smallNumImage, newStats.speed, left + 96, top + 57);
+  drawSmallNum(surface, smallNumImage, oldStats.lingli, left + 47, top + 69);
+  drawSmallNum(surface, smallNumImage, newStats.lingli, left + 96, top + 69);
+  drawSmallNum(surface, smallNumImage, oldStats.luck, left + 47, top + 81);
+  drawSmallNum(surface, smallNumImage, newStats.luck, left + 96, top + 81);
 }
 
 function drawMessageFrame(surface: Surface, left: number, top: number, width: number): void {

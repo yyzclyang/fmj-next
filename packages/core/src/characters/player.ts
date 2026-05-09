@@ -3,6 +3,7 @@ import { FightingCharacter, type FightingCharacterData } from './fighting-charac
 import { GoodsDecorations, type GoodsEquipment, GoodsWeapon } from '@/goods';
 import type { ResImage } from '@/lib/res-image';
 import type { BaseMagic } from '@/magic';
+import { toUint8 } from '@/shared/integer';
 import type { ResLevelUpChain } from './res-level-up-chain';
 
 export const PLAYER_EQUIPMENT_TYPES = [6, 6, 5, 3, 7, 2, 4, 1] as const;
@@ -369,10 +370,6 @@ export class Player extends FightingCharacter {
   private syncOnHitStatuses(): void {
     this.onHitStatuses.replaceWithFlags(this.onHitStatusMask, this.onHitStatusRounds);
   }
-}
-
-function toUint8(value: number): number {
-  return value & 0xff;
 }
 
 export function mapDirection(value: number): DirectionValue {

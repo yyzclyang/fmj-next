@@ -9,6 +9,7 @@ import {
   ScriptChoiceScreen,
   ScriptMenuScreen,
 } from '@/screens/main-game/script';
+import { toInt16, toUint8 } from '@/shared/integer';
 import { KeyCode } from '@/shared/key-code';
 import { ScriptProcess } from './script-process';
 
@@ -570,8 +571,8 @@ export class ScriptVm {
   }
 
   private cmdStartChapter(code: Uint8Array, start: number): CommandBuilder {
-    const type = readUint16(code, start) & 0xff;
-    const index = readUint16(code, start + 2) & 0xff;
+    const type = toUint8(readUint16(code, start));
+    const index = toUint8(readUint16(code, start + 2));
 
     return {
       len: 4,
@@ -1335,7 +1336,7 @@ export class ScriptVm {
   private cmdAttribAdd(code: Uint8Array, start: number): CommandBuilder {
     const actorId = readUint16(code, start);
     const type = readUint16(code, start + 2);
-    const value = toSignedUint16(readUint16(code, start + 4));
+    const value = toInt16(readUint16(code, start + 4));
 
     return {
       len: 6,
@@ -1388,10 +1389,6 @@ function getCStringLength(buf: Uint8Array, start: number): number {
     end += 1;
   }
   return end - start + 1;
-}
-
-function toSignedUint16(value: number): number {
-  return value >= 0x8000 ? value - 0x10000 : value;
 }
 
 function mapFacing(faceTo: number): Direction {

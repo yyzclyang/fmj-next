@@ -1,6 +1,7 @@
 import {
   StatusSlots,
   CharacterState,
+  Direction,
   Monster,
   Npc,
   Player,
@@ -14,7 +15,6 @@ import {
   type PlayerData,
 } from '@/characters';
 import type { GoodsEquipment } from '@/goods';
-import { KeyCode } from '@/shared/key-code';
 import type { DatLib } from '../dat-lib';
 import { ResourceType, readGbkString, readUint16 } from '../resource-utils';
 
@@ -123,7 +123,7 @@ function createMonster(datLib: DatLib, buffer: Uint8Array, offset: number): Mons
       index: buffer[offset + 1] ?? 0,
       name: readGbkString(buffer, offset + 6),
       state: CharacterState.Stop,
-      direction: KeyCode.Down,
+      direction: Direction.South,
       step: 0,
       mapX: 0,
       mapY: 0,
@@ -171,7 +171,7 @@ function createSceneObj(datLib: DatLib, buffer: Uint8Array, offset: number): Sce
     index: buffer[offset + 1] ?? 0,
     name: readGbkString(buffer, offset + 9),
     state: mapCharacterState(buffer[offset + 4] ?? 0),
-    direction: KeyCode.Up,
+    direction: Direction.North,
     step: buffer[offset + 3] ?? 0,
     mapX: 0,
     mapY: 0,

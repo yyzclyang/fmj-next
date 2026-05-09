@@ -1,8 +1,14 @@
 import { ResBase } from '@/lib/res-base';
-import { KeyCode } from '@/shared/key-code';
 import type { WalkingSprite } from './walking-sprite';
 
-export type Direction = typeof KeyCode.Up | typeof KeyCode.Right | typeof KeyCode.Down | typeof KeyCode.Left;
+export const Direction = {
+  North: 1,
+  East: 2,
+  South: 3,
+  West: 4,
+} as const;
+
+export type Direction = (typeof Direction)[keyof typeof Direction];
 
 export const CharacterState = {
   Stop: 0,

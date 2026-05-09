@@ -1,7 +1,7 @@
 import { DatLib } from '@/lib/dat-lib';
 import { CombatRuntime } from '@/combat';
 import { BaseGoods, GoodsEquipment } from '@/goods';
-import { CharacterState, Player } from '@/characters';
+import { CharacterState, Direction, Player } from '@/characters';
 import type { StatusSlot } from '@/characters';
 import { GoodsBag } from '@/goods/goods-bag';
 import { Surface } from '@/rendering/surface';
@@ -452,10 +452,10 @@ function restoreSavedCharacterState(value: number | undefined, fallback: Player[
 
 function restoreSavedDirection(value: number | undefined, fallback: Player['direction']): Player['direction'] {
   switch (value) {
-    case KeyCode.Up:
-    case KeyCode.Down:
-    case KeyCode.Left:
-    case KeyCode.Right:
+    case Direction.North:
+    case Direction.East:
+    case Direction.South:
+    case Direction.West:
       return value;
     default:
       return fallback;

@@ -1,6 +1,6 @@
 import type { Game } from '@/game/game';
 import type { CombatEnterFightParams, CombatInitFightParams, CombatRuntimeSnapshot } from '@/combat';
-import { CharacterState, mapCharacterState, type Player, type WalkingSprite } from '@/characters';
+import { CharacterState, Direction, mapCharacterState, type Player, type WalkingSprite } from '@/characters';
 import type { ResImage } from '@/lib/res-image';
 import type { ResMap } from '@/lib/res-map';
 import { ResourceType } from '@/lib/resource-utils';
@@ -11,7 +11,7 @@ import { KeyCode } from '@/shared/key-code';
 import { clamp } from '@/shared/math';
 import { ScreenCombat } from './combat/screen-combat';
 
-export type Facing = typeof KeyCode.Up | typeof KeyCode.Down | typeof KeyCode.Left | typeof KeyCode.Right;
+export type Facing = Direction;
 export type SceneObjectKind = 'npc' | 'box';
 
 export interface SceneObject {
@@ -90,7 +90,7 @@ export class MainSceneRuntime {
   private hasPlayerValue = false;
   private playerWalkingSpriteValue: WalkingSprite | null = null;
   private playerActorIdValue = 0;
-  private facingValue: Facing = KeyCode.Down;
+  private facingValue: Facing = Direction.South;
   private playerStepValue = 0;
   private overlayValue: ScreenOverlay | null = null;
   private readonly actorMoveIntervals = new Map<number, number>();
@@ -213,10 +213,10 @@ export class MainSceneRuntime {
     process?.timerStep(delta);
   }
 
-  move(facing: Facing): void {
+  move(key: KeyCode): void {
     if (!this.canControlPlayer()) return;
 
-    switch (facing) {
+    switch (key) {
       case KeyCode.Left:
         this.walkLeft();
         return;
@@ -380,7 +380,7 @@ export class MainSceneRuntime {
   createNpc(id: number, resId: number, x: number, y: number): void {
     const npcRes = this.game.datLib.getNpc(resId);
     const walkingSprite = npcRes?.walkingSprite ?? null;
-    const direction = npcRes?.direction ?? KeyCode.Down;
+    const direction = npcRes?.direction ?? Direction.South;
     const step = npcRes?.step ?? 0;
     const state = npcRes?.state ?? CharacterState.Stop;
     const delay = npcRes?.delay ?? 0;
@@ -405,7 +405,7 @@ export class MainSceneRuntime {
   createBox(id: number, resId: number, x: number, y: number): void {
     const boxRes = this.game.datLib.getSceneObj(resId);
     const walkingSprite = boxRes?.walkingSprite ?? null;
-    const direction = boxRes?.direction ?? KeyCode.Up;
+    const direction = boxRes?.direction ?? Direction.North;
     const state = boxRes?.state ?? CharacterState.Stop;
     const delay = boxRes?.delay ?? 0;
     const step = this.game.isBoxCollected(this.getBoxEventKey(x, y, resId))
@@ -624,11 +624,11 @@ export class MainSceneRuntime {
   private walkLeft(): void {
     if (!this.currentMapValue) return;
 
-    this.facingValue = KeyCode.Left;
+    this.facingValue = Direction.West;
     const x = this.playerMapXValue;
     const y = this.playerMapYValue;
     this.triggerMapEvent(x - 1, y);
-    this.stepActorPose(0, KeyCode.Left);
+    this.stepActorPose(0, Direction.West);
     if (!this.canPlayerStepTo(x - 1, y)) return;
     this.setPlayerMapPosition(x - 1, y);
     if (this.getPlayerScreenPosition().x <= PLAYER_SCREEN_X) {
@@ -639,11 +639,11 @@ export class MainSceneRuntime {
   private walkRight(): void {
     if (!this.currentMapValue) return;
 
-    this.facingValue = KeyCode.Right;
+    this.facingValue = Direction.East;
     const x = this.playerMapXValue;
     const y = this.playerMapYValue;
     this.triggerMapEvent(x + 1, y);
-    this.stepActorPose(0, KeyCode.Right);
+    this.stepActorPose(0, Direction.East);
     if (!this.canPlayerStepTo(x + 1, y)) return;
     this.setPlayerMapPosition(x + 1, y);
     if (this.getPlayerScreenPosition().x >= PLAYER_SCREEN_X) {
@@ -654,11 +654,11 @@ export class MainSceneRuntime {
   private walkUp(): void {
     if (!this.currentMapValue) return;
 
-    this.facingValue = KeyCode.Up;
+    this.facingValue = Direction.North;
     const x = this.playerMapXValue;
     const y = this.playerMapYValue;
     this.triggerMapEvent(x, y - 1);
-    this.stepActorPose(0, KeyCode.Up);
+    this.stepActorPose(0, Direction.North);
     if (!this.canPlayerStepTo(x, y - 1)) return;
     this.setPlayerMapPosition(x, y - 1);
     if (this.getPlayerScreenPosition().y <= PLAYER_SCREEN_Y) {
@@ -669,11 +669,11 @@ export class MainSceneRuntime {
   private walkDown(): void {
     if (!this.currentMapValue) return;
 
-    this.facingValue = KeyCode.Down;
+    this.facingValue = Direction.South;
     const x = this.playerMapXValue;
     const y = this.playerMapYValue;
     this.triggerMapEvent(x, y + 1);
-    this.stepActorPose(0, KeyCode.Down);
+    this.stepActorPose(0, Direction.South);
     if (!this.canPlayerStepTo(x, y + 1)) return;
     this.setPlayerMapPosition(x, y + 1);
     if (this.getPlayerScreenPosition().y >= PLAYER_SCREEN_Y) {
@@ -774,16 +774,16 @@ export class MainSceneRuntime {
     let y = this.playerMapYValue;
 
     switch (this.facingValue) {
-      case KeyCode.Left:
+      case Direction.West:
         x -= 1;
         break;
-      case KeyCode.Right:
+      case Direction.East:
         x += 1;
         break;
-      case KeyCode.Up:
+      case Direction.North:
         y -= 1;
         break;
-      case KeyCode.Down:
+      case Direction.South:
         y += 1;
         break;
     }
@@ -1066,33 +1066,33 @@ function shouldCenterMovie(x: number, y: number): boolean {
 }
 
 function getFacingToward(x: number, y: number, targetX: number, targetY: number): Facing {
-  if (targetX < x) return KeyCode.Left;
-  if (targetX > x) return KeyCode.Right;
-  if (targetY < y) return KeyCode.Up;
-  return KeyCode.Down;
+  if (targetX < x) return Direction.West;
+  if (targetX > x) return Direction.East;
+  if (targetY < y) return Direction.North;
+  return Direction.South;
 }
 
 function getNextX(x: number, facing: Facing): number {
-  if (facing === KeyCode.Left) return x - 1;
-  if (facing === KeyCode.Right) return x + 1;
+  if (facing === Direction.West) return x - 1;
+  if (facing === Direction.East) return x + 1;
   return x;
 }
 
 function getNextY(y: number, facing: Facing): number {
-  if (facing === KeyCode.Up) return y - 1;
-  if (facing === KeyCode.Down) return y + 1;
+  if (facing === Direction.North) return y - 1;
+  if (facing === Direction.South) return y + 1;
   return y;
 }
 
 function randomFacing(): Facing {
   switch (Math.trunc(Math.random() * 4)) {
     case 0:
-      return KeyCode.Up;
+      return Direction.North;
     case 1:
-      return KeyCode.Right;
+      return Direction.East;
     case 2:
-      return KeyCode.Down;
+      return Direction.South;
     default:
-      return KeyCode.Left;
+      return Direction.West;
   }
 }

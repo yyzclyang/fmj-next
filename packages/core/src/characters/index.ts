@@ -1,7 +1,7 @@
 export { StatusSlots } from './status';
 export type { StatusSlot } from './status';
-export { Character, CharacterState } from './character';
-export type { CharacterData, Direction } from './character';
+export { Character, CharacterState, Direction } from './character';
+export type { CharacterData } from './character';
 export { WalkingSprite } from './walking-sprite';
 export { FightingSprite } from './fighting-sprite';
 export { FightingCharacter } from './fighting-character';

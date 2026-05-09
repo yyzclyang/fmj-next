@@ -1,5 +1,4 @@
-import { KeyCode } from '@/shared/key-code';
-import type { Direction } from './character';
+import { Direction, type Direction as DirectionValue } from './character';
 import { FightingCharacter, type FightingCharacterData } from './fighting-character';
 import { GoodsDecorations, type GoodsEquipment, GoodsWeapon } from '@/goods';
 import type { ResImage } from '@/lib/res-image';
@@ -376,17 +375,17 @@ function toUint8(value: number): number {
   return value & 0xff;
 }
 
-export function mapDirection(value: number): Direction {
+export function mapDirection(value: number): DirectionValue {
   switch (value) {
     case 1:
-      return KeyCode.Up;
+      return Direction.North;
     case 2:
-      return KeyCode.Right;
+      return Direction.East;
     case 3:
-      return KeyCode.Down;
+      return Direction.South;
     case 4:
-      return KeyCode.Left;
+      return Direction.West;
     default:
-      return KeyCode.Up;
+      return Direction.North;
   }
 }

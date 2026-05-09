@@ -1,4 +1,5 @@
 import type { Game } from '@/game/game';
+import { Direction } from '@/characters';
 import type { ResGut } from '@/lib/res-gut';
 import { readGbkString, readUint16, readUint32 } from '@/lib/resource-utils';
 import { SaveLoadOperation, ScreenSaveLoadGame } from '@/screens/main-game/menu/screen-save-load-game';
@@ -100,8 +101,6 @@ type CommandBuilder = {
   readonly len: number;
   readonly execute: (process: ScriptProcess) => void;
 };
-
-type Facing = typeof KeyCode.Up | typeof KeyCode.Down | typeof KeyCode.Left | typeof KeyCode.Right;
 
 // 按 Kotlin ScriptVM 指令表迁移；个别基线自身也未落地的指令在对应 cmd 中保留兼容降级说明。
 export class ScriptVm {
@@ -1395,17 +1394,17 @@ function toSignedUint16(value: number): number {
   return value >= 0x8000 ? value - 0x10000 : value;
 }
 
-function mapFacing(faceTo: number): Facing {
+function mapFacing(faceTo: number): Direction {
   switch (faceTo) {
     case 0:
-      return KeyCode.Up;
+      return Direction.North;
     case 1:
-      return KeyCode.Right;
+      return Direction.East;
     case 2:
-      return KeyCode.Down;
+      return Direction.South;
     case 3:
-      return KeyCode.Left;
+      return Direction.West;
     default:
-      return KeyCode.Down;
+      return Direction.South;
   }
 }

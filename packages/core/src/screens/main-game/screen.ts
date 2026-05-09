@@ -2,7 +2,7 @@ import type { Game } from '@/game/game';
 import { COLOR_BLACK, COLOR_WHITE, type Color } from '@/rendering/color';
 import { Surface } from '@/rendering/surface';
 import { TextRender } from '@/rendering/text-render';
-import type { WalkingSprite } from '@/characters';
+import { Direction, type WalkingSprite } from '@/characters';
 import type { Facing, MainSceneRuntime, SceneObject } from './runtime';
 import {
   MAP_TILE_SIZE,
@@ -416,13 +416,13 @@ function getWalkingFrame(facing: Facing, step: number): number {
 
 function getWalkingDirectionOffset(facing: Facing): number {
   switch (facing) {
-    case KeyCode.Up:
+    case Direction.North:
       return 1;
-    case KeyCode.Right:
+    case Direction.East:
       return 4;
-    case KeyCode.Down:
+    case Direction.South:
       return 7;
-    case KeyCode.Left:
+    case Direction.West:
       return 10;
   }
 }
@@ -436,16 +436,16 @@ function drawFacingMark(
   facing: Facing
 ): void {
   switch (facing) {
-    case KeyCode.Left:
+    case Direction.West:
       surface.fillRect(left + 1, top + 5, 3, 2, COLOR_BLACK);
       return;
-    case KeyCode.Right:
+    case Direction.East:
       surface.fillRect(left + width - 4, top + 5, 3, 2, COLOR_BLACK);
       return;
-    case KeyCode.Up:
+    case Direction.North:
       surface.fillRect(left + Math.floor(width / 2) - 1, top + 1, 2, 3, COLOR_BLACK);
       return;
-    case KeyCode.Down:
+    case Direction.South:
       surface.fillRect(left + Math.floor(width / 2) - 1, top + height - 4, 2, 3, COLOR_BLACK);
       return;
   }

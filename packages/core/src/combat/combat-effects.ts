@@ -53,7 +53,12 @@ export function decayFighterBuffs(actor: FightingCharacter): void {
   actor.debuff.decay();
 }
 
-export function calcPhysicalDamage(attacker: FightingCharacter, target: FightingCharacter, targetIsPlayer: boolean): number {
+export function calcPhysicalDamage(
+  attacker: FightingCharacter,
+  target: FightingCharacter,
+  targetIsPlayer: boolean,
+  targetIsDefending = false
+): number {
   const attack = Math.max(0, getComputedAttack(attacker));
   const defense = Math.max(0, getComputedDefense(target));
   const defenseShift = targetIsPlayer ? 2 : 3;
@@ -61,7 +66,7 @@ export function calcPhysicalDamage(attacker: FightingCharacter, target: Fighting
   const base = Math.trunc(attack / ((defense >> defenseShift) + 1));
   const random = Math.trunc(Math.random() * ((attack >> randomShift) + 1));
   let damage = base + random;
-  if (targetIsPlayer && hasSpecialDamageReduction(target)) damage >>= 1;
+  if (targetIsPlayer && hasSpecialDamageReduction(target, targetIsDefending)) damage >>= 1;
   return Math.max(1, damage);
 }
 
@@ -102,9 +107,10 @@ export function applyMagicAttack(
   actor: FightingCharacter,
   magic: MagicAttack,
   target: FightingCharacter,
-  formula: MagicDamageFormula = 'original'
+  formula: MagicDamageFormula = 'original',
+  targetIsDefending = false
 ): void {
-  applyHpMagicEffect(actor, target, calcHpMagicEffect(actor, target, magic.affectHp, formula));
+  applyHpMagicEffect(actor, target, calcHpMagicEffect(actor, target, magic.affectHp, formula, targetIsDefending));
   applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.affectMp, formula));
   applyCombatBuff(target, makeAttackBuff(magic.buffMask & 0x0f, (magic.buffMask >> 4) & 0x0f), target.luck);
   applyAttributeMagicEffect(target, -magic.attackPercent, -magic.defensePercent, -magic.agilityPercent, 0);
@@ -141,7 +147,8 @@ function calcHpMagicEffect(
   src: FightingCharacter,
   dst: FightingCharacter,
   base: number,
-  formula: MagicDamageFormula
+  formula: MagicDamageFormula,
+  targetIsDefending: boolean
 ): number {
   if (base === 0 || dst.hp <= 0) return 0;
   if (base < 0) {
@@ -149,27 +156,38 @@ function calcHpMagicEffect(
     return -Math.min(dst.hp, Math.abs(base) * rate);
   }
   return formula === 'simplified'
-    ? calcHpMagicEffectSimplified(src, dst, base)
-    : calcHpMagicEffectOriginal(src, dst, base);
+    ? calcHpMagicEffectSimplified(src, dst, base, targetIsDefending)
+    : calcHpMagicEffectOriginal(src, dst, base, targetIsDefending);
 }
 
-function calcHpMagicEffectOriginal(src: FightingCharacter, dst: FightingCharacter, base: number): number {
+function calcHpMagicEffectOriginal(
+  src: FightingCharacter,
+  dst: FightingCharacter,
+  base: number,
+  targetIsDefending: boolean
+): number {
   let damage = base;
   damage += src.spirit * (damage >> 6);
   damage -= dst.spirit * (damage >> 6);
   if (damage > 0) damage += (Math.trunc(Math.random() * 1000) % damage) >> 4;
-  if (damage > 0 && hasSpecialDamageReduction(dst)) damage -= damage >> 2;
+  if (damage > 0 && hasSpecialDamageReduction(dst, targetIsDefending)) damage -= damage >> 2;
   if (damage > dst.hp) damage = dst.hp;
   // Kotlin 原版会保留被目标灵力修正成负数的结果，后续按吸收效果处理。
   return Math.max(damage, damage > 0 ? 1 : damage);
 }
 
-function hasSpecialDamageReduction(target: FightingCharacter): boolean {
-  return target instanceof Player && target.buff.hasBuff(BUFF_MASK_ALL);
+function hasSpecialDamageReduction(target: FightingCharacter, targetIsDefending: boolean): boolean {
+  return target instanceof Player && (targetIsDefending || target.buff.hasBuff(BUFF_MASK_ALL));
 }
 
-function calcHpMagicEffectSimplified(src: FightingCharacter, dst: FightingCharacter, base: number): number {
-  const damage = Math.max(0, base + Math.trunc((base * (src.spirit - dst.spirit)) / 100));
+function calcHpMagicEffectSimplified(
+  src: FightingCharacter,
+  dst: FightingCharacter,
+  base: number,
+  targetIsDefending: boolean
+): number {
+  let damage = Math.max(0, base + Math.trunc((base * (src.spirit - dst.spirit)) / 100));
+  if (damage > 0 && hasSpecialDamageReduction(dst, targetIsDefending)) damage -= damage >> 2;
   return Math.min(dst.hp, damage);
 }
 

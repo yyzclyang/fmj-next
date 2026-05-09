@@ -39,7 +39,9 @@ export function prepareAttackAction(ctx: CombatPrepareContext, action: AttackAct
   }
   const before = captureFighterStates([action.target]);
   const missed = isMissed(ctx.game, action.actor, action.target, action.actor !== action.target);
-  const damage = missed ? 0 : calcPhysicalDamage(action.actor, action.target, ctx.session.players.includes(action.target as Player));
+  const targetIsPlayer = ctx.session.players.includes(action.target as Player);
+  const targetIsDefending = targetIsPlayer && ctx.session.isPlayerDefending(action.target as Player);
+  const damage = missed ? 0 : calcPhysicalDamage(action.actor, action.target, targetIsPlayer, targetIsDefending);
   if (!missed) {
     action.target.hp = Math.max(0, action.target.hp - damage);
     applyAttackBuff(action.actor, action.target);
@@ -65,7 +67,13 @@ export function prepareAttackAllAction(ctx: CombatPrepareContext, action: Combat
       misses.push(createMissAnimation(ctx.game, target));
       continue;
     }
-    const damage = calcPhysicalDamage(action.actor, target, ctx.session.players.includes(target as Player));
+    const targetIsPlayer = ctx.session.players.includes(target as Player);
+    const damage = calcPhysicalDamage(
+      action.actor,
+      target,
+      targetIsPlayer,
+      targetIsPlayer && ctx.session.isPlayerDefending(target as Player)
+    );
     target.hp = Math.max(0, target.hp - damage);
     applyAttackBuff(action.actor, target);
   }

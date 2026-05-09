@@ -77,6 +77,7 @@ export class CombatSession {
   readonly players: Player[];
   readonly monsters: Monster[];
   readonly background: Bitmap | null;
+  private readonly defendingPlayers = new Set<Player>();
   private winSettlement: CombatWinSettlement | null = null;
 
   constructor(
@@ -119,6 +120,18 @@ export class CombatSession {
 
   rememberPlayerAction(playerId: number, action: CombatAction): void {
     this.runtime.rememberPlayerAction(playerId, action);
+  }
+
+  clearDefendingPlayers(): void {
+    this.defendingPlayers.clear();
+  }
+
+  setPlayerDefending(player: Player): void {
+    this.defendingPlayers.add(player);
+  }
+
+  isPlayerDefending(player: Player): boolean {
+    return this.defendingPlayers.has(player);
   }
 }
 

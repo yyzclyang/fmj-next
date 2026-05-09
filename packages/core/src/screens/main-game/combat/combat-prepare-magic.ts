@@ -51,7 +51,13 @@ export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: Magi
       misses.push(createMissAnimation(ctx.game, target));
       continue;
     }
-    applyMagicAttack(action.actor, action.magic, target, ctx.game.engineOptions.magicDamageFormula);
+    applyMagicAttack(
+      action.actor,
+      action.magic,
+      target,
+      ctx.game.engineOptions.magicDamageFormula,
+      isPlayerDefending(ctx, target)
+    );
   }
   const animation = new CastCombatAnimation({
     actor: action.actor,
@@ -117,4 +123,9 @@ export function prepareSpecialMagicAction(ctx: CombatPrepareContext, action: Spe
     raises: [],
     hitTargets: false,
   }));
+}
+
+function isPlayerDefending(ctx: CombatPrepareContext, target: unknown): boolean {
+  const player = target as Player;
+  return ctx.session.players.includes(player) && ctx.session.isPlayerDefending(player);
 }

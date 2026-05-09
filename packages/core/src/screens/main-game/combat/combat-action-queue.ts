@@ -1,5 +1,6 @@
 import type { CombatAction } from '@/combat/combat-actions';
 import type { CombatFinishResult, CombatSession } from '@/combat/combat-runtime';
+import { isConfusing, isSleeping } from '@/combat/combat-effects';
 import type { Game } from '@/game/game';
 import { createMonsterAction } from './combat-monster-ai';
 import type { CombatActionAnimation } from './combat-animations';
@@ -52,13 +53,17 @@ export class CombatActionQueue {
 
   clear(): void {
     this.queue.length = 0;
+    this.session.clearDefendingPlayers();
   }
 
   clearAndRestoreItems(): void {
     clearActionQueueAndRestoreItems(this.game, this.queue);
+    this.session.clearDefendingPlayers();
   }
 
   startPerforming(): void {
+    this.session.clearDefendingPlayers();
+    this.registerDefendingPlayers();
     this.appendMonsterActions();
     this.queue.sort((a, b) => getActionPriority(b) - getActionPriority(a));
     this.currentAction = null;
@@ -79,7 +84,10 @@ export class CombatActionQueue {
 
     while (!this.currentAction) {
       const next = this.queue.shift();
-      if (!next) return { kind: 'finishRound' };
+      if (!next) {
+        this.session.clearDefendingPlayers();
+        return { kind: 'finishRound' };
+      }
       const prepared = this.options.actionPreparer.prepare(next);
       this.applyPreparedAction(prepared);
     }
@@ -118,6 +126,14 @@ export class CombatActionQueue {
       const target = getRandomAlivePlayer(this.session.players);
       if (!target) return;
       this.queue.push(createMonsterAction(monster, target, this.session.players, this.session.monsters));
+    }
+  }
+
+  private registerDefendingPlayers(): void {
+    for (const action of this.queue) {
+      if (action.kind !== 'defend') continue;
+      if (!action.actor.isAlive || isSleeping(action.actor) || isConfusing(action.actor)) continue;
+      this.session.setPlayerDefending(action.actor);
     }
   }
 

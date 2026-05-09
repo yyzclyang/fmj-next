@@ -9,6 +9,7 @@ import { MissCombatAnimation, type CombatActionAnimation, type CombatPoint } fro
 
 // 动作工具只处理战斗执行阶段的通用细节，避免 ScreenCombat 同时承担背包和动画杂务。
 export function getActionPriority(action: CombatAction): number {
+  if (action.kind === 'defend') return Number.MAX_SAFE_INTEGER;
   if (action.kind === 'flee') return getComputedAgility(action.actor) * 100;
   if (action.kind === 'coop') return action.actor.defense;
   return getComputedAgility(action.actor);

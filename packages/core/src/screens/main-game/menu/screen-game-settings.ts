@@ -6,11 +6,11 @@ import { KeyCode } from '@/shared/key-code';
 import { drawMenuFrame } from '../ui-utils';
 import { moveSelectionWrap } from './menu-select';
 
-const SETTINGS_ITEMS = ['地图信息', '穿墙模式', '原版伤害'] as const;
+const SETTINGS_ITEMS = ['地图信息', '穿墙模式', '原版伤害', 'Miss 判定'] as const;
 const FRAME_LEFT = 72;
 const FRAME_TOP = 43;
 const FRAME_WIDTH = 176;
-const FRAME_HEIGHT = 84;
+const FRAME_HEIGHT = 100;
 const LINE_GAP = 16;
 
 type SettingsMenuItem = (typeof SETTINGS_ITEMS)[number];
@@ -71,6 +71,10 @@ export class ScreenGameSettings extends BaseScreen {
         this.game.state.useOriginalDamageFormula = !this.game.state.useOriginalDamageFormula;
         this.showMessage(this.game.state.useOriginalDamageFormula ? '原版伤害已开启' : '原版伤害已关闭');
         return;
+      case 'Miss 判定':
+        this.game.state.allowFightMiss = !this.game.state.allowFightMiss;
+        this.showMessage(this.game.state.allowFightMiss ? 'Miss 判定已开启' : 'Miss 判定已关闭');
+        return;
     }
   }
 
@@ -88,6 +92,8 @@ export class ScreenGameSettings extends BaseScreen {
         return this.game.state.allowWallWalking ? '[开启]' : '[关闭]';
       case '原版伤害':
         return this.game.state.useOriginalDamageFormula ? '[开启]' : '[关闭]';
+      case 'Miss 判定':
+        return this.game.state.allowFightMiss ? '[开启]' : '[关闭]';
     }
   }
 }

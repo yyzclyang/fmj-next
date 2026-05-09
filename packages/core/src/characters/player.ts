@@ -16,45 +16,23 @@ export interface PlayerMagicKey {
 export interface PlayerData extends FightingCharacterData {
   readonly headImage: ResImage | null;
   readonly levelUpChain: ResLevelUpChain | null;
-  readonly currentExp: number;
+  readonly exp: number;
   readonly equipment: Array<GoodsEquipment | null>;
-  readonly totalMaxHp: number;
-  readonly totalMaxMp: number;
-  readonly totalAttack: number;
-  readonly totalDefend: number;
-  readonly totalSpeed: number;
-  readonly totalLingli: number;
-  readonly totalLuck: number;
 }
 
 export class Player extends FightingCharacter {
   headImage: ResImage | null;
   levelUpChain: ResLevelUpChain | null;
-  currentExp: number;
+  exp: number;
   readonly equipment: Array<GoodsEquipment | null>;
   private readonly privateLearntMagics: BaseMagic[] = [];
-
-  totalMaxHp: number;
-  totalMaxMp: number;
-  totalAttack: number;
-  totalDefend: number;
-  totalSpeed: number;
-  totalLingli: number;
-  totalLuck: number;
 
   constructor(data: PlayerData) {
     super(data);
     this.headImage = data.headImage;
     this.levelUpChain = data.levelUpChain;
-    this.currentExp = data.currentExp;
+    this.exp = data.exp;
     this.equipment = data.equipment;
-    this.totalMaxHp = data.totalMaxHp;
-    this.totalMaxMp = data.totalMaxMp;
-    this.totalAttack = data.totalAttack;
-    this.totalDefend = data.totalDefend;
-    this.totalSpeed = data.totalSpeed;
-    this.totalLingli = data.totalLingli;
-    this.totalLuck = data.totalLuck;
   }
 
   getAllLearntMagics(): BaseMagic[] {
@@ -88,26 +66,18 @@ export class Player extends FightingCharacter {
     const hpIncrease = this.levelUpChain.getMaxHp(targetLevel) - this.levelUpChain.getMaxHp(fromLevel);
     const mpIncrease = this.levelUpChain.getMaxMp(targetLevel) - this.levelUpChain.getMaxMp(fromLevel);
     const attackIncrease = this.levelUpChain.getAttack(targetLevel) - this.levelUpChain.getAttack(fromLevel);
-    const defendIncrease = this.levelUpChain.getDefend(targetLevel) - this.levelUpChain.getDefend(fromLevel);
-    const speedIncrease = this.levelUpChain.getSpeed(targetLevel) - this.levelUpChain.getSpeed(fromLevel);
-    const lingliIncrease = this.levelUpChain.getLingli(targetLevel) - this.levelUpChain.getLingli(fromLevel);
+    const defenseIncrease = this.levelUpChain.getDefense(targetLevel) - this.levelUpChain.getDefense(fromLevel);
+    const agilityIncrease = this.levelUpChain.getAgility(targetLevel) - this.levelUpChain.getAgility(fromLevel);
+    const spiritIncrease = this.levelUpChain.getSpirit(targetLevel) - this.levelUpChain.getSpirit(fromLevel);
     const luckIncrease = this.levelUpChain.getLuck(targetLevel) - this.levelUpChain.getLuck(fromLevel);
 
-    this.totalMaxHp += hpIncrease;
-    this.totalMaxMp += mpIncrease;
-    this.totalAttack += attackIncrease;
-    this.totalDefend += defendIncrease;
-    this.totalSpeed += speedIncrease;
-    this.totalLingli += lingliIncrease;
-    this.totalLuck += luckIncrease;
-
-    this.maxHp = this.totalMaxHp;
-    this.maxMp = this.totalMaxMp;
-    this.attack = this.totalAttack;
-    this.defend = this.totalDefend;
-    this.speed = this.totalSpeed;
-    this.lingli = this.totalLingli;
-    this.luck = this.totalLuck;
+    this.maxHp += hpIncrease;
+    this.maxMp += mpIncrease;
+    this.attack += attackIncrease;
+    this.defense += defenseIncrease;
+    this.agility += agilityIncrease;
+    this.spirit += spiritIncrease;
+    this.luck += luckIncrease;
     this.hp = this.maxHp;
     this.mp = this.maxMp;
     if (this.magicChain) {
@@ -123,17 +93,17 @@ export class Player extends FightingCharacter {
       case 1:
         return this.attack;
       case 2:
-        return this.defend;
+        return this.defense;
       case 3:
-        return this.speed;
+        return this.agility;
       case 4:
         return this.hp;
       case 5:
         return this.mp;
       case 6:
-        return this.currentExp;
+        return this.exp;
       case 7:
-        return this.lingli;
+        return this.spirit;
       case 8:
         return this.luck;
       case 15:
@@ -167,16 +137,13 @@ export class Player extends FightingCharacter {
         this.setLevel(value);
         return;
       case 1:
-        this.totalAttack = value;
         this.attack = value;
         return;
       case 2:
-        this.totalDefend = value;
-        this.defend = value;
+        this.defense = value;
         return;
       case 3:
-        this.totalSpeed = value;
-        this.speed = value;
+        this.agility = value;
         return;
       case 4:
         this.hp = value;
@@ -185,22 +152,18 @@ export class Player extends FightingCharacter {
         this.mp = value;
         return;
       case 6:
-        this.currentExp = value;
+        this.exp = value;
         return;
       case 7:
-        this.totalLingli = value;
-        this.lingli = value;
+        this.spirit = value;
         return;
       case 8:
-        this.totalLuck = value;
         this.luck = value;
         return;
       case 15:
-        this.totalMaxHp = value;
         this.maxHp = value;
         return;
       case 16:
-        this.totalMaxMp = value;
         this.maxMp = value;
         return;
     }
@@ -208,7 +171,7 @@ export class Player extends FightingCharacter {
 
   addAttribute(type: number, value: number): void {
     if (this.levelUpChain?.maxLevel === 0 && type === 6) {
-      this.currentExp -= 150 + Math.trunc(this.currentExp * 0.1);
+      this.exp -= 150 + Math.trunc(this.exp * 0.1);
       return;
     }
 
@@ -217,16 +180,13 @@ export class Player extends FightingCharacter {
         this.setLevel(this.level + value);
         return;
       case 1:
-        this.totalAttack += value;
         this.attack += value;
         return;
       case 2:
-        this.totalDefend += value;
-        this.defend += value;
+        this.defense += value;
         return;
       case 3:
-        this.totalSpeed += value;
-        this.speed += value;
+        this.agility += value;
         return;
       case 4:
         this.hp += value;
@@ -235,22 +195,18 @@ export class Player extends FightingCharacter {
         this.mp += value;
         return;
       case 6:
-        this.currentExp += value;
+        this.exp += value;
         return;
       case 7:
-        this.totalLingli += value;
-        this.lingli += value;
+        this.spirit += value;
         return;
       case 8:
-        this.totalLuck += value;
         this.luck += value;
         return;
       case 10:
-        this.totalMaxHp += value;
         this.maxHp += value;
         return;
       case 11:
-        this.totalMaxMp += value;
         this.maxMp += value;
         return;
     }
@@ -317,20 +273,13 @@ export class Player extends FightingCharacter {
   }
 
   private applyEquipmentEffect(equipment: GoodsEquipment, sign: 1 | -1): void {
-    this.totalMaxMp += equipment.mpMax * sign;
-    this.totalMaxHp += equipment.hpMax * sign;
-    this.totalDefend += equipment.defend * sign;
-    this.totalAttack += equipment.attack * sign;
-    this.totalLingli += equipment.lingli * sign;
-    this.totalSpeed += equipment.speed * sign;
-    this.totalLuck += equipment.luck * sign;
-    this.maxMp = this.totalMaxMp;
-    this.maxHp = this.totalMaxHp;
-    this.defend = this.totalDefend;
-    this.attack = this.totalAttack;
-    this.lingli = this.totalLingli;
-    this.speed = this.totalSpeed;
-    this.luck = this.totalLuck;
+    this.maxMp += equipment.mpMax * sign;
+    this.maxHp += equipment.hpMax * sign;
+    this.defense += equipment.defense * sign;
+    this.attack += equipment.attack * sign;
+    this.spirit += equipment.spirit * sign;
+    this.agility += equipment.agility * sign;
+    this.luck += equipment.luck * sign;
     if (equipment instanceof GoodsWeapon) {
       this.atbuff.clearBuff(0xff);
       if (sign > 0) this.atbuff.addBuff(equipment.bitEffect, equipment.sumRound);

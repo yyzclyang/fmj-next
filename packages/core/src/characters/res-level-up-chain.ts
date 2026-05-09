@@ -40,7 +40,7 @@ export class ResLevelUpChain extends ResBase {
     return this.readLevelUint16(level, 8);
   }
 
-  getDefend(level: number): number {
+  getDefense(level: number): number {
     return this.readLevelUint16(level, 10);
   }
 
@@ -50,11 +50,11 @@ export class ResLevelUpChain extends ResBase {
     return exp > 0 ? exp : Math.trunc(100 * 1.5 ** level);
   }
 
-  getSpeed(level: number): number {
+  getAgility(level: number): number {
     return this.readLevelByte(level, 16);
   }
 
-  getLingli(level: number): number {
+  getSpirit(level: number): number {
     return this.readLevelByte(level, 17);
   }
 

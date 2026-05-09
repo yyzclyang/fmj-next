@@ -61,7 +61,7 @@ export class CombatStatusUi {
     drawSmallNum(surface, this.smallNumImage, player.hp, x + 50, y + 9);
     drawSmallNum(surface, this.smallNumImage, player.attack, x + 50, y + 21);
     drawSmallNum(surface, this.smallNumImage, player.luck, x + 87, y + 9);
-    drawSmallNum(surface, this.smallNumImage, player.speed, x + 87, y + 21);
+    drawSmallNum(surface, this.smallNumImage, player.agility, x + 87, y + 21);
     for (const marker of STATUS_MARKERS) {
       const buff = player.debuff.buffs[marker.index];
       const frame = getStatusMarkerFrame(buff?.value ?? 0, marker.isBool);

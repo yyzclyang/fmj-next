@@ -20,18 +20,18 @@ export function parseMagicResource(datLib: DatLib, buffer: Uint8Array, type: num
         ...baseData,
         affectHp: readInt16(buffer, offset + 0x12),
         affectMp: readInt16(buffer, offset + 0x14),
-        defendPercent: buffer[offset + 0x16] ?? 0,
+        defensePercent: buffer[offset + 0x16] ?? 0,
         attackPercent: buffer[offset + 0x17] ?? 0,
         buffMask: buffer[offset + 0x18] ?? 0,
-        speedPercent: buffer[offset + 0x19] ?? 0,
+        agilityPercent: buffer[offset + 0x19] ?? 0,
       });
     case 2:
       return new MagicEnhance({
         ...baseData,
-        defendPercent: buffer[offset + 0x16] ?? 0,
+        defensePercent: buffer[offset + 0x16] ?? 0,
         attackPercent: buffer[offset + 0x17] ?? 0,
         buffRound: ((buffer[offset + 0x18] ?? 0) >> 4) & 0x0f,
-        speedPercent: buffer[offset + 0x19] ?? 0,
+        agilityPercent: buffer[offset + 0x19] ?? 0,
       });
     case 3:
       return new MagicRestore({

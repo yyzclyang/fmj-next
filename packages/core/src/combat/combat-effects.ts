@@ -35,16 +35,16 @@ export function isSleeping(actor: FightingCharacter): boolean {
   return hasDebuff(actor, BUFF_MASK_MIAN);
 }
 
-export function getComputedSpeed(actor: FightingCharacter): number {
-  return actor.speed + Math.trunc((actor.speed * getBuffValue(actor, BUFF_INDEX_SU)) / 100);
+export function getComputedAgility(actor: FightingCharacter): number {
+  return actor.agility + Math.trunc((actor.agility * getBuffValue(actor, BUFF_INDEX_SU)) / 100);
 }
 
 export function getComputedAttack(actor: FightingCharacter): number {
   return actor.attack + Math.trunc((actor.attack * getBuffValue(actor, BUFF_INDEX_GONG)) / 100);
 }
 
-export function getComputedDefend(actor: FightingCharacter): number {
-  return actor.defend + Math.trunc((actor.defend * getBuffValue(actor, BUFF_INDEX_FANG)) / 100);
+export function getComputedDefense(actor: FightingCharacter): number {
+  return actor.defense + Math.trunc((actor.defense * getBuffValue(actor, BUFF_INDEX_FANG)) / 100);
 }
 
 export function decayFighterBuffs(actor: FightingCharacter): void {
@@ -54,7 +54,7 @@ export function decayFighterBuffs(actor: FightingCharacter): void {
 
 export function calcPhysicalDamage(attacker: FightingCharacter, target: FightingCharacter, targetIsPlayer: boolean): number {
   const attack = Math.max(0, getComputedAttack(attacker));
-  const defense = Math.max(0, getComputedDefend(target));
+  const defense = Math.max(0, getComputedDefense(target));
   const defenseShift = targetIsPlayer ? 2 : 3;
   const randomShift = targetIsPlayer ? 4 : 2;
   const base = Math.trunc(attack / ((defense >> defenseShift) + 1));
@@ -64,14 +64,14 @@ export function calcPhysicalDamage(attacker: FightingCharacter, target: Fighting
 
 export function randomMiss(attacker: FightingCharacter, target: FightingCharacter, enabled: boolean, allowMiss = true): boolean {
   if (!enabled || !allowMiss) return false;
-  let attackerSpeed = getComputedSpeed(attacker);
-  let targetSpeed = getComputedSpeed(target);
+  let attackerAgility = getComputedAgility(attacker);
+  let targetAgility = getComputedAgility(target);
   if (attacker instanceof Monster && target instanceof Player) {
-    targetSpeed += 50;
+    targetAgility += 50;
   } else if (attacker instanceof Player && target instanceof Monster) {
-    attackerSpeed += 50;
+    attackerAgility += 50;
   }
-  const diff = attackerSpeed > targetSpeed ? attackerSpeed - targetSpeed : 10;
+  const diff = attackerAgility > targetAgility ? attackerAgility - targetAgility : 10;
   return Math.trunc(Math.random() * 200) >= diff;
 }
 
@@ -104,7 +104,7 @@ export function applyMagicAttack(
   applyHpMagicEffect(actor, target, calcHpMagicEffect(actor, target, magic.affectHp, formula));
   applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.affectMp, formula));
   applyCombatBuff(target, makeAttackBuff(magic.buffMask & 0x0f, (magic.buffMask >> 4) & 0x0f), target.luck);
-  applyAttributeMagicEffect(target, -magic.attackPercent, -magic.defendPercent, -magic.speedPercent, 0);
+  applyAttributeMagicEffect(target, -magic.attackPercent, -magic.defensePercent, -magic.agilityPercent, 0);
 }
 
 export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter): void {
@@ -121,7 +121,7 @@ export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter
     return;
   }
   if (magic instanceof MagicEnhance && target.isAlive) {
-    applyAttributeMagicEffect(target, magic.attackPercent, magic.defendPercent, magic.speedPercent, magic.buffRound);
+    applyAttributeMagicEffect(target, magic.attackPercent, magic.defensePercent, magic.agilityPercent, magic.buffRound);
   }
 }
 
@@ -152,8 +152,8 @@ function calcHpMagicEffect(
 
 function calcHpMagicEffectOriginal(src: FightingCharacter, dst: FightingCharacter, base: number): number {
   let damage = base;
-  damage += src.lingli * (damage >> 6);
-  damage -= dst.lingli * (damage >> 6);
+  damage += src.spirit * (damage >> 6);
+  damage -= dst.spirit * (damage >> 6);
   if (damage > 0) damage += (Math.trunc(Math.random() * 1000) % damage) >> 4;
   if (damage > dst.hp) damage = dst.hp;
   // Kotlin 原版会保留被目标灵力修正成负数的结果，后续按吸收效果处理。
@@ -161,7 +161,7 @@ function calcHpMagicEffectOriginal(src: FightingCharacter, dst: FightingCharacte
 }
 
 function calcHpMagicEffectSimplified(src: FightingCharacter, dst: FightingCharacter, base: number): number {
-  const damage = Math.max(0, base + Math.trunc((base * (src.lingli - dst.lingli)) / 100));
+  const damage = Math.max(0, base + Math.trunc((base * (src.spirit - dst.spirit)) / 100));
   return Math.min(dst.hp, damage);
 }
 
@@ -183,35 +183,51 @@ function calcMpMagicEffect(
 
 function calcMpMagicEffectOriginal(src: FightingCharacter, dst: FightingCharacter, base: number): number {
   let damage = base;
-  damage -= src.lingli * (damage >> 6);
-  damage += dst.lingli * (damage >> 6);
+  damage -= src.spirit * (damage >> 6);
+  damage += dst.spirit * (damage >> 6);
   if (damage > 0) damage += (Math.trunc(Math.random() * 1000) % damage) >> 4;
   return Math.min(dst.mp, Math.max(0, damage));
 }
 
 function calcMpMagicEffectSimplified(src: FightingCharacter, dst: FightingCharacter, base: number): number {
-  const damage = Math.max(0, base + Math.trunc((base * (src.lingli - dst.lingli)) / 100));
+  const damage = Math.max(0, base + Math.trunc((base * (src.spirit - dst.spirit)) / 100));
   return Math.min(dst.mp, damage);
 }
 
 function applyHpMagicEffect(actor: FightingCharacter, target: FightingCharacter, effect: number): void {
   if (effect === 0) return;
-  const damage = Math.min(target.hp, Math.abs(effect));
+  const damage = calcBoundedEffect(target.hp, effect);
+  if (damage === 0) return;
   target.hp = Math.max(0, target.hp - damage);
-  if (effect < 0) actor.hp = Math.min(actor.maxHp, actor.hp + damage);
+  if (effect < 0) actor.hp = clampFighterValue(actor.hp + damage, 0, actor.maxHp);
 }
 
 function applyMpMagicEffect(actor: FightingCharacter, target: FightingCharacter, effect: number): void {
   if (effect === 0) return;
-  const damage = Math.min(target.mp, Math.abs(effect));
+  const damage = calcBoundedEffect(target.mp, effect);
+  if (damage === 0) return;
   target.mp = Math.max(0, target.mp - damage);
-  if (effect < 0) actor.mp = Math.min(actor.maxMp, actor.mp + damage);
+  if (effect < 0) actor.mp = clampFighterValue(actor.mp + damage, 0, actor.maxMp);
 }
 
-function applyAttributeMagicEffect(target: FightingCharacter, attack: number, defend: number, speed: number, round: number): void {
+function calcBoundedEffect(current: number, effect: number): number {
+  return Math.min(Math.max(0, current), Math.abs(effect));
+}
+
+function clampFighterValue(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
+}
+
+function applyAttributeMagicEffect(
+  target: FightingCharacter,
+  attack: number,
+  defense: number,
+  agility: number,
+  round: number
+): void {
   setDebuffPercent(target, BUFF_INDEX_GONG, attack, round);
-  setDebuffPercent(target, BUFF_INDEX_FANG, defend, round);
-  setDebuffPercent(target, BUFF_INDEX_SU, speed, round);
+  setDebuffPercent(target, BUFF_INDEX_FANG, defense, round);
+  setDebuffPercent(target, BUFF_INDEX_SU, agility, round);
 }
 
 function setDebuffPercent(target: FightingCharacter, index: number, value: number, round: number): void {

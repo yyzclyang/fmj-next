@@ -1,6 +1,6 @@
 import type { FightingCharacter } from '@/characters';
 import type { CombatAction, CombatMedicineGoods } from '@/combat/combat-actions';
-import { getComputedSpeed, randomMiss } from '@/combat/combat-effects';
+import { getComputedAgility, randomMiss } from '@/combat/combat-effects';
 import type { Game } from '@/game/game';
 import type { BaseGoods } from '@/goods';
 import { GoodsMedicine } from '@/goods';
@@ -9,9 +9,9 @@ import { MissCombatAnimation, type CombatActionAnimation, type CombatPoint } fro
 
 // 动作工具只处理战斗执行阶段的通用细节，避免 ScreenCombat 同时承担背包和动画杂务。
 export function getActionPriority(action: CombatAction): number {
-  if (action.kind === 'flee') return getComputedSpeed(action.actor) * 100;
-  if (action.kind === 'coop') return action.actor.defend;
-  return getComputedSpeed(action.actor);
+  if (action.kind === 'flee') return getComputedAgility(action.actor) * 100;
+  if (action.kind === 'coop') return action.actor.defense;
+  return getComputedAgility(action.actor);
 }
 
 export function isMissed(game: Game, attacker: FightingCharacter, target: FightingCharacter, allowMiss = true): boolean {

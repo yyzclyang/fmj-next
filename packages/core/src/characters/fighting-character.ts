@@ -12,9 +12,9 @@ export interface FightingCharacterData extends CharacterData {
   readonly maxMp: number;
   readonly mp: number;
   readonly attack: number;
-  readonly defend: number;
-  readonly speed: number;
-  readonly lingli: number;
+  readonly defense: number;
+  readonly agility: number;
+  readonly spirit: number;
   readonly luck: number;
   readonly buff: BuffMan;
   readonly debuff: BuffMan;
@@ -31,9 +31,9 @@ export abstract class FightingCharacter extends Character {
   maxMp: number;
   mp: number;
   attack: number;
-  defend: number;
-  speed: number;
-  lingli: number;
+  defense: number;
+  agility: number;
+  spirit: number;
   luck: number;
   buff: BuffMan;
   debuff: BuffMan;
@@ -50,9 +50,9 @@ export abstract class FightingCharacter extends Character {
     this.maxMp = data.maxMp;
     this.mp = data.mp;
     this.attack = data.attack;
-    this.defend = data.defend;
-    this.speed = data.speed;
-    this.lingli = data.lingli;
+    this.defense = data.defense;
+    this.agility = data.agility;
+    this.spirit = data.spirit;
     this.luck = data.luck;
     this.buff = data.buff;
     this.debuff = data.debuff;

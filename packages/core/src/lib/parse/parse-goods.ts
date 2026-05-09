@@ -73,18 +73,18 @@ export function parseGoodsResource(datLib: DatLib, buffer: Uint8Array, type: num
         ...baseData,
         mpMax: readInt8(buffer, offset + 0x16),
         hpMax: readInt8(buffer, offset + 0x17),
-        defend: readInt8(buffer, offset + 0x18),
+        defense: readInt8(buffer, offset + 0x18),
         attack: readInt8(buffer, offset + 0x19),
-        lingli: readInt8(buffer, offset + 0x1a),
-        speed: readInt8(buffer, offset + 0x1b),
+        spirit: readInt8(buffer, offset + 0x1a),
+        agility: readInt8(buffer, offset + 0x1b),
         luck: readInt8(buffer, offset + 0x1d),
       });
     case 12:
       return new GoodsStimulant({
         ...baseData,
-        defendPercent: buffer[offset + 0x18] ?? 0,
+        defensePercent: buffer[offset + 0x18] ?? 0,
         attackPercent: buffer[offset + 0x19] ?? 0,
-        speedPercent: buffer[offset + 0x1b] ?? 0,
+        agilityPercent: buffer[offset + 0x1b] ?? 0,
         forAll: ((buffer[offset + 0x1c] ?? 0) & 0x10) !== 0,
       });
     case 13:
@@ -117,10 +117,10 @@ function parseGoodsEquipmentData(buffer: Uint8Array, baseData: BaseGoodsData, of
     ...baseData,
     mpMax: readInt8(buffer, offset + 0x16),
     hpMax: readInt8(buffer, offset + 0x17),
-    defend: readInt8(buffer, offset + 0x18),
+    defense: readInt8(buffer, offset + 0x18),
     attack: readInt8(buffer, offset + 0x19),
-    lingli: readInt8(buffer, offset + 0x1a),
-    speed: readInt8(buffer, offset + 0x1b),
+    spirit: readInt8(buffer, offset + 0x1a),
+    agility: readInt8(buffer, offset + 0x1b),
     bitEffect: buffer[offset + 0x1c] ?? 0,
     luck: readInt8(buffer, offset + 0x1d),
   };

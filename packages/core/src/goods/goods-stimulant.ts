@@ -1,23 +1,23 @@
 import { BaseGoods, type BaseGoodsData } from './base-goods';
 
 export interface GoodsStimulantData extends BaseGoodsData {
-  readonly defendPercent: number;
+  readonly defensePercent: number;
   readonly attackPercent: number;
-  readonly speedPercent: number;
+  readonly agilityPercent: number;
   readonly forAll: boolean;
 }
 
 export class GoodsStimulant extends BaseGoods {
-  defendPercent: number;
+  defensePercent: number;
   attackPercent: number;
-  speedPercent: number;
+  agilityPercent: number;
   forAll: boolean;
 
   constructor(data: GoodsStimulantData) {
     super(data);
-    this.defendPercent = data.defendPercent;
+    this.defensePercent = data.defensePercent;
     this.attackPercent = data.attackPercent;
-    this.speedPercent = data.speedPercent;
+    this.agilityPercent = data.agilityPercent;
     this.forAll = data.forAll;
   }
 

@@ -3,10 +3,10 @@ import { BaseGoods, type BaseGoodsData } from './base-goods';
 export interface GoodsEquipmentData extends BaseGoodsData {
   readonly mpMax: number;
   readonly hpMax: number;
-  readonly defend: number;
+  readonly defense: number;
   readonly attack: number;
-  readonly lingli: number;
-  readonly speed: number;
+  readonly spirit: number;
+  readonly agility: number;
   readonly bitEffect: number;
   readonly luck: number;
 }
@@ -14,10 +14,10 @@ export interface GoodsEquipmentData extends BaseGoodsData {
 export class GoodsEquipment extends BaseGoods {
   mpMax: number;
   hpMax: number;
-  defend: number;
+  defense: number;
   attack: number;
-  lingli: number;
-  speed: number;
+  spirit: number;
+  agility: number;
   bitEffect: number;
   luck: number;
 
@@ -25,10 +25,10 @@ export class GoodsEquipment extends BaseGoods {
     super(data);
     this.mpMax = data.mpMax;
     this.hpMax = data.hpMax;
-    this.defend = data.defend;
+    this.defense = data.defense;
     this.attack = data.attack;
-    this.lingli = data.lingli;
-    this.speed = data.speed;
+    this.spirit = data.spirit;
+    this.agility = data.agility;
     this.bitEffect = data.bitEffect;
     this.luck = data.luck;
   }

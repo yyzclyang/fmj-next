@@ -97,9 +97,9 @@ class LevelUpPage implements SuccessPage {
     drawLevelLine(surface, this.smallNumImage, '生命', newStats.hp, oldStats.maxHp, newStats.maxHp, 1);
     drawLevelLine(surface, this.smallNumImage, '真气', newStats.mp, oldStats.maxMp, newStats.maxMp, 2);
     drawLevelLine(surface, this.smallNumImage, '攻击', 0, oldStats.attack, newStats.attack, 3);
-    drawLevelLine(surface, this.smallNumImage, '防御', 0, oldStats.defend, newStats.defend, 4);
-    drawLevelLine(surface, this.smallNumImage, '身法', 0, oldStats.speed, newStats.speed, 5);
-    drawLevelLine(surface, this.smallNumImage, '灵力', 0, oldStats.lingli, newStats.lingli, 6);
+    drawLevelLine(surface, this.smallNumImage, '防御', 0, oldStats.defense, newStats.defense, 4);
+    drawLevelLine(surface, this.smallNumImage, '身法', 0, oldStats.agility, newStats.agility, 5);
+    drawLevelLine(surface, this.smallNumImage, '灵力', 0, oldStats.spirit, newStats.spirit, 6);
     drawLevelLine(surface, this.smallNumImage, '幸运', 0, oldStats.luck, newStats.luck, 7);
   }
 }
@@ -165,12 +165,12 @@ function drawLevelInfoNumbers(
   drawSmallNum(surface, smallNumImage, newStats.maxMp, left + 105, top + 21);
   drawSmallNum(surface, smallNumImage, oldStats.attack, left + 47, top + 33);
   drawSmallNum(surface, smallNumImage, newStats.attack, left + 96, top + 33);
-  drawSmallNum(surface, smallNumImage, oldStats.defend, left + 47, top + 45);
-  drawSmallNum(surface, smallNumImage, newStats.defend, left + 96, top + 45);
-  drawSmallNum(surface, smallNumImage, oldStats.speed, left + 47, top + 57);
-  drawSmallNum(surface, smallNumImage, newStats.speed, left + 96, top + 57);
-  drawSmallNum(surface, smallNumImage, oldStats.lingli, left + 47, top + 69);
-  drawSmallNum(surface, smallNumImage, newStats.lingli, left + 96, top + 69);
+  drawSmallNum(surface, smallNumImage, oldStats.defense, left + 47, top + 45);
+  drawSmallNum(surface, smallNumImage, newStats.defense, left + 96, top + 45);
+  drawSmallNum(surface, smallNumImage, oldStats.agility, left + 47, top + 57);
+  drawSmallNum(surface, smallNumImage, newStats.agility, left + 96, top + 57);
+  drawSmallNum(surface, smallNumImage, oldStats.spirit, left + 47, top + 69);
+  drawSmallNum(surface, smallNumImage, newStats.spirit, left + 96, top + 69);
   drawSmallNum(surface, smallNumImage, oldStats.luck, left + 47, top + 81);
   drawSmallNum(surface, smallNumImage, newStats.luck, left + 96, top + 81);
 }

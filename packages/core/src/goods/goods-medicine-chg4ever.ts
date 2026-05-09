@@ -4,48 +4,41 @@ import { BaseGoods, type BaseGoodsData } from './base-goods';
 export interface GoodsMedicineChg4EverData extends BaseGoodsData {
   readonly mpMax: number;
   readonly hpMax: number;
-  readonly defend: number;
+  readonly defense: number;
   readonly attack: number;
-  readonly lingli: number;
-  readonly speed: number;
+  readonly spirit: number;
+  readonly agility: number;
   readonly luck: number;
 }
 
 export class GoodsMedicineChg4Ever extends BaseGoods {
   mpMax: number;
   hpMax: number;
-  defend: number;
+  defense: number;
   attack: number;
-  lingli: number;
-  speed: number;
+  spirit: number;
+  agility: number;
   luck: number;
 
   constructor(data: GoodsMedicineChg4EverData) {
     super(data);
     this.mpMax = data.mpMax;
     this.hpMax = data.hpMax;
-    this.defend = data.defend;
+    this.defense = data.defense;
     this.attack = data.attack;
-    this.lingli = data.lingli;
-    this.speed = data.speed;
+    this.spirit = data.spirit;
+    this.agility = data.agility;
     this.luck = data.luck;
   }
 
   eat(player: Player): boolean {
-    player.totalMaxMp += this.mpMax;
-    player.totalMaxHp += this.hpMax;
-    player.totalDefend += this.defend;
-    player.totalAttack += this.attack;
-    player.totalLingli += this.lingli;
-    player.totalSpeed += this.speed;
-    player.totalLuck += this.luck;
-    player.maxMp = player.totalMaxMp;
-    player.maxHp = player.totalMaxHp;
-    player.defend = player.totalDefend;
-    player.attack = player.totalAttack;
-    player.lingli = player.totalLingli;
-    player.speed = player.totalSpeed;
-    player.luck = player.totalLuck;
+    player.maxMp += this.mpMax;
+    player.maxHp += this.hpMax;
+    player.defense += this.defense;
+    player.attack += this.attack;
+    player.spirit += this.spirit;
+    player.agility += this.agility;
+    player.luck += this.luck;
     return true;
   }
 }

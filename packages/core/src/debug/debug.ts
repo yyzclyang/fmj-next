@@ -12,11 +12,11 @@ const DEBUG_PLAYER_INCREASE_KEYS = [
   'mp',
   'maxMp',
   'attack',
-  'defend',
-  'speed',
-  'lingli',
+  'defense',
+  'agility',
+  'spirit',
   'luck',
-  'currentExp',
+  'exp',
 ] as const;
 
 export interface DebugSnapshot {
@@ -78,11 +78,11 @@ export interface DebugPlayerIncreaseInput {
   mp?: number;
   maxMp?: number;
   attack?: number;
-  defend?: number;
-  speed?: number;
-  lingli?: number;
+  defense?: number;
+  agility?: number;
+  spirit?: number;
   luck?: number;
-  currentExp?: number;
+  exp?: number;
 }
 
 export interface DebugScriptApi {
@@ -144,9 +144,9 @@ export interface DebugCombatMonsterItem {
   hp: number;
   mp: number;
   attack: number;
-  defend: number;
-  speed: number;
-  lingli: number;
+  defense: number;
+  agility: number;
+  spirit: number;
   luck: number;
   iq: number;
   exp: number;
@@ -178,11 +178,11 @@ export interface DebugPlayerItem {
   mp: number;
   maxMp: number;
   attack: number;
-  defend: number;
-  speed: number;
-  lingli: number;
+  defense: number;
+  agility: number;
+  spirit: number;
   luck: number;
-  currentExp: number;
+  exp: number;
   inParty: boolean;
   isControl: boolean;
 }
@@ -422,12 +422,12 @@ function applyDebugPlayerIncrease(player: Player, input: DebugPlayerIncreaseInpu
   let applied = false;
   applied = addDebugPlayerAttribute(player, 0, input.level, 'level') || applied;
   applied = addDebugPlayerAttribute(player, 1, input.attack, 'attack') || applied;
-  applied = addDebugPlayerAttribute(player, 2, input.defend, 'defend') || applied;
-  applied = addDebugPlayerAttribute(player, 3, input.speed, 'speed') || applied;
+  applied = addDebugPlayerAttribute(player, 2, input.defense, 'defense') || applied;
+  applied = addDebugPlayerAttribute(player, 3, input.agility, 'agility') || applied;
   applied = addDebugPlayerAttribute(player, 4, input.hp, 'hp') || applied;
   applied = addDebugPlayerAttribute(player, 5, input.mp, 'mp') || applied;
-  applied = addDebugPlayerAttribute(player, 6, input.currentExp, 'currentExp') || applied;
-  applied = addDebugPlayerAttribute(player, 7, input.lingli, 'lingli') || applied;
+  applied = addDebugPlayerAttribute(player, 6, input.exp, 'exp') || applied;
+  applied = addDebugPlayerAttribute(player, 7, input.spirit, 'spirit') || applied;
   applied = addDebugPlayerAttribute(player, 8, input.luck, 'luck') || applied;
   applied = addDebugPlayerAttribute(player, 10, input.maxHp, 'maxHp') || applied;
   applied = addDebugPlayerAttribute(player, 11, input.maxMp, 'maxMp') || applied;
@@ -593,11 +593,11 @@ function toDebugPlayerItem(game: Game, player: Player): DebugPlayerItem {
     mp: player.mp,
     maxMp: player.maxMp,
     attack: player.attack,
-    defend: player.defend,
-    speed: player.speed,
-    lingli: player.lingli,
+    defense: player.defense,
+    agility: player.agility,
+    spirit: player.spirit,
     luck: player.luck,
-    currentExp: player.currentExp,
+    exp: player.exp,
     inParty: game.state.partyActorIds.includes(player.index),
     isControl: game.state.controlActorId === player.index,
   };
@@ -623,9 +623,9 @@ function toDebugCombatMonsterItem(monster: Monster): DebugCombatMonsterItem {
     hp: monster.maxHp,
     mp: monster.maxMp,
     attack: monster.attack,
-    defend: monster.defend,
-    speed: monster.speed,
-    lingli: monster.lingli,
+    defense: monster.defense,
+    agility: monster.agility,
+    spirit: monster.spirit,
     luck: monster.luck,
     iq: monster.iq,
     exp: monster.exp,

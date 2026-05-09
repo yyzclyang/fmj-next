@@ -45,9 +45,9 @@ export interface CombatLevelUpStats {
   readonly maxHp: number;
   readonly maxMp: number;
   readonly attack: number;
-  readonly defend: number;
-  readonly speed: number;
-  readonly lingli: number;
+  readonly defense: number;
+  readonly agility: number;
+  readonly spirit: number;
   readonly luck: number;
 }
 
@@ -366,20 +366,20 @@ export class CombatRuntime {
       if (!player.isAlive) continue;
       const chain = player.levelUpChain;
       if (!chain || chain.maxLevel <= 0) {
-        player.currentExp += exp;
+        player.exp += exp;
         continue;
       }
       if (player.level >= chain.maxLevel) continue;
-      let currentExp = player.currentExp + exp;
+      let remainingExp = player.exp + exp;
       while (player.level < chain.maxLevel) {
         const nextExp = chain.getNextLevelExp(player.level);
-        if (nextExp <= 0 || currentExp < nextExp) break;
+        if (nextExp <= 0 || remainingExp < nextExp) break;
 
         const previousLevel = player.level;
         const oldMagicCount = chain.getLearnMagicCount(previousLevel);
         const previousStats = captureLevelUpStats(player);
         if (!player.levelUp(previousLevel + 1)) break;
-        currentExp -= nextExp;
+        remainingExp -= nextExp;
 
         res.push({
           player,
@@ -391,7 +391,7 @@ export class CombatRuntime {
           currentStats: captureLevelUpStats(player),
         });
       }
-      player.currentExp = currentExp;
+      player.exp = remainingExp;
     }
     return res;
   }
@@ -421,9 +421,9 @@ function captureLevelUpStats(player: Player): CombatLevelUpStats {
     maxHp: player.maxHp,
     maxMp: player.maxMp,
     attack: player.attack,
-    defend: player.defend,
-    speed: player.speed,
-    lingli: player.lingli,
+    defense: player.defense,
+    agility: player.agility,
+    spirit: player.spirit,
     luck: player.luck,
   };
 }

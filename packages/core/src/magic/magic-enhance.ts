@@ -1,23 +1,23 @@
 import { BaseMagic, type BaseMagicData } from './base-magic';
 
 export interface MagicEnhanceData extends BaseMagicData {
-  readonly defendPercent: number;
+  readonly defensePercent: number;
   readonly attackPercent: number;
-  readonly speedPercent: number;
+  readonly agilityPercent: number;
   readonly buffRound: number;
 }
 
 export class MagicEnhance extends BaseMagic {
-  defendPercent: number;
+  defensePercent: number;
   attackPercent: number;
-  speedPercent: number;
+  agilityPercent: number;
   buffRound: number;
 
   constructor(data: MagicEnhanceData) {
     super(data);
-    this.defendPercent = data.defendPercent;
+    this.defensePercent = data.defensePercent;
     this.attackPercent = data.attackPercent;
-    this.speedPercent = data.speedPercent;
+    this.agilityPercent = data.agilityPercent;
     this.buffRound = data.buffRound;
   }
 }

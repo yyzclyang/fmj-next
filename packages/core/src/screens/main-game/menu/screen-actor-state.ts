@@ -86,17 +86,17 @@ export function drawPlayerState(surface: Surface, player: Player, page: number, 
   y += STATE_LINE_HEIGHT;
   TextRender.drawText(surface, `攻击力 ${player.attack}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
-  TextRender.drawText(surface, `防御力 ${player.defend}`, STATE_TEXT_LEFT, y);
+  TextRender.drawText(surface, `防御力 ${player.defense}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
-  TextRender.drawText(surface, `身法   ${player.speed}`, STATE_TEXT_LEFT, y);
+  TextRender.drawText(surface, `身法   ${player.agility}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
-  TextRender.drawText(surface, `灵力   ${player.lingli}`, STATE_TEXT_LEFT, y);
+  TextRender.drawText(surface, `灵力   ${player.spirit}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
   TextRender.drawText(surface, `幸运   ${player.luck}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
 
   TextRender.drawText(surface, '经验值', STATE_TEXT_LEFT, y);
-  const width = drawSmallNum(surface, smallNumImage, player.currentExp, 97, y);
+  const width = drawSmallNum(surface, smallNumImage, player.exp, 97, y);
   TextRender.drawText(surface, '/', 97 + width + 2, y);
   drawSmallNum(surface, smallNumImage, player.levelUpChain?.getNextLevelExp(player.level) ?? 0, 97 + width + 9, y + 6);
   y += STATE_LINE_HEIGHT;

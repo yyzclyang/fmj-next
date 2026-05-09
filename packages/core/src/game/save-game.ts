@@ -71,18 +71,11 @@ export interface SavePlayerState {
   maxMp: number;
   mp: number;
   attack: number;
-  defend: number;
-  speed: number;
-  lingli: number;
+  defense: number;
+  agility: number;
+  spirit: number;
   luck: number;
-  currentExp: number;
-  totalMaxHp: number;
-  totalMaxMp: number;
-  totalAttack: number;
-  totalDefend: number;
-  totalSpeed: number;
-  totalLingli: number;
-  totalLuck: number;
+  exp: number;
   equipment: Array<SaveResourceRef | null>;
   privateMagics: SaveResourceRef[];
   buff: BuffState[];
@@ -150,18 +143,11 @@ function createPlayerState(player: Player): SavePlayerState {
     maxMp: player.maxMp,
     mp: player.mp,
     attack: player.attack,
-    defend: player.defend,
-    speed: player.speed,
-    lingli: player.lingli,
+    defense: player.defense,
+    agility: player.agility,
+    spirit: player.spirit,
     luck: player.luck,
-    currentExp: player.currentExp,
-    totalMaxHp: player.totalMaxHp,
-    totalMaxMp: player.totalMaxMp,
-    totalAttack: player.totalAttack,
-    totalDefend: player.totalDefend,
-    totalSpeed: player.totalSpeed,
-    totalLingli: player.totalLingli,
-    totalLuck: player.totalLuck,
+    exp: player.exp,
     equipment: player.equipment.map(goods => (goods ? { type: goods.type, index: goods.index } : null)),
     privateMagics: player.getPrivateLearntMagicKeys(),
     buff: cloneBuffs(player.buff.buffs),

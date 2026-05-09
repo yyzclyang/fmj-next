@@ -44,9 +44,9 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
   const maxHp = readUint16(buffer, offset + 0x26);
   const maxMp = readUint16(buffer, offset + 0x2a);
   const attack = readUint16(buffer, offset + 0x2e);
-  const defend = readUint16(buffer, offset + 0x30);
-  const speed = buffer[offset + 0x36] ?? 0;
-  const lingli = buffer[offset + 0x37] ?? 0;
+  const defense = readUint16(buffer, offset + 0x30);
+  const agility = buffer[offset + 0x36] ?? 0;
+  const spirit = buffer[offset + 0x37] ?? 0;
   const luck = buffer[offset + 0x38] ?? 0;
   const equipment = createPlayerEquipment(datLib, buffer, offset);
 
@@ -70,22 +70,15 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
     maxMp,
     mp: readUint16(buffer, offset + 0x2c),
     attack,
-    defend,
-    speed,
-    lingli,
+    defense,
+    agility,
+    spirit,
     luck,
     fightingSprite: datLib.createFightingSprite(ResourceType.PIC, index),
     headImage: index > 0 ? datLib.getImage(ResourceType.PIC, 1, index) : null,
     levelUpChain: datLib.getLevelUpChain(index),
-    currentExp: readUint16(buffer, offset + 0x32),
+    exp: readUint16(buffer, offset + 0x32),
     equipment,
-    totalMaxHp: maxHp,
-    totalMaxMp: maxMp,
-    totalAttack: attack,
-    totalDefend: defend,
-    totalSpeed: speed,
-    totalLingli: lingli,
-    totalLuck: luck,
   };
 
   return new Player(data);
@@ -133,15 +126,15 @@ function createMonster(datLib: DatLib, buffer: Uint8Array, offset: number): Mons
     magicChain,
     learntMagicCount,
     level: buffer[offset + 0x12] ?? 0,
-    speed: buffer[offset + 0x13] ?? 0,
-    lingli: buffer[offset + 0x14] ?? 0,
+    agility: buffer[offset + 0x13] ?? 0,
+    spirit: buffer[offset + 0x14] ?? 0,
     luck: buffer[offset + 0x16] ?? 0,
     maxHp: readUint16(buffer, offset + 0x18),
     hp: readUint16(buffer, offset + 0x1a),
     maxMp: readUint16(buffer, offset + 0x1c),
     mp: readUint16(buffer, offset + 0x1e),
     attack: readUint16(buffer, offset + 0x20),
-    defend: readUint16(buffer, offset + 0x22),
+    defense: readUint16(buffer, offset + 0x22),
     buff,
     debuff: new BuffMan(),
     atbuff,
@@ -192,9 +185,9 @@ function createFightingCharacterDefaults(characterData: CharacterData): Fighting
     maxMp: 0,
     mp: 0,
     attack: 0,
-    defend: 0,
-    speed: 0,
-    lingli: 0,
+    defense: 0,
+    agility: 0,
+    spirit: 0,
     luck: 0,
     buff: new BuffMan(),
     debuff: new BuffMan(),

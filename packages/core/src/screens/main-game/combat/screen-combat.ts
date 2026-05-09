@@ -13,16 +13,16 @@ import type { Game } from '@/game/game';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
-import { CombatActionPreparer } from './combat-action-preparer';
-import { CombatActionQueue, type CombatActionQueueResult } from './combat-action-queue';
-import { useGoodsFromBag } from './combat-action-utils';
-import { createThrowGoodsSelection, createUseGoodsSelection, type CombatGoodsActionSelection } from './combat-goods-actions';
-import { CombatGoodsMenu } from './combat-goods-menu';
-import { CombatInputHandler } from './combat-input';
-import { CombatLossAnimation } from './combat-loss-animation';
-import { CombatMagicMenu } from './combat-magic-menu';
-import { CombatMenuController } from './combat-menu-controller';
-import { canSelectCoopTarget, createCoopPlayerAction } from './combat-coop-actions';
+import { CombatActionPreparer } from './prepare/action-preparer';
+import { CombatActionQueue, type CombatActionQueueResult } from './flow/action-queue';
+import { useGoodsFromBag } from './flow/action-utils';
+import { createThrowGoodsSelection, createUseGoodsSelection, type CombatGoodsActionSelection } from './actions/goods-actions';
+import { CombatGoodsMenu } from './ui/goods-menu';
+import { CombatInputHandler } from './flow/input';
+import { CombatLossAnimation } from './animations/loss-animation';
+import { CombatMagicMenu } from './ui/magic-menu';
+import { CombatMenuController } from './ui/menu-controller';
+import { canSelectCoopTarget, createCoopPlayerAction } from './actions/coop-actions';
 import {
   createAutoAttackActions,
   createDisabledPlayerAction,
@@ -30,16 +30,16 @@ import {
   createMonsterTargetAction,
   createPlayerTargetAction,
   createRepeatedPlayerActions,
-} from './combat-player-actions';
+} from './actions/player-actions';
 import {
   getFirstAliveMonsterIndex,
   getFirstAlivePlayerIndex,
   getNextAlivePlayerIndex,
   getPreviousAlivePlayerIndex,
-} from './combat-targeting';
-import { CombatRenderer } from './combat-renderer';
-import { completeRound, triggerRoundEvent } from './combat-round';
-import { ScreenCombatSuccess } from './screen-combat-success';
+} from './actions/targeting';
+import { CombatRenderer } from './ui/renderer';
+import { completeRound, triggerRoundEvent } from './flow/round';
+import { ScreenCombatSuccess } from './ui/screen-combat-success';
 
 export interface ScreenCombatOptions {
   readonly allowDebugWin?: boolean;

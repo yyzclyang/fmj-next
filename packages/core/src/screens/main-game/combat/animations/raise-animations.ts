@@ -1,11 +1,11 @@
 import {
-  STATUS_MASK_POISON,
-  STATUS_MASK_DEFENSE,
-  STATUS_MASK_SEAL,
-  STATUS_MASK_ATTACK,
-  STATUS_MASK_CONFUSE,
-  STATUS_MASK_SLEEP,
-  STATUS_MASK_AGILITY,
+  STATUS_FLAG_POISON,
+  STATUS_FLAG_DEFENSE,
+  STATUS_FLAG_SEAL,
+  STATUS_FLAG_ATTACK,
+  STATUS_FLAG_CONFUSE,
+  STATUS_FLAG_SLEEP,
+  STATUS_FLAG_AGILITY,
 } from '@/combat/combat-constants';
 import type { FightingCharacter } from '@/characters';
 import type { Game } from '@/game/game';
@@ -91,20 +91,20 @@ export class RaiseCombatAnimation implements CombatActionAnimation {
   private readonly smallNumImage: ResImage | null;
   private readonly srsList: ResSrs[] = [];
 
-  constructor(game: Game, private readonly x: number, private readonly y: number, private readonly hpDiff: number, statusMask: number) {
+  constructor(game: Game, private readonly x: number, private readonly y: number, private readonly hpDiff: number, statusFlags: number) {
     this.showingNumber = hpDiff !== 0;
     this.signImage = hpDiff === 0 ? null : game.datLib.getImage(ResourceType.PIC, 2, hpDiff > 0 ? 6 : 7);
     this.smallNumImage = game.datLib.getImage(ResourceType.PIC, 2, 5);
     for (const item of [
-      { mask: STATUS_MASK_POISON, srs: 243 },
-      { mask: STATUS_MASK_CONFUSE, srs: 244 },
-      { mask: STATUS_MASK_SEAL, srs: 245 },
-      { mask: STATUS_MASK_SLEEP, srs: 246 },
-      { mask: STATUS_MASK_ATTACK, srs: 240 },
-      { mask: STATUS_MASK_DEFENSE, srs: 241 },
-      { mask: STATUS_MASK_AGILITY, srs: 242 },
+      { flag: STATUS_FLAG_POISON, srs: 243 },
+      { flag: STATUS_FLAG_CONFUSE, srs: 244 },
+      { flag: STATUS_FLAG_SEAL, srs: 245 },
+      { flag: STATUS_FLAG_SLEEP, srs: 246 },
+      { flag: STATUS_FLAG_ATTACK, srs: 240 },
+      { flag: STATUS_FLAG_DEFENSE, srs: 241 },
+      { flag: STATUS_FLAG_AGILITY, srs: 242 },
     ]) {
-      if ((statusMask & item.mask) === 0) continue;
+      if ((statusFlags & item.flag) === 0) continue;
       const srs = game.datLib.getSrs(1, item.srs);
       if (!srs) continue;
       srs.start();

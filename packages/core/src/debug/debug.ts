@@ -440,11 +440,11 @@ function addDebugPlayerAttribute(player: Player, type: number, value: number | u
   return true;
 }
 
-function applyDebugStatuses(statuses: Player['immuneStatuses'], mask: number | undefined, round: number | undefined, name: string): void {
-  if (mask == null) return;
-  const value = assertDebugNonNegativeInt(mask, `${name}Mask`);
-  statuses.clearStatuses(0xff);
-  if (value !== 0) statuses.addStatuses(value, round == null ? 99 : assertDebugNonNegativeInt(round, `${name}Rounds`));
+function applyDebugStatuses(statuses: Player['immuneStatuses'], flags: number | undefined, round: number | undefined, name: string): void {
+  if (flags == null) return;
+  const value = assertDebugNonNegativeInt(flags, `${name}Mask`);
+  statuses.clearFlags(0xff);
+  if (value !== 0) statuses.addFlags(value, round == null ? 99 : assertDebugNonNegativeInt(round, `${name}Rounds`));
 }
 
 function addDebugGoods(game: Game, input: DebugCombatGoodsInput): void {

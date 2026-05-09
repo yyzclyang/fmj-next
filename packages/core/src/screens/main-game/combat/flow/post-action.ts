@@ -39,9 +39,9 @@ export function createRaiseAnimations(
     const sprite = fighter.fightingSprite;
     if (!snapshot || !sprite) continue;
     const hpDiff = fighter.hp - snapshot.hp;
-    const statusMask = getActiveStatusDiffMask(snapshot, fighter);
-    if (hpDiff === 0 && statusMask === 0) continue;
-    res.push(new RaiseCombatAnimation(game, sprite.combatX, sprite.combatY, hpDiff, statusMask));
+    const statusFlags = getActiveStatusDiffFlags(snapshot, fighter);
+    if (hpDiff === 0 && statusFlags === 0) continue;
+    res.push(new RaiseCombatAnimation(game, sprite.combatX, sprite.combatY, hpDiff, statusFlags));
   }
   return res;
 }
@@ -69,15 +69,15 @@ export function resetFighterFrames(players: readonly Player[], monsters: readonl
   }
 }
 
-function getActiveStatusDiffMask(snapshot: FighterStateSnapshot, fighter: FightingCharacter): number {
-  let mask = 0;
+function getActiveStatusDiffFlags(snapshot: FighterStateSnapshot, fighter: FightingCharacter): number {
+  let flags = 0;
   for (let i = 0; i < fighter.activeStatuses.slots.length; i += 1) {
     const oldStatus = snapshot.statuses[i];
     const status = fighter.activeStatuses.slots[i];
     if (!oldStatus || !status || (oldStatus.value === status.value && oldStatus.round === status.round)) continue;
-    mask |= 1 << i;
+    flags |= 1 << i;
   }
-  return mask;
+  return flags;
 }
 
 function applyTurnPlayerEffects(player: Player): void {

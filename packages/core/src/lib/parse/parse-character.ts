@@ -1,5 +1,5 @@
 import {
-  StatusSet,
+  StatusSlots,
   CharacterState,
   Monster,
   Npc,
@@ -74,7 +74,7 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
     agility,
     spirit,
     luck,
-    immuneStatuses: StatusSet.fromRoundAndMask(0, buffer[offset + 0x21] ?? 0),
+    immuneStatuses: StatusSlots.fromFlags(buffer[offset + 0x21] ?? 0, 0),
     fightingSprite: datLib.createFightingSprite(ResourceType.PIC, index),
     headImage: index > 0 ? datLib.getImage(ResourceType.PIC, 1, index) : null,
     levelUpChain: datLib.getLevelUpChain(index),
@@ -112,10 +112,10 @@ function createMonster(datLib: DatLib, buffer: Uint8Array, offset: number): Mons
   const magicChain = magicIndex > 0 ? datLib.getMagicChain(magicIndex) : null;
   const learntMagicCount = buffer[offset + 2] ?? 0;
   if (magicChain) magicChain.learnNum = learntMagicCount;
-  const immuneStatuses = new StatusSet();
-  immuneStatuses.addStatuses(buffer[offset + 3] ?? 0, 0);
-  const onHitStatuses = new StatusSet();
-  onHitStatuses.addStatuses(buffer[offset + 4] ?? 0, buffer[offset + 0x17] ?? 0);
+  const immuneStatuses = new StatusSlots();
+  immuneStatuses.addFlags(buffer[offset + 3] ?? 0, 0);
+  const onHitStatuses = new StatusSlots();
+  onHitStatuses.addFlags(buffer[offset + 4] ?? 0, buffer[offset + 0x17] ?? 0);
 
   const data: MonsterData = {
     ...createFightingCharacterDefaults({
@@ -142,7 +142,7 @@ function createMonster(datLib: DatLib, buffer: Uint8Array, offset: number): Mons
     attack: readUint16(buffer, offset + 0x20),
     defense: readUint16(buffer, offset + 0x22),
     immuneStatuses,
-    activeStatuses: new StatusSet(),
+    activeStatuses: new StatusSlots(),
     onHitStatuses,
     fightingSprite: datLib.createFightingSprite(ResourceType.ACP, buffer[offset + 0x2e] ?? 0),
     iq: buffer[offset + 0x15] ?? 0,
@@ -195,9 +195,9 @@ function createFightingCharacterDefaults(characterData: CharacterData): Fighting
     agility: 0,
     spirit: 0,
     luck: 0,
-    immuneStatuses: new StatusSet(),
-    activeStatuses: new StatusSet(),
-    onHitStatuses: new StatusSet(),
+    immuneStatuses: new StatusSlots(),
+    activeStatuses: new StatusSlots(),
+    onHitStatuses: new StatusSlots(),
     fightingSprite: null,
   };
 }

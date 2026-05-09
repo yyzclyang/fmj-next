@@ -1,5 +1,5 @@
 import { Character, type CharacterData } from './character';
-import { StatusSet } from './status';
+import { StatusSlots } from './status';
 import type { FightingSprite } from './fighting-sprite';
 import type { ResMagicChain } from '@/magic';
 
@@ -16,9 +16,9 @@ export interface FightingCharacterData extends CharacterData {
   readonly agility: number;
   readonly spirit: number;
   readonly luck: number;
-  readonly immuneStatuses: StatusSet;
-  readonly activeStatuses: StatusSet;
-  readonly onHitStatuses: StatusSet;
+  readonly immuneStatuses: StatusSlots;
+  readonly activeStatuses: StatusSlots;
+  readonly onHitStatuses: StatusSlots;
   readonly fightingSprite: FightingSprite | null;
 }
 
@@ -35,9 +35,9 @@ export abstract class FightingCharacter extends Character {
   agility: number;
   spirit: number;
   luck: number;
-  immuneStatuses: StatusSet;
-  activeStatuses: StatusSet;
-  onHitStatuses: StatusSet;
+  immuneStatuses: StatusSlots;
+  activeStatuses: StatusSlots;
+  onHitStatuses: StatusSlots;
   fightingSprite: FightingSprite | null;
 
   protected constructor(data: FightingCharacterData) {

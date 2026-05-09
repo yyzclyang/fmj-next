@@ -1,4 +1,4 @@
-export { StatusSet } from './status';
+export { StatusSlots } from './status';
 export type { StatusSlot } from './status';
 export { Character, CharacterState } from './character';
 export type { CharacterData, Direction } from './character';

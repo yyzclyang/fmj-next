@@ -23,7 +23,7 @@ export class MagicRestore extends BaseMagic {
       dst.hp = Math.min(dst.maxHp, dst.hp + this.hp);
     }
     if (dst.isAlive) {
-      dst.activeStatuses.clearStatuses(this.cureMask);
+      dst.activeStatuses.clearFlags(this.cureMask);
     }
     return true;
   }

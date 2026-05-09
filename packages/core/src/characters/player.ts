@@ -125,7 +125,7 @@ export class Player extends FightingCharacter {
       case 9:
         return this.onHitStatusRounds;
       case 10:
-        return this.immuneStatuses.toMask();
+        return this.immuneStatuses.toFlags();
       case 11:
         return this.onHitStatusMask;
       case 12:
@@ -192,7 +192,7 @@ export class Player extends FightingCharacter {
         this.setOnHitStatusRounds(value);
         return;
       case 10:
-        this.immuneStatuses.setStatuses(toUint8(value), 0);
+        this.immuneStatuses.replaceWithFlags(toUint8(value), 0);
         return;
       case 11:
         this.setOnHitStatusMask(value);
@@ -349,8 +349,8 @@ export class Player extends FightingCharacter {
       return;
     }
 
-    if (sign > 0) this.immuneStatuses.addStatuses(equipment.bitEffect, 0);
-    else this.immuneStatuses.removeStatuses(equipment.bitEffect);
+    if (sign > 0) this.immuneStatuses.addFlags(equipment.bitEffect, 0);
+    else this.immuneStatuses.removeFlags(equipment.bitEffect);
   }
 
   private setOnHitStatusRounds(value: number): void {
@@ -368,7 +368,7 @@ export class Player extends FightingCharacter {
   }
 
   private syncOnHitStatuses(): void {
-    this.onHitStatuses.setStatuses(this.onHitStatusMask, this.onHitStatusRounds);
+    this.onHitStatuses.replaceWithFlags(this.onHitStatusMask, this.onHitStatusRounds);
   }
 }
 

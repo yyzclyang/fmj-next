@@ -3,49 +3,49 @@ import { GoodsHiddenWeapon } from '@/goods';
 import type { MagicDamageFormula } from '@/game/game-engine-options';
 import { type BaseMagic, MagicAttack, MagicAuxiliary, MagicEnhance, MagicRestore } from '@/magic';
 import {
-  STATUS_INDEX_POISON,
-  STATUS_INDEX_DEFENSE,
-  STATUS_INDEX_ATTACK,
-  STATUS_INDEX_SLEEP,
-  STATUS_INDEX_AGILITY,
-  STATUS_MASK_ALL,
-  STATUS_MASK_POISON,
-  STATUS_MASK_SEAL,
-  STATUS_MASK_CONFUSE,
-  STATUS_MASK_SLEEP,
+  STATUS_SLOT_POISON,
+  STATUS_SLOT_DEFENSE,
+  STATUS_SLOT_ATTACK,
+  STATUS_SLOT_SLEEP,
+  STATUS_SLOT_AGILITY,
+  STATUS_FLAG_SPECIAL_DAMAGE_REDUCTION,
+  STATUS_FLAG_POISON,
+  STATUS_FLAG_SEAL,
+  STATUS_FLAG_CONFUSE,
+  STATUS_FLAG_SLEEP,
 } from './combat-constants';
 import type { CombatHelpMagic, CombatThrowableGoods } from './combat-actions';
 
-export function hasActiveStatus(actor: FightingCharacter, mask: number): boolean {
-  return actor.activeStatuses.hasStatus(mask);
+export function hasActiveStatus(actor: FightingCharacter, flags: number): boolean {
+  return actor.activeStatuses.hasAnyFlag(flags);
 }
 
 export function isPoisoned(actor: FightingCharacter): boolean {
-  return hasActiveStatus(actor, STATUS_MASK_POISON);
+  return hasActiveStatus(actor, STATUS_FLAG_POISON);
 }
 
 export function isConfusing(actor: FightingCharacter): boolean {
-  return hasActiveStatus(actor, STATUS_MASK_CONFUSE);
+  return hasActiveStatus(actor, STATUS_FLAG_CONFUSE);
 }
 
 export function isSealed(actor: FightingCharacter): boolean {
-  return hasActiveStatus(actor, STATUS_MASK_SEAL);
+  return hasActiveStatus(actor, STATUS_FLAG_SEAL);
 }
 
 export function isSleeping(actor: FightingCharacter): boolean {
-  return hasActiveStatus(actor, STATUS_MASK_SLEEP);
+  return hasActiveStatus(actor, STATUS_FLAG_SLEEP);
 }
 
 export function getComputedAgility(actor: FightingCharacter): number {
-  return actor.agility + Math.trunc((actor.agility * getStatusValue(actor, STATUS_INDEX_AGILITY)) / 100);
+  return actor.agility + Math.trunc((actor.agility * getStatusValue(actor, STATUS_SLOT_AGILITY)) / 100);
 }
 
 export function getComputedAttack(actor: FightingCharacter): number {
-  return actor.attack + Math.trunc((actor.attack * getStatusValue(actor, STATUS_INDEX_ATTACK)) / 100);
+  return actor.attack + Math.trunc((actor.attack * getStatusValue(actor, STATUS_SLOT_ATTACK)) / 100);
 }
 
 export function getComputedDefense(actor: FightingCharacter): number {
-  return actor.defense + Math.trunc((actor.defense * getStatusValue(actor, STATUS_INDEX_DEFENSE)) / 100);
+  return actor.defense + Math.trunc((actor.defense * getStatusValue(actor, STATUS_SLOT_DEFENSE)) / 100);
 }
 
 export function decayFighterStatuses(actor: FightingCharacter): void {
@@ -91,7 +91,7 @@ export function applyThrownGoods(goods: CombatThrowableGoods, target: Monster): 
   target.hp -= goods.affectHp;
   target.mp -= goods.affectMp;
   if (goods instanceof GoodsHiddenWeapon) {
-    applyCombatStatuses(target, makeStatusSet(goods.bitMask & 0x0f, goods.sumRound), 0);
+    applyCombatStatuses(target, createStatusSlots(goods.bitMask & 0x0f, goods.sumRound), 0);
   }
   if (target.hp < 0) target.hp = 0;
   if (target.mp < 0) target.mp = 0;
@@ -112,7 +112,7 @@ export function applyMagicAttack(
 ): void {
   applyHpMagicEffect(actor, target, calcHpMagicEffect(actor, target, magic.affectHp, formula, targetIsDefending));
   applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.affectMp, formula));
-  applyCombatStatuses(target, makeStatusSet(magic.statusMask & 0x0f, (magic.statusMask >> 4) & 0x0f), target.luck);
+  applyCombatStatuses(target, createStatusSlots(magic.statusFlags & 0x0f, (magic.statusFlags >> 4) & 0x0f), target.luck);
   applyAttributeMagicEffect(target, -magic.attackPercent, -magic.defensePercent, -magic.agilityPercent, 0);
 }
 
@@ -120,7 +120,7 @@ export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter
   if (magic instanceof MagicRestore) {
     if (!target.isAlive) return;
     if (magic.hp > 0) target.hp = Math.min(target.maxHp, target.hp + magic.hp);
-    target.activeStatuses.clearStatuses(magic.cureMask);
+    target.activeStatuses.clearFlags(magic.cureMask);
     return;
   }
   if (magic instanceof MagicAuxiliary) {
@@ -177,7 +177,7 @@ function calcHpMagicEffectOriginal(
 }
 
 function hasSpecialDamageReduction(target: FightingCharacter, targetIsDefending: boolean): boolean {
-  return target instanceof Player && (targetIsDefending || target.immuneStatuses.hasStatus(STATUS_MASK_ALL));
+  return target instanceof Player && (targetIsDefending || target.immuneStatuses.hasAnyFlag(STATUS_FLAG_SPECIAL_DAMAGE_REDUCTION));
 }
 
 function calcHpMagicEffectSimplified(
@@ -251,23 +251,23 @@ function applyAttributeMagicEffect(
   agility: number,
   round: number
 ): void {
-  setAttributeStatusPercent(target, STATUS_INDEX_ATTACK, attack, round);
-  setAttributeStatusPercent(target, STATUS_INDEX_DEFENSE, defense, round);
-  setAttributeStatusPercent(target, STATUS_INDEX_AGILITY, agility, round);
+  setAttributeStatusPercent(target, STATUS_SLOT_ATTACK, attack, round);
+  setAttributeStatusPercent(target, STATUS_SLOT_DEFENSE, defense, round);
+  setAttributeStatusPercent(target, STATUS_SLOT_AGILITY, agility, round);
 }
 
-function setAttributeStatusPercent(target: FightingCharacter, index: number, value: number, round: number): void {
+function setAttributeStatusPercent(target: FightingCharacter, slotIndex: number, value: number, round: number): void {
   if (value === 0) return;
-  const status = target.activeStatuses.slots[index];
-  if (!status) throw new Error(`魔法设置状态失败，非法状态索引: ${index}`);
+  const status = target.activeStatuses.slots[slotIndex];
+  if (!status) throw new Error(`魔法设置状态失败，非法状态槽位: ${slotIndex}`);
   status.value = value;
   status.round = round;
 }
 
-function makeStatusSet(mask: number, round: number) {
+function createStatusSlots(flags: number, round: number) {
   return {
     slots: Array.from({ length: 8 }, (_, i) => ({
-      value: (mask & (1 << i)) !== 0 ? 1 : 0,
+      value: (flags & (1 << i)) !== 0 ? 1 : 0,
       round,
     })),
   };
@@ -275,7 +275,7 @@ function makeStatusSet(mask: number, round: number) {
 
 function applyCombatStatuses(target: FightingCharacter, src: { slots: readonly { value: number; round: number }[] }, luck: number): void {
   const resist = Math.sqrt(Math.max(0, luck) / 100);
-  for (let i = STATUS_INDEX_SLEEP; i <= STATUS_INDEX_POISON; i += 1) {
+  for (let i = STATUS_SLOT_SLEEP; i <= STATUS_SLOT_POISON; i += 1) {
     if (Math.random() + 0.01 < resist) continue;
     const sourceStatus = src.slots[i];
     const immuneStatus = target.immuneStatuses.slots[i];
@@ -289,7 +289,7 @@ function applyCombatStatuses(target: FightingCharacter, src: { slots: readonly {
       activeStatus.round = Math.max(activeStatus.round, sourceStatus.round);
     }
   }
-  for (let i = STATUS_INDEX_ATTACK; i <= STATUS_INDEX_AGILITY; i += 1) {
+  for (let i = STATUS_SLOT_ATTACK; i <= STATUS_SLOT_AGILITY; i += 1) {
     const sourceStatus = src.slots[i];
     const activeStatus = target.activeStatuses.slots[i];
     if (!sourceStatus || !activeStatus || sourceStatus.value === 0) continue;

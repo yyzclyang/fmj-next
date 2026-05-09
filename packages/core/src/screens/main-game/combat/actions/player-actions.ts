@@ -1,5 +1,5 @@
 import type { FightingCharacter, Monster, Player } from '@/characters';
-import { STATUS_MASK_ALL } from '@/combat/combat-constants';
+import { STATUS_FLAG_ATTACK_ALL } from '@/combat/combat-constants';
 import { isConfusing, isSleeping } from '@/combat/combat-effects';
 import type {
   CombatAction,
@@ -34,7 +34,7 @@ export function createDisabledPlayerAction(player: Player | null): CombatAction 
 }
 
 export function hasAttackAll(actor: FightingCharacter, players: readonly Player[]): boolean {
-  if (actor.onHitStatuses.hasStatus(STATUS_MASK_ALL)) return true;
+  if (actor.onHitStatuses.hasAnyFlag(STATUS_FLAG_ATTACK_ALL)) return true;
   if (!players.includes(actor as Player)) return false;
   const player = actor as Player;
   return player.equipment.some(item => item instanceof GoodsWeapon && item.attackAll());

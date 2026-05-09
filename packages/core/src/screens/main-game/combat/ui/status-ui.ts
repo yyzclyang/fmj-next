@@ -1,12 +1,12 @@
 import type { Player } from '@/characters';
 import {
-  STATUS_INDEX_POISON,
-  STATUS_INDEX_DEFENSE,
-  STATUS_INDEX_SEAL,
-  STATUS_INDEX_ATTACK,
-  STATUS_INDEX_CONFUSE,
-  STATUS_INDEX_SLEEP,
-  STATUS_INDEX_AGILITY,
+  STATUS_SLOT_POISON,
+  STATUS_SLOT_DEFENSE,
+  STATUS_SLOT_SEAL,
+  STATUS_SLOT_ATTACK,
+  STATUS_SLOT_CONFUSE,
+  STATUS_SLOT_SLEEP,
+  STATUS_SLOT_AGILITY,
 } from '@/combat/combat-constants';
 import type { Game } from '@/game/game';
 import type { ResImage } from '@/lib/res-image';
@@ -23,13 +23,13 @@ export interface CombatStatusUiState {
 }
 
 const STATUS_MARKERS = [
-  { index: STATUS_INDEX_ATTACK, ox: 9, isBool: false },
-  { index: STATUS_INDEX_DEFENSE, ox: 25, isBool: false },
-  { index: STATUS_INDEX_AGILITY, ox: 41, isBool: false },
-  { index: STATUS_INDEX_POISON, ox: 57, isBool: true },
-  { index: STATUS_INDEX_CONFUSE, ox: 73, isBool: true },
-  { index: STATUS_INDEX_SEAL, ox: 88, isBool: true },
-  { index: STATUS_INDEX_SLEEP, ox: 104, isBool: true },
+  { slot: STATUS_SLOT_ATTACK, ox: 9, isBool: false },
+  { slot: STATUS_SLOT_DEFENSE, ox: 25, isBool: false },
+  { slot: STATUS_SLOT_AGILITY, ox: 41, isBool: false },
+  { slot: STATUS_SLOT_POISON, ox: 57, isBool: true },
+  { slot: STATUS_SLOT_CONFUSE, ox: 73, isBool: true },
+  { slot: STATUS_SLOT_SEAL, ox: 88, isBool: true },
+  { slot: STATUS_SLOT_SLEEP, ox: 104, isBool: true },
 ] as const;
 
 // 状态面板使用独立资源和坐标，和主战斗菜单分开维护。
@@ -63,7 +63,7 @@ export class CombatStatusUi {
     drawSmallNum(surface, this.smallNumImage, player.luck, x + 87, y + 9);
     drawSmallNum(surface, this.smallNumImage, player.agility, x + 87, y + 21);
     for (const marker of STATUS_MARKERS) {
-      const status = player.activeStatuses.slots[marker.index];
+      const status = player.activeStatuses.slots[marker.slot];
       const frame = getStatusMarkerFrame(status?.value ?? 0, marker.isBool);
       this.statusMarker?.draw(surface, frame, x + marker.ox, y + 48);
       drawSmallNum(surface, this.smallNumImage, status?.round ?? 0, x + marker.ox + 1, y + 57);

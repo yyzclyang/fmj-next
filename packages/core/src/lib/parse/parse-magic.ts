@@ -22,7 +22,7 @@ export function parseMagicResource(datLib: DatLib, buffer: Uint8Array, type: num
         affectMp: readInt16(buffer, offset + 0x14),
         defensePercent: buffer[offset + 0x16] ?? 0,
         attackPercent: buffer[offset + 0x17] ?? 0,
-        statusMask: buffer[offset + 0x18] ?? 0,
+        statusFlags: buffer[offset + 0x18] ?? 0,
         agilityPercent: buffer[offset + 0x19] ?? 0,
       });
     case 2:

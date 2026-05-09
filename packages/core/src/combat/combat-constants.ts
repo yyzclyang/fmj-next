@@ -1,16 +1,18 @@
-export const STATUS_MASK_SLEEP = 1;
-export const STATUS_MASK_SEAL = 2;
-export const STATUS_MASK_CONFUSE = 4;
-export const STATUS_MASK_POISON = 8;
-export const STATUS_MASK_ALL = 16;
-export const STATUS_MASK_ATTACK = 32;
-export const STATUS_MASK_DEFENSE = 64;
-export const STATUS_MASK_AGILITY = 128;
+export const STATUS_FLAG_SLEEP = 0b0000_0001;
+export const STATUS_FLAG_SEAL = 0b0000_0010;
+export const STATUS_FLAG_CONFUSE = 0b0000_0100;
+export const STATUS_FLAG_POISON = 0b0000_1000;
+export const STATUS_FLAG_ATTACK_ALL = 0b0001_0000;
+export const STATUS_FLAG_ATTACK = 0b0010_0000;
+export const STATUS_FLAG_DEFENSE = 0b0100_0000;
+export const STATUS_FLAG_AGILITY = 0b1000_0000;
 
-export const STATUS_INDEX_SLEEP = 0;
-export const STATUS_INDEX_SEAL = 1;
-export const STATUS_INDEX_CONFUSE = 2;
-export const STATUS_INDEX_POISON = 3;
-export const STATUS_INDEX_ATTACK = 5;
-export const STATUS_INDEX_DEFENSE = 6;
-export const STATUS_INDEX_AGILITY = 7;
+export const STATUS_FLAG_SPECIAL_DAMAGE_REDUCTION = STATUS_FLAG_ATTACK_ALL;
+
+export const STATUS_SLOT_SLEEP = 0;
+export const STATUS_SLOT_SEAL = 1;
+export const STATUS_SLOT_CONFUSE = 2;
+export const STATUS_SLOT_POISON = 3;
+export const STATUS_SLOT_ATTACK = 5;
+export const STATUS_SLOT_DEFENSE = 6;
+export const STATUS_SLOT_AGILITY = 7;

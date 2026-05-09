@@ -10,6 +10,24 @@ export class BuffMan {
     return maskToIndexes(mask).some(index => (this.buffs[index]?.value ?? 0) > 0);
   }
 
+  toMask(): number {
+    let mask = 0;
+    for (let i = 0; i < this.buffs.length; i += 1) {
+      if ((this.buffs[i]?.value ?? 0) > 0) mask |= 1 << i;
+    }
+    return mask;
+  }
+
+  setMask(mask: number, round: number): void {
+    this.clearBuff(0xff);
+    for (const index of maskToIndexes(mask)) {
+      const buff = this.buffs[index];
+      if (!buff) continue;
+      buff.value = 1;
+      buff.round = round;
+    }
+  }
+
   addBuff(mask: number, round: number): void {
     for (const index of maskToIndexes(mask)) {
       const buff = this.buffs[index];

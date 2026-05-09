@@ -395,11 +395,16 @@ export class Game {
     player.spirit = snapshot.spirit;
     player.luck = snapshot.luck;
     player.exp = snapshot.exp;
+    player.attackStatusRounds = snapshot.attackStatusRounds;
+    player.attackStatusMask = snapshot.attackStatusMask;
+    player.coopMagicIndex = snapshot.coopMagicIndex;
+    player.hpPerRound = snapshot.hpPerRound;
+    player.mpPerRound = snapshot.mpPerRound;
     this.restorePlayerEquipment(player, snapshot.equipment);
     player.restorePrivateLearntMagics(snapshot.privateMagics.map(ref => this.getSaveMagic(ref)));
     restoreBuffs(player.buff.buffs, snapshot.buff);
     restoreBuffs(player.debuff.buffs, snapshot.debuff);
-    restoreBuffs(player.atbuff.buffs, snapshot.atbuff);
+    player.syncScriptAttributes();
   }
 
   private restorePlayerEquipment(player: Player, equipmentRefs: readonly (SaveResourceRef | null)[]): void {

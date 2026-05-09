@@ -78,11 +78,15 @@ export interface SavePlayerState {
   spirit: number;
   luck: number;
   exp: number;
+  attackStatusRounds: number;
+  attackStatusMask: number;
+  coopMagicIndex: number;
+  hpPerRound: number;
+  mpPerRound: number;
   equipment: Array<SaveResourceRef | null>;
   privateMagics: SaveResourceRef[];
   buff: BuffState[];
   debuff: BuffState[];
-  atbuff: BuffState[];
 }
 
 export function createSavePayload(
@@ -152,11 +156,15 @@ function createPlayerState(player: Player): SavePlayerState {
     spirit: player.spirit,
     luck: player.luck,
     exp: player.exp,
+    attackStatusRounds: player.attackStatusRounds,
+    attackStatusMask: player.attackStatusMask,
+    coopMagicIndex: player.coopMagicIndex,
+    hpPerRound: player.hpPerRound,
+    mpPerRound: player.mpPerRound,
     equipment: player.equipment.map(goods => (goods ? { type: goods.type, index: goods.index } : null)),
     privateMagics: player.getPrivateLearntMagicKeys(),
     buff: cloneBuffs(player.buff.buffs),
     debuff: cloneBuffs(player.debuff.buffs),
-    atbuff: cloneBuffs(player.atbuff.buffs),
   };
 }
 

@@ -2,7 +2,6 @@ import { Player, type FightingCharacter, type Monster } from '@/characters';
 import type { CombatAction } from '@/combat/combat-actions';
 import { applyPoisonPostEffect, decayFighterBuffs } from '@/combat/combat-effects';
 import type { Game } from '@/game/game';
-import { GoodsDecorations } from '@/goods';
 import {
   RaiseCombatAnimation,
   RaiseGroupCombatAnimation,
@@ -47,13 +46,13 @@ export function createRaiseAnimations(
   return res;
 }
 
-// Kotlin 在每个动作后结算饰品、中毒和状态回合，这里保持同一顺序。
+// C 引擎在动作后结算玩家每回合 HP/MP、毒和状态回合，这里保持同一顺序。
 export function finishActionState(game: Game, action: CombatAction): CombatActionAnimation | null {
   const actors = action.kind === 'coop' ? action.actors : [action.actor];
   const aliveActors = actors.filter(actor => actor.isAlive);
   const before = captureFighterStates(aliveActors);
   for (const actor of aliveActors) {
-    if (actor instanceof Player) applyTurnEquipmentEffects(actor);
+    if (actor instanceof Player) applyTurnPlayerEffects(actor);
     applyPoisonPostEffect(actor);
   }
   const raises = createRaiseAnimations(game, before, aliveActors);
@@ -81,10 +80,11 @@ function getDebuffDiffMask(snapshot: FighterStateSnapshot, fighter: FightingChar
   return mask;
 }
 
-function applyTurnEquipmentEffects(player: Player): void {
-  for (const equipment of player.equipment.slice(0, 2)) {
-    if (!(equipment instanceof GoodsDecorations)) continue;
-    player.hp = Math.min(player.maxHp, player.hp + equipment.hp);
-    player.mp = Math.min(player.maxMp, player.mp + equipment.mp);
-  }
+function applyTurnPlayerEffects(player: Player): void {
+  if (player.hpPerRound !== 0) player.hp = clampFighterValue(player.hp + player.hpPerRound, 0, player.maxHp);
+  if (player.mpPerRound !== 0) player.mp = clampFighterValue(player.mp + player.mpPerRound, 0, player.maxMp);
+}
+
+function clampFighterValue(value: number, min: number, max: number): number {
+  return Math.max(min, Math.min(max, value));
 }

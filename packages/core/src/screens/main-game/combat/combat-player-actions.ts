@@ -117,6 +117,7 @@ export function createAutoAttackActions(
 }
 
 export function createRepeatedPlayerActions(options: {
+  readonly game: Game;
   readonly players: readonly Player[];
   readonly monsters: readonly Monster[];
   readonly lastPlayerActions: ReadonlyMap<number, CombatAction>;

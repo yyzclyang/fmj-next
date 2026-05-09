@@ -74,11 +74,17 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
     agility,
     spirit,
     luck,
+    buff: BuffMan.fromRoundAndMask(0, buffer[offset + 0x21] ?? 0),
     fightingSprite: datLib.createFightingSprite(ResourceType.PIC, index),
     headImage: index > 0 ? datLib.getImage(ResourceType.PIC, 1, index) : null,
     levelUpChain: datLib.getLevelUpChain(index),
     exp: readUint16(buffer, offset + 0x32),
     equipment,
+    attackStatusRounds: buffer[offset + 0x39] ?? 0,
+    attackStatusMask: buffer[offset + 0x22] ?? 0,
+    coopMagicIndex: buffer[offset + 0x23] ?? 0,
+    hpPerRound: buffer[offset + 0x24] ?? 0,
+    mpPerRound: buffer[offset + 0x25] ?? 0,
   };
 
   return new Player(data);

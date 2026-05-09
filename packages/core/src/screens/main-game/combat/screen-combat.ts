@@ -289,7 +289,7 @@ export class ScreenCombat extends BaseScreen {
   }
 
   private confirmCoopAction(monster: Monster): void {
-    const action = createCoopPlayerAction(this.session.players, this.currentPlayer, monster, this.session.monsters);
+    const action = createCoopPlayerAction(this.game, this.session.players, this.currentPlayer, monster, this.session.monsters);
     if (!action) return;
     this.actionQueue.clearAndRestoreItems();
     this.actionQueue.push(action);
@@ -397,6 +397,7 @@ export class ScreenCombat extends BaseScreen {
 
   private repeatLastActions(): void {
     const actions = createRepeatedPlayerActions({
+      game: this.game,
       players: this.session.players,
       monsters: this.session.monsters,
       lastPlayerActions: this.lastPlayerActions,

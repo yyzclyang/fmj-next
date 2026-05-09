@@ -1,7 +1,7 @@
 import type { Monster, Player } from '@/characters';
 import type { CombatAction, CoopAction } from '@/combat/combat-actions';
-import { GoodsDecorations } from '@/goods';
-import type { MagicAttack } from '@/magic';
+import type { Game } from '@/game/game';
+import { MagicAttack } from '@/magic';
 import { getAvailableCoopPlayers } from './combat-targeting';
 
 export interface QueuedCoopAction {
@@ -13,12 +13,14 @@ export function canSelectCoopTarget(players: readonly Player[], currentPlayer: P
   return getAvailableCoopPlayers(players, currentPlayer).length > 1;
 }
 
-export function getCombatCoopMagic(player: Player): MagicAttack | null {
-  const decoration = player.equipment[0] ?? null;
-  return decoration instanceof GoodsDecorations ? decoration.coopMagic : null;
+export function getCombatCoopMagic(game: Game, player: Player): MagicAttack | null {
+  if (player.coopMagicIndex <= 0) return null;
+  const magic = game.datLib.getMagic(1, player.coopMagicIndex);
+  return magic instanceof MagicAttack ? magic : null;
 }
 
 export function createCoopPlayerAction(
+  game: Game,
   players: readonly Player[],
   currentPlayer: Player | null,
   monster: Monster,
@@ -26,10 +28,11 @@ export function createCoopPlayerAction(
 ): CoopAction | null {
   const actors = getAvailableCoopPlayers(players, currentPlayer);
   if (actors.length <= 1) return null;
-  return createCoopAction(actors, monster, monsters, false);
+  return createCoopAction(game, actors, monster, monsters, false);
 }
 
 export function createRepeatedCoopAction(options: {
+  readonly game: Game;
   readonly players: readonly Player[];
   readonly monsters: readonly Monster[];
   readonly alivePlayers: readonly Player[];
@@ -40,13 +43,19 @@ export function createRepeatedCoopAction(options: {
   if (!first) return null;
   const firstAction = options.lastPlayerActions.get(first.index);
   if (firstAction?.kind !== 'coop' || options.alivePlayers.length < 2) return null;
-  const action = createCoopAction(options.alivePlayers, options.monster, options.monsters, firstAction.targetAll);
+  const action = createCoopAction(options.game, options.alivePlayers, options.monster, options.monsters, firstAction.targetAll);
   return { action, rememberIndexes: options.alivePlayers.map(player => options.players.indexOf(player)).filter(index => index >= 0) };
 }
 
-function createCoopAction(actors: readonly Player[], monster: Monster, monsters: readonly Monster[], targetAll: boolean): CoopAction {
+function createCoopAction(
+  game: Game,
+  actors: readonly Player[],
+  monster: Monster,
+  monsters: readonly Monster[],
+  targetAll: boolean
+): CoopAction {
   const first = actors[0]!;
-  const magic = getCombatCoopMagic(first);
+  const magic = getCombatCoopMagic(game, first);
   return {
     kind: 'coop',
     actor: first,

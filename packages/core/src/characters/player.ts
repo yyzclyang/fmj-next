@@ -1,7 +1,7 @@
 import { KeyCode } from '@/shared/key-code';
 import type { Direction } from './character';
 import { FightingCharacter, type FightingCharacterData } from './fighting-character';
-import { type GoodsEquipment, GoodsWeapon } from '@/goods';
+import { GoodsDecorations, type GoodsEquipment, GoodsWeapon } from '@/goods';
 import type { ResImage } from '@/lib/res-image';
 import type { BaseMagic } from '@/magic';
 import type { ResLevelUpChain } from './res-level-up-chain';
@@ -18,6 +18,11 @@ export interface PlayerData extends FightingCharacterData {
   readonly levelUpChain: ResLevelUpChain | null;
   readonly exp: number;
   readonly equipment: Array<GoodsEquipment | null>;
+  readonly attackStatusRounds: number;
+  readonly attackStatusMask: number;
+  readonly coopMagicIndex: number;
+  readonly hpPerRound: number;
+  readonly mpPerRound: number;
 }
 
 export class Player extends FightingCharacter {
@@ -25,6 +30,11 @@ export class Player extends FightingCharacter {
   levelUpChain: ResLevelUpChain | null;
   exp: number;
   readonly equipment: Array<GoodsEquipment | null>;
+  attackStatusRounds: number;
+  attackStatusMask: number;
+  coopMagicIndex: number;
+  hpPerRound: number;
+  mpPerRound: number;
   private readonly privateLearntMagics: BaseMagic[] = [];
 
   constructor(data: PlayerData) {
@@ -33,6 +43,12 @@ export class Player extends FightingCharacter {
     this.levelUpChain = data.levelUpChain;
     this.exp = data.exp;
     this.equipment = data.equipment;
+    this.attackStatusRounds = data.attackStatusRounds;
+    this.attackStatusMask = data.attackStatusMask;
+    this.coopMagicIndex = data.coopMagicIndex;
+    this.hpPerRound = data.hpPerRound;
+    this.mpPerRound = data.mpPerRound;
+    this.syncAttackStatusBuff();
   }
 
   getAllLearntMagics(): BaseMagic[] {
@@ -106,6 +122,18 @@ export class Player extends FightingCharacter {
         return this.spirit;
       case 8:
         return this.luck;
+      case 9:
+        return this.attackStatusRounds;
+      case 10:
+        return this.buff.toMask();
+      case 11:
+        return this.attackStatusMask;
+      case 12:
+        return this.coopMagicIndex;
+      case 13:
+        return this.hpPerRound;
+      case 14:
+        return this.mpPerRound;
       case 15:
         return this.equipment[7]?.index ?? 0;
       case 16:
@@ -160,6 +188,24 @@ export class Player extends FightingCharacter {
       case 8:
         this.luck = value;
         return;
+      case 9:
+        this.setAttackStatusRounds(value);
+        return;
+      case 10:
+        this.buff.setMask(toUint8(value), 0);
+        return;
+      case 11:
+        this.setAttackStatusMask(value);
+        return;
+      case 12:
+        this.coopMagicIndex = toUint8(value);
+        return;
+      case 13:
+        this.hpPerRound = toUint8(value);
+        return;
+      case 14:
+        this.mpPerRound = toUint8(value);
+        return;
       case 15:
         this.maxHp = value;
         return;
@@ -202,6 +248,9 @@ export class Player extends FightingCharacter {
         return;
       case 8:
         this.luck += value;
+        return;
+      case 9:
+        this.setAttackStatusRounds(this.attackStatusRounds + value);
         return;
       case 10:
         this.maxHp += value;
@@ -273,22 +322,58 @@ export class Player extends FightingCharacter {
   }
 
   private applyEquipmentEffect(equipment: GoodsEquipment, sign: 1 | -1): void {
-    this.maxMp += equipment.mpMax * sign;
-    this.maxHp += equipment.hpMax * sign;
+    if (!(equipment instanceof GoodsDecorations)) {
+      this.maxMp += equipment.mpMax * sign;
+      this.maxHp += equipment.hpMax * sign;
+    }
     this.defense += equipment.defense * sign;
     this.attack += equipment.attack * sign;
     this.spirit += equipment.spirit * sign;
     this.agility += equipment.agility * sign;
     this.luck += equipment.luck * sign;
     if (equipment instanceof GoodsWeapon) {
-      this.atbuff.clearBuff(0xff);
-      if (sign > 0) this.atbuff.addBuff(equipment.bitEffect, equipment.sumRound);
+      if (sign > 0) {
+        this.attackStatusMask = toUint8(equipment.bitEffect);
+        this.attackStatusRounds = toUint8(equipment.sumRound);
+      } else {
+        this.attackStatusMask = 0;
+        this.attackStatusRounds = 0;
+      }
+      this.syncAttackStatusBuff();
+      return;
+    }
+    if (equipment instanceof GoodsDecorations) {
+      this.hpPerRound += equipment.hp * sign;
+      this.mpPerRound += equipment.mp * sign;
+      this.coopMagicIndex = sign > 0 ? equipment.coopMagic?.index ?? 0 : 0;
       return;
     }
 
     if (sign > 0) this.buff.addBuff(equipment.bitEffect, 0);
     else this.buff.delBuff(equipment.bitEffect);
   }
+
+  private setAttackStatusRounds(value: number): void {
+    this.attackStatusRounds = toUint8(value);
+    this.syncAttackStatusBuff();
+  }
+
+  private setAttackStatusMask(value: number): void {
+    this.attackStatusMask = toUint8(value);
+    this.syncAttackStatusBuff();
+  }
+
+  syncScriptAttributes(): void {
+    this.syncAttackStatusBuff();
+  }
+
+  private syncAttackStatusBuff(): void {
+    this.atbuff.setMask(this.attackStatusMask, this.attackStatusRounds);
+  }
+}
+
+function toUint8(value: number): number {
+  return value & 0xff;
 }
 
 export function mapDirection(value: number): Direction {

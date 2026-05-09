@@ -69,6 +69,7 @@ const NPC_WALK_INTERVAL = 500;
 const ACTIVE_POSE_INTERVAL = 100;
 const MOVIE_BASE_WIDTH = 160;
 const MOVIE_BASE_HEIGHT = 96;
+const WALL_WALKING_BOUNDARY_OFFSET = 4;
 
 export interface MovieParams {
   readonly type: number;
@@ -724,7 +725,35 @@ export class MainSceneRuntime {
   }
 
   private canPlayerStepTo(x: number, y: number): boolean {
+    const map = this.currentMapValue;
+    if (!map || !this.isWithinBypassBounds(x, y, map)) return false;
+    if (this.canPlayerWalkNormally(x, y)) return true;
+    if (this.hasSceneObjectAt(x, y)) return false;
+    return this.game.state.allowWallWalking || this.isPlayerStuck();
+  }
+
+  private canPlayerWalkNormally(x: number, y: number): boolean {
     return this.currentMapValue?.canPlayerWalk(x, y) === true && !this.hasSceneObjectAt(x, y);
+  }
+
+  private isPlayerStuck(): boolean {
+    const x = this.playerMapXValue;
+    const y = this.playerMapYValue;
+    return (
+      !this.canPlayerWalkNormally(x - 1, y) &&
+      !this.canPlayerWalkNormally(x + 1, y) &&
+      !this.canPlayerWalkNormally(x, y - 1) &&
+      !this.canPlayerWalkNormally(x, y + 1)
+    );
+  }
+
+  private isWithinBypassBounds(x: number, y: number, map: ResMap): boolean {
+    return (
+      x >= -WALL_WALKING_BOUNDARY_OFFSET &&
+      x < map.mapWidth + WALL_WALKING_BOUNDARY_OFFSET &&
+      y >= -WALL_WALKING_BOUNDARY_OFFSET &&
+      y < map.mapHeight + WALL_WALKING_BOUNDARY_OFFSET
+    );
   }
 
   private hasSceneObjectAt(x: number, y: number): boolean {

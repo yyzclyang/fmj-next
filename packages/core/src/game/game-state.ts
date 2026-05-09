@@ -32,6 +32,8 @@ export interface GameState {
   disableSave: boolean;
   allowFightMiss: boolean;
   allowTossArm: boolean;
+  allowWallWalking: boolean;
+  useOriginalDamageFormula: boolean;
   showPosition: boolean;
   screenRed: number;
   screenAlpha: number;
@@ -59,7 +61,9 @@ export function createInitialGameState(): GameState {
     disableSave: false,
     allowFightMiss: false,
     allowTossArm: true,
-    showPosition: false,
+    allowWallWalking: false,
+    useOriginalDamageFormula: true,
+    showPosition: true,
     screenRed: 0,
     screenAlpha: 0,
   };

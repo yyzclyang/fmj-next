@@ -22,6 +22,7 @@ import { ScreenActorState } from './screen-actor-state';
 import { ScreenActorWearing } from './screen-actor-wearing';
 import { ScreenChangeEquipment } from './screen-change-equipment';
 import { ScreenDiscardGoods } from './screen-discard-goods';
+import { ScreenGameSettings } from './screen-game-settings';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from './screen-goods-list';
 import { ScreenMagic } from './screen-magic';
 import { ScreenMenuGoods, type GoodsMenuItem } from './screen-menu-goods';
@@ -166,6 +167,8 @@ export class ScreenGameMainMenu extends BaseScreen {
         return;
       }
       case '游戏设置':
+        this.openChildScreen(new ScreenGameSettings(this.game));
+        return;
       case '结束游戏':
         this.finishMenuAction(`确认系统菜单:${item}`);
         return;

@@ -23,7 +23,7 @@ import {
   SCRIPT_VARIABLE_COUNT,
   type GameState,
 } from './game-state';
-import type { GameEngineOptions } from './game-engine-options';
+import type { GameEngineOptions, MagicDamageFormula } from './game-engine-options';
 import {
   createSavePayload,
   CORRUPT_SAVE_MESSAGE,
@@ -54,6 +54,7 @@ export class Game {
   constructor(host: EngineHost, datLibBuffer: Uint8Array, engineOptions: GameEngineOptions = {}) {
     this.host = host;
     this.engineOptions = engineOptions;
+    this.state = this.createInitialState();
     this.datLib = new DatLib(datLibBuffer);
   }
 
@@ -63,6 +64,10 @@ export class Game {
 
   get bag(): GoodsBag {
     return new GoodsBag(this.state.goods, this.datLib);
+  }
+
+  get magicDamageFormula(): MagicDamageFormula {
+    return this.state.useOriginalDamageFormula ? 'original' : 'simplified';
   }
 
   getStateSnapshot(): GameState {
@@ -118,7 +123,7 @@ export class Game {
     this.boxEventMap.clear();
     this.pendingBoxEventKey = null;
     this.combat.reset();
-    this.state = createInitialGameState();
+    this.state = this.createInitialState();
     this.replaceWithMainScene();
     this.mainSceneRuntime?.startChapter(1 /* 开场章节类型。 */, 1 /* 开场章节索引。 */);
   }
@@ -131,6 +136,12 @@ export class Game {
 
   requestExit(): void {
     this.host.requestExit?.();
+  }
+
+  private createInitialState(): GameState {
+    const state = createInitialGameState();
+    state.useOriginalDamageFormula = this.engineOptions.magicDamageFormula !== 'simplified';
+    return state;
   }
 
   applyLoadedState(

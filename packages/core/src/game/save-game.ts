@@ -46,7 +46,9 @@ export interface SaveGameState {
   mainScene: MainSceneRuntimeSnapshot | null;
   allowFightMiss: boolean;
   allowTossArm: boolean;
-  showPosition?: boolean;
+  allowWallWalking: boolean;
+  useOriginalDamageFormula: boolean;
+  showPosition: boolean;
   screenRed?: number;
   screenAlpha?: number;
 }
@@ -120,6 +122,8 @@ export function createSavePayload(
       mainScene,
       allowFightMiss: state.allowFightMiss,
       allowTossArm: state.allowTossArm,
+      allowWallWalking: state.allowWallWalking,
+      useOriginalDamageFormula: state.useOriginalDamageFormula,
       showPosition: state.showPosition,
       screenRed: state.screenRed,
       screenAlpha: state.screenAlpha,
@@ -202,7 +206,9 @@ export function toLoadedGameState(payload: SaveGamePayload): GameState {
     disableSave: state.disableSave ?? false,
     allowFightMiss: state.allowFightMiss ?? false,
     allowTossArm: state.allowTossArm ?? true,
-    showPosition: state.showPosition ?? false,
+    allowWallWalking: state.allowWallWalking,
+    useOriginalDamageFormula: state.useOriginalDamageFormula,
+    showPosition: state.showPosition,
     screenRed: state.screenRed ?? 0,
     screenAlpha: state.screenAlpha ?? 0,
   };
@@ -225,7 +231,10 @@ function isSavePayloadShape(value: unknown): value is SaveGamePayload {
     isStringArray(state.collectedBoxKeys) &&
     Array.isArray(state.players) &&
     isNumberArray(state.partyActorIds) &&
-    isGoodsArray(state.goods)
+    isGoodsArray(state.goods) &&
+    typeof state.allowWallWalking === 'boolean' &&
+    typeof state.useOriginalDamageFormula === 'boolean' &&
+    typeof state.showPosition === 'boolean'
   );
 }
 

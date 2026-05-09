@@ -299,10 +299,11 @@ export class ScreenMainGame extends BaseScreen {
   }
 
   private drawMapInfo(surface: Surface): void {
+    if (!this.game.state.showPosition) return;
     const mapName = this.game.state.sceneName || this.runtime.currentMap?.mapName || 'Map';
     TextRender.drawText(surface, mapName, MAP_INFO_LEFT, MAP_INFO_TOP);
 
-    if (!this.runtime.hasPlayer || !this.game.state.showPosition) return;
+    if (!this.runtime.hasPlayer) return;
     TextRender.drawText(
       surface,
       `${this.runtime.playerMapX},${this.runtime.playerMapY}`,

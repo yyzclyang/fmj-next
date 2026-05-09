@@ -168,6 +168,7 @@ export class MainSceneRuntime {
   createSnapshot(): MainSceneRuntimeSnapshot {
     const blockedMessage = this.getSaveBlockedMessage();
     if (blockedMessage) throw new Error(blockedMessage);
+    this.syncVisiblePlayer();
     return {
       scriptProcess: this.scriptProcess?.createSnapshot() ?? null,
       combat: this.game.combat.createSnapshot(),

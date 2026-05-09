@@ -161,6 +161,7 @@ export class Game {
     } else {
       this.mainSceneRuntime?.startChapter(this.state.scriptType, this.state.scriptIndex);
     }
+    this.state.sceneName = state.sceneName;
   }
 
   gainGoods(type: number, index: number, count = 1): BaseGoods | null {

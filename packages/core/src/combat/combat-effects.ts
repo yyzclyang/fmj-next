@@ -8,6 +8,7 @@ import {
   BUFF_INDEX_GONG,
   BUFF_INDEX_MIAN,
   BUFF_INDEX_SU,
+  BUFF_MASK_ALL,
   BUFF_MASK_DU,
   BUFF_MASK_FENG,
   BUFF_MASK_LUAN,
@@ -59,7 +60,9 @@ export function calcPhysicalDamage(attacker: FightingCharacter, target: Fighting
   const randomShift = targetIsPlayer ? 4 : 2;
   const base = Math.trunc(attack / ((defense >> defenseShift) + 1));
   const random = Math.trunc(Math.random() * ((attack >> randomShift) + 1));
-  return Math.max(1, base + random);
+  let damage = base + random;
+  if (targetIsPlayer && hasSpecialDamageReduction(target)) damage >>= 1;
+  return Math.max(1, damage);
 }
 
 export function randomMiss(attacker: FightingCharacter, target: FightingCharacter, enabled: boolean, allowMiss = true): boolean {
@@ -155,9 +158,14 @@ function calcHpMagicEffectOriginal(src: FightingCharacter, dst: FightingCharacte
   damage += src.spirit * (damage >> 6);
   damage -= dst.spirit * (damage >> 6);
   if (damage > 0) damage += (Math.trunc(Math.random() * 1000) % damage) >> 4;
+  if (damage > 0 && hasSpecialDamageReduction(dst)) damage -= damage >> 2;
   if (damage > dst.hp) damage = dst.hp;
   // Kotlin 原版会保留被目标灵力修正成负数的结果，后续按吸收效果处理。
   return Math.max(damage, damage > 0 ? 1 : damage);
+}
+
+function hasSpecialDamageReduction(target: FightingCharacter): boolean {
+  return target instanceof Player && target.buff.hasBuff(BUFF_MASK_ALL);
 }
 
 function calcHpMagicEffectSimplified(src: FightingCharacter, dst: FightingCharacter, base: number): number {

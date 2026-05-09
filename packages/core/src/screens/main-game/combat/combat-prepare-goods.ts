@@ -8,7 +8,7 @@ import {
   noPreparedAction,
   preparedAction,
 } from './combat-action-preparer-types';
-import { getAnimationPoint, getGoodsUseAnimation, restoreActionGoods } from './combat-action-utils';
+import { getGoodsAnimationPoint, getGoodsUseAnimation, restoreActionGoods } from './combat-action-utils';
 import { captureFighterStates, createRaiseAnimations } from './combat-post-action';
 import { getFirstAliveMonster, getRandomAlivePlayer } from './combat-targeting';
 
@@ -30,7 +30,7 @@ export function prepareThrowItemAction(ctx: CombatPrepareContext, action: ThrowI
     actor: action.actor,
     targets: finalTargets,
     srs: action.goods.animation,
-    srsPoint: getAnimationPoint(finalTargets, action.targetAll),
+    srsPoint: getGoodsAnimationPoint(finalTargets, action.targetAll),
     raises: createRaiseAnimations(ctx.game, before, finalTargets),
     hitTargets: true,
   });
@@ -58,7 +58,7 @@ export function prepareUseItemAction(ctx: CombatPrepareContext, action: UseItemA
     actor: action.actor,
     targets: finalTargets,
     srs: getGoodsUseAnimation(ctx.game, action.goods),
-    srsPoint: getAnimationPoint(finalTargets, action.targetAll),
+    srsPoint: getGoodsAnimationPoint(finalTargets, action.targetAll),
     raises: createRaiseAnimations(ctx.game, before, finalTargets),
     hitTargets: false,
   });

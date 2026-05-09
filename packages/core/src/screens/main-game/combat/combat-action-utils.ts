@@ -30,6 +30,13 @@ export function getAnimationPoint(targets: readonly FightingCharacter[], _isAll:
   return sprite ? { x: sprite.combatX, y: sprite.combatY - Math.trunc(sprite.height / 2) } : { x: 0, y: 0 };
 }
 
+export function getGoodsAnimationPoint(targets: readonly FightingCharacter[], isAll: boolean): CombatPoint {
+  const target = targets[0];
+  const sprite = target?.fightingSprite;
+  if (!sprite) return { x: 0, y: 0 };
+  return { x: sprite.combatX, y: isAll ? sprite.combatY - Math.trunc(sprite.height / 2) : sprite.combatY };
+}
+
 export function getGoodsUseAnimation(game: Game, goods: CombatMedicineGoods): ResSrs | null {
   return goods instanceof GoodsMedicine ? goods.animation : game.datLib.getSrs(2, 1);
 }

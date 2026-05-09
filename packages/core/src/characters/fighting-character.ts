@@ -1,5 +1,5 @@
 import { Character, type CharacterData } from './character';
-import { BuffMan } from './buff';
+import { StatusSet } from './status';
 import type { FightingSprite } from './fighting-sprite';
 import type { ResMagicChain } from '@/magic';
 
@@ -16,9 +16,9 @@ export interface FightingCharacterData extends CharacterData {
   readonly agility: number;
   readonly spirit: number;
   readonly luck: number;
-  readonly buff: BuffMan;
-  readonly debuff: BuffMan;
-  readonly atbuff: BuffMan;
+  readonly immuneStatuses: StatusSet;
+  readonly activeStatuses: StatusSet;
+  readonly onHitStatuses: StatusSet;
   readonly fightingSprite: FightingSprite | null;
 }
 
@@ -35,9 +35,9 @@ export abstract class FightingCharacter extends Character {
   agility: number;
   spirit: number;
   luck: number;
-  buff: BuffMan;
-  debuff: BuffMan;
-  atbuff: BuffMan;
+  immuneStatuses: StatusSet;
+  activeStatuses: StatusSet;
+  onHitStatuses: StatusSet;
   fightingSprite: FightingSprite | null;
 
   protected constructor(data: FightingCharacterData) {
@@ -54,9 +54,9 @@ export abstract class FightingCharacter extends Character {
     this.agility = data.agility;
     this.spirit = data.spirit;
     this.luck = data.luck;
-    this.buff = data.buff;
-    this.debuff = data.debuff;
-    this.atbuff = data.atbuff;
+    this.immuneStatuses = data.immuneStatuses;
+    this.activeStatuses = data.activeStatuses;
+    this.onHitStatuses = data.onHitStatuses;
     this.fightingSprite = data.fightingSprite;
   }
 

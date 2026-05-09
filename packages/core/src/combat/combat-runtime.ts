@@ -313,7 +313,7 @@ export class CombatRuntime {
       const pos = PLAYER_POS[Math.min(i, PLAYER_POS.length - 1)]!;
       const sprite = player.fightingSprite;
       if (!sprite) throw new Error(`角色缺少战斗图: ${player.name}`);
-      player.debuff.clearBuff(0xff);
+      player.activeStatuses.clearStatuses(0xff);
       sprite.setCombatPos(pos.x, pos.y);
       sprite.currentFrame = player.hp <= 0 ? 12 : player.hp < player.maxHp / 4 ? 11 : 1;
     });
@@ -321,7 +321,7 @@ export class CombatRuntime {
     session.monsters.forEach((monster, i) => {
       monster.hp = monster.maxHp;
       monster.mp = monster.maxMp;
-      monster.debuff.clearBuff(0xff);
+      monster.activeStatuses.clearStatuses(0xff);
       const sprite = monster.fightingSprite;
       if (!sprite) throw new Error(`怪物缺少战斗图: ${monster.name}`);
       const posIndex = session.monsters.length === 1 ? 1 : i;

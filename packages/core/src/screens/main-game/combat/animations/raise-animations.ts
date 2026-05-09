@@ -1,11 +1,11 @@
 import {
-  BUFF_MASK_DU,
-  BUFF_MASK_FANG,
-  BUFF_MASK_FENG,
-  BUFF_MASK_GONG,
-  BUFF_MASK_LUAN,
-  BUFF_MASK_MIAN,
-  BUFF_MASK_SU,
+  STATUS_MASK_POISON,
+  STATUS_MASK_DEFENSE,
+  STATUS_MASK_SEAL,
+  STATUS_MASK_ATTACK,
+  STATUS_MASK_CONFUSE,
+  STATUS_MASK_SLEEP,
+  STATUS_MASK_AGILITY,
 } from '@/combat/combat-constants';
 import type { FightingCharacter } from '@/characters';
 import type { Game } from '@/game/game';
@@ -91,20 +91,20 @@ export class RaiseCombatAnimation implements CombatActionAnimation {
   private readonly smallNumImage: ResImage | null;
   private readonly srsList: ResSrs[] = [];
 
-  constructor(game: Game, private readonly x: number, private readonly y: number, private readonly hpDiff: number, buffMask: number) {
+  constructor(game: Game, private readonly x: number, private readonly y: number, private readonly hpDiff: number, statusMask: number) {
     this.showingNumber = hpDiff !== 0;
     this.signImage = hpDiff === 0 ? null : game.datLib.getImage(ResourceType.PIC, 2, hpDiff > 0 ? 6 : 7);
     this.smallNumImage = game.datLib.getImage(ResourceType.PIC, 2, 5);
     for (const item of [
-      { mask: BUFF_MASK_DU, srs: 243 },
-      { mask: BUFF_MASK_LUAN, srs: 244 },
-      { mask: BUFF_MASK_FENG, srs: 245 },
-      { mask: BUFF_MASK_MIAN, srs: 246 },
-      { mask: BUFF_MASK_GONG, srs: 240 },
-      { mask: BUFF_MASK_FANG, srs: 241 },
-      { mask: BUFF_MASK_SU, srs: 242 },
+      { mask: STATUS_MASK_POISON, srs: 243 },
+      { mask: STATUS_MASK_CONFUSE, srs: 244 },
+      { mask: STATUS_MASK_SEAL, srs: 245 },
+      { mask: STATUS_MASK_SLEEP, srs: 246 },
+      { mask: STATUS_MASK_ATTACK, srs: 240 },
+      { mask: STATUS_MASK_DEFENSE, srs: 241 },
+      { mask: STATUS_MASK_AGILITY, srs: 242 },
     ]) {
-      if ((buffMask & item.mask) === 0) continue;
+      if ((statusMask & item.mask) === 0) continue;
       const srs = game.datLib.getSrs(1, item.srs);
       if (!srs) continue;
       srs.start();

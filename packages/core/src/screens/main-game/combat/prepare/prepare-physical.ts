@@ -1,6 +1,6 @@
 import type { FightingCharacter, Monster, Player } from '@/characters';
 import type { AttackAction, CombatAction, CoopAction } from '@/combat/combat-actions';
-import { applyMagicAttack, applyAttackBuff, calcPhysicalDamage, isSleeping, spendMagicMp } from '@/combat/combat-effects';
+import { applyMagicAttack, applyOnHitStatuses, calcPhysicalDamage, isSleeping, spendMagicMp } from '@/combat/combat-effects';
 import {
   CoopCombatAnimation,
   FleeCombatAnimation,
@@ -44,7 +44,7 @@ export function prepareAttackAction(ctx: CombatPrepareContext, action: AttackAct
   const damage = missed ? 0 : calcPhysicalDamage(action.actor, action.target, targetIsPlayer, targetIsDefending);
   if (!missed) {
     action.target.hp = Math.max(0, action.target.hp - damage);
-    applyAttackBuff(action.actor, action.target);
+    applyOnHitStatuses(action.actor, action.target);
   }
   const animation = new PhysicalCombatAnimation({
     actor: action.actor,
@@ -75,7 +75,7 @@ export function prepareAttackAllAction(ctx: CombatPrepareContext, action: Combat
       targetIsPlayer && ctx.session.isPlayerDefending(target as Player)
     );
     target.hp = Math.max(0, target.hp - damage);
-    applyAttackBuff(action.actor, target);
+    applyOnHitStatuses(action.actor, target);
   }
   const animation = new PhysicalCombatAnimation({
     actor: action.actor,
@@ -119,7 +119,7 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
         }
         const damage = Math.trunc(calcPhysicalDamage(actor, target, false) * 1.6);
         target.hp = Math.max(0, target.hp - damage);
-        applyAttackBuff(actor, target);
+        applyOnHitStatuses(actor, target);
       }
     }
     ctx.setMessage(`${actors[0]!.name}等合击`);

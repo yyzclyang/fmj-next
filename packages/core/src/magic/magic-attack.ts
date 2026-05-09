@@ -5,7 +5,7 @@ export interface MagicAttackData extends BaseMagicData {
   readonly affectMp: number;
   readonly defensePercent: number;
   readonly attackPercent: number;
-  readonly buffMask: number;
+  readonly statusMask: number;
   readonly agilityPercent: number;
 }
 
@@ -14,7 +14,7 @@ export class MagicAttack extends BaseMagic {
   affectMp: number;
   defensePercent: number;
   attackPercent: number;
-  buffMask: number;
+  statusMask: number;
   agilityPercent: number;
 
   constructor(data: MagicAttackData) {
@@ -23,7 +23,7 @@ export class MagicAttack extends BaseMagic {
     this.affectMp = data.affectMp;
     this.defensePercent = data.defensePercent;
     this.attackPercent = data.attackPercent;
-    this.buffMask = data.buffMask;
+    this.statusMask = data.statusMask;
     this.agilityPercent = data.agilityPercent;
   }
 }

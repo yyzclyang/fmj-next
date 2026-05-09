@@ -1,5 +1,5 @@
 import {
-  BuffMan,
+  StatusSet,
   CharacterState,
   Monster,
   Npc,
@@ -74,14 +74,14 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
     agility,
     spirit,
     luck,
-    buff: BuffMan.fromRoundAndMask(0, buffer[offset + 0x21] ?? 0),
+    immuneStatuses: StatusSet.fromRoundAndMask(0, buffer[offset + 0x21] ?? 0),
     fightingSprite: datLib.createFightingSprite(ResourceType.PIC, index),
     headImage: index > 0 ? datLib.getImage(ResourceType.PIC, 1, index) : null,
     levelUpChain: datLib.getLevelUpChain(index),
     exp: readUint16(buffer, offset + 0x32),
     equipment,
-    attackStatusRounds: buffer[offset + 0x39] ?? 0,
-    attackStatusMask: buffer[offset + 0x22] ?? 0,
+    onHitStatusRounds: buffer[offset + 0x39] ?? 0,
+    onHitStatusMask: buffer[offset + 0x22] ?? 0,
     coopMagicIndex: buffer[offset + 0x23] ?? 0,
     hpPerRound: buffer[offset + 0x24] ?? 0,
     mpPerRound: buffer[offset + 0x25] ?? 0,
@@ -112,10 +112,10 @@ function createMonster(datLib: DatLib, buffer: Uint8Array, offset: number): Mons
   const magicChain = magicIndex > 0 ? datLib.getMagicChain(magicIndex) : null;
   const learntMagicCount = buffer[offset + 2] ?? 0;
   if (magicChain) magicChain.learnNum = learntMagicCount;
-  const buff = new BuffMan();
-  buff.addBuff(buffer[offset + 3] ?? 0, 0);
-  const atbuff = new BuffMan();
-  atbuff.addBuff(buffer[offset + 4] ?? 0, buffer[offset + 0x17] ?? 0);
+  const immuneStatuses = new StatusSet();
+  immuneStatuses.addStatuses(buffer[offset + 3] ?? 0, 0);
+  const onHitStatuses = new StatusSet();
+  onHitStatuses.addStatuses(buffer[offset + 4] ?? 0, buffer[offset + 0x17] ?? 0);
 
   const data: MonsterData = {
     ...createFightingCharacterDefaults({
@@ -141,9 +141,9 @@ function createMonster(datLib: DatLib, buffer: Uint8Array, offset: number): Mons
     mp: readUint16(buffer, offset + 0x1e),
     attack: readUint16(buffer, offset + 0x20),
     defense: readUint16(buffer, offset + 0x22),
-    buff,
-    debuff: new BuffMan(),
-    atbuff,
+    immuneStatuses,
+    activeStatuses: new StatusSet(),
+    onHitStatuses,
     fightingSprite: datLib.createFightingSprite(ResourceType.ACP, buffer[offset + 0x2e] ?? 0),
     iq: buffer[offset + 0x15] ?? 0,
     money: readUint16(buffer, offset + 0x24),
@@ -195,9 +195,9 @@ function createFightingCharacterDefaults(characterData: CharacterData): Fighting
     agility: 0,
     spirit: 0,
     luck: 0,
-    buff: new BuffMan(),
-    debuff: new BuffMan(),
-    atbuff: new BuffMan(),
+    immuneStatuses: new StatusSet(),
+    activeStatuses: new StatusSet(),
+    onHitStatuses: new StatusSet(),
     fightingSprite: null,
   };
 }

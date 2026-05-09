@@ -3,54 +3,54 @@ import { GoodsHiddenWeapon } from '@/goods';
 import type { MagicDamageFormula } from '@/game/game-engine-options';
 import { type BaseMagic, MagicAttack, MagicAuxiliary, MagicEnhance, MagicRestore } from '@/magic';
 import {
-  BUFF_INDEX_DU,
-  BUFF_INDEX_FANG,
-  BUFF_INDEX_GONG,
-  BUFF_INDEX_MIAN,
-  BUFF_INDEX_SU,
-  BUFF_MASK_ALL,
-  BUFF_MASK_DU,
-  BUFF_MASK_FENG,
-  BUFF_MASK_LUAN,
-  BUFF_MASK_MIAN,
+  STATUS_INDEX_POISON,
+  STATUS_INDEX_DEFENSE,
+  STATUS_INDEX_ATTACK,
+  STATUS_INDEX_SLEEP,
+  STATUS_INDEX_AGILITY,
+  STATUS_MASK_ALL,
+  STATUS_MASK_POISON,
+  STATUS_MASK_SEAL,
+  STATUS_MASK_CONFUSE,
+  STATUS_MASK_SLEEP,
 } from './combat-constants';
 import type { CombatHelpMagic, CombatThrowableGoods } from './combat-actions';
 
-export function hasDebuff(actor: FightingCharacter, mask: number): boolean {
-  return actor.debuff.hasBuff(mask);
+export function hasActiveStatus(actor: FightingCharacter, mask: number): boolean {
+  return actor.activeStatuses.hasStatus(mask);
 }
 
 export function isPoisoned(actor: FightingCharacter): boolean {
-  return hasDebuff(actor, BUFF_MASK_DU);
+  return hasActiveStatus(actor, STATUS_MASK_POISON);
 }
 
 export function isConfusing(actor: FightingCharacter): boolean {
-  return hasDebuff(actor, BUFF_MASK_LUAN);
+  return hasActiveStatus(actor, STATUS_MASK_CONFUSE);
 }
 
 export function isSealed(actor: FightingCharacter): boolean {
-  return hasDebuff(actor, BUFF_MASK_FENG);
+  return hasActiveStatus(actor, STATUS_MASK_SEAL);
 }
 
 export function isSleeping(actor: FightingCharacter): boolean {
-  return hasDebuff(actor, BUFF_MASK_MIAN);
+  return hasActiveStatus(actor, STATUS_MASK_SLEEP);
 }
 
 export function getComputedAgility(actor: FightingCharacter): number {
-  return actor.agility + Math.trunc((actor.agility * getBuffValue(actor, BUFF_INDEX_SU)) / 100);
+  return actor.agility + Math.trunc((actor.agility * getStatusValue(actor, STATUS_INDEX_AGILITY)) / 100);
 }
 
 export function getComputedAttack(actor: FightingCharacter): number {
-  return actor.attack + Math.trunc((actor.attack * getBuffValue(actor, BUFF_INDEX_GONG)) / 100);
+  return actor.attack + Math.trunc((actor.attack * getStatusValue(actor, STATUS_INDEX_ATTACK)) / 100);
 }
 
 export function getComputedDefense(actor: FightingCharacter): number {
-  return actor.defense + Math.trunc((actor.defense * getBuffValue(actor, BUFF_INDEX_FANG)) / 100);
+  return actor.defense + Math.trunc((actor.defense * getStatusValue(actor, STATUS_INDEX_DEFENSE)) / 100);
 }
 
-export function decayFighterBuffs(actor: FightingCharacter): void {
-  actor.buff.decay();
-  actor.debuff.decay();
+export function decayFighterStatuses(actor: FightingCharacter): void {
+  actor.immuneStatuses.decay();
+  actor.activeStatuses.decay();
 }
 
 export function calcPhysicalDamage(
@@ -83,15 +83,15 @@ export function randomMiss(attacker: FightingCharacter, target: FightingCharacte
   return Math.trunc(Math.random() * 200) >= diff;
 }
 
-export function applyAttackBuff(attacker: FightingCharacter, target: FightingCharacter): void {
-  applyCombatBuff(target, attacker.atbuff, target.luck);
+export function applyOnHitStatuses(attacker: FightingCharacter, target: FightingCharacter): void {
+  applyCombatStatuses(target, attacker.onHitStatuses, target.luck);
 }
 
 export function applyThrownGoods(goods: CombatThrowableGoods, target: Monster): void {
   target.hp -= goods.affectHp;
   target.mp -= goods.affectMp;
   if (goods instanceof GoodsHiddenWeapon) {
-    applyCombatBuff(target, makeAttackBuff(goods.bitMask & 0x0f, goods.sumRound), 0);
+    applyCombatStatuses(target, makeStatusSet(goods.bitMask & 0x0f, goods.sumRound), 0);
   }
   if (target.hp < 0) target.hp = 0;
   if (target.mp < 0) target.mp = 0;
@@ -112,7 +112,7 @@ export function applyMagicAttack(
 ): void {
   applyHpMagicEffect(actor, target, calcHpMagicEffect(actor, target, magic.affectHp, formula, targetIsDefending));
   applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.affectMp, formula));
-  applyCombatBuff(target, makeAttackBuff(magic.buffMask & 0x0f, (magic.buffMask >> 4) & 0x0f), target.luck);
+  applyCombatStatuses(target, makeStatusSet(magic.statusMask & 0x0f, (magic.statusMask >> 4) & 0x0f), target.luck);
   applyAttributeMagicEffect(target, -magic.attackPercent, -magic.defensePercent, -magic.agilityPercent, 0);
 }
 
@@ -120,7 +120,7 @@ export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter
   if (magic instanceof MagicRestore) {
     if (!target.isAlive) return;
     if (magic.hp > 0) target.hp = Math.min(target.maxHp, target.hp + magic.hp);
-    target.debuff.clearBuff(magic.cureMask);
+    target.activeStatuses.clearStatuses(magic.cureMask);
     return;
   }
   if (magic instanceof MagicAuxiliary) {
@@ -130,7 +130,7 @@ export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter
     return;
   }
   if (magic instanceof MagicEnhance && target.isAlive) {
-    applyAttributeMagicEffect(target, magic.attackPercent, magic.defensePercent, magic.agilityPercent, magic.buffRound);
+    applyAttributeMagicEffect(target, magic.attackPercent, magic.defensePercent, magic.agilityPercent, magic.statusRound);
   }
 }
 
@@ -139,8 +139,8 @@ export function applyPoisonPostEffect(actor: FightingCharacter): void {
   actor.hp = actor.hp === 1 ? 0 : Math.trunc(actor.hp * 0.75);
 }
 
-function getBuffValue(actor: FightingCharacter, index: number): number {
-  return actor.debuff.buffs[index]?.value ?? 0;
+function getStatusValue(actor: FightingCharacter, index: number): number {
+  return actor.activeStatuses.slots[index]?.value ?? 0;
 }
 
 function calcHpMagicEffect(
@@ -177,7 +177,7 @@ function calcHpMagicEffectOriginal(
 }
 
 function hasSpecialDamageReduction(target: FightingCharacter, targetIsDefending: boolean): boolean {
-  return target instanceof Player && (targetIsDefending || target.buff.hasBuff(BUFF_MASK_ALL));
+  return target instanceof Player && (targetIsDefending || target.immuneStatuses.hasStatus(STATUS_MASK_ALL));
 }
 
 function calcHpMagicEffectSimplified(
@@ -251,49 +251,49 @@ function applyAttributeMagicEffect(
   agility: number,
   round: number
 ): void {
-  setDebuffPercent(target, BUFF_INDEX_GONG, attack, round);
-  setDebuffPercent(target, BUFF_INDEX_FANG, defense, round);
-  setDebuffPercent(target, BUFF_INDEX_SU, agility, round);
+  setAttributeStatusPercent(target, STATUS_INDEX_ATTACK, attack, round);
+  setAttributeStatusPercent(target, STATUS_INDEX_DEFENSE, defense, round);
+  setAttributeStatusPercent(target, STATUS_INDEX_AGILITY, agility, round);
 }
 
-function setDebuffPercent(target: FightingCharacter, index: number, value: number, round: number): void {
+function setAttributeStatusPercent(target: FightingCharacter, index: number, value: number, round: number): void {
   if (value === 0) return;
-  const buff = target.debuff.buffs[index];
-  if (!buff) throw new Error(`魔法设置状态失败，非法状态索引: ${index}`);
-  buff.value = value;
-  buff.round = round;
+  const status = target.activeStatuses.slots[index];
+  if (!status) throw new Error(`魔法设置状态失败，非法状态索引: ${index}`);
+  status.value = value;
+  status.round = round;
 }
 
-function makeAttackBuff(mask: number, round: number) {
+function makeStatusSet(mask: number, round: number) {
   return {
-    buffs: Array.from({ length: 8 }, (_, i) => ({
+    slots: Array.from({ length: 8 }, (_, i) => ({
       value: (mask & (1 << i)) !== 0 ? 1 : 0,
       round,
     })),
   };
 }
 
-function applyCombatBuff(target: FightingCharacter, src: { buffs: readonly { value: number; round: number }[] }, luck: number): void {
+function applyCombatStatuses(target: FightingCharacter, src: { slots: readonly { value: number; round: number }[] }, luck: number): void {
   const resist = Math.sqrt(Math.max(0, luck) / 100);
-  for (let i = BUFF_INDEX_MIAN; i <= BUFF_INDEX_DU; i += 1) {
+  for (let i = STATUS_INDEX_SLEEP; i <= STATUS_INDEX_POISON; i += 1) {
     if (Math.random() + 0.01 < resist) continue;
-    const attackBuff = src.buffs[i];
-    const immuneBuff = target.buff.buffs[i];
-    if (!attackBuff || !immuneBuff || immuneBuff.value !== 0 || attackBuff.value <= 0) continue;
-    const debuff = target.debuff.buffs[i];
-    if (!debuff) continue;
-    if (attackBuff.round === 0) {
-      debuff.value += 1;
+    const sourceStatus = src.slots[i];
+    const immuneStatus = target.immuneStatuses.slots[i];
+    if (!sourceStatus || !immuneStatus || immuneStatus.value !== 0 || sourceStatus.value <= 0) continue;
+    const activeStatus = target.activeStatuses.slots[i];
+    if (!activeStatus) continue;
+    if (sourceStatus.round === 0) {
+      activeStatus.value += 1;
     } else {
-      if (debuff.round === 0) debuff.value += 1;
-      debuff.round = Math.max(debuff.round, attackBuff.round);
+      if (activeStatus.round === 0) activeStatus.value += 1;
+      activeStatus.round = Math.max(activeStatus.round, sourceStatus.round);
     }
   }
-  for (let i = BUFF_INDEX_GONG; i <= BUFF_INDEX_SU; i += 1) {
-    const attackBuff = src.buffs[i];
-    const debuff = target.debuff.buffs[i];
-    if (!attackBuff || !debuff || attackBuff.value === 0) continue;
-    debuff.value = -attackBuff.value;
-    debuff.round = attackBuff.round;
+  for (let i = STATUS_INDEX_ATTACK; i <= STATUS_INDEX_AGILITY; i += 1) {
+    const sourceStatus = src.slots[i];
+    const activeStatus = target.activeStatuses.slots[i];
+    if (!sourceStatus || !activeStatus || sourceStatus.value === 0) continue;
+    activeStatus.value = -sourceStatus.value;
+    activeStatus.round = sourceStatus.round;
   }
 }

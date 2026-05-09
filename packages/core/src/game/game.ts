@@ -2,7 +2,7 @@ import { DatLib } from '@/lib/dat-lib';
 import { CombatRuntime } from '@/combat';
 import { BaseGoods, GoodsEquipment } from '@/goods';
 import { CharacterState, Player } from '@/characters';
-import type { BuffState } from '@/characters';
+import type { StatusSlot } from '@/characters';
 import { GoodsBag } from '@/goods/goods-bag';
 import { Surface } from '@/rendering/surface';
 import { type FrameBuffer, FRAME_HEIGHT, FRAME_WIDTH } from '@/rendering/frame-buffer';
@@ -395,15 +395,15 @@ export class Game {
     player.spirit = snapshot.spirit;
     player.luck = snapshot.luck;
     player.exp = snapshot.exp;
-    player.attackStatusRounds = snapshot.attackStatusRounds;
-    player.attackStatusMask = snapshot.attackStatusMask;
+    player.onHitStatusRounds = snapshot.onHitStatusRounds;
+    player.onHitStatusMask = snapshot.onHitStatusMask;
     player.coopMagicIndex = snapshot.coopMagicIndex;
     player.hpPerRound = snapshot.hpPerRound;
     player.mpPerRound = snapshot.mpPerRound;
     this.restorePlayerEquipment(player, snapshot.equipment);
     player.restorePrivateLearntMagics(snapshot.privateMagics.map(ref => this.getSaveMagic(ref)));
-    restoreBuffs(player.buff.buffs, snapshot.buff);
-    restoreBuffs(player.debuff.buffs, snapshot.debuff);
+    restoreStatusSlots(player.immuneStatuses.slots, snapshot.immuneStatuses);
+    restoreStatusSlots(player.activeStatuses.slots, snapshot.activeStatuses);
     player.syncScriptAttributes();
   }
 
@@ -427,13 +427,13 @@ export class Game {
   }
 }
 
-function restoreBuffs(target: BuffState[], source: readonly BuffState[]): void {
+function restoreStatusSlots(target: StatusSlot[], source: readonly StatusSlot[]): void {
   for (let i = 0; i < target.length; i += 1) {
-    const buff = target[i];
+    const slot = target[i];
     const saved = source[i];
-    if (!buff) continue;
-    buff.value = saved?.value ?? 0;
-    buff.round = saved?.round ?? 0;
+    if (!slot) continue;
+    slot.value = saved?.value ?? 0;
+    slot.round = saved?.round ?? 0;
   }
 }
 

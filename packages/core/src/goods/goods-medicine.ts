@@ -31,7 +31,7 @@ export class GoodsMedicine extends BaseGoods {
     if (!player.isAlive) return false;
     player.hp = Math.min(player.maxHp, player.hp + this.hp);
     player.mp = Math.min(player.maxMp, player.mp + this.mp);
-    player.debuff.clearBuff(this.bitMask);
+    player.activeStatuses.clearStatuses(this.bitMask);
     return true;
   }
 }

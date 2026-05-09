@@ -132,10 +132,10 @@ function drawSmallNum(surface: Surface, image: ResImage | null, num: number, lef
 
 function getImmunityText(player: Player): string {
   let text = '';
-  if ((player.buff.buffs[3]?.value ?? 0) > 0) text += '毒';
-  if ((player.buff.buffs[2]?.value ?? 0) > 0) text += '乱';
-  if ((player.buff.buffs[1]?.value ?? 0) > 0) text += '封';
-  if ((player.buff.buffs[0]?.value ?? 0) > 0) text += '眠';
+  if ((player.immuneStatuses.slots[3]?.value ?? 0) > 0) text += '毒';
+  if ((player.immuneStatuses.slots[2]?.value ?? 0) > 0) text += '乱';
+  if ((player.immuneStatuses.slots[1]?.value ?? 0) > 0) text += '封';
+  if ((player.immuneStatuses.slots[0]?.value ?? 0) > 0) text += '眠';
   return text || '无';
 }
 

@@ -1,12 +1,12 @@
 import type { Player } from '@/characters';
 import {
-  BUFF_INDEX_DU,
-  BUFF_INDEX_FANG,
-  BUFF_INDEX_FENG,
-  BUFF_INDEX_GONG,
-  BUFF_INDEX_LUAN,
-  BUFF_INDEX_MIAN,
-  BUFF_INDEX_SU,
+  STATUS_INDEX_POISON,
+  STATUS_INDEX_DEFENSE,
+  STATUS_INDEX_SEAL,
+  STATUS_INDEX_ATTACK,
+  STATUS_INDEX_CONFUSE,
+  STATUS_INDEX_SLEEP,
+  STATUS_INDEX_AGILITY,
 } from '@/combat/combat-constants';
 import type { Game } from '@/game/game';
 import type { ResImage } from '@/lib/res-image';
@@ -23,13 +23,13 @@ export interface CombatStatusUiState {
 }
 
 const STATUS_MARKERS = [
-  { index: BUFF_INDEX_GONG, ox: 9, isBool: false },
-  { index: BUFF_INDEX_FANG, ox: 25, isBool: false },
-  { index: BUFF_INDEX_SU, ox: 41, isBool: false },
-  { index: BUFF_INDEX_DU, ox: 57, isBool: true },
-  { index: BUFF_INDEX_LUAN, ox: 73, isBool: true },
-  { index: BUFF_INDEX_FENG, ox: 88, isBool: true },
-  { index: BUFF_INDEX_MIAN, ox: 104, isBool: true },
+  { index: STATUS_INDEX_ATTACK, ox: 9, isBool: false },
+  { index: STATUS_INDEX_DEFENSE, ox: 25, isBool: false },
+  { index: STATUS_INDEX_AGILITY, ox: 41, isBool: false },
+  { index: STATUS_INDEX_POISON, ox: 57, isBool: true },
+  { index: STATUS_INDEX_CONFUSE, ox: 73, isBool: true },
+  { index: STATUS_INDEX_SEAL, ox: 88, isBool: true },
+  { index: STATUS_INDEX_SLEEP, ox: 104, isBool: true },
 ] as const;
 
 // 状态面板使用独立资源和坐标，和主战斗菜单分开维护。
@@ -63,10 +63,10 @@ export class CombatStatusUi {
     drawSmallNum(surface, this.smallNumImage, player.luck, x + 87, y + 9);
     drawSmallNum(surface, this.smallNumImage, player.agility, x + 87, y + 21);
     for (const marker of STATUS_MARKERS) {
-      const buff = player.debuff.buffs[marker.index];
-      const frame = getStatusMarkerFrame(buff?.value ?? 0, marker.isBool);
+      const status = player.activeStatuses.slots[marker.index];
+      const frame = getStatusMarkerFrame(status?.value ?? 0, marker.isBool);
       this.statusMarker?.draw(surface, frame, x + marker.ox, y + 48);
-      drawSmallNum(surface, this.smallNumImage, buff?.round ?? 0, x + marker.ox + 1, y + 57);
+      drawSmallNum(surface, this.smallNumImage, status?.round ?? 0, x + marker.ox + 1, y + 57);
     }
   }
 }

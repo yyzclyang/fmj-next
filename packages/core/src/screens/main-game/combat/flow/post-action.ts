@@ -1,6 +1,6 @@
 import { Player, type FightingCharacter, type Monster } from '@/characters';
 import type { CombatAction } from '@/combat/combat-actions';
-import { applyPoisonPostEffect, decayFighterBuffs } from '@/combat/combat-effects';
+import { applyPoisonPostEffect, decayFighterStatuses } from '@/combat/combat-effects';
 import type { Game } from '@/game/game';
 import {
   RaiseCombatAnimation,
@@ -12,7 +12,7 @@ import {
 interface FighterStateSnapshot {
   readonly hp: number;
   readonly mp: number;
-  readonly debuffs: readonly { readonly value: number; readonly round: number }[];
+  readonly statuses: readonly { readonly value: number; readonly round: number }[];
 }
 
 export function captureFighterStates(fighters: readonly FightingCharacter[]): Map<FightingCharacter, FighterStateSnapshot> {
@@ -22,7 +22,7 @@ export function captureFighterStates(fighters: readonly FightingCharacter[]): Ma
     res.set(fighter, {
       hp: fighter.hp,
       mp: fighter.mp,
-      debuffs: fighter.debuff.buffs.map(buff => ({ value: buff.value, round: buff.round })),
+      statuses: fighter.activeStatuses.slots.map(status => ({ value: status.value, round: status.round })),
     });
   }
   return res;
@@ -39,9 +39,9 @@ export function createRaiseAnimations(
     const sprite = fighter.fightingSprite;
     if (!snapshot || !sprite) continue;
     const hpDiff = fighter.hp - snapshot.hp;
-    const buffMask = getDebuffDiffMask(snapshot, fighter);
-    if (hpDiff === 0 && buffMask === 0) continue;
-    res.push(new RaiseCombatAnimation(game, sprite.combatX, sprite.combatY, hpDiff, buffMask));
+    const statusMask = getActiveStatusDiffMask(snapshot, fighter);
+    if (hpDiff === 0 && statusMask === 0) continue;
+    res.push(new RaiseCombatAnimation(game, sprite.combatX, sprite.combatY, hpDiff, statusMask));
   }
   return res;
 }
@@ -56,7 +56,7 @@ export function finishActionState(game: Game, action: CombatAction): CombatActio
     applyPoisonPostEffect(actor);
   }
   const raises = createRaiseAnimations(game, before, aliveActors);
-  for (const actor of actors) decayFighterBuffs(actor);
+  for (const actor of actors) decayFighterStatuses(actor);
   return raises.length > 0 ? new RaiseGroupCombatAnimation(raises, aliveActors) : null;
 }
 
@@ -69,12 +69,12 @@ export function resetFighterFrames(players: readonly Player[], monsters: readonl
   }
 }
 
-function getDebuffDiffMask(snapshot: FighterStateSnapshot, fighter: FightingCharacter): number {
+function getActiveStatusDiffMask(snapshot: FighterStateSnapshot, fighter: FightingCharacter): number {
   let mask = 0;
-  for (let i = 0; i < fighter.debuff.buffs.length; i += 1) {
-    const oldBuff = snapshot.debuffs[i];
-    const buff = fighter.debuff.buffs[i];
-    if (!oldBuff || !buff || (oldBuff.value === buff.value && oldBuff.round === buff.round)) continue;
+  for (let i = 0; i < fighter.activeStatuses.slots.length; i += 1) {
+    const oldStatus = snapshot.statuses[i];
+    const status = fighter.activeStatuses.slots[i];
+    if (!oldStatus || !status || (oldStatus.value === status.value && oldStatus.round === status.round)) continue;
     mask |= 1 << i;
   }
   return mask;

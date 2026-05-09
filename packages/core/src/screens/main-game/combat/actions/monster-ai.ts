@@ -1,4 +1,4 @@
-import { BUFF_MASK_ALL } from '@/combat/combat-constants';
+import { STATUS_MASK_ALL } from '@/combat/combat-constants';
 import type { CombatAction } from '@/combat/combat-actions';
 import { isSealed } from '@/combat/combat-effects';
 import type { Monster, Player } from '@/characters';
@@ -30,7 +30,7 @@ export function createMonsterAction(
 }
 
 function createMonsterPhysicalAction(monster: Monster, target: Player, players: readonly Player[]): CombatAction {
-  return monster.atbuff.hasBuff(BUFF_MASK_ALL)
+  return monster.onHitStatuses.hasStatus(STATUS_MASK_ALL)
     ? { kind: 'attackAll', actor: monster, targets: players.filter(player => player.isAlive) }
     : { kind: 'attack', actor: monster, target };
 }

@@ -1,5 +1,5 @@
 import { isSealed } from '@/combat/combat-effects';
-import { BUFF_MASK_ALL } from '@/combat/combat-constants';
+import { STATUS_MASK_ALL } from '@/combat/combat-constants';
 import type {
   CombatAction,
   CombatHelpMagic,
@@ -94,6 +94,6 @@ function createRepeatThrowItemAction(options: CreateRepeatActionOptions, lastAct
 }
 
 function hasAttackAll(player: Player): boolean {
-  if (player.atbuff.hasBuff(BUFF_MASK_ALL)) return true;
+  if (player.onHitStatuses.hasStatus(STATUS_MASK_ALL)) return true;
   return player.equipment.some(item => item instanceof GoodsWeapon && item.attackAll());
 }

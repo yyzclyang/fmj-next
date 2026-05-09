@@ -107,12 +107,12 @@ export interface DebugCombatPlayerStateInput {
   id: number;
   hp?: number;
   mp?: number;
-  buffMask?: number;
-  buffRound?: number;
-  debuffMask?: number;
-  debuffRound?: number;
-  atbuffMask?: number;
-  atbuffRound?: number;
+  immuneStatusMask?: number;
+  immuneStatusRounds?: number;
+  activeStatusMask?: number;
+  activeStatusRounds?: number;
+  onHitStatusMask?: number;
+  onHitStatusRounds?: number;
 }
 
 export interface DebugCombatStartOptions {
@@ -399,9 +399,9 @@ function applyDebugPlayerState(game: Game, input: DebugCombatPlayerStateInput): 
   const player = addDebugPlayer(game, input.id);
   if (input.hp != null) player.hp = clampDebugInt(input.hp, 'hp', 0, player.maxHp);
   if (input.mp != null) player.mp = clampDebugInt(input.mp, 'mp', 0, player.maxMp);
-  applyDebugBuff(player.buff, input.buffMask, input.buffRound, 'buff');
-  applyDebugBuff(player.debuff, input.debuffMask, input.debuffRound, 'debuff');
-  applyDebugBuff(player.atbuff, input.atbuffMask, input.atbuffRound, 'atbuff');
+  applyDebugStatuses(player.immuneStatuses, input.immuneStatusMask, input.immuneStatusRounds, 'immuneStatus');
+  applyDebugStatuses(player.activeStatuses, input.activeStatusMask, input.activeStatusRounds, 'activeStatus');
+  applyDebugStatuses(player.onHitStatuses, input.onHitStatusMask, input.onHitStatusRounds, 'onHitStatus');
 }
 
 function resolveDebugPlayers(game: Game, actorIds: readonly number[], input: DebugPlayerIncreaseInput): Player[] {
@@ -440,11 +440,11 @@ function addDebugPlayerAttribute(player: Player, type: number, value: number | u
   return true;
 }
 
-function applyDebugBuff(buff: Player['buff'], mask: number | undefined, round: number | undefined, name: string): void {
+function applyDebugStatuses(statuses: Player['immuneStatuses'], mask: number | undefined, round: number | undefined, name: string): void {
   if (mask == null) return;
   const value = assertDebugNonNegativeInt(mask, `${name}Mask`);
-  buff.clearBuff(0xff);
-  if (value !== 0) buff.addBuff(value, round == null ? 99 : assertDebugNonNegativeInt(round, `${name}Round`));
+  statuses.clearStatuses(0xff);
+  if (value !== 0) statuses.addStatuses(value, round == null ? 99 : assertDebugNonNegativeInt(round, `${name}Rounds`));
 }
 
 function addDebugGoods(game: Game, input: DebugCombatGoodsInput): void {

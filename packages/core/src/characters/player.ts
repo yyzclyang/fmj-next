@@ -18,8 +18,8 @@ export interface PlayerData extends FightingCharacterData {
   readonly levelUpChain: ResLevelUpChain | null;
   readonly exp: number;
   readonly equipment: Array<GoodsEquipment | null>;
-  readonly attackStatusRounds: number;
-  readonly attackStatusMask: number;
+  readonly onHitStatusRounds: number;
+  readonly onHitStatusMask: number;
   readonly coopMagicIndex: number;
   readonly hpPerRound: number;
   readonly mpPerRound: number;
@@ -30,8 +30,8 @@ export class Player extends FightingCharacter {
   levelUpChain: ResLevelUpChain | null;
   exp: number;
   readonly equipment: Array<GoodsEquipment | null>;
-  attackStatusRounds: number;
-  attackStatusMask: number;
+  onHitStatusRounds: number;
+  onHitStatusMask: number;
   coopMagicIndex: number;
   hpPerRound: number;
   mpPerRound: number;
@@ -43,12 +43,12 @@ export class Player extends FightingCharacter {
     this.levelUpChain = data.levelUpChain;
     this.exp = data.exp;
     this.equipment = data.equipment;
-    this.attackStatusRounds = data.attackStatusRounds;
-    this.attackStatusMask = data.attackStatusMask;
+    this.onHitStatusRounds = data.onHitStatusRounds;
+    this.onHitStatusMask = data.onHitStatusMask;
     this.coopMagicIndex = data.coopMagicIndex;
     this.hpPerRound = data.hpPerRound;
     this.mpPerRound = data.mpPerRound;
-    this.syncAttackStatusBuff();
+    this.syncOnHitStatuses();
   }
 
   getAllLearntMagics(): BaseMagic[] {
@@ -123,11 +123,11 @@ export class Player extends FightingCharacter {
       case 8:
         return this.luck;
       case 9:
-        return this.attackStatusRounds;
+        return this.onHitStatusRounds;
       case 10:
-        return this.buff.toMask();
+        return this.immuneStatuses.toMask();
       case 11:
-        return this.attackStatusMask;
+        return this.onHitStatusMask;
       case 12:
         return this.coopMagicIndex;
       case 13:
@@ -189,13 +189,13 @@ export class Player extends FightingCharacter {
         this.luck = value;
         return;
       case 9:
-        this.setAttackStatusRounds(value);
+        this.setOnHitStatusRounds(value);
         return;
       case 10:
-        this.buff.setMask(toUint8(value), 0);
+        this.immuneStatuses.setStatuses(toUint8(value), 0);
         return;
       case 11:
-        this.setAttackStatusMask(value);
+        this.setOnHitStatusMask(value);
         return;
       case 12:
         this.coopMagicIndex = toUint8(value);
@@ -250,7 +250,7 @@ export class Player extends FightingCharacter {
         this.luck += value;
         return;
       case 9:
-        this.setAttackStatusRounds(this.attackStatusRounds + value);
+        this.setOnHitStatusRounds(this.onHitStatusRounds + value);
         return;
       case 10:
         this.maxHp += value;
@@ -333,13 +333,13 @@ export class Player extends FightingCharacter {
     this.luck += equipment.luck * sign;
     if (equipment instanceof GoodsWeapon) {
       if (sign > 0) {
-        this.attackStatusMask = toUint8(equipment.bitEffect);
-        this.attackStatusRounds = toUint8(equipment.sumRound);
+        this.onHitStatusMask = toUint8(equipment.bitEffect);
+        this.onHitStatusRounds = toUint8(equipment.sumRound);
       } else {
-        this.attackStatusMask = 0;
-        this.attackStatusRounds = 0;
+        this.onHitStatusMask = 0;
+        this.onHitStatusRounds = 0;
       }
-      this.syncAttackStatusBuff();
+      this.syncOnHitStatuses();
       return;
     }
     if (equipment instanceof GoodsDecorations) {
@@ -349,26 +349,26 @@ export class Player extends FightingCharacter {
       return;
     }
 
-    if (sign > 0) this.buff.addBuff(equipment.bitEffect, 0);
-    else this.buff.delBuff(equipment.bitEffect);
+    if (sign > 0) this.immuneStatuses.addStatuses(equipment.bitEffect, 0);
+    else this.immuneStatuses.removeStatuses(equipment.bitEffect);
   }
 
-  private setAttackStatusRounds(value: number): void {
-    this.attackStatusRounds = toUint8(value);
-    this.syncAttackStatusBuff();
+  private setOnHitStatusRounds(value: number): void {
+    this.onHitStatusRounds = toUint8(value);
+    this.syncOnHitStatuses();
   }
 
-  private setAttackStatusMask(value: number): void {
-    this.attackStatusMask = toUint8(value);
-    this.syncAttackStatusBuff();
+  private setOnHitStatusMask(value: number): void {
+    this.onHitStatusMask = toUint8(value);
+    this.syncOnHitStatuses();
   }
 
   syncScriptAttributes(): void {
-    this.syncAttackStatusBuff();
+    this.syncOnHitStatuses();
   }
 
-  private syncAttackStatusBuff(): void {
-    this.atbuff.setMask(this.attackStatusMask, this.attackStatusRounds);
+  private syncOnHitStatuses(): void {
+    this.onHitStatuses.setStatuses(this.onHitStatusMask, this.onHitStatusRounds);
   }
 }
 

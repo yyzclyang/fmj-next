@@ -1,5 +1,5 @@
 import { createInitialGameState, type GameGoodsState, type GameState } from './game-state';
-import type { BuffState, Player } from '@/characters';
+import type { StatusSlot, Player } from '@/characters';
 import type { MainSceneRuntimeSnapshot } from '@/screens/main-game/runtime';
 
 export const SAVE_SLOT_COUNT = 5;
@@ -78,15 +78,15 @@ export interface SavePlayerState {
   spirit: number;
   luck: number;
   exp: number;
-  attackStatusRounds: number;
-  attackStatusMask: number;
+  onHitStatusRounds: number;
+  onHitStatusMask: number;
   coopMagicIndex: number;
   hpPerRound: number;
   mpPerRound: number;
   equipment: Array<SaveResourceRef | null>;
   privateMagics: SaveResourceRef[];
-  buff: BuffState[];
-  debuff: BuffState[];
+  immuneStatuses: StatusSlot[];
+  activeStatuses: StatusSlot[];
 }
 
 export function createSavePayload(
@@ -156,20 +156,20 @@ function createPlayerState(player: Player): SavePlayerState {
     spirit: player.spirit,
     luck: player.luck,
     exp: player.exp,
-    attackStatusRounds: player.attackStatusRounds,
-    attackStatusMask: player.attackStatusMask,
+    onHitStatusRounds: player.onHitStatusRounds,
+    onHitStatusMask: player.onHitStatusMask,
     coopMagicIndex: player.coopMagicIndex,
     hpPerRound: player.hpPerRound,
     mpPerRound: player.mpPerRound,
     equipment: player.equipment.map(goods => (goods ? { type: goods.type, index: goods.index } : null)),
     privateMagics: player.getPrivateLearntMagicKeys(),
-    buff: cloneBuffs(player.buff.buffs),
-    debuff: cloneBuffs(player.debuff.buffs),
+    immuneStatuses: cloneStatusSlots(player.immuneStatuses.slots),
+    activeStatuses: cloneStatusSlots(player.activeStatuses.slots),
   };
 }
 
-function cloneBuffs(buffs: readonly BuffState[]): BuffState[] {
-  return buffs.map(buff => ({ value: buff.value, round: buff.round }));
+function cloneStatusSlots(slots: readonly StatusSlot[]): StatusSlot[] {
+  return slots.map(slot => ({ value: slot.value, round: slot.round }));
 }
 
 export function encodeSavePayload(payload: SaveGamePayload): Uint8Array {

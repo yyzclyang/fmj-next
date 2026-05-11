@@ -1,11 +1,6 @@
 import { isSealed } from '@/combat/combat-effects';
 import { STATUS_FLAG_ATTACK_ALL } from '@/characters/status';
-import type {
-  CombatAction,
-  CombatHelpMagic,
-  ThrowItemAction,
-  UseItemAction,
-} from '@/combat/combat-actions';
+import type { CombatAction, CombatHelpMagic, ThrowItemAction, UseItemAction } from '@/combat/combat-actions';
 import type { Monster, Player } from '@/characters';
 import type { GoodsBag } from '@/goods/goods-bag';
 import { GoodsMedicineLife, GoodsWeapon } from '@/goods';
@@ -23,7 +18,8 @@ export interface CreateRepeatActionOptions {
 
 export function createRepeatAction(options: CreateRepeatActionOptions): CombatAction | null {
   const { player, lastAction, monster } = options;
-  if (!lastAction) return monster ? { kind: 'attack', actor: player, target: monster } : { kind: 'defend', actor: player };
+  if (!lastAction)
+    return monster ? { kind: 'attack', actor: player, target: monster } : { kind: 'defend', actor: player };
   if (lastAction.kind === 'attackAll') {
     return monster && hasAttackAll(player) ? { kind: 'attackAll', actor: player, targets: options.monsters } : null;
   }
@@ -51,14 +47,19 @@ export function createRepeatAction(options: CreateRepeatActionOptions): CombatAc
   return monster ? { kind: 'attack', actor: player, target: monster } : null;
 }
 
-function createRepeatMagicHelpAction(options: CreateRepeatActionOptions, lastAction: CombatAction & { kind: 'magicHelp' }): CombatAction | null {
+function createRepeatMagicHelpAction(
+  options: CreateRepeatActionOptions,
+  lastAction: CombatAction & { kind: 'magicHelp' }
+): CombatAction | null {
   const { player } = options;
   if (player.mp < lastAction.magic.costMp || isSealed(player)) return null;
   if (lastAction.targetAll) {
     return { kind: 'magicHelp', actor: player, magic: lastAction.magic, targets: options.players, targetAll: true };
   }
   const target = selectRepeatHelpTarget(lastAction.magic, options.players);
-  return target ? { kind: 'magicHelp', actor: player, magic: lastAction.magic, targets: [target], targetAll: false } : null;
+  return target
+    ? { kind: 'magicHelp', actor: player, magic: lastAction.magic, targets: [target], targetAll: false }
+    : null;
 }
 
 function selectRepeatHelpTarget(magic: CombatHelpMagic, players: readonly Player[]): Player | null {
@@ -74,14 +75,18 @@ function createRepeatUseItemAction(options: CreateRepeatActionOptions, lastActio
     if (!bag.consumeGoods(lastAction.goods.type, lastAction.goods.index, 1)) return null;
     return { kind: 'useItem', actor: player, goods: lastAction.goods, targets: players, targetAll: true };
   }
-  const target = lastAction.goods instanceof GoodsMedicineLife
-    ? players.find(item => !item.isAlive) ?? getLowestHpPlayer(players, true)
-    : getLowestHpPlayer(players, false);
+  const target =
+    lastAction.goods instanceof GoodsMedicineLife
+      ? (players.find(item => !item.isAlive) ?? getLowestHpPlayer(players, true))
+      : getLowestHpPlayer(players, false);
   if (!target || !bag.consumeGoods(lastAction.goods.type, lastAction.goods.index, 1)) return null;
   return { kind: 'useItem', actor: player, goods: lastAction.goods, targets: [target], targetAll: false };
 }
 
-function createRepeatThrowItemAction(options: CreateRepeatActionOptions, lastAction: ThrowItemAction): CombatAction | null {
+function createRepeatThrowItemAction(
+  options: CreateRepeatActionOptions,
+  lastAction: ThrowItemAction
+): CombatAction | null {
   const { player, monster, monsters, bag } = options;
   if (!monster || !bag.consumeGoods(lastAction.goods.type, lastAction.goods.index, 1)) return null;
   return {

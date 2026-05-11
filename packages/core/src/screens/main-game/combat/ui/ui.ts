@@ -118,7 +118,12 @@ export class CombatUi {
   private drawTargetIndicator(surface: Surface, state: CombatUiState): void {
     const sprite = state.currentMonster?.fightingSprite;
     if (!sprite) return;
-    this.drawIndicator(surface, this.monsterIndicator, sprite.combatX, sprite.combatY - Math.trunc(sprite.height / 2) - 8);
+    this.drawIndicator(
+      surface,
+      this.monsterIndicator,
+      sprite.combatX,
+      sprite.combatY - Math.trunc(sprite.height / 2) - 8
+    );
   }
 
   private drawPlayerTargetIndicator(surface: Surface, state: CombatUiState): void {

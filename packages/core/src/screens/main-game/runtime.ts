@@ -408,9 +408,7 @@ export class MainSceneRuntime {
     const direction = boxRes?.direction ?? Direction.North;
     const state = boxRes?.state ?? CharacterState.Stop;
     const delay = boxRes?.delay ?? 0;
-    const step = this.game.isBoxCollected(this.getBoxEventKey(x, y, resId))
-      ? 2
-      : (boxRes?.step ?? 0);
+    const step = this.game.isBoxCollected(this.getBoxEventKey(x, y, resId)) ? 2 : (boxRes?.step ?? 0);
     this.sceneObjectsValue.set(
       id,
       this.createSceneObject({
@@ -1058,7 +1056,6 @@ export class MainSceneRuntime {
     const screenY = pos.y - this.game.state.mapScreenY;
     return screenX >= 0 && screenX < MAP_VIEW_TILE_WIDTH && screenY >= 0 && screenY < MAP_VIEW_TILE_HEIGHT;
   }
-
 }
 
 function shouldCenterMovie(x: number, y: number): boolean {

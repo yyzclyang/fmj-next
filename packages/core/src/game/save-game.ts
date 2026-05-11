@@ -260,12 +260,11 @@ function isStringArray(value: unknown): value is string[] {
 }
 
 function isGoodsArray(value: unknown): value is GameGoodsState[] {
-  return Array.isArray(value) && value.every(item => {
-    if (!isRecord(item)) return false;
-    return (
-      typeof item.type === 'number' &&
-      typeof item.index === 'number' &&
-      typeof item.count === 'number'
-    );
-  });
+  return (
+    Array.isArray(value) &&
+    value.every(item => {
+      if (!isRecord(item)) return false;
+      return typeof item.type === 'number' && typeof item.index === 'number' && typeof item.count === 'number';
+    })
+  );
 }

@@ -123,7 +123,9 @@ export interface NopAction {
 }
 
 export function isCombatMedicineGoods(goods: BaseGoods): goods is CombatMedicineGoods {
-  return goods instanceof GoodsMedicine || goods instanceof GoodsMedicineLife || goods instanceof GoodsMedicinePermanent;
+  return (
+    goods instanceof GoodsMedicine || goods instanceof GoodsMedicineLife || goods instanceof GoodsMedicinePermanent
+  );
 }
 
 export function isCombatThrowableGoods(goods: BaseGoods): goods is CombatThrowableGoods {

@@ -15,7 +15,9 @@ interface FighterStateSnapshot {
   readonly statuses: readonly { readonly value: number; readonly round: number }[];
 }
 
-export function captureFighterStates(fighters: readonly FightingCharacter[]): Map<FightingCharacter, FighterStateSnapshot> {
+export function captureFighterStates(
+  fighters: readonly FightingCharacter[]
+): Map<FightingCharacter, FighterStateSnapshot> {
   const res = new Map<FightingCharacter, FighterStateSnapshot>();
   for (const fighter of fighters) {
     if (res.has(fighter)) continue;

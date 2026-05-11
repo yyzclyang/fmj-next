@@ -64,9 +64,13 @@ export class PhysicalCombatAnimation implements CombatActionAnimation {
   private updateActorMoveFrame(): void {
     const snapshot = this.actorSnapshot;
     if (!snapshot) return;
-    const dst = 'fightingSprite' in this.options.moveTo
-      ? { x: this.options.moveTo.fightingSprite?.combatX ?? snapshot.x, y: this.options.moveTo.fightingSprite?.combatY ?? snapshot.y }
-      : this.options.moveTo;
+    const dst =
+      'fightingSprite' in this.options.moveTo
+        ? {
+            x: this.options.moveTo.fightingSprite?.combatX ?? snapshot.x,
+            y: this.options.moveTo.fightingSprite?.combatY ?? snapshot.y,
+          }
+        : this.options.moveTo;
     snapshot.sprite.setCombatPos(
       Math.trunc(snapshot.x + ((dst.x - snapshot.x) * this.frame) / PHYSICAL_MOVE_FRAMES),
       Math.trunc(snapshot.y + ((dst.y - snapshot.y) * this.frame) / PHYSICAL_MOVE_FRAMES)

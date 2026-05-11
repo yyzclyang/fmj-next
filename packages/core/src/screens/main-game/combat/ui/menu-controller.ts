@@ -1,11 +1,7 @@
 import type { Player } from '@/characters';
 import type { ActionIconIndex, CombatPhase, MonsterTargetMode } from '@/combat/combat-actions';
 import type { CombatGoodsMenu } from './goods-menu';
-import {
-  selectActionIcon,
-  selectCombatGoodsMenuItem,
-  selectMiscMenuItem,
-} from './menu-selection';
+import { selectActionIcon, selectCombatGoodsMenuItem, selectMiscMenuItem } from './menu-selection';
 
 interface CombatMenuControllerOptions {
   readonly getCurrentPlayer: () => Player | null;

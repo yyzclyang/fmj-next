@@ -10,7 +10,11 @@ import { GoodsMedicine, GoodsMedicineLife } from '@/goods';
 import { getFirstTargetPlayerIndex } from './targeting';
 
 export type CombatGoodsActionSelection =
-  | { readonly kind: 'action'; readonly action: CombatAction; readonly goodsToUse: CombatMedicineGoods | CombatThrowableGoods }
+  | {
+      readonly kind: 'action';
+      readonly action: CombatAction;
+      readonly goodsToUse: CombatMedicineGoods | CombatThrowableGoods;
+    }
   | { readonly kind: 'monsterTarget'; readonly mode: MonsterTargetMode }
   | { readonly kind: 'playerTarget'; readonly mode: PlayerTargetMode; readonly targetIndex: number }
   | { readonly kind: 'none' };
@@ -23,7 +27,13 @@ export function createThrowGoodsSelection(
   if (goods.affectsAllTargets()) {
     return {
       kind: 'action',
-      action: { kind: 'throwItem', actor: player, goods, targets: monsters.filter(monster => monster.isAlive), targetAll: true },
+      action: {
+        kind: 'throwItem',
+        actor: player,
+        goods,
+        targets: monsters.filter(monster => monster.isAlive),
+        targetAll: true,
+      },
       goodsToUse: goods,
     };
   }

@@ -1,4 +1,12 @@
-import { Engine, KeyCode, type AudioPort, type DebugApi, type EngineHost, type GameEngineOptions, type SaveStore } from '@fmj-next/core';
+import {
+  Engine,
+  KeyCode,
+  type AudioPort,
+  type DebugApi,
+  type EngineHost,
+  type GameEngineOptions,
+  type SaveStore,
+} from '@fmj-next/core';
 import { CanvasPresenter } from './canvas-presenter';
 
 export interface BrowserRuntimeOptions {

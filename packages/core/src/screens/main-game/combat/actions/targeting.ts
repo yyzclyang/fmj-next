@@ -11,7 +11,12 @@ export function selectAliveMonsterIndex(monsters: readonly Monster[], currentInd
   return currentIndex;
 }
 
-export function selectTargetPlayerIndex(players: readonly Player[], currentIndex: number, allowDead: boolean, step: 1 | -1): number {
+export function selectTargetPlayerIndex(
+  players: readonly Player[],
+  currentIndex: number,
+  allowDead: boolean,
+  step: 1 | -1
+): number {
   let index = currentIndex;
   for (let i = 0; i < players.length; i += 1) {
     index = (index + step + players.length) % players.length;

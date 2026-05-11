@@ -92,10 +92,14 @@ export class CombatInputHandler {
   private onTargetKey(key: KeyCode): void {
     switch (key) {
       case KeyCode.Left:
-        this.options.setTargetIndex(selectAliveMonsterIndex(this.options.getMonsters(), this.options.getTargetIndex(), -1));
+        this.options.setTargetIndex(
+          selectAliveMonsterIndex(this.options.getMonsters(), this.options.getTargetIndex(), -1)
+        );
         return;
       case KeyCode.Right:
-        this.options.setTargetIndex(selectAliveMonsterIndex(this.options.getMonsters(), this.options.getTargetIndex(), 1));
+        this.options.setTargetIndex(
+          selectAliveMonsterIndex(this.options.getMonsters(), this.options.getTargetIndex(), 1)
+        );
         return;
       case KeyCode.Enter:
         this.options.confirmMonsterTarget();
@@ -144,10 +148,14 @@ export class CombatInputHandler {
   private onGoodsKey(key: KeyCode): void {
     switch (key) {
       case KeyCode.Up:
-        this.options.setCombatGoodsIndex(moveSelectionWrap(this.options.getCombatGoodsIndex(), -1, COMBAT_GOODS_ITEMS.length));
+        this.options.setCombatGoodsIndex(
+          moveSelectionWrap(this.options.getCombatGoodsIndex(), -1, COMBAT_GOODS_ITEMS.length)
+        );
         return;
       case KeyCode.Down:
-        this.options.setCombatGoodsIndex(moveSelectionWrap(this.options.getCombatGoodsIndex(), 1, COMBAT_GOODS_ITEMS.length));
+        this.options.setCombatGoodsIndex(
+          moveSelectionWrap(this.options.getCombatGoodsIndex(), 1, COMBAT_GOODS_ITEMS.length)
+        );
         return;
       case KeyCode.Enter:
         this.options.confirmCombatGoodsMenuItem();

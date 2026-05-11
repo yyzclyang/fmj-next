@@ -20,12 +20,15 @@ export function prepareRolledBackMagicAction(
 ): PreparedCombatAction {
   if (action.kind === 'magicAttack') {
     const targets = action.targets.filter(target => target.isAlive);
-    if (targets.length > 0) return prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target: targets[0]! });
+    if (targets.length > 0)
+      return prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target: targets[0]! });
   }
   const target = ctx.session.players.includes(action.actor as Player)
     ? getFirstAliveMonster(ctx.session.monsters)
-    : ctx.session.players.find(player => player.isAlive) ?? null;
-  return target ? prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target }) : prepareNopAction(ctx, action.actor);
+    : (ctx.session.players.find(player => player.isAlive) ?? null);
+  return target
+    ? prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target })
+    : prepareNopAction(ctx, action.actor);
 }
 
 export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: MagicAttackAction): PreparedCombatAction {
@@ -40,7 +43,8 @@ export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: Magi
   if (finalTargets.length === 0) return noPreparedAction();
   const before = captureFighterStates([action.actor, ...finalTargets]);
   const misses: CombatActionAnimation[] = [];
-  const singleMissed = !action.targetAll && finalTargets.length === 1 && isMissed(ctx.game, action.actor, finalTargets[0]!);
+  const singleMissed =
+    !action.targetAll && finalTargets.length === 1 && isMissed(ctx.game, action.actor, finalTargets[0]!);
   if (!singleMissed && !spendMagicMp(action.actor, action.magic)) {
     ctx.setMessage('真气不足');
     return preparedAction(action, new StaticCombatAnimation(ctx.actionInterval));
@@ -51,13 +55,7 @@ export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: Magi
       misses.push(createMissAnimation(ctx.game, target));
       continue;
     }
-    applyMagicAttack(
-      action.actor,
-      action.magic,
-      target,
-      ctx.game.damageFormula,
-      isPlayerDefending(ctx, target)
-    );
+    applyMagicAttack(action.actor, action.magic, target, ctx.game.damageFormula, isPlayerDefending(ctx, target));
   }
   const animation = new CastCombatAnimation({
     actor: action.actor,
@@ -115,14 +113,17 @@ export function prepareSpecialMagicAction(ctx: CombatPrepareContext, action: Spe
   } else {
     ctx.setMessage(`${action.actor.name}施展${action.magic.name}`);
   }
-  return preparedAction(action, new CastCombatAnimation({
-    actor: action.actor,
-    targets: [action.target],
-    srs: action.magic.animation,
-    srsPoint: getAnimationPoint([action.target], false),
-    raises: [],
-    hitTargets: false,
-  }));
+  return preparedAction(
+    action,
+    new CastCombatAnimation({
+      actor: action.actor,
+      targets: [action.target],
+      srs: action.magic.animation,
+      srsPoint: getAnimationPoint([action.target], false),
+      raises: [],
+      hitTargets: false,
+    })
+  );
 }
 
 function isPlayerDefending(ctx: CombatPrepareContext, target: unknown): boolean {

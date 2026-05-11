@@ -65,7 +65,10 @@ export function createMonsterTargetAction(
     return { kind: 'coop' };
   }
   if (mode.kind === 'magicAttack') {
-    return { kind: 'action', action: { kind: 'magicAttack', actor: player, magic: mode.magic, targets: [monster], targetAll: false } };
+    return {
+      kind: 'action',
+      action: { kind: 'magicAttack', actor: player, magic: mode.magic, targets: [monster], targetAll: false },
+    };
   }
   if (mode.kind === 'specialMagic') {
     return { kind: 'action', action: { kind: 'specialMagic', actor: player, target: monster, magic: mode.magic } };
@@ -89,7 +92,11 @@ export function createPlayerTargetAction(player: Player, target: Player, mode: P
   };
 }
 
-export function createFleeActions(players: readonly Player[], startIndex: number, isRandomFight: boolean): CombatAction[] {
+export function createFleeActions(
+  players: readonly Player[],
+  startIndex: number,
+  isRandomFight: boolean
+): CombatAction[] {
   const res: CombatAction[] = [];
   let hasSuccess = false;
   for (let i = startIndex; i < players.length; i += 1) {
@@ -134,14 +141,15 @@ export function createRepeatedPlayerActions(options: {
   const res: QueuedPlayerAction[] = [];
   for (const player of alivePlayers) {
     const index = options.players.indexOf(player);
-    const action = createRepeatAction({
-      player,
-      lastAction: options.lastPlayerActions.get(player.index),
-      monster,
-      players: options.players,
-      monsters: options.monsters,
-      bag: options.bag,
-    }) ?? createRepeatFallbackAction(player, monster, options.monsters, options.players);
+    const action =
+      createRepeatAction({
+        player,
+        lastAction: options.lastPlayerActions.get(player.index),
+        monster,
+        players: options.players,
+        monsters: options.monsters,
+        bag: options.bag,
+      }) ?? createRepeatFallbackAction(player, monster, options.monsters, options.players);
     res.push({ action, rememberIndexes: [index] });
   }
   return res;

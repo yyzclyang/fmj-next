@@ -59,7 +59,11 @@ export class MissCombatAnimation implements CombatActionAnimation {
   private elapsed = 0;
   private readonly image: ResImage | null;
 
-  constructor(game: Game, private readonly x: number, private readonly y: number) {
+  constructor(
+    game: Game,
+    private readonly x: number,
+    private readonly y: number
+  ) {
     this.image = game.datLib.getImage(ResourceType.PIC, 2, 18);
   }
 
@@ -91,7 +95,13 @@ export class RaiseCombatAnimation implements CombatActionAnimation {
   private readonly smallNumImage: ResImage | null;
   private readonly srsList: ResSrs[] = [];
 
-  constructor(game: Game, private readonly x: number, private readonly y: number, private readonly hpDiff: number, statusFlags: number) {
+  constructor(
+    game: Game,
+    private readonly x: number,
+    private readonly y: number,
+    private readonly hpDiff: number,
+    statusFlags: number
+  ) {
     this.showingNumber = hpDiff !== 0;
     this.signImage = hpDiff === 0 ? null : game.datLib.getImage(ResourceType.PIC, 2, hpDiff > 0 ? 6 : 7);
     this.smallNumImage = game.datLib.getImage(ResourceType.PIC, 2, 5);

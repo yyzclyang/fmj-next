@@ -47,7 +47,8 @@ export class CombatMagicMenu {
   private confirm(magic: BaseMagic): void {
     const player = this.options.getCurrentPlayer();
     if (!player) throw new Error('确认战斗魔法时缺少当前角色');
-    if (!(this.options.screenStack.current instanceof ScreenMagic)) throw new Error('确认战斗魔法时当前 Screen 不是魔法列表');
+    if (!(this.options.screenStack.current instanceof ScreenMagic))
+      throw new Error('确认战斗魔法时当前 Screen 不是魔法列表');
     this.options.screenStack.pop();
     if (player.mp < magic.costMp) {
       this.options.setMessage('真气不足');
@@ -87,7 +88,13 @@ export class CombatMagicMenu {
 
   private confirmHelpMagic(player: Player, magic: CombatHelpMagic): void {
     if (magic.targetAll) {
-      this.options.confirmPlayerAction({ kind: 'magicHelp', actor: player, magic, targets: this.options.players, targetAll: true });
+      this.options.confirmPlayerAction({
+        kind: 'magicHelp',
+        actor: player,
+        magic,
+        targets: this.options.players,
+        targetAll: true,
+      });
       return;
     }
     const allowDead = magic instanceof MagicAuxiliary;

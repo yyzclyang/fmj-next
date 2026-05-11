@@ -15,7 +15,12 @@ export function getActionPriority(action: CombatAction): number {
   return getComputedAgility(action.actor);
 }
 
-export function isMissed(game: Game, attacker: FightingCharacter, target: FightingCharacter, allowMiss = true): boolean {
+export function isMissed(
+  game: Game,
+  attacker: FightingCharacter,
+  target: FightingCharacter,
+  allowMiss = true
+): boolean {
   return randomMiss(attacker, target, game.state.allowFightMiss, allowMiss);
 }
 

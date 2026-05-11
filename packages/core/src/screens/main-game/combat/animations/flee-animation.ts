@@ -14,7 +14,10 @@ export class FleeCombatAnimation implements CombatActionAnimation {
   private frame = 0;
   private elapsed = 0;
 
-  constructor(private readonly player: Player, private readonly succeed: boolean) {
+  constructor(
+    private readonly player: Player,
+    private readonly succeed: boolean
+  ) {
     this.snapshot = snapshotSprite(player);
     if (this.snapshot) this.snapshot.sprite.currentFrame = 1;
   }

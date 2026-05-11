@@ -86,7 +86,14 @@ function wrapTextLine(text: string, maxWidth: number): string[] {
   return lines;
 }
 
-function drawTextWithColors(surface: Surface, text: string, left: number, top: number, fgColor: Color, bgColor: Color): void {
+function drawTextWithColors(
+  surface: Surface,
+  text: string,
+  left: number,
+  top: number,
+  fgColor: Color,
+  bgColor: Color
+): void {
   let x = left;
 
   for (const char of text) {

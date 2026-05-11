@@ -43,8 +43,17 @@ export function createRepeatedCoopAction(options: {
   if (!first) return null;
   const firstAction = options.lastPlayerActions.get(first.index);
   if (firstAction?.kind !== 'coop' || options.alivePlayers.length < 2) return null;
-  const action = createCoopAction(options.game, options.alivePlayers, options.monster, options.monsters, firstAction.targetAll);
-  return { action, rememberIndexes: options.alivePlayers.map(player => options.players.indexOf(player)).filter(index => index >= 0) };
+  const action = createCoopAction(
+    options.game,
+    options.alivePlayers,
+    options.monster,
+    options.monsters,
+    firstAction.targetAll
+  );
+  return {
+    action,
+    rememberIndexes: options.alivePlayers.map(player => options.players.indexOf(player)).filter(index => index >= 0),
+  };
 }
 
 function createCoopAction(

@@ -1,5 +1,10 @@
 import type { CombatFinishResult, CombatSession } from '@/combat/combat-runtime';
-import { getFirstAliveMonsterIndex, getFirstAlivePlayerIndex, hasAlivePlayers, isAllMonsterDead } from '../actions/targeting';
+import {
+  getFirstAliveMonsterIndex,
+  getFirstAlivePlayerIndex,
+  hasAlivePlayers,
+  isAllMonsterDead,
+} from '../actions/targeting';
 
 export type CombatRoundCompletion =
   | { readonly kind: 'startSuccess' }

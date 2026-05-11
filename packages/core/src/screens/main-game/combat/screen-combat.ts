@@ -16,7 +16,11 @@ import { KeyCode } from '@/shared/key-code';
 import { CombatActionPreparer } from './prepare/action-preparer';
 import { CombatActionQueue, type CombatActionQueueResult } from './flow/action-queue';
 import { useGoodsFromBag } from './flow/action-utils';
-import { createThrowGoodsSelection, createUseGoodsSelection, type CombatGoodsActionSelection } from './actions/goods-actions';
+import {
+  createThrowGoodsSelection,
+  createUseGoodsSelection,
+  type CombatGoodsActionSelection,
+} from './actions/goods-actions';
 import { CombatGoodsMenu } from './ui/goods-menu';
 import { CombatInputHandler } from './flow/input';
 import { CombatLossAnimation } from './animations/loss-animation';
@@ -267,7 +271,13 @@ export class ScreenCombat extends BaseScreen {
     const player = this.currentPlayer;
     const monster = this.currentMonster;
     if (!player || !monster) throw new Error('确认目标时缺少可行动角色或目标');
-    const result = createMonsterTargetAction(player, monster, this.monsterTargetMode, this.session.players, this.session.monsters);
+    const result = createMonsterTargetAction(
+      player,
+      monster,
+      this.monsterTargetMode,
+      this.session.players,
+      this.session.monsters
+    );
     if (result.kind === 'coop') {
       this.confirmCoopAction(monster);
       return;
@@ -289,7 +299,13 @@ export class ScreenCombat extends BaseScreen {
   }
 
   private confirmCoopAction(monster: Monster): void {
-    const action = createCoopPlayerAction(this.game, this.session.players, this.currentPlayer, monster, this.session.monsters);
+    const action = createCoopPlayerAction(
+      this.game,
+      this.session.players,
+      this.currentPlayer,
+      monster,
+      this.session.monsters
+    );
     if (!action) return;
     this.actionQueue.clearAndRestoreItems();
     this.actionQueue.push(action);
@@ -509,7 +525,9 @@ export class ScreenCombat extends BaseScreen {
 
   private get currentUiMonster(): Monster | null {
     return this.phase === 'selectTarget'
-      ? this.ensureSelectedMonster() ? this.currentMonster : null
+      ? this.ensureSelectedMonster()
+        ? this.currentMonster
+        : null
       : this.currentMonster;
   }
 

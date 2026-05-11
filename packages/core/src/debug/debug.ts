@@ -441,7 +441,12 @@ function addDebugPlayerAttribute(player: Player, type: number, value: number | u
   return true;
 }
 
-function applyDebugStatuses(statuses: Player['immuneStatuses'], flags: number | undefined, round: number | undefined, name: string): void {
+function applyDebugStatuses(
+  statuses: Player['immuneStatuses'],
+  flags: number | undefined,
+  round: number | undefined,
+  name: string
+): void {
   if (flags == null) return;
   const value = assertDebugNonNegativeInt(flags, `${name}Flags`);
   statuses.clearFlags(STATUS_FLAGS_ALL);

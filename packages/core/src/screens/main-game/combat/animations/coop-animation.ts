@@ -53,7 +53,8 @@ export class CoopCombatAnimation implements CombatActionAnimation {
     if (this.stage === 'pre') {
       this.advance(delta);
       if (this.frame < CAST_PRE_FRAMES) {
-        for (const item of this.actorSnapshots) item.sprite.currentFrame = Math.trunc((this.frame * 3) / CAST_PRE_FRAMES) + 6;
+        for (const item of this.actorSnapshots)
+          item.sprite.currentFrame = Math.trunc((this.frame * 3) / CAST_PRE_FRAMES) + 6;
         return true;
       }
       if (this.options.srs) this.stage = 'ani';

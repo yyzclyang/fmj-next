@@ -1,11 +1,7 @@
 import type { CombatWinSettlement } from '@/combat/combat-runtime';
 import type { Game } from '@/game/game';
 import type { Surface } from '@/rendering/surface';
-import {
-  createCombatSuccessPendingPages,
-  createCombatSuccessVisiblePages,
-  type SuccessPage,
-} from './success-pages';
+import { createCombatSuccessPendingPages, createCombatSuccessVisiblePages, type SuccessPage } from './success-pages';
 
 const PAGE_INTERVAL = 1000;
 

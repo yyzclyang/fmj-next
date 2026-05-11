@@ -1,7 +1,7 @@
 import type { Game } from '@/game/game';
 import { SaveLoadOperation, ScreenSaveLoadGame } from '@/screens/main-game/menu/screen-save-load-game';
 import { ScriptChoiceScreen, ScriptMenuScreen } from '@/screens/main-game/script';
-import type { CommandBuilder } from '../script-command';
+import type { CommandBuilder } from '../script-command-builder';
 import { COMMAND } from '../script-opcodes';
 import type { ScriptReader } from '../script-reader';
 

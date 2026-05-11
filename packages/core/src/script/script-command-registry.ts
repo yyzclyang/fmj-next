@@ -1,5 +1,5 @@
 import type { Game } from '@/game/game';
-import type { CommandBuilder } from './script-command';
+import type { CommandBuilder } from './script-command-builder';
 import { compileCombatCommand } from './script-commands/combat-commands';
 import { compileFlowCommand } from './script-commands/flow-commands';
 import { compileInventoryCommand } from './script-commands/inventory-commands';

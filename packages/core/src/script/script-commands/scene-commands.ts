@@ -1,5 +1,5 @@
 import type { Game } from '@/game/game';
-import type { CommandBuilder } from '../script-command';
+import type { CommandBuilder } from '../script-command-builder';
 import { toNpcStepDirection } from '../script-direction';
 import { COMMAND } from '../script-opcodes';
 import type { ScriptReader } from '../script-reader';

@@ -1,6 +1,6 @@
 import type { Game } from '@/game/game';
 import { toInt16 } from '@/shared/integer';
-import type { CommandBuilder } from '../script-command';
+import type { CommandBuilder } from '../script-command-builder';
 import { COMMAND } from '../script-opcodes';
 import type { ScriptReader } from '../script-reader';
 

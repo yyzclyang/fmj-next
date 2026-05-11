@@ -1,6 +1,6 @@
 import type { Game } from '@/game/game';
 import type { ResGut } from '@/lib/res-gut';
-import type { CommandBuilder } from './script-command';
+import type { CommandBuilder } from './script-command-builder';
 import { compileScriptCommand } from './script-command-registry';
 import { getCommandName } from './script-opcodes';
 import { type ScriptCommand, ScriptProcess } from './script-process';

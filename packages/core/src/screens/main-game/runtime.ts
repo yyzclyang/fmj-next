@@ -76,7 +76,7 @@ export interface MovieParams {
   readonly index: number;
   readonly x: number;
   readonly y: number;
-  readonly ctl: number;
+  readonly controlFlags: number;
 }
 
 // 主场景运行时只负责地图、对象、交互和脚本入口，不处理具体 UI。
@@ -509,14 +509,14 @@ export class MainSceneRuntime {
     this.actorMoveIntervals.set(actorId, Math.max(20, Math.trunc(speed)));
   }
 
-  faceActorToActor(sourceId: number, targetId: number): void {
-    const source = this.getActorPosition(sourceId);
-    const target = this.getActorPosition(targetId);
-    if (!source || !target) return;
-    if (source.x === target.x && source.y === target.y) return;
+  faceActorTowardActor(actorId: number, targetActorId: number): void {
+    const actor = this.getActorPosition(actorId);
+    const target = this.getActorPosition(targetActorId);
+    if (!actor || !target) return;
+    if (actor.x === target.x && actor.y === target.y) return;
 
-    const facing = getFacingToward(target.x, target.y, source.x, source.y);
-    this.setActorFacing(targetId, facing);
+    const facing = getFacingToward(actor.x, actor.y, target.x, target.y);
+    this.setActorFacing(actorId, facing);
   }
 
   setNpcMoveMode(id: number, state: number): void {
@@ -558,39 +558,39 @@ export class MainSceneRuntime {
   }
 
   playMovie(params: MovieParams, process: ScriptProcess): void {
-    const res = this.game.datLib.getSrs(params.type, params.index);
-    if (!res) return;
+    const movieAnimation = this.game.datLib.getSrs(params.type, params.index);
+    if (!movieAnimation) return;
 
-    res.setIteratorNum(5);
-    res.start();
+    movieAnimation.setIteratorNum(5);
+    movieAnimation.start();
 
     let skipped = false;
-    const skippable = (params.ctl & 1) === 1;
-    const overlayScene = (params.ctl & 2) === 2;
-    const x = shouldCenterMovie(params.x, params.y)
+    const skippable = (params.controlFlags & 1) === 1;
+    const drawsOverScene = (params.controlFlags & 2) === 2;
+    const left = shouldCenterMovie(params.x, params.y)
       ? params.x + Math.floor((SCREEN_WIDTH - MOVIE_BASE_WIDTH) / 2)
       : params.x;
-    const y = shouldCenterMovie(params.x, params.y)
+    const top = shouldCenterMovie(params.x, params.y)
       ? params.y + Math.floor((SCREEN_HEIGHT - MOVIE_BASE_HEIGHT) / 2)
       : params.y;
 
     const overlay: ScreenOverlay = {
-      coversScreen: !overlayScene,
+      coversScreen: !drawsOverScene,
       draw: surface => {
-        res.draw(surface, x, y);
+        movieAnimation.draw(surface, left, top);
       },
       onKey: () => {
         if (skippable) skipped = true;
       },
     };
     const operation: ScriptOperation = {
-      update: delta => !skipped && res.update(delta),
+      update: delta => !skipped && movieAnimation.update(delta),
     };
 
     process.wait(this.withOverlay(operation, overlay));
   }
 
-  showScreen(): void {
+  clearOverlay(): void {
     this.overlayValue = null;
   }
 

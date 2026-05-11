@@ -45,19 +45,6 @@ export class Surface {
     this.fillRect(x + width - 1, y, 1, height, color);
   }
 
-  blendColor(color: Color, opacity: number): void {
-    const alpha = Math.max(0, Math.min(255, Math.trunc(opacity)));
-    if (alpha <= 0) return;
-
-    const inverse = 255 - alpha;
-    for (let offset = 0; offset < this.buffer.length; offset += PIXEL_CHANNELS) {
-      this.buffer[offset] = Math.trunc(((this.buffer[offset] ?? 0) * inverse + color[0] * alpha) / 255);
-      this.buffer[offset + 1] = Math.trunc(((this.buffer[offset + 1] ?? 0) * inverse + color[1] * alpha) / 255);
-      this.buffer[offset + 2] = Math.trunc(((this.buffer[offset + 2] ?? 0) * inverse + color[2] * alpha) / 255);
-      this.buffer[offset + 3] = 255;
-    }
-  }
-
   drawBitmap(bitmap: Bitmap, left: number, top: number): void {
     const startX = Math.max(0, -left);
     const startY = Math.max(0, -top);

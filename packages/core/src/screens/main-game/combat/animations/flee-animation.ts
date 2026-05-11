@@ -1,7 +1,7 @@
 import { Player } from '@/characters';
 import {
-  FRAME_INTERVAL,
   PHYSICAL_MOVE_FRAMES,
+  advanceFrameTimer,
   restoreSprite,
   setPlayerFrameByState,
   snapshotSprite,
@@ -45,10 +45,8 @@ export class FleeCombatAnimation implements CombatActionAnimation {
   draw(): void {}
 
   private advance(delta: number): void {
-    this.elapsed += delta;
-    while (this.elapsed >= FRAME_INTERVAL) {
-      this.elapsed -= FRAME_INTERVAL;
-      this.frame += 1;
-    }
+    const next = advanceFrameTimer(this.frame, this.elapsed, delta);
+    this.frame = next.frame;
+    this.elapsed = next.elapsed;
   }
 }

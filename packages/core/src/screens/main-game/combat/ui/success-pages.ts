@@ -4,7 +4,7 @@ import type { ResImage } from '@/lib/res-image';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
-import { drawText, getTextWidth } from '@/rendering/text-render';
+import { drawText, getTextWidth, TEXT_LINE_HEIGHT } from '@/rendering/text-render';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { drawSmallNum } from './render-utils';
 
@@ -18,7 +18,6 @@ const LEVEL_FRAME_WIDTH = 150;
 const LEVEL_FRAME_HEIGHT = 120;
 const LEVEL_TEXT_LEFT = Math.floor((SCREEN_WIDTH - LEVEL_FRAME_WIDTH) / 2) + 12;
 const LEVEL_TEXT_TOP = Math.floor((SCREEN_HEIGHT - LEVEL_FRAME_HEIGHT) / 2) + 8;
-const LEVEL_LINE_GAP = 16;
 
 // 结算页绘制拆到这里，ScreenCombatSuccess 只负责逐页播放。
 export function createCombatSuccessVisiblePages(settlement: CombatWinSettlement): SuccessPage[] {
@@ -135,7 +134,7 @@ function drawLevelLine(
   newValue: number,
   line: number
 ): void {
-  const top = LEVEL_TEXT_TOP + line * LEVEL_LINE_GAP;
+  const top = LEVEL_TEXT_TOP + line * TEXT_LINE_HEIGHT;
   drawText(surface, label, LEVEL_TEXT_LEFT, top);
   if (current > 0) {
     drawSmallNum(surface, smallNumImage, current, LEVEL_TEXT_LEFT + 40, top);

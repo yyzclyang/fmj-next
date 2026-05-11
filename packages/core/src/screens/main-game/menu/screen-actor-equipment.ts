@@ -12,7 +12,7 @@ import { getPartyPlayers } from './party-utils';
 import { ScreenChangeEquipment } from './screen-change-equipment';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from './screen-goods-list';
 
-const WEARING_SLOTS = [
+const EQUIPMENT_SLOT_LAYOUTS = [
   {
     slot: PlayerEquipmentSlot.Decoration1,
     name: '装饰',
@@ -141,7 +141,7 @@ export class ScreenActorEquipment extends BaseScreen {
     this.drawSlots(surface, player);
     this.drawActor(surface, player);
     if (this.showingDescription) {
-      const slot = WEARING_SLOTS[this.selectedSlotIndex];
+      const slot = EQUIPMENT_SLOT_LAYOUTS[this.selectedSlotIndex];
       this.drawDescription(surface, slot ? (player.equipment[slot.slot] ?? null) : null);
     }
   }
@@ -171,7 +171,7 @@ export class ScreenActorEquipment extends BaseScreen {
 
   private moveItem(step: number): void {
     const next = this.selectedSlotIndex + step;
-    if (next < 0 || next >= WEARING_SLOTS.length) return;
+    if (next < 0 || next >= EQUIPMENT_SLOT_LAYOUTS.length) return;
     this.selectedSlotIndex = next;
     this.showingDescription = false;
   }
@@ -184,7 +184,7 @@ export class ScreenActorEquipment extends BaseScreen {
   }
 
   private handleEnter(): void {
-    const slot = WEARING_SLOTS[this.selectedSlotIndex];
+    const slot = EQUIPMENT_SLOT_LAYOUTS[this.selectedSlotIndex];
     const equipment = slot ? (this.players[this.selectedPlayerIndex]?.equipment[slot.slot] ?? null) : null;
     if (!this.showingDescription && equipment) {
       this.showingDescription = true;
@@ -195,11 +195,11 @@ export class ScreenActorEquipment extends BaseScreen {
   }
 
   private drawSlots(surface: Surface, player: Player): void {
-    for (const slot of WEARING_SLOTS) {
+    for (const slot of EQUIPMENT_SLOT_LAYOUTS) {
       const equipment = player.equipment[slot.slot] ?? null;
       equipment?.image?.draw(surface, 1, slot.x + 1, slot.y + 1);
     }
-    const slot = WEARING_SLOTS[this.selectedSlotIndex];
+    const slot = EQUIPMENT_SLOT_LAYOUTS[this.selectedSlotIndex];
     if (slot) drawSelectedSlot(surface, slot.x, slot.y);
   }
 
@@ -210,7 +210,7 @@ export class ScreenActorEquipment extends BaseScreen {
       drawInsetPanel(surface, 140, 40, 24, 24);
     }
     drawText(surface, player.name, 140, 80);
-    drawText(surface, WEARING_SLOTS[this.selectedSlotIndex]?.name ?? '', 200, 60);
+    drawText(surface, EQUIPMENT_SLOT_LAYOUTS[this.selectedSlotIndex]?.name ?? '', 200, 60);
   }
 
   private drawDescription(surface: Surface, equipment: GoodsEquipment | null): void {
@@ -240,7 +240,7 @@ export class ScreenActorEquipment extends BaseScreen {
   }
 
   private getEquipmentList(player: Player): ScreenGoodsListItem[] {
-    const slot = WEARING_SLOTS[this.selectedSlotIndex];
+    const slot = EQUIPMENT_SLOT_LAYOUTS[this.selectedSlotIndex];
     if (!slot) return [];
     return this.game.bag.equipList.filter(
       (item): item is ScreenGoodsListItem =>
@@ -252,7 +252,7 @@ export class ScreenActorEquipment extends BaseScreen {
 
   private openChangeEquipmentScreen(player: Player, goods: ScreenGoodsListItem['goods']): void {
     if (!(goods instanceof GoodsEquipment)) throw new Error('穿戴页选择了非装备物品');
-    const slot = WEARING_SLOTS[this.selectedSlotIndex];
+    const slot = EQUIPMENT_SLOT_LAYOUTS[this.selectedSlotIndex];
     if (!slot) throw new Error('穿戴页当前槽位不存在');
     this.screenStack.clear();
     this.screenStack.push(new ScreenChangeEquipment(this.game, player, goods, slot.slot));

@@ -35,8 +35,6 @@ export interface GameState {
   allowWallWalking: boolean;
   useOriginalDamageFormula: boolean;
   showPosition: boolean;
-  screenRed: number;
-  screenAlpha: number;
 }
 
 export function createInitialGameState(): GameState {
@@ -64,8 +62,6 @@ export function createInitialGameState(): GameState {
     allowWallWalking: false,
     useOriginalDamageFormula: true,
     showPosition: true,
-    screenRed: 0,
-    screenAlpha: 0,
   };
 }
 

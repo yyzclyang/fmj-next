@@ -49,8 +49,6 @@ export interface SaveGameState {
   allowWallWalking: boolean;
   useOriginalDamageFormula: boolean;
   showPosition: boolean;
-  screenRed?: number;
-  screenAlpha?: number;
 }
 
 export interface SaveResourceRef {
@@ -129,8 +127,6 @@ export function createSavePayload(
       allowWallWalking: state.allowWallWalking,
       useOriginalDamageFormula: state.useOriginalDamageFormula,
       showPosition: state.showPosition,
-      screenRed: state.screenRed,
-      screenAlpha: state.screenAlpha,
     },
   };
 }
@@ -218,8 +214,6 @@ export function toLoadedGameState(payload: SaveGamePayload): GameState {
     allowWallWalking: state.allowWallWalking,
     useOriginalDamageFormula: state.useOriginalDamageFormula,
     showPosition: state.showPosition,
-    screenRed: state.screenRed ?? 0,
-    screenAlpha: state.screenAlpha ?? 0,
   };
 }
 

@@ -6,7 +6,7 @@ import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
 import { BaseScreen } from '../base-screen';
 import { ScreenViewType } from '../screen-view-type';
-import { ScreenMenu } from '../menu/screen';
+import { ScreenStartMenu } from '../menu/screen';
 
 interface AnimationScreenConfig {
   readonly srsIndex: number;
@@ -15,19 +15,19 @@ interface AnimationScreenConfig {
 }
 
 const ANIMATION_SCREEN_CONFIGS: Partial<Record<ScreenViewType, AnimationScreenConfig>> = {
-  [ScreenViewType.SCREEN_DEV_LOGO]: {
+  [ScreenViewType.DevLogo]: {
     srsIndex: 247,
-    nextScreen: ScreenViewType.SCREEN_GAME_LOGO,
+    nextScreen: ScreenViewType.GameLogo,
     skippable: true,
   },
-  [ScreenViewType.SCREEN_GAME_LOGO]: {
+  [ScreenViewType.GameLogo]: {
     srsIndex: 248,
-    nextScreen: ScreenViewType.SCREEN_MENU,
+    nextScreen: ScreenViewType.Menu,
     skippable: true,
   },
-  [ScreenViewType.SCREEN_GAME_FAIL]: {
+  [ScreenViewType.GameFail]: {
     srsIndex: 249,
-    nextScreen: ScreenViewType.SCREEN_MENU,
+    nextScreen: ScreenViewType.Menu,
     skippable: false,
   },
 };
@@ -68,7 +68,7 @@ export class ScreenAnimation extends BaseScreen {
 
   override onKey(key: KeyCode): boolean | undefined {
     if (key === KeyCode.Cancel && this.config.skippable) {
-      this.transitionToScreen(ScreenViewType.SCREEN_MENU);
+      this.transitionToScreen(ScreenViewType.Menu);
     }
     return undefined;
   }
@@ -78,13 +78,13 @@ export class ScreenAnimation extends BaseScreen {
     this.game.mainSceneRuntime = null;
 
     switch (screenType) {
-      case ScreenViewType.SCREEN_DEV_LOGO:
-      case ScreenViewType.SCREEN_GAME_LOGO:
-      case ScreenViewType.SCREEN_GAME_FAIL:
+      case ScreenViewType.DevLogo:
+      case ScreenViewType.GameLogo:
+      case ScreenViewType.GameFail:
         this.game.screenStack.replaceAll(new ScreenAnimation(this.game, screenType));
         return;
-      case ScreenViewType.SCREEN_MENU:
-        this.game.screenStack.replaceAll(new ScreenMenu(this.game));
+      case ScreenViewType.Menu:
+        this.game.screenStack.replaceAll(new ScreenStartMenu(this.game));
         return;
       default:
         throw new Error(`ScreenAnimation cannot transition to screen type ${screenType}`);

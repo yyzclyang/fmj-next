@@ -1,42 +1,46 @@
 import type { FightingCharacter } from '@/characters';
 import type { Surface } from '@/rendering/surface';
 import {
-  FRAME_INTERVAL,
   PHYSICAL_MOVE_FRAMES,
+  advanceFrameTimer,
+  drawActiveAnimations,
   restoreSprite,
+  restoreSprites,
   setPhysicalAttackFrame,
   snapshotSprite,
+  snapshotSprites,
   type SpriteSnapshot,
+  updateActiveAnimations,
 } from './animation-sprite';
 import type { CombatActionAnimation, CombatPoint } from './animation-types';
 
 export class PhysicalCombatAnimation implements CombatActionAnimation {
   private readonly actorSnapshot: SpriteSnapshot | null;
   private readonly targetSnapshots: SpriteSnapshot[];
-  private readonly targetSet: Set<FightingCharacter>;
+  private readonly visibleTargetSet: Set<FightingCharacter>;
   private frame = 0;
   private elapsed = 0;
   private stage: 'move' | 'raise' = 'move';
   private hitStarted = false;
-  private raises: CombatActionAnimation[];
+  private raiseAnimations: CombatActionAnimation[];
 
   constructor(
     private readonly options: {
       readonly actor: FightingCharacter;
       readonly targets: readonly FightingCharacter[];
       readonly moveTo: FightingCharacter | CombatPoint;
-      readonly raises: CombatActionAnimation[];
+      readonly raiseAnimations: CombatActionAnimation[];
       readonly targetIsPlayer: boolean;
     }
   ) {
     this.actorSnapshot = snapshotSprite(options.actor);
-    this.targetSnapshots = options.targets.map(snapshotSprite).filter((item): item is SpriteSnapshot => item != null);
-    this.targetSet = new Set(options.targets);
-    this.raises = [...options.raises];
+    this.targetSnapshots = snapshotSprites(options.targets);
+    this.visibleTargetSet = new Set(options.targets);
+    this.raiseAnimations = [...options.raiseAnimations];
   }
 
   keepsVisible(fighter: FightingCharacter): boolean {
-    return this.targetSet.has(fighter);
+    return this.visibleTargetSet.has(fighter);
   }
 
   update(delta: number): boolean {
@@ -58,7 +62,7 @@ export class PhysicalCombatAnimation implements CombatActionAnimation {
 
   draw(surface: Surface): void {
     if (this.stage !== 'raise') return;
-    for (const raise of this.raises) raise.draw(surface);
+    drawActiveAnimations(surface, this.raiseAnimations);
   }
 
   private updateActorMoveFrame(): void {
@@ -88,16 +92,13 @@ export class PhysicalCombatAnimation implements CombatActionAnimation {
   }
 
   private updateRaises(delta: number): boolean {
-    this.raises = this.raises.filter(raise => raise.update(delta));
-    return this.raises.length > 0;
+    return updateActiveAnimations(this.raiseAnimations, delta);
   }
 
   private advance(delta: number): void {
-    this.elapsed += delta;
-    while (this.elapsed >= FRAME_INTERVAL) {
-      this.elapsed -= FRAME_INTERVAL;
-      this.frame += 1;
-    }
+    const next = advanceFrameTimer(this.frame, this.elapsed, delta);
+    this.frame = next.frame;
+    this.elapsed = next.elapsed;
   }
 
   private restoreActor(): void {
@@ -105,6 +106,6 @@ export class PhysicalCombatAnimation implements CombatActionAnimation {
   }
 
   private restoreTargets(): void {
-    for (const item of this.targetSnapshots) restoreSprite(item);
+    restoreSprites(this.targetSnapshots);
   }
 }

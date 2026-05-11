@@ -1,11 +1,11 @@
 import { isSealed } from '@/combat/combat-effects';
-import { STATUS_FLAG_ATTACK_ALL } from '@/characters/status';
 import type { CombatAction, CombatHelpMagic, ThrowItemAction, UseItemAction } from '@/combat/combat-actions';
 import type { Monster, Player } from '@/characters';
 import type { GoodsBag } from '@/goods/goods-bag';
-import { GoodsMedicineLife, GoodsWeapon } from '@/goods';
+import { GoodsMedicineLife } from '@/goods';
 import { MagicAuxiliary } from '@/magic';
 import { getLowestHpPlayer } from './targeting';
+import { canAttackAllTargets } from './attack-all';
 
 export interface CreateRepeatActionOptions {
   readonly player: Player;
@@ -21,7 +21,9 @@ export function createRepeatAction(options: CreateRepeatActionOptions): CombatAc
   if (!lastAction)
     return monster ? { kind: 'attack', actor: player, target: monster } : { kind: 'defend', actor: player };
   if (lastAction.kind === 'attackAll') {
-    return monster && hasAttackAll(player) ? { kind: 'attackAll', actor: player, targets: options.monsters } : null;
+    return monster && canAttackAllTargets(player, options.players)
+      ? { kind: 'attackAll', actor: player, targets: options.monsters }
+      : null;
   }
   if (lastAction.kind === 'attack') return monster ? { kind: 'attack', actor: player, target: monster } : null;
   if (lastAction.kind === 'magicAttack') {
@@ -96,9 +98,4 @@ function createRepeatThrowItemAction(
     targets: lastAction.targetAll ? monsters.filter(item => item.isAlive) : [monster],
     targetAll: lastAction.targetAll,
   };
-}
-
-function hasAttackAll(player: Player): boolean {
-  if (player.onHitStatuses.hasAnyFlag(STATUS_FLAG_ATTACK_ALL)) return true;
-  return player.equipment.some(item => item instanceof GoodsWeapon && item.attackAll());
 }

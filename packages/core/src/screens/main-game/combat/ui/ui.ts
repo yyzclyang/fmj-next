@@ -6,7 +6,7 @@ import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
-import { drawSelectedText, drawText, getTextWidth } from '@/rendering/text-render';
+import { drawText, getTextWidth, TEXT_LINE_HEIGHT } from '@/rendering/text-render';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { drawVerticalMenu } from '@/screens/main-game/menu/menu-select';
 import { COMBAT_GOODS_ITEMS, MISC_ITEMS } from './menu-items';
@@ -27,7 +27,6 @@ const GOODS_MENU_LEFT = 29;
 const GOODS_MENU_TOP = 14;
 const GOODS_MENU_WIDTH = 38;
 const GOODS_MENU_PADDING = 3;
-const LINE_GAP = 16;
 
 export interface CombatUiState {
   readonly phase: CombatPhase;
@@ -142,11 +141,14 @@ export class CombatUi {
   }
 
   private drawMiscMenu(surface: Surface, state: CombatUiState): void {
-    drawInsetPanel(surface, MISC_LEFT, MISC_TOP, MISC_WIDTH, MISC_ITEMS.length * LINE_GAP + MISC_PADDING * 2);
-    for (let i = 0; i < MISC_ITEMS.length; i += 1) {
-      const draw = i === state.miscIndex ? drawSelectedText : drawText;
-      draw(surface, MISC_ITEMS[i]!, MISC_LEFT + MISC_PADDING, MISC_TOP + MISC_PADDING + i * LINE_GAP);
-    }
+    drawInsetPanel(surface, MISC_LEFT, MISC_TOP, MISC_WIDTH, MISC_ITEMS.length * TEXT_LINE_HEIGHT + MISC_PADDING * 2);
+    drawVerticalMenu(surface, {
+      items: MISC_ITEMS,
+      selectedIndex: state.miscIndex,
+      left: MISC_LEFT + MISC_PADDING,
+      top: MISC_TOP + MISC_PADDING,
+      lineGap: TEXT_LINE_HEIGHT,
+    });
   }
 
   private drawCombatGoodsMenu(surface: Surface, state: CombatUiState): void {
@@ -155,14 +157,14 @@ export class CombatUi {
       GOODS_MENU_LEFT,
       GOODS_MENU_TOP,
       GOODS_MENU_WIDTH,
-      COMBAT_GOODS_ITEMS.length * LINE_GAP + GOODS_MENU_PADDING * 2
+      COMBAT_GOODS_ITEMS.length * TEXT_LINE_HEIGHT + GOODS_MENU_PADDING * 2
     );
     drawVerticalMenu(surface, {
       items: COMBAT_GOODS_ITEMS,
       selectedIndex: state.combatGoodsIndex,
       left: GOODS_MENU_LEFT + GOODS_MENU_PADDING,
       top: GOODS_MENU_TOP + GOODS_MENU_PADDING,
-      lineGap: LINE_GAP,
+      lineGap: TEXT_LINE_HEIGHT,
     });
   }
 }

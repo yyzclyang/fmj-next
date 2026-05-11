@@ -3,21 +3,26 @@ import type { ResSrs } from '@/lib/res-srs';
 import type { Surface } from '@/rendering/surface';
 import {
   CAST_PRE_FRAMES,
-  FRAME_INTERVAL,
+  advanceFrameTimer,
+  drawActiveAnimations,
   restoreSprite,
+  restoreSprites,
+  setPlayerCastFrame,
   snapshotSprite,
+  snapshotSprites,
   type SpriteSnapshot,
+  updateActiveAnimations,
 } from './animation-sprite';
 import type { CombatActionAnimation, CombatPoint } from './animation-types';
 
 export class CastCombatAnimation implements CombatActionAnimation {
   private readonly actorSnapshot: SpriteSnapshot | null;
   private readonly targetSnapshots: SpriteSnapshot[];
-  private readonly targetSet: Set<FightingCharacter>;
+  private readonly visibleTargetSet: Set<FightingCharacter>;
   private frame = 0;
   private elapsed = 0;
   private stage: 'pre' | 'ani' | 'raise' = 'pre';
-  private raises: CombatActionAnimation[];
+  private raiseAnimations: CombatActionAnimation[];
 
   constructor(
     private readonly options: {
@@ -25,20 +30,20 @@ export class CastCombatAnimation implements CombatActionAnimation {
       readonly targets: readonly FightingCharacter[];
       readonly srs: ResSrs | null;
       readonly srsPoint: CombatPoint;
-      readonly raises: CombatActionAnimation[];
+      readonly raiseAnimations: CombatActionAnimation[];
       readonly hitTargets: boolean;
     }
   ) {
     this.actorSnapshot = snapshotSprite(options.actor);
-    this.targetSnapshots = options.targets.map(snapshotSprite).filter((item): item is SpriteSnapshot => item != null);
-    this.targetSet = new Set(options.targets);
-    this.raises = [...options.raises];
+    this.targetSnapshots = snapshotSprites(options.targets);
+    this.visibleTargetSet = new Set(options.targets);
+    this.raiseAnimations = [...options.raiseAnimations];
     options.srs?.start();
     options.srs?.setIteratorNum(2);
   }
 
   keepsVisible(fighter: FightingCharacter): boolean {
-    return this.targetSet.has(fighter);
+    return this.visibleTargetSet.has(fighter);
   }
 
   update(delta: number): boolean {
@@ -74,7 +79,7 @@ export class CastCombatAnimation implements CombatActionAnimation {
       return;
     }
     if (this.stage === 'raise') {
-      for (const raise of this.raises) raise.draw(surface);
+      drawActiveAnimations(surface, this.raiseAnimations);
     }
   }
 
@@ -82,7 +87,7 @@ export class CastCombatAnimation implements CombatActionAnimation {
     const snapshot = this.actorSnapshot;
     if (!snapshot) return;
     if (this.options.actor instanceof Player) {
-      snapshot.sprite.currentFrame = Math.trunc((this.frame * 3) / CAST_PRE_FRAMES) + 6;
+      setPlayerCastFrame(snapshot, this.frame);
     } else {
       snapshot.sprite.setCombatPos(snapshot.x + 2, snapshot.y + 2);
     }
@@ -99,16 +104,13 @@ export class CastCombatAnimation implements CombatActionAnimation {
   }
 
   private updateRaises(delta: number): boolean {
-    this.raises = this.raises.filter(raise => raise.update(delta));
-    return this.raises.length > 0;
+    return updateActiveAnimations(this.raiseAnimations, delta);
   }
 
   private advance(delta: number): void {
-    this.elapsed += delta;
-    while (this.elapsed >= FRAME_INTERVAL) {
-      this.elapsed -= FRAME_INTERVAL;
-      this.frame += 1;
-    }
+    const next = advanceFrameTimer(this.frame, this.elapsed, delta);
+    this.frame = next.frame;
+    this.elapsed = next.elapsed;
   }
 
   private restoreActor(): void {
@@ -116,6 +118,6 @@ export class CastCombatAnimation implements CombatActionAnimation {
   }
 
   private restoreTargets(): void {
-    for (const item of this.targetSnapshots) restoreSprite(item);
+    restoreSprites(this.targetSnapshots);
   }
 }

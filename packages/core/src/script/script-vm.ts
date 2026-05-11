@@ -179,11 +179,11 @@ export class ScriptVm {
       case COMMAND.STARTCHAPTER:
         return this.cmdStartChapter(code, start);
       case COMMAND.SCREENR:
-        return this.cmdScreenRed(code, start);
+        return this.cmdIgnoredScreenFilter();
       case COMMAND.SCREENS:
         return this.cmdSetMapScreen(code, start);
       case COMMAND.SCREENA:
-        return this.cmdScreenAlpha(code, start);
+        return this.cmdIgnoredScreenFilter();
       case COMMAND.EVENT:
         return this.cmdEvent(code, start);
       case COMMAND.MONEY:
@@ -594,25 +594,11 @@ export class ScriptVm {
     };
   }
 
-  private cmdScreenRed(code: Uint8Array, start: number): CommandBuilder {
-    const red = code[start] ?? 0;
-
+  private cmdIgnoredScreenFilter(): CommandBuilder {
     return {
       len: 1,
-      execute: () => {
-        this.game.state.screenRed = red;
-      },
-    };
-  }
-
-  private cmdScreenAlpha(code: Uint8Array, start: number): CommandBuilder {
-    const alpha = code[start] ?? 0;
-
-    return {
-      len: 1,
-      execute: () => {
-        this.game.state.screenAlpha = alpha;
-      },
+      // C/Kotlin 基线都没有实际屏幕滤镜，这里只消耗 opcode 参数。
+      execute: () => undefined,
     };
   }
 
@@ -691,7 +677,7 @@ export class ScriptVm {
     return {
       len: 4,
       execute: () => {
-        this.game.mainSceneRuntime?.faceActorToActor(sourceId, targetId);
+        this.game.mainSceneRuntime?.faceActorTowardActor(targetId, sourceId);
       },
     };
   }
@@ -701,12 +687,12 @@ export class ScriptVm {
     const index = readUint16(code, start + 2);
     const x = readUint16(code, start + 4);
     const y = readUint16(code, start + 6);
-    const ctl = readUint16(code, start + 8);
+    const controlFlags = readUint16(code, start + 8);
 
     return {
       len: 10,
       execute: process => {
-        this.game.mainSceneRuntime?.playMovie({ type, index, x, y, ctl }, process);
+        this.game.mainSceneRuntime?.playMovie({ type, index, x, y, controlFlags }, process);
       },
     };
   }
@@ -1259,7 +1245,7 @@ export class ScriptVm {
     return {
       len: 0,
       execute: () => {
-        this.game.mainSceneRuntime?.showScreen();
+        this.game.mainSceneRuntime?.clearOverlay();
       },
     };
   }

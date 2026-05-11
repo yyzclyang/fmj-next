@@ -1,5 +1,5 @@
 import type { Game } from '@/game/game';
-import { COLOR_BLACK, COLOR_WHITE, type Color } from '@/rendering/color';
+import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import { Surface } from '@/rendering/surface';
 import { drawText, getTextWidth, wrapTextBlock } from '@/rendering/text-render';
 import { Direction, type WalkingSprite } from '@/characters';
@@ -66,12 +66,6 @@ export class ScreenMainGame extends BaseScreen {
 
   draw(surface: Surface): void {
     this.drawMainGame(surface);
-  }
-
-  override performDraw(surface: Surface): void {
-    this.draw(surface);
-    this.screenStack.draw(surface);
-    this.drawScreenFilter(surface);
   }
 
   showMessage(text: string, delay?: number): void {
@@ -308,13 +302,6 @@ export class ScreenMainGame extends BaseScreen {
       MAP_INFO_LEFT,
       MAP_INFO_TOP + MAP_INFO_LINE_GAP
     );
-  }
-
-  private drawScreenFilter(surface: Surface): void {
-    const alpha = this.game.state.screenAlpha;
-    if (alpha <= 0) return;
-    const color: Color = [this.game.state.screenRed, 0, 0, 255];
-    surface.blendColor(color, alpha);
   }
 
   private drawTip(surface: Surface): void {

@@ -86,22 +86,37 @@ export class ScreenCombat extends BaseScreen {
   ) {
     super(game);
     this.renderer = new CombatRenderer(game);
+    this.actionQueue = this.createActionQueue();
+    this.goodsMenu = this.createGoodsMenu();
+    this.magicMenu = this.createMagicMenu();
+    this.menuController = this.createMenuController();
+    this.inputHandler = this.createInputHandler();
+    this.lastPlayerActions = session.getLastPlayerActions();
+    this.currentPlayerIndex = getFirstAlivePlayerIndex(this.session.players);
+    this.statusPlayerIndex = Math.max(0, this.currentPlayerIndex);
+    this.targetIndex = getFirstAliveMonsterIndex(this.session.monsters);
+  }
+
+  private createActionQueue(): CombatActionQueue {
     const actionPreparer = new CombatActionPreparer({
-      game,
-      session,
+      game: this.game,
+      session: this.session,
       actionInterval: ACTION_INTERVAL,
       setMessage: (message, duration) => this.setMessage(message, duration),
     });
-    this.actionQueue = new CombatActionQueue({
-      game,
-      session,
+    return new CombatActionQueue({
+      game: this.game,
+      session: this.session,
       actionPreparer,
       actionInterval: ACTION_INTERVAL,
     });
-    this.goodsMenu = new CombatGoodsMenu({
-      game,
+  }
+
+  private createGoodsMenu(): CombatGoodsMenu {
+    return new CombatGoodsMenu({
+      game: this.game,
       screenStack: this.screenStack,
-      players: session.players,
+      players: this.session.players,
       setMessage: message => this.setMessage(message),
       onCancel: () => {
         this.phase = 'goodsMenu';
@@ -109,11 +124,14 @@ export class ScreenCombat extends BaseScreen {
       onConfirmThrowGoods: goods => this.confirmThrowGoods(goods),
       onConfirmUseGoods: goods => this.confirmUseGoods(goods),
     });
-    this.magicMenu = new CombatMagicMenu({
-      game,
+  }
+
+  private createMagicMenu(): CombatMagicMenu {
+    return new CombatMagicMenu({
+      game: this.game,
       screenStack: this.screenStack,
-      players: session.players,
-      monsters: session.monsters,
+      players: this.session.players,
+      monsters: this.session.monsters,
       getCurrentPlayer: () => this.currentPlayer,
       ensureSelectedMonster: () => this.ensureSelectedMonster(),
       setMessage: message => this.setMessage(message),
@@ -132,7 +150,10 @@ export class ScreenCombat extends BaseScreen {
       confirmPlayerAction: action => this.confirmPlayerAction(action),
       startSuccess: () => this.startSuccess(),
     });
-    this.menuController = new CombatMenuController({
+  }
+
+  private createMenuController(): CombatMenuController {
+    return new CombatMenuController({
       getCurrentPlayer: () => this.currentPlayer,
       getCurrentPlayerIndex: () => this.currentPlayerIndex,
       ensureSelectedMonster: () => this.ensureSelectedMonster(),
@@ -158,7 +179,10 @@ export class ScreenCombat extends BaseScreen {
       confirmFlee: () => this.confirmFlee(),
       goodsMenu: this.goodsMenu,
     });
-    this.inputHandler = new CombatInputHandler({
+  }
+
+  private createInputHandler(): CombatInputHandler {
+    return new CombatInputHandler({
       getPhase: () => this.phase,
       setPhase: phase => {
         this.phase = phase;
@@ -198,10 +222,6 @@ export class ScreenCombat extends BaseScreen {
       confirmCombatGoodsMenuItem: () => this.menuController.confirmCombatGoodsMenuItem(this.combatGoodsIndex),
       selectStatusPlayer: step => this.selectStatusPlayer(step),
     });
-    this.lastPlayerActions = session.getLastPlayerActions();
-    this.currentPlayerIndex = getFirstAlivePlayerIndex(this.session.players);
-    this.statusPlayerIndex = Math.max(0, this.currentPlayerIndex);
-    this.targetIndex = getFirstAliveMonsterIndex(this.session.monsters);
   }
 
   override update(delta: number): void {

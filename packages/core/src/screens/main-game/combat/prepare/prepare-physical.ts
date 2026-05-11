@@ -62,7 +62,7 @@ export function prepareAttackAction(ctx: CombatPrepareContext, action: AttackAct
     actor: action.actor,
     targets: [action.target],
     moveTo: action.target,
-    raises: missed
+    raiseAnimations: missed
       ? [createMissAnimation(ctx.game, action.target)]
       : createRaiseAnimations(ctx.game, before, [action.target]),
     targetIsPlayer: ctx.session.players.includes(action.target as Player),
@@ -98,7 +98,7 @@ export function prepareAttackAllAction(
     actor: action.actor,
     targets,
     moveTo: { x: 44, y: 14 },
-    raises: [...createRaiseAnimations(ctx.game, before, targets), ...misses],
+    raiseAnimations: [...createRaiseAnimations(ctx.game, before, targets), ...misses],
     targetIsPlayer: ctx.session.players.includes(targets[0] as Player),
   });
   ctx.setMessage(`${action.actor.name}攻击全体`);
@@ -150,7 +150,7 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
       targets,
       srs: action.magic?.animation ?? ctx.game.datLib.getSrs(2, 240),
       srsPoint: action.targetAll ? { x: 0, y: 0 } : getAnimationPoint(targets, false),
-      raises: [...createRaiseAnimations(ctx.game, before, [...targets, ...actors]), ...misses],
+      raiseAnimations: [...createRaiseAnimations(ctx.game, before, [...targets, ...actors]), ...misses],
     })
   );
 }

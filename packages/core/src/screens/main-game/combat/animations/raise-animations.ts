@@ -14,7 +14,7 @@ import type { ResSrs } from '@/lib/res-srs';
 import { ResourceType } from '@/lib/resource-utils';
 import type { Surface } from '@/rendering/surface';
 import { drawText } from '@/rendering/text-render';
-import { FRAME_INTERVAL } from './animation-sprite';
+import { drawActiveAnimations, FRAME_INTERVAL, updateActiveAnimations } from './animation-sprite';
 import type { CombatActionAnimation } from './animation-types';
 
 export class StaticCombatAnimation implements CombatActionAnimation {
@@ -31,25 +31,24 @@ export class StaticCombatAnimation implements CombatActionAnimation {
 }
 
 export class RaiseGroupCombatAnimation implements CombatActionAnimation {
-  private raises: CombatActionAnimation[];
-  private readonly targetSet: Set<FightingCharacter>;
+  private raiseAnimations: CombatActionAnimation[];
+  private readonly visibleTargetSet: Set<FightingCharacter>;
 
-  constructor(raises: readonly CombatActionAnimation[], fighters: readonly FightingCharacter[]) {
-    this.raises = [...raises];
-    this.targetSet = new Set(fighters);
+  constructor(raiseAnimations: readonly CombatActionAnimation[], fighters: readonly FightingCharacter[]) {
+    this.raiseAnimations = [...raiseAnimations];
+    this.visibleTargetSet = new Set(fighters);
   }
 
   keepsVisible(fighter: FightingCharacter): boolean {
-    return this.targetSet.has(fighter);
+    return this.visibleTargetSet.has(fighter);
   }
 
   update(delta: number): boolean {
-    this.raises = this.raises.filter(raise => raise.update(delta));
-    return this.raises.length > 0;
+    return updateActiveAnimations(this.raiseAnimations, delta);
   }
 
   draw(surface: Surface): void {
-    for (const raise of this.raises) raise.draw(surface);
+    drawActiveAnimations(surface, this.raiseAnimations);
   }
 }
 

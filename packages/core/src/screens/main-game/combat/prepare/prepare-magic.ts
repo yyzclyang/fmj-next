@@ -62,7 +62,7 @@ export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: Magi
     targets: finalTargets,
     srs: action.magic.animation,
     srsPoint: getAnimationPoint(finalTargets, action.targetAll),
-    raises: [...createRaiseAnimations(ctx.game, before, [...finalTargets, action.actor]), ...misses],
+    raiseAnimations: [...createRaiseAnimations(ctx.game, before, [...finalTargets, action.actor]), ...misses],
     hitTargets: true,
   });
   ctx.setMessage(`${action.actor.name}施展${action.magic.name}`);
@@ -92,7 +92,7 @@ export function prepareMagicHelpAction(ctx: CombatPrepareContext, action: MagicH
     targets: finalTargets,
     srs: action.magic.animation,
     srsPoint: getAnimationPoint(finalTargets, action.targetAll),
-    raises: createRaiseAnimations(ctx.game, before, finalTargets),
+    raiseAnimations: createRaiseAnimations(ctx.game, before, finalTargets),
     hitTargets: false,
   });
   ctx.setMessage(`${action.actor.name}施展${action.magic.name}`);
@@ -120,7 +120,7 @@ export function prepareSpecialMagicAction(ctx: CombatPrepareContext, action: Spe
       targets: [action.target],
       srs: action.magic.animation,
       srsPoint: getAnimationPoint([action.target], false),
-      raises: [],
+      raiseAnimations: [],
       hitTargets: false,
     })
   );

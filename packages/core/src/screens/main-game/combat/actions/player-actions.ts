@@ -1,5 +1,4 @@
-import type { FightingCharacter, Monster, Player } from '@/characters';
-import { STATUS_FLAG_ATTACK_ALL } from '@/characters/status';
+import type { Monster, Player } from '@/characters';
 import { isConfusing, isSleeping } from '@/combat/combat-effects';
 import type {
   CombatAction,
@@ -9,10 +8,10 @@ import type {
   PlayerTargetMode,
 } from '@/combat/combat-actions';
 import type { Game } from '@/game/game';
-import { GoodsWeapon } from '@/goods';
 import { getFirstAliveMonster } from './targeting';
 import { createRepeatedCoopAction } from './coop-actions';
 import { createRepeatAction } from './repeat-actions';
+import { canAttackAllTargets } from './attack-all';
 
 export interface QueuedPlayerAction {
   readonly action: CombatAction;
@@ -33,20 +32,13 @@ export function createDisabledPlayerAction(player: Player | null): CombatAction 
   return { kind: 'nop', actor: player };
 }
 
-export function hasAttackAll(actor: FightingCharacter, players: readonly Player[]): boolean {
-  if (actor.onHitStatuses.hasAnyFlag(STATUS_FLAG_ATTACK_ALL)) return true;
-  if (!players.includes(actor as Player)) return false;
-  const player = actor as Player;
-  return player.equipment.some(item => item instanceof GoodsWeapon && item.attackAll());
-}
-
 export function createPlayerAttackAction(
   player: Player,
   monster: Monster,
   monsters: readonly Monster[],
   players: readonly Player[]
 ): CombatAction {
-  return hasAttackAll(player, players)
+  return canAttackAllTargets(player, players)
     ? { kind: 'attackAll', actor: player, targets: monsters.filter(item => item.isAlive) }
     : { kind: 'attack', actor: player, target: monster };
 }

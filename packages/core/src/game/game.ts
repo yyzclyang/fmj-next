@@ -13,7 +13,7 @@ import { KeyCode } from '@/shared/key-code';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { ScreenMainGame } from '@/screens/main-game/screen';
 import { ScreenAnimation } from '@/screens/animation/screen';
-import { ScreenMenu } from '@/screens/menu/screen';
+import { ScreenStartMenu } from '@/screens/menu/screen';
 import { ScreenStack } from '@/screens/screen-stack';
 import { ScreenViewType } from '@/screens/screen-view-type';
 import {
@@ -104,7 +104,7 @@ export class Game {
     this.mainScene = null;
     this.mainSceneRuntime = null;
     this.combat.reset();
-    this.screenStack.replaceAll(new ScreenAnimation(this, ScreenViewType.SCREEN_DEV_LOGO));
+    this.screenStack.replaceAll(new ScreenAnimation(this, ScreenViewType.DevLogo));
     this.draw();
   }
 
@@ -132,7 +132,7 @@ export class Game {
   returnToMenu(): void {
     this.mainScene = null;
     this.mainSceneRuntime = null;
-    this.screenStack.replaceAll(new ScreenMenu(this));
+    this.screenStack.replaceAll(new ScreenStartMenu(this));
   }
 
   requestExit(): void {

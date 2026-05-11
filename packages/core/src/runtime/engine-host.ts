@@ -6,7 +6,6 @@ export interface SaveStore {
 export interface AudioPort {
   playMusic(id: string): void;
   stopMusic(): void;
-  playSfx(id: string): void;
 }
 
 export interface EngineHost {

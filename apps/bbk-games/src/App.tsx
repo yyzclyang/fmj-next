@@ -154,20 +154,12 @@ function App() {
       runtimeRef.current?.keyDown(key);
       event.preventDefault();
     };
-    const handleKeyUp = (event: KeyboardEvent) => {
-      const key = mapKeyboard(event.code);
-      if (key == null) return;
-      runtimeRef.current?.keyUp(key);
-      event.preventDefault();
-    };
     const handleBeforeUnload = () => runtimeRef.current?.dispose();
 
     window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('beforeunload', handleBeforeUnload);
     };
   }, []);

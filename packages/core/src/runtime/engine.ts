@@ -1,13 +1,12 @@
 import { createDebugApi } from '@/debug/debug';
 import { Game } from '@/game/game';
 import type { GameEngineOptions } from '@/game/game-engine-options';
-import type { GameState } from '@/game/game-state';
 import { createPixelBuffer, type PixelBuffer } from '@/rendering/pixel-buffer';
 import { FIXED_STEP_MS, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
 import type { EngineHost } from './engine-host';
 
-export interface BootOptions {
+export interface EngineBootOptions {
   readonly lib: Uint8Array;
   readonly engineOptions?: GameEngineOptions;
 }
@@ -27,20 +26,16 @@ export class Engine {
     return this.game?.frameBuffer ?? this.emptyBuffer;
   }
 
-  boot(options: BootOptions): void {
+  boot(options: EngineBootOptions): void {
     this.accumulatorMs = 0;
     this.game = new Game(this.host, options.lib, options.engineOptions);
     this.game.start();
   }
 
-  getStateSnapshot(): GameState | null {
-    return this.game?.getStateSnapshot() ?? null;
-  }
-
   tick(deltaMs: number): void {
     if (!this.game) return;
 
-    this.accumulatorMs += deltaMs;
+    this.accumulatorMs = Math.min(this.accumulatorMs + deltaMs, FIXED_STEP_MS * 5);
     while (this.accumulatorMs >= FIXED_STEP_MS) {
       this.accumulatorMs -= FIXED_STEP_MS;
       this.game.update(FIXED_STEP_MS);
@@ -50,9 +45,5 @@ export class Engine {
 
   keyDown(key: KeyCode): void {
     this.game?.onKey(key);
-  }
-
-  keyUp(key: KeyCode): void {
-    void key;
   }
 }

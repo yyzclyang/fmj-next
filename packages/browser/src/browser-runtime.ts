@@ -75,10 +75,6 @@ export class BrowserRuntime {
     this.engine?.keyDown(code);
   }
 
-  keyUp(code: KeyCode): void {
-    this.engine?.keyUp(code);
-  }
-
   dispose(): void {
     this.stopLoop();
     this.engine = null;

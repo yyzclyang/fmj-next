@@ -7,7 +7,4 @@ export const audio: AudioPort = {
   stopMusic() {
     console.debug('[audio] stopMusic');
   },
-  playSfx(id) {
-    console.debug('[audio] playSfx', id);
-  },
 };

@@ -17,13 +17,13 @@ export function createMonsterAction(
         kind: 'magicAttack',
         actor: monster,
         magic,
-        targets: magic.isForAll ? players : [target],
-        targetAll: magic.isForAll,
+        targets: magic.targetAll ? players : [target],
+        targetAll: magic.targetAll,
       };
     }
     if (magic instanceof MagicRestore) {
-      const targets = magic.isForAll ? monsters : [selectMonsterRestoreTarget(monsters) ?? monster];
-      return { kind: 'magicHelp', actor: monster, magic, targets, targetAll: magic.isForAll };
+      const targets = magic.targetAll ? monsters : [selectMonsterRestoreTarget(monsters) ?? monster];
+      return { kind: 'magicHelp', actor: monster, magic, targets, targetAll: magic.targetAll };
     }
   }
   return createMonsterPhysicalAction(monster, target, players);
@@ -44,7 +44,7 @@ function getMonsterMagicChance(iq: number): number {
 }
 
 function selectMonsterMagic(monster: Monster): BaseMagic | null {
-  const magics = monster.magicChain?.getAllLearntMagics(true).filter(magic => magic.costMp <= monster.mp) ?? [];
+  const magics = monster.magicChain?.getAllLearnedMagics(true).filter(magic => magic.costMp <= monster.mp) ?? [];
   if (magics.length === 0) return null;
   return magics[Math.trunc(Math.random() * magics.length)] ?? null;
 }

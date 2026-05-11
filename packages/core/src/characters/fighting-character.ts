@@ -5,7 +5,7 @@ import type { FightingSprite } from './fighting-sprite';
 
 export interface FightingCharacterData extends CharacterData {
   readonly magicChain: ResMagicChain | null;
-  readonly learntMagicCount: number;
+  readonly learnedMagicCount: number;
   readonly level: number;
   readonly hpMax: number;
   readonly hp: number;
@@ -24,7 +24,7 @@ export interface FightingCharacterData extends CharacterData {
 
 export abstract class FightingCharacter extends Character {
   magicChain: ResMagicChain | null;
-  learntMagicCount: number;
+  learnedMagicCount: number;
   level: number;
   hpMax: number;
   hp: number;
@@ -43,7 +43,7 @@ export abstract class FightingCharacter extends Character {
   protected constructor(data: FightingCharacterData) {
     super(data);
     this.magicChain = data.magicChain;
-    this.learntMagicCount = data.learntMagicCount;
+    this.learnedMagicCount = data.learnedMagicCount;
     this.level = data.level;
     this.hpMax = data.hpMax;
     this.hp = data.hp;

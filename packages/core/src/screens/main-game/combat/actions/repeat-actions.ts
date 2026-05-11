@@ -34,8 +34,8 @@ export function createRepeatAction(options: CreateRepeatActionOptions): CombatAc
       kind: 'magicAttack',
       actor: player,
       magic: lastAction.magic,
-      targets: lastAction.magic.isForAll ? options.monsters : [monster],
-      targetAll: lastAction.magic.isForAll,
+      targets: lastAction.magic.targetAll ? options.monsters : [monster],
+      targetAll: lastAction.magic.targetAll,
     };
   }
   if (lastAction.kind === 'specialMagic') {

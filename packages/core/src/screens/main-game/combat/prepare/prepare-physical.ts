@@ -109,7 +109,7 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
         applyMagicAttack(actor, action.magic, target, ctx.game.damageFormula);
       }
     }
-    ctx.setMessage(`${actors[0]!.name}等施展${action.magic.magicName}`);
+    ctx.setMessage(`${actors[0]!.name}等施展${action.magic.name}`);
   } else {
     for (const actor of actors) {
       for (const target of targets) {
@@ -127,7 +127,7 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
   return preparedAction(action, new CoopCombatAnimation({
     actors,
     targets,
-    srs: action.magic?.magicAni ?? ctx.game.datLib.getSrs(2, 240),
+    srs: action.magic?.animation ?? ctx.game.datLib.getSrs(2, 240),
     srsPoint: action.targetAll ? { x: 0, y: 0 } : getAnimationPoint(targets, false),
     raises: [...createRaiseAnimations(ctx.game, before, [...targets, ...actors]), ...misses],
   }));

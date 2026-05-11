@@ -115,21 +115,15 @@ export function applyMagicAttack(
   formula: DamageFormula = 'original',
   targetIsDefending = false
 ): void {
-  applyHpMagicEffect(actor, target, calcHpMagicEffect(actor, target, magic.affectHp, formula, targetIsDefending));
-  applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.affectMp, formula));
-  applyCombatStatuses(
-    target,
-    createStatusSlots(magic.statusFlags & 0x0f, (magic.statusFlags >> 4) & 0x0f),
-    target.luck
-  );
+  applyHpMagicEffect(actor, target, calcHpMagicEffect(actor, target, magic.hpEffect, formula, targetIsDefending));
+  applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.mpEffect, formula));
+  applyCombatStatuses(target, createStatusSlots(magic.statusEffectFlags, magic.statusEffectRounds), target.luck);
   applyAttributeMagicEffect(target, -magic.attackPercent, -magic.defensePercent, -magic.agilityPercent, 0);
 }
 
 export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter): void {
   if (magic instanceof MagicRestore) {
-    if (!target.isAlive) return;
-    if (magic.hp > 0) target.hp = Math.min(target.hpMax, target.hp + magic.hp);
-    target.activeStatuses.clearFlags(magic.cureFlags);
+    applyRestoreMagic(magic, target);
     return;
   }
   if (magic instanceof MagicAuxiliary) {
@@ -144,9 +138,15 @@ export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter
       magic.attackPercent,
       magic.defensePercent,
       magic.agilityPercent,
-      magic.statusRound
+      magic.statusEffectRounds
     );
   }
+}
+
+export function applyRestoreMagic(magic: MagicRestore, target: FightingCharacter): void {
+  if (!target.isAlive) return;
+  if (magic.hp > 0) target.hp = Math.min(target.hpMax, target.hp + magic.hp);
+  target.activeStatuses.clearFlags(magic.cureFlags);
 }
 
 export function applyPoisonPostEffect(actor: FightingCharacter): void {

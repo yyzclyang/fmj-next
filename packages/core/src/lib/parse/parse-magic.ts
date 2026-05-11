@@ -15,22 +15,25 @@ import { readGbkString, readInt16, readUint16 } from '../resource-utils';
 export function parseMagicResource(datLib: DatLib, buffer: Uint8Array, type: number, offset: number): BaseMagic | null {
   const baseData = parseBaseMagicData(datLib, buffer, offset);
   switch (type) {
-    case 1:
+    case 1: {
+      const statusByte = buffer[offset + 0x18] ?? 0;
       return new MagicAttack({
         ...baseData,
-        affectHp: readInt16(buffer, offset + 0x12),
-        affectMp: readInt16(buffer, offset + 0x14),
+        hpEffect: readInt16(buffer, offset + 0x12),
+        mpEffect: readInt16(buffer, offset + 0x14),
         defensePercent: buffer[offset + 0x16] ?? 0,
         attackPercent: buffer[offset + 0x17] ?? 0,
-        statusFlags: buffer[offset + 0x18] ?? 0,
+        statusEffectFlags: statusByte & 0x0f,
+        statusEffectRounds: (statusByte >> 4) & 0x0f,
         agilityPercent: buffer[offset + 0x19] ?? 0,
       });
+    }
     case 2:
       return new MagicEnhance({
         ...baseData,
         defensePercent: buffer[offset + 0x16] ?? 0,
         attackPercent: buffer[offset + 0x17] ?? 0,
-        statusRound: ((buffer[offset + 0x18] ?? 0) >> 4) & 0x0f,
+        statusEffectRounds: ((buffer[offset + 0x18] ?? 0) >> 4) & 0x0f,
         agilityPercent: buffer[offset + 0x19] ?? 0,
       });
     case 3:
@@ -57,11 +60,11 @@ export function parseMagicChainResource(datLib: DatLib, buffer: Uint8Array, offs
 }
 
 function parseMagicChainData(datLib: DatLib, buffer: Uint8Array, offset: number): ResMagicChainData {
-  const magicSum = buffer[offset + 2] ?? 0;
+  const magicCount = buffer[offset + 2] ?? 0;
   const magics: ResMagicChainData['magics'] = [];
 
   let pointer = offset + 3;
-  for (let i = 0; i < magicSum; i += 1) {
+  for (let i = 0; i < magicCount; i += 1) {
     const magicType = buffer[pointer] ?? 0;
     const magicIndex = buffer[pointer + 1] ?? 0;
     pointer += 2;
@@ -71,8 +74,7 @@ function parseMagicChainData(datLib: DatLib, buffer: Uint8Array, offset: number)
   return {
     type: buffer[offset] ?? 0,
     index: buffer[offset + 1] ?? 0,
-    magicSum,
-    learnNum: 0,
+    learnedMagicCount: 0,
     magics,
   };
 }
@@ -83,12 +85,12 @@ function parseBaseMagicData(datLib: DatLib, buffer: Uint8Array, offset: number):
   return {
     type: buffer[offset] ?? 0,
     index: buffer[offset + 1] ?? 0,
-    roundNum: roundFlag & 0x7f,
-    isForAll: (roundFlag & 0x80) !== 0,
+    castRounds: roundFlag & 0x7f,
+    targetAll: (roundFlag & 0x80) !== 0,
     costMp: buffer[offset + 4] ?? 0,
-    magicAni: animationIndex > 0 ? datLib.getSrs(2, animationIndex) : null,
-    magicName: readGbkString(buffer, offset + 6),
-    magicDescription: readMagicDescription(buffer, offset),
+    animation: animationIndex > 0 ? datLib.getSrs(2, animationIndex) : null,
+    name: readGbkString(buffer, offset + 6),
+    description: readMagicDescription(buffer, offset),
   };
 }
 

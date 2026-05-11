@@ -896,7 +896,7 @@ export class ScriptVm {
         const magic = this.game.datLib.getMagic(type, index);
         if (!player || !magic) return;
         player.learnMagic(magic);
-        this.game.mainScene?.showTip(`${player.name}学会:${magic.magicName}`);
+        this.game.mainScene?.showTip(`${player.name}学会:${magic.name}`);
       },
     };
   }

@@ -62,12 +62,12 @@ export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: Magi
   const animation = new CastCombatAnimation({
     actor: action.actor,
     targets: finalTargets,
-    srs: action.magic.magicAni,
+    srs: action.magic.animation,
     srsPoint: getAnimationPoint(finalTargets, action.targetAll),
     raises: [...createRaiseAnimations(ctx.game, before, [...finalTargets, action.actor]), ...misses],
     hitTargets: true,
   });
-  ctx.setMessage(`${action.actor.name}施展${action.magic.magicName}`);
+  ctx.setMessage(`${action.actor.name}施展${action.magic.name}`);
   return preparedAction(action, animation);
 }
 
@@ -92,12 +92,12 @@ export function prepareMagicHelpAction(ctx: CombatPrepareContext, action: MagicH
   const animation = new CastCombatAnimation({
     actor: action.actor,
     targets: finalTargets,
-    srs: action.magic.magicAni,
+    srs: action.magic.animation,
     srsPoint: getAnimationPoint(finalTargets, action.targetAll),
     raises: createRaiseAnimations(ctx.game, before, finalTargets),
     hitTargets: false,
   });
-  ctx.setMessage(`${action.actor.name}施展${action.magic.magicName}`);
+  ctx.setMessage(`${action.actor.name}施展${action.magic.name}`);
   return preparedAction(action, animation);
 }
 
@@ -113,12 +113,12 @@ export function prepareSpecialMagicAction(ctx: CombatPrepareContext, action: Spe
     if (!goods) throw new Error(`战斗偷取物品不存在: GRS ${steal.type}-${steal.index}`);
     ctx.setMessage(`获得${goods.name}`);
   } else {
-    ctx.setMessage(`${action.actor.name}施展${action.magic.magicName}`);
+    ctx.setMessage(`${action.actor.name}施展${action.magic.name}`);
   }
   return preparedAction(action, new CastCombatAnimation({
     actor: action.actor,
     targets: [action.target],
-    srs: action.magic.magicAni,
+    srs: action.magic.animation,
     srsPoint: getAnimationPoint([action.target], false),
     raises: [],
     hitTargets: false,

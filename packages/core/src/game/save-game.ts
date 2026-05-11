@@ -66,8 +66,8 @@ export interface SavePlayerState {
   mapX?: number;
   mapY?: number;
   level: number;
-  learntMagicCount: number;
-  magicChainLearnNum: number;
+  learnedMagicCount: number;
+  magicChainLearnedMagicCount: number;
   hpMax: number;
   hp: number;
   mpMax: number;
@@ -145,8 +145,8 @@ function createPlayerState(player: Player): SavePlayerState {
     mapX: player.mapX,
     mapY: player.mapY,
     level: player.level,
-    learntMagicCount: player.learntMagicCount,
-    magicChainLearnNum: player.magicChain?.learnNum ?? 0,
+    learnedMagicCount: player.learnedMagicCount,
+    magicChainLearnedMagicCount: player.magicChain?.learnedMagicCount ?? 0,
     hpMax: player.hpMax,
     hp: player.hp,
     mpMax: player.mpMax,
@@ -163,7 +163,7 @@ function createPlayerState(player: Player): SavePlayerState {
     hpPerRound: player.hpPerRound,
     mpPerRound: player.mpPerRound,
     equipment: player.equipment.map(goods => (goods ? { type: goods.type, index: goods.index } : null)),
-    privateMagics: player.getPrivateLearntMagicRefs(),
+    privateMagics: player.getPrivateLearnedMagicRefs(),
     immuneStatuses: cloneStatusSlots(player.immuneStatuses.slots),
     activeStatuses: cloneStatusSlots(player.activeStatuses.slots),
   };

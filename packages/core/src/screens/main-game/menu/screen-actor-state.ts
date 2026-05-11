@@ -105,10 +105,10 @@ export function drawPlayerState(surface: Surface, player: Player, page: number, 
   y += STATE_LINE_HEIGHT;
 
   TextRender.drawText(surface, '已学魔法:', STATE_TEXT_LEFT, y);
-  const magics = player.getAllLearntMagics();
+  const magics = player.getAllLearnedMagics();
   const maxDisplay = Math.min(4, magics.length);
   for (let i = 0; i < maxDisplay; i += 1) {
-    TextRender.drawText(surface, `${i + 1}. ${magics[i]?.magicName ?? '未知'}`, STATE_TEXT_LEFT, y + STATE_LINE_HEIGHT * (i + 1));
+    TextRender.drawText(surface, `${i + 1}. ${magics[i]?.name ?? '未知'}`, STATE_TEXT_LEFT, y + STATE_LINE_HEIGHT * (i + 1));
   }
   if (magics.length > 4) {
     TextRender.drawText(surface, `... 还有${magics.length - 4}个`, STATE_TEXT_LEFT, y + STATE_LINE_HEIGHT * (maxDisplay + 1));

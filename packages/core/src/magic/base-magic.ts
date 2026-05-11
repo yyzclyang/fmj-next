@@ -4,31 +4,31 @@ import type { ResSrs } from '@/lib/res-srs';
 export interface BaseMagicData {
   readonly type: number;
   readonly index: number;
-  readonly roundNum: number;
-  readonly isForAll: boolean;
+  readonly castRounds: number;
+  readonly targetAll: boolean;
   readonly costMp: number;
-  readonly magicAni: ResSrs | null;
-  readonly magicName: string;
-  readonly magicDescription: string;
+  readonly animation: ResSrs | null;
+  readonly name: string;
+  readonly description: string;
 }
 
 export abstract class BaseMagic extends ResBase {
-  roundNum: number;
-  isForAll: boolean;
+  castRounds: number;
+  targetAll: boolean;
   costMp: number;
-  magicAni: ResSrs | null;
-  magicName: string;
-  magicDescription: string;
+  animation: ResSrs | null;
+  name: string;
+  description: string;
 
   protected constructor(data: BaseMagicData) {
     super();
     this.type = data.type;
     this.index = data.index;
-    this.roundNum = data.roundNum;
-    this.isForAll = data.isForAll;
+    this.castRounds = data.castRounds;
+    this.targetAll = data.targetAll;
     this.costMp = data.costMp;
-    this.magicAni = data.magicAni;
-    this.magicName = data.magicName;
-    this.magicDescription = data.magicDescription;
+    this.animation = data.animation;
+    this.name = data.name;
+    this.description = data.description;
   }
 }

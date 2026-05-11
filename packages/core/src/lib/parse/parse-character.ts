@@ -39,8 +39,8 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
   const index = buffer[offset + 1] ?? 0;
   const magicChainIndex = buffer[offset + 0x17] ?? 0;
   const magicChain = magicChainIndex > 0 ? datLib.getMagicChain(magicChainIndex) : null;
-  const learntMagicCount = buffer[offset + 9] ?? 0;
-  if (magicChain) magicChain.learnNum = learntMagicCount;
+  const learnedMagicCount = buffer[offset + 9] ?? 0;
+  if (magicChain) magicChain.learnedMagicCount = learnedMagicCount;
   const hpMax = readUint16(buffer, offset + 0x26);
   const mpMax = readUint16(buffer, offset + 0x2a);
   const attack = readUint16(buffer, offset + 0x2e);
@@ -63,7 +63,7 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
       walkingSprite: datLib.createWalkingSprite(type, buffer[offset + 0x16] ?? 0),
     }),
     magicChain,
-    learntMagicCount,
+    learnedMagicCount,
     level: buffer[offset + 0x20] ?? 0,
     hpMax,
     hp: readUint16(buffer, offset + 0x28),
@@ -110,8 +110,8 @@ function createNpc(datLib: DatLib, buffer: Uint8Array, offset: number): Npc {
 function createMonster(datLib: DatLib, buffer: Uint8Array, offset: number): Monster {
   const magicIndex = buffer[offset + 0x2f] ?? 0;
   const magicChain = magicIndex > 0 ? datLib.getMagicChain(magicIndex) : null;
-  const learntMagicCount = buffer[offset + 2] ?? 0;
-  if (magicChain) magicChain.learnNum = learntMagicCount;
+  const learnedMagicCount = buffer[offset + 2] ?? 0;
+  if (magicChain) magicChain.learnedMagicCount = learnedMagicCount;
   const immuneStatuses = new StatusSlots();
   immuneStatuses.addFlags(buffer[offset + 3] ?? 0, 0);
   const onHitStatuses = new StatusSlots();
@@ -130,7 +130,7 @@ function createMonster(datLib: DatLib, buffer: Uint8Array, offset: number): Mons
       walkingSprite: null,
     }),
     magicChain,
-    learntMagicCount,
+    learnedMagicCount,
     level: buffer[offset + 0x12] ?? 0,
     agility: buffer[offset + 0x13] ?? 0,
     spirit: buffer[offset + 0x14] ?? 0,
@@ -184,7 +184,7 @@ function createFightingCharacterDefaults(characterData: CharacterData): Fighting
   return {
     ...characterData,
     magicChain: null,
-    learntMagicCount: 0,
+    learnedMagicCount: 0,
     level: 0,
     hpMax: 0,
     hp: 0,

@@ -35,7 +35,7 @@ export class CombatMagicMenu {
   open(): void {
     const player = this.options.getCurrentPlayer();
     if (!player) throw new Error('打开战斗魔法菜单时缺少当前角色');
-    const magics = player.getAllLearntMagics();
+    const magics = player.getAllLearnedMagics();
     if (magics.length === 0) return;
     this.options.screenStack.push(
       new ScreenMagic(this.options.game, magics, player.mp, {
@@ -71,7 +71,7 @@ export class CombatMagicMenu {
   }
 
   private confirmAttackMagic(player: Player, magic: MagicAttack): void {
-    if (magic.isForAll) {
+    if (magic.targetAll) {
       const targets = this.options.monsters.filter(monster => monster.isAlive);
       if (targets.length === 0) {
         this.options.startSuccess();
@@ -86,7 +86,7 @@ export class CombatMagicMenu {
   }
 
   private confirmHelpMagic(player: Player, magic: CombatHelpMagic): void {
-    if (magic.isForAll) {
+    if (magic.targetAll) {
       this.options.confirmPlayerAction({ kind: 'magicHelp', actor: player, magic, targets: this.options.players, targetAll: true });
       return;
     }

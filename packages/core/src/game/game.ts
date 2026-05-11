@@ -380,8 +380,8 @@ export class Game {
     player.mapX = snapshot.mapX ?? player.mapX;
     player.mapY = snapshot.mapY ?? player.mapY;
     player.level = snapshot.level;
-    player.learntMagicCount = snapshot.learntMagicCount;
-    if (player.magicChain) player.magicChain.learnNum = snapshot.magicChainLearnNum;
+    player.learnedMagicCount = snapshot.learnedMagicCount;
+    if (player.magicChain) player.magicChain.learnedMagicCount = snapshot.magicChainLearnedMagicCount;
     player.hpMax = snapshot.hpMax;
     player.hp = snapshot.hp;
     player.mpMax = snapshot.mpMax;
@@ -397,7 +397,7 @@ export class Game {
     player.hpPerRound = snapshot.hpPerRound;
     player.mpPerRound = snapshot.mpPerRound;
     this.restorePlayerEquipment(player, snapshot.equipment);
-    player.restorePrivateLearntMagics(snapshot.privateMagics.map(ref => this.getSaveMagic(ref)));
+    player.restorePrivateLearnedMagics(snapshot.privateMagics.map(ref => this.getSaveMagic(ref)));
     restoreStatusSlots(player.immuneStatuses.slots, snapshot.immuneStatuses);
     restoreStatusSlots(player.activeStatuses.slots, snapshot.activeStatuses);
   }

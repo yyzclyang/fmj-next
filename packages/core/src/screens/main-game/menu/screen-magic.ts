@@ -85,7 +85,7 @@ export class ScreenMagic extends BaseScreen {
     for (let i = 0; i < showCount; i += 1) {
       const index = this.firstItemIndex + i;
       const y = ITEM_TOP + i * ITEM_GAP;
-      TextRender.drawText(surface, this.magics[index]?.magicName ?? '', ITEM_TEXT_LEFT, y);
+      TextRender.drawText(surface, this.magics[index]?.name ?? '', ITEM_TEXT_LEFT, y);
       if (index === this.currentItemIndex) drawMagicCursor(surface, LIST_LEFT + 4, y + 2);
     }
   }
@@ -93,7 +93,7 @@ export class ScreenMagic extends BaseScreen {
   private drawDescription(surface: Surface): void {
     const magic = this.currentMagic;
     if (!magic) return;
-    const lines = wrapTextBlock(magic.magicDescription, DESCRIPTION_WIDTH);
+    const lines = wrapTextBlock(magic.description, DESCRIPTION_WIDTH);
     const visible = lines.slice(this.descriptionLine, this.descriptionLine + DESCRIPTION_LINES);
     for (let i = 0; i < visible.length; i += 1) {
       TextRender.drawText(surface, visible[i] ?? '', DESCRIPTION_LEFT, DESCRIPTION_TOP + i * 16);
@@ -114,7 +114,7 @@ export class ScreenMagic extends BaseScreen {
   private pageDescription(step: number): void {
     const magic = this.currentMagic;
     if (!magic) return;
-    const lines = wrapTextBlock(magic.magicDescription, DESCRIPTION_WIDTH);
+    const lines = wrapTextBlock(magic.description, DESCRIPTION_WIDTH);
     const maxLine = Math.max(0, lines.length - DESCRIPTION_LINES);
     this.descriptionLine = Math.max(0, Math.min(maxLine, this.descriptionLine + step * DESCRIPTION_LINES));
   }

@@ -203,7 +203,7 @@ function getLearnedMagicNames(award: CombatLevelUpAward): string[] {
   const res: string[] = [];
   for (let i = award.oldMagicCount; i < maxCount; i += 1) {
     const magic = chain.getMagic(i);
-    if (magic) res.push(magic.magicName);
+    if (magic) res.push(magic.name);
   }
   return res;
 }

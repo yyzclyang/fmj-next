@@ -122,7 +122,7 @@ export class Player extends FightingCharacter {
   mpPerRound: number;
   private onHitEffectRoundsValue: number;
   private onHitEffectFlagsValue: number;
-  private readonly privateLearntMagics: BaseMagic[] = [];
+  private readonly privateLearnedMagics: BaseMagic[] = [];
 
   constructor(data: PlayerData) {
     super(data);
@@ -138,22 +138,22 @@ export class Player extends FightingCharacter {
     this.syncOnHitStatuses();
   }
 
-  getAllLearntMagics(): BaseMagic[] {
-    const chainMagics = this.magicChain?.getAllLearntMagics() ?? [];
-    return [...this.privateLearntMagics, ...chainMagics];
+  getAllLearnedMagics(): BaseMagic[] {
+    const chainMagics = this.magicChain?.getAllLearnedMagics() ?? [];
+    return [...this.privateLearnedMagics, ...chainMagics];
   }
 
   learnMagic(magic: BaseMagic): void {
-    this.privateLearntMagics.push(magic);
+    this.privateLearnedMagics.push(magic);
   }
 
-  getPrivateLearntMagicRefs(): PlayerMagicRef[] {
-    return this.privateLearntMagics.map(magic => ({ type: magic.type, index: magic.index }));
+  getPrivateLearnedMagicRefs(): PlayerMagicRef[] {
+    return this.privateLearnedMagics.map(magic => ({ type: magic.type, index: magic.index }));
   }
 
-  restorePrivateLearntMagics(magics: readonly BaseMagic[]): void {
-    this.privateLearntMagics.length = 0;
-    this.privateLearntMagics.push(...magics);
+  restorePrivateLearnedMagics(magics: readonly BaseMagic[]): void {
+    this.privateLearnedMagics.length = 0;
+    this.privateLearnedMagics.push(...magics);
   }
 
   getOnHitEffectConfig(): PlayerOnHitEffectConfig {
@@ -194,7 +194,7 @@ export class Player extends FightingCharacter {
     this.hp = this.hpMax;
     this.mp = this.mpMax;
     if (this.magicChain) {
-      this.magicChain.learnNum = this.levelUpChain.getLearnMagicCount(targetLevel);
+      this.magicChain.learnedMagicCount = this.levelUpChain.getLearnMagicCount(targetLevel);
     }
     return true;
   }

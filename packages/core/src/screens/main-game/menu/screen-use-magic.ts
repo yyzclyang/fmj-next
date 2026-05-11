@@ -1,4 +1,5 @@
 import type { Player } from '@/characters';
+import { applyRestoreMagic } from '@/combat/combat-effects';
 import type { Game } from '@/game/game';
 import { MagicRestore } from '@/magic';
 import { ResourceType } from '@/lib/resource-utils';
@@ -69,27 +70,32 @@ export class ScreenUseMagic extends BaseScreen {
   }
 
   private drawMagicName(surface: Surface): void {
-    const lines = wrapTextBlock(this.magic.magicName, NAME_WIDTH);
+    const lines = wrapTextBlock(this.magic.name, NAME_WIDTH);
     for (let i = 0; i < lines.length; i += 1) {
       TextRender.drawText(surface, lines[i] ?? '', NAME_LEFT, NAME_TOP + i * 16);
     }
   }
 
   private useMagic(): void {
+    const targets = this.getTargets();
+    if (targets.length === 0) {
+      this.close();
+      return;
+    }
     if (this.caster.mp < this.magic.costMp) {
       this.showMessage('真气不足');
       return;
     }
-    if (this.magic.isForAll) {
-      for (const player of this.players) {
-        if (player.isAlive) this.magic.use(this.caster, player);
-      }
-    } else {
-      const target = this.players[this.actorIndex];
-      if (!target) throw new Error('魔法使用页没有可用角色');
-      this.magic.use(this.caster, target);
-    }
+    this.caster.mp = Math.max(0, this.caster.mp - this.magic.costMp);
+    for (const target of targets) applyRestoreMagic(this.magic, target);
     this.close();
+  }
+
+  private getTargets(): Player[] {
+    if (this.magic.targetAll) return this.players.filter(player => player.isAlive);
+    const target = this.players[this.actorIndex];
+    if (!target) throw new Error('魔法使用页没有可用角色');
+    return [target];
   }
 
   private showMessage(text: string): void {

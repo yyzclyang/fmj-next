@@ -183,7 +183,7 @@ export class ScreenGameMainMenu extends BaseScreen {
   }
 
   private openMagicScreen(player: Player): void {
-    const magics = player.getAllLearntMagics();
+    const magics = player.getAllLearnedMagics();
     if (magics.length === 0) return;
     this.screenStack.push(
       new ScreenMagic(this.game, magics, player.mp, {

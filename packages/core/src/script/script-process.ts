@@ -1,4 +1,8 @@
-interface ScriptCommand {
+export interface ScriptCommand {
+  readonly opcode: number;
+  readonly offset: number;
+  readonly name: string;
+  readonly len: number;
   execute(process: ScriptProcess): void;
 }
 
@@ -28,6 +32,7 @@ export class ScriptProcess {
   running = false;
 
   constructor(
+    private readonly scriptName: string,
     private readonly commands: ScriptCommand[],
     private readonly eventIndex: number[],
     private readonly addressIndexMap: Map<number, number>,
@@ -71,7 +76,7 @@ export class ScriptProcess {
   }
 
   createSnapshot(): ScriptProcessSnapshot {
-    if (this.operation) throw new Error('脚本操作执行中不能存档');
+    if (this.operation) throw new Error(`${this.describeCurrentCommand()}: 脚本操作执行中不能存档`);
     return {
       currentIndex: this.currentIndex,
       running: this.resumeOnRestore || this.running,
@@ -83,7 +88,7 @@ export class ScriptProcess {
 
   restoreSnapshot(snapshot: ScriptProcessSnapshot): void {
     if (snapshot.currentIndex < 0 || snapshot.currentIndex > this.commands.length) {
-      throw new Error(`脚本进度越界: ${snapshot.currentIndex}`);
+      throw new Error(`${this.scriptName}: 脚本进度越界 ${snapshot.currentIndex}/${this.commands.length}`);
     }
     this.currentIndex = snapshot.currentIndex;
     this.running = snapshot.running;
@@ -105,7 +110,13 @@ export class ScriptProcess {
 
     while (this.running && this.currentIndex < this.commands.length && steps < MAX_STEPS_PER_TICK) {
       const indexBefore = this.currentIndex;
-      this.commands[this.currentIndex]?.execute(this);
+      const command = this.commands[this.currentIndex];
+      if (!command) throw new Error(`${this.scriptName}: 脚本指令索引不存在 index=${this.currentIndex}`);
+      try {
+        command.execute(this);
+      } catch (error) {
+        throw this.wrapCommandError(command, indexBefore, error);
+      }
       if (!this.running) return;
       if (this.currentIndex === indexBefore) {
         this.currentIndex += 1;
@@ -119,19 +130,30 @@ export class ScriptProcess {
     }
 
     if (steps >= MAX_STEPS_PER_TICK) {
-      throw new Error('Script step limit exceeded');
+      throw new Error(`${this.describeCurrentCommand()}: 单帧脚本步数超过 ${MAX_STEPS_PER_TICK}`);
     }
   }
 
   gotoAddress(address: number): void {
-    const target = this.addressIndexMap.get(address - this.headerSize);
-    if (target == null) return;
+    const offset = address - this.headerSize;
+    const target = this.addressIndexMap.get(offset);
+    if (target == null) {
+      this.warn(`无效跳转地址 address=${address}, offset=${offset}`);
+      return;
+    }
+    if (target < 0 || target >= this.commands.length) {
+      this.warn(`跳转目标越界 address=${address}, target=${target}`);
+      return;
+    }
     this.currentIndex = target;
   }
 
   startAtOffset(offset: number): void {
     const target = this.addressIndexMap.get(offset);
-    if (target == null) throw new Error(`脚本偏移不存在: ${offset}`);
+    if (target == null) throw new Error(`${this.scriptName}: 脚本偏移不存在 offset=${offset}`);
+    if (target < 0 || target >= this.commands.length) {
+      throw new Error(`${this.scriptName}: 脚本偏移目标越界 offset=${offset}, target=${target}`);
+    }
     this.currentIndex = target;
     this.operation = null;
     this.resumeOnRestore = false;
@@ -144,6 +166,10 @@ export class ScriptProcess {
 
     const target = this.eventIndex[eventId - 1] ?? -1;
     if (target < 0) return false;
+    if (target >= this.commands.length) {
+      this.warn(`事件目标越界 eventId=${eventId}, target=${target}`);
+      return false;
+    }
 
     this.currentIndex = target;
     this.running = true;
@@ -162,5 +188,26 @@ export class ScriptProcess {
     if (this.timerCounter > 0) return;
     this.timerCounter += this.timer;
     this.triggerEvent(this.timerEventId);
+  }
+
+  private describeCurrentCommand(): string {
+    return this.describeCommand(this.commands[this.currentIndex] ?? null, this.currentIndex);
+  }
+
+  private describeCommand(command: ScriptCommand | null, index: number): string {
+    if (!command) return `${this.scriptName} commandIndex=${index}`;
+    return `${this.scriptName} ${command.name} opcode=${command.opcode} offset=${command.offset} commandIndex=${index}`;
+  }
+
+  private wrapCommandError(command: ScriptCommand, index: number, error: unknown): Error {
+    const prefix = this.describeCommand(command, index);
+    if (error instanceof Error) {
+      return new Error(`${prefix}: ${error.message}`, { cause: error });
+    }
+    return new Error(`${prefix}: ${String(error)}`);
+  }
+
+  private warn(message: string): void {
+    console.warn(`[ScriptProcess] ${this.describeCurrentCommand()}: ${message}`);
   }
 }

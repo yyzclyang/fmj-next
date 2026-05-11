@@ -988,8 +988,8 @@ export class ScriptVm {
         if (!scene) throw new Error('主场景不存在，无法打开脚本选择框');
         process.pause();
         scene.screenStack.push(
-          new ScriptChoiceScreen(this.game, firstChoice, secondChoice, selectedIndex => {
-            if (selectedIndex === 1) process.gotoAddress(address);
+          new ScriptChoiceScreen(this.game, firstChoice, secondChoice, choiceIndex => {
+            if (choiceIndex === 1) process.gotoAddress(address);
             process.start();
           })
         );
@@ -1108,8 +1108,8 @@ export class ScriptVm {
         if (!scene) throw new Error('主场景不存在，无法打开脚本菜单');
         process.pause();
         scene.screenStack.push(
-          new ScriptMenuScreen(this.game, items, value => {
-            this.game.setVariable(variableIndex, value);
+          new ScriptMenuScreen(this.game, items, menuValue => {
+            this.game.setVariable(variableIndex, menuValue);
             process.start();
           })
         );

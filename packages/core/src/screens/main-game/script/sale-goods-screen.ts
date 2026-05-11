@@ -5,7 +5,7 @@ import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from '../menu/screen-goods-list';
-import { drawTradeFrame, showTradeMessage, TRADE_TEXT_LEFT } from './ui-utils';
+import { drawTradePanel, showTradeMessage, TRADE_PANEL_TEXT_LEFT } from './ui-utils';
 
 // SALE 指令使用动态背包列表，卖出后列表会自动反映数量变化。
 export function createScriptSaleGoodsScreen(game: Game, onClose: () => void): ScreenGoodsList {
@@ -34,11 +34,11 @@ class SaleGoodsCountScreen extends BaseScreen {
   }
 
   override draw(surface: Surface): void {
-    drawTradeFrame(surface);
-    drawText(surface, `金钱：${this.money}`, TRADE_TEXT_LEFT, 24);
-    drawText(surface, this.goods.name, TRADE_TEXT_LEFT, 40);
+    drawTradePanel(surface);
+    drawText(surface, `金钱：${this.money}`, TRADE_PANEL_TEXT_LEFT, 24);
+    drawText(surface, this.goods.name, TRADE_PANEL_TEXT_LEFT, 40);
     drawText(surface, `: ${this.remainingCount}`, 93, 40);
-    drawText(surface, `卖出个数　：${this.saleCount}`, TRADE_TEXT_LEFT, 56);
+    drawText(surface, `卖出个数　：${this.saleCount}`, TRADE_PANEL_TEXT_LEFT, 56);
   }
 
   override onKey(key: KeyCode): boolean | undefined {

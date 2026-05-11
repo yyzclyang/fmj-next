@@ -5,7 +5,7 @@ import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from '../menu/screen-goods-list';
-import { drawTradeFrame, showTradeMessage, TRADE_TEXT_LEFT } from './ui-utils';
+import { drawTradePanel, showTradeMessage, TRADE_PANEL_TEXT_LEFT } from './ui-utils';
 
 // BUY 指令先打开商品列表，数量确认页只在确认时提交背包和金钱变化。
 export function createScriptBuyGoodsScreen(
@@ -38,11 +38,11 @@ class BuyGoodsCountScreen extends BaseScreen {
   }
 
   override draw(surface: Surface): void {
-    drawTradeFrame(surface);
-    drawText(surface, `金钱：${this.money}`, TRADE_TEXT_LEFT, 24);
-    drawText(surface, this.goods.name, TRADE_TEXT_LEFT, 40);
+    drawTradePanel(surface);
+    drawText(surface, `金钱：${this.money}`, TRADE_PANEL_TEXT_LEFT, 24);
+    drawText(surface, this.goods.name, TRADE_PANEL_TEXT_LEFT, 40);
     drawText(surface, `: ${this.currentCount}`, 93, 40);
-    drawText(surface, `买入个数　：${this.buyCount}`, TRADE_TEXT_LEFT, 56);
+    drawText(surface, `买入个数　：${this.buyCount}`, TRADE_PANEL_TEXT_LEFT, 56);
   }
 
   override onKey(key: KeyCode): boolean | undefined {

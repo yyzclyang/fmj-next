@@ -3,7 +3,8 @@ import { ASC16_BASE64, HZK16_BASE64 } from './font-data';
 import type { Surface } from './surface';
 
 // 文字渲染固定使用 16 点阵字库，ASCII 和汉字宽度不同。
-const GLYPH_HEIGHT = 16;
+export const TEXT_LINE_HEIGHT = 16;
+const GLYPH_HEIGHT = TEXT_LINE_HEIGHT;
 const ASCII_WIDTH = 8;
 const HZK_WIDTH = 16;
 const HZK_BYTES_PER_GLYPH = 32;
@@ -53,28 +54,35 @@ export function wrapTextBlock(text: string, maxWidth: number): string[] {
   return lines;
 }
 
+export function splitTextByWidth(text: string, maxWidth: number): { line: string; rest: string } {
+  let width = 0;
+  let end = 0;
+
+  for (const char of text) {
+    if (char === '\0') return { line: text.slice(0, end), rest: '' };
+    const charWidth = getCharWidth(char);
+    if (end > 0 && width + charWidth > maxWidth) break;
+    width += charWidth;
+    end += char.length;
+  }
+
+  return {
+    line: text.slice(0, end),
+    rest: text.slice(end),
+  };
+}
+
 function wrapTextLine(text: string, maxWidth: number): string[] {
   if (text.length === 0) return [''];
 
   const lines: string[] = [];
-  let current = '';
-  let width = 0;
-
-  for (const char of text) {
-    if (char === '\0') break;
-    const charWidth = getCharWidth(char);
-    if (current.length > 0 && width + charWidth > maxWidth) {
-      lines.push(current);
-      current = char;
-      width = charWidth;
-      continue;
-    }
-
-    current += char;
-    width += charWidth;
+  let rest = text;
+  while (rest.length > 0) {
+    const split = splitTextByWidth(rest, maxWidth);
+    if (split.line.length === 0) break;
+    lines.push(split.line);
+    rest = split.rest;
   }
-
-  if (current.length > 0) lines.push(current);
   return lines;
 }
 

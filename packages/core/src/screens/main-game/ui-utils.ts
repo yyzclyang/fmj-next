@@ -1,11 +1,12 @@
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
+import { TEXT_LINE_HEIGHT } from '@/rendering/text-render';
 import type { Surface } from '@/rendering/surface';
 
 export const TIP_FRAME_WIDTH = 240;
 export const TIP_TEXT_WIDTH = 224;
 export const TIP_TEXT_PADDING_X = 8;
 export const TIP_TEXT_TOP_PADDING = 2;
-export const TIP_LINE_GAP = 16;
+export const TIP_LINE_GAP = TEXT_LINE_HEIGHT;
 export const TIP_MAX_LINES = 4;
 
 export function drawTipPanel(surface: Surface, left: number, top: number, height: number): void {

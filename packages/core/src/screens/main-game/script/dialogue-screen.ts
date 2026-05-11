@@ -3,7 +3,7 @@ import type { ResImage } from '@/lib/res-image';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
-import { drawText, wrapTextBlock } from '@/rendering/text-render';
+import { drawText, splitTextByWidth, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import {
   drawTipPanel,
@@ -38,7 +38,9 @@ interface DialogueLineLayout {
 export class ScriptDialogueScreen extends BaseScreen {
   private readonly pages: string[][];
   private readonly headImage: ResImage | null;
+  private readonly layout: DialogueLayout;
   private pageIndex = 0;
+  private closed = false;
 
   constructor(
     game: Game,
@@ -48,7 +50,8 @@ export class ScriptDialogueScreen extends BaseScreen {
   ) {
     super(game);
     this.headImage = loadHeadImage(game, headImageIndex);
-    this.pages = paginateDialogue(text, getDialogueLineLayouts(this.headImage));
+    this.layout = getDialogueLayout(this.headImage);
+    this.pages = paginateDialogue(text, this.layout.lines);
   }
 
   get isEmpty(): boolean {
@@ -56,17 +59,16 @@ export class ScriptDialogueScreen extends BaseScreen {
   }
 
   override draw(surface: Surface): void {
-    const layout = getDialogueLayout(this.headImage);
-    surface.fillRect(DIALOG_LEFT, layout.top, DIALOG_WIDTH, layout.height, COLOR_BLACK);
-    surface.fillRect(DIALOG_LEFT + 1, layout.top + 1, DIALOG_WIDTH - 2, layout.height - 2, COLOR_WHITE);
+    surface.fillRect(DIALOG_LEFT, this.layout.top, DIALOG_WIDTH, this.layout.height, COLOR_BLACK);
+    surface.fillRect(DIALOG_LEFT + 1, this.layout.top + 1, DIALOG_WIDTH - 2, this.layout.height - 2, COLOR_WHITE);
 
     if (this.headImage) {
-      this.headImage.draw(surface, 1, DIALOG_HEAD_LEFT, layout.headTop);
+      this.headImage.draw(surface, 1, DIALOG_HEAD_LEFT, this.layout.headTop);
     }
 
     const page = this.pages[this.pageIndex] ?? [];
     for (let i = 0; i < page.length; i += 1) {
-      const lineLayout = layout.lines[i];
+      const lineLayout = this.layout.lines[i];
       if (!lineLayout) continue;
       drawText(surface, page[i] ?? '', lineLayout.left, lineLayout.top);
     }
@@ -77,9 +79,15 @@ export class ScriptDialogueScreen extends BaseScreen {
       this.pageIndex += 1;
       return;
     }
+    this.closeWithScriptResume();
+    return;
+  }
+
+  private closeWithScriptResume(): void {
+    if (this.closed) return;
+    this.closed = true;
     this.close();
     this.onClose();
-    return;
   }
 }
 
@@ -173,39 +181,19 @@ function paginateDialogue(text: string, lineLayouts: readonly DialogueLineLayout
   return pages;
 }
 
-function splitTextByWidth(text: string, maxWidth: number): { line: string; rest: string } {
-  let width = 0;
-  let end = 0;
-
-  for (const char of text) {
-    const charWidth = getDialogueCharWidth(char);
-    if (end > 0 && width + charWidth > maxWidth) break;
-    width += charWidth;
-    end += char.length;
-  }
-
-  return {
-    line: text.slice(0, end),
-    rest: text.slice(end),
-  };
-}
-
-function getDialogueCharWidth(char: string): number {
-  const code = char.codePointAt(0) ?? 0;
-  return code < 0x80 ? 8 : 16;
-}
-
 function loadHeadImage(game: Game, index: number): ResImage | null {
   if (index <= 0) return null;
   return game.datLib.getImage(ResourceType.PIC, 1, index);
 }
 
-function getDialogueLayout(headImage: ResImage | null): {
+interface DialogueLayout {
   top: number;
   height: number;
   lines: DialogueLineLayout[];
   headTop: number;
-} {
+}
+
+function getDialogueLayout(headImage: ResImage | null): DialogueLayout {
   const lines = getDialogueLineLayouts(headImage);
   if (!headImage) {
     return {

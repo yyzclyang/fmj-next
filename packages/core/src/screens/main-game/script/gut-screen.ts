@@ -3,7 +3,7 @@ import type { ResImage } from '@/lib/res-image';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
-import { drawText, wrapTextBlock } from '@/rendering/text-render';
+import { drawText, TEXT_LINE_HEIGHT, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
@@ -13,13 +13,21 @@ interface GutState {
   bottomImage: ResImage | null;
   lines: string[];
   scrollY: number;
-  step: number;
-  interval: number;
   elapsed: number;
 }
 
-const GUT_DEFAULT_STEP = 1;
-const GUT_DEFAULT_INTERVAL = 50;
+interface GutLayout {
+  topImageLeft: number;
+  bottomImageLeft: number;
+  bottomImageTop: number;
+  textLeft: number;
+  textTop: number;
+  textWidth: number;
+  textBottom: number;
+}
+
+const GUT_AUTO_SCROLL_STEP = 1;
+const GUT_AUTO_SCROLL_INTERVAL = 50;
 const GUT_KEY_SCROLL_STEP = 8;
 const GUT_TEXT_SIDE_PADDING = 16;
 const GUT_SECTION_GAP = 6;
@@ -27,6 +35,8 @@ const GUT_SECTION_GAP = 6;
 // 脚本类 screen 把“关闭 UI 后恢复脚本”收在自身生命周期里。
 export class ScriptGutScreen extends BaseScreen {
   private readonly gut: GutState;
+  private readonly layout: GutLayout;
+  private closed = false;
 
   constructor(
     game: Game,
@@ -36,62 +46,49 @@ export class ScriptGutScreen extends BaseScreen {
     private readonly onClose: () => void
   ) {
     super(game);
-    const topImage = loadPicture(game, topImageIndex);
-    const bottomImage = loadPicture(game, bottomImageIndex);
-    const layout = getGutLayout({
-      topImage,
-      bottomImage,
-      lines: [],
-      scrollY: 0,
-      step: 0,
-      interval: 0,
-      elapsed: 0,
-    });
+    const topImage = loadGutImage(game, topImageIndex);
+    const bottomImage = loadGutImage(game, bottomImageIndex);
+    this.layout = getGutLayout(topImage, bottomImage);
 
     this.gut = {
       topImage,
       bottomImage,
-      lines: wrapTextBlock(text, layout.textWidth),
-      scrollY: layout.textBottom,
-      step: GUT_DEFAULT_STEP,
-      interval: GUT_DEFAULT_INTERVAL,
+      lines: wrapTextBlock(text, this.layout.textWidth),
+      scrollY: this.layout.textBottom,
       elapsed: 0,
     };
   }
 
   override update(delta: number): void {
-    const layout = getGutLayout(this.gut);
     this.gut.elapsed += delta;
-    while (this.gut.elapsed >= this.gut.interval) {
-      this.gut.elapsed -= this.gut.interval;
-      this.gut.scrollY -= this.gut.step;
+    while (this.gut.elapsed >= GUT_AUTO_SCROLL_INTERVAL) {
+      this.gut.elapsed -= GUT_AUTO_SCROLL_INTERVAL;
+      this.gut.scrollY -= GUT_AUTO_SCROLL_STEP;
     }
 
-    const textBottom = this.gut.scrollY + this.gut.lines.length * 16;
-    if (textBottom < layout.textTop) {
+    const textBottom = this.gut.scrollY + this.gut.lines.length * TEXT_LINE_HEIGHT;
+    if (textBottom < this.layout.textTop) {
       this.closeWithScriptResume();
     }
   }
 
   override draw(surface: Surface): void {
-    const layout = getGutLayout(this.gut);
-
     surface.drawColor(COLOR_WHITE);
     for (let i = 0; i < this.gut.lines.length; i += 1) {
-      const top = this.gut.scrollY + i * 16;
-      if (top + 16 <= layout.textTop || top >= layout.textBottom) continue;
-      drawText(surface, this.gut.lines[i] ?? '', layout.textLeft, top);
+      const top = this.gut.scrollY + i * TEXT_LINE_HEIGHT;
+      if (top + TEXT_LINE_HEIGHT <= this.layout.textTop || top >= this.layout.textBottom) continue;
+      drawText(surface, this.gut.lines[i] ?? '', this.layout.textLeft, top);
     }
 
-    if (layout.textTop > 0) {
-      surface.fillRect(0, 0, SCREEN_WIDTH, layout.textTop, COLOR_WHITE);
+    if (this.layout.textTop > 0) {
+      surface.fillRect(0, 0, SCREEN_WIDTH, this.layout.textTop, COLOR_WHITE);
     }
-    if (layout.textBottom < SCREEN_HEIGHT) {
-      surface.fillRect(0, layout.textBottom, SCREEN_WIDTH, SCREEN_HEIGHT - layout.textBottom, COLOR_WHITE);
+    if (this.layout.textBottom < SCREEN_HEIGHT) {
+      surface.fillRect(0, this.layout.textBottom, SCREEN_WIDTH, SCREEN_HEIGHT - this.layout.textBottom, COLOR_WHITE);
     }
 
-    this.gut.topImage?.draw(surface, 1, layout.topImageLeft, 0);
-    this.gut.bottomImage?.draw(surface, 1, layout.bottomImageLeft, layout.bottomImageTop);
+    this.gut.topImage?.draw(surface, 1, this.layout.topImageLeft, 0);
+    this.gut.bottomImage?.draw(surface, 1, this.layout.bottomImageLeft, this.layout.bottomImageTop);
   }
 
   override onKey(key: KeyCode): boolean | undefined {
@@ -104,30 +101,24 @@ export class ScriptGutScreen extends BaseScreen {
   }
 
   private closeWithScriptResume(): void {
+    if (this.closed) return;
+    this.closed = true;
     this.close();
     this.onClose();
   }
 }
 
-function loadPicture(game: Game, index: number): ResImage | null {
+function loadGutImage(game: Game, index: number): ResImage | null {
   if (index <= 0) return null;
   return game.datLib.getImage(ResourceType.PIC, 5, index);
 }
 
-function getGutLayout(gut: GutState): {
-  topImageLeft: number;
-  bottomImageLeft: number;
-  bottomImageTop: number;
-  textLeft: number;
-  textTop: number;
-  textWidth: number;
-  textBottom: number;
-} {
-  const topImageLeft = gut.topImage ? Math.max(0, Math.floor((SCREEN_WIDTH - gut.topImage.width) / 2)) : 0;
-  const bottomImageTop = gut.bottomImage ? SCREEN_HEIGHT - gut.bottomImage.height : SCREEN_HEIGHT;
-  const bottomImageLeft = gut.bottomImage ? Math.max(0, Math.floor((SCREEN_WIDTH - gut.bottomImage.width) / 2)) : 0;
-  const textTop = (gut.topImage?.height ?? 0) + GUT_SECTION_GAP;
-  const rawTextBottom = bottomImageTop - (gut.bottomImage ? GUT_SECTION_GAP : 0);
+function getGutLayout(topImage: ResImage | null, bottomImage: ResImage | null): GutLayout {
+  const topImageLeft = topImage ? Math.max(0, Math.floor((SCREEN_WIDTH - topImage.width) / 2)) : 0;
+  const bottomImageTop = bottomImage ? SCREEN_HEIGHT - bottomImage.height : SCREEN_HEIGHT;
+  const bottomImageLeft = bottomImage ? Math.max(0, Math.floor((SCREEN_WIDTH - bottomImage.width) / 2)) : 0;
+  const textTop = (topImage?.height ?? 0) + GUT_SECTION_GAP;
+  const rawTextBottom = bottomImageTop - (bottomImage ? GUT_SECTION_GAP : 0);
   const textBottom = Math.max(textTop, rawTextBottom);
 
   return {
@@ -136,7 +127,7 @@ function getGutLayout(gut: GutState): {
     bottomImageTop,
     textLeft: GUT_TEXT_SIDE_PADDING,
     textTop,
-    textWidth: Math.max(16, SCREEN_WIDTH - GUT_TEXT_SIDE_PADDING * 2),
+    textWidth: Math.max(TEXT_LINE_HEIGHT, SCREEN_WIDTH - GUT_TEXT_SIDE_PADDING * 2),
     textBottom,
   };
 }

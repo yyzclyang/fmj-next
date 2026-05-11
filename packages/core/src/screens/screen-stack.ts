@@ -61,7 +61,8 @@ export class ScreenStack {
     }
   }
 
-  onKey(key: KeyCode): boolean | undefined {
+  // 返回 true 表示当前栈没有消费按键，调用方可以继续向外层传递。
+  dispatchKey(key: KeyCode): boolean | undefined {
     const screens = [...this.screens];
     for (let index = screens.length - 1; index >= 0; index -= 1) {
       if (screens[index]?.dispatchKey(key) !== true) return;

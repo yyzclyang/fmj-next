@@ -2,16 +2,12 @@ import type { Game } from '@/game/game';
 import type { ResImage } from '@/lib/res-image';
 import type { ResSrs } from '@/lib/res-srs';
 import { ResourceType } from '@/lib/resource-utils';
-import { Surface } from '@/rendering/surface';
+import type { Surface } from '@/rendering/surface';
 import { COLOR_WHITE } from '@/rendering/color';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
 import { BaseScreen } from '../base-screen';
 import { SaveLoadOperation, ScreenSaveLoadGame } from '../main-game/menu/screen-save-load-game';
-
-// 菜单底图来自 PIC 2:14，对应原版启动菜单画面。
-const MENU_PIC_TYPE = 2;
-const MENU_PIC_INDEX = 14;
 
 // 主菜单直接复用原版菜单底图和光标动画。
 export class ScreenMenu extends BaseScreen {
@@ -19,13 +15,14 @@ export class ScreenMenu extends BaseScreen {
   private readonly selectors: ResSrs[];
   private readonly left: number;
   private readonly top: number;
-  private currentSelection = 0;
+  private selectedIndex = 0;
 
   constructor(game: Game) {
     super(game);
-    const image = this.game.datLib.getImage(ResourceType.PIC, MENU_PIC_TYPE, MENU_PIC_INDEX);
+    // 菜单底图来自 PIC 2:14，对应原版启动菜单画面。
+    const image = this.game.datLib.getImage(ResourceType.PIC, 2, 14);
     if (!image) {
-      throw new Error(`Missing menu background PIC ${MENU_PIC_TYPE}:${MENU_PIC_INDEX}`);
+      throw new Error('Missing menu background PIC 2:14');
     }
 
     this.menuImage = image;
@@ -36,7 +33,7 @@ export class ScreenMenu extends BaseScreen {
   }
 
   override update(delta: number): void {
-    const selector = this.selectors[this.currentSelection];
+    const selector = this.selectors[this.selectedIndex];
     if (!selector) return;
 
     if (!selector.update(delta)) {
@@ -48,7 +45,7 @@ export class ScreenMenu extends BaseScreen {
     surface.drawColor(COLOR_WHITE);
     this.menuImage.draw(surface, 1, this.left, this.top);
     const selectorOffset = this.game.engineOptions.mainMenuSelectorOffset ?? { x: 0, y: 24 };
-    this.selectors[this.currentSelection]?.draw(
+    this.selectors[this.selectedIndex]?.draw(
       surface,
       this.left + selectorOffset.x,
       Math.floor(this.top / 2) + selectorOffset.y
@@ -75,7 +72,7 @@ export class ScreenMenu extends BaseScreen {
 
     if (key !== KeyCode.Enter) return;
 
-    switch (this.currentSelection) {
+    switch (this.selectedIndex) {
       case 0:
         this.game.startNewGame();
         return;
@@ -91,8 +88,8 @@ export class ScreenMenu extends BaseScreen {
   private moveSelection(step: number): void {
     const count = this.selectors.length;
     if (count === 0) return;
-    this.currentSelection = (this.currentSelection + step + count) % count;
-    this.selectors[this.currentSelection]?.start();
+    this.selectedIndex = (this.selectedIndex + step + count) % count;
+    this.selectors[this.selectedIndex]?.start();
   }
 
   private loadSelectors(): ResSrs[] {

@@ -63,7 +63,7 @@ export abstract class BaseScreen {
   }
 
   dispatchKey(key: KeyCode): boolean | undefined {
-    if (!this.screenStack.isEmpty && this.screenStack.onKey(key) !== true) return;
+    if (!this.screenStack.isEmpty && this.screenStack.dispatchKey(key) !== true) return;
     return this.onKey(key);
   }
 

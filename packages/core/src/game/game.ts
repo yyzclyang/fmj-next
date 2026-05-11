@@ -117,7 +117,7 @@ export class Game {
   }
 
   onKey(key: KeyCode): void {
-    this.screenStack.onKey(key);
+    this.screenStack.dispatchKey(key);
   }
 
   startNewGame(): void {

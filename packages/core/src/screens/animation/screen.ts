@@ -1,6 +1,6 @@
 import type { Game } from '@/game/game';
 import type { ResSrs } from '@/lib/res-srs';
-import { Surface } from '@/rendering/surface';
+import type { Surface } from '@/rendering/surface';
 import { COLOR_WHITE } from '@/rendering/color';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
@@ -8,25 +8,25 @@ import { BaseScreen } from '../base-screen';
 import { ScreenViewType } from '../screen-view-type';
 import { ScreenMenu } from '../menu/screen';
 
-interface ScreenAnimationDef {
-  readonly resourceIndex: number;
+interface AnimationScreenConfig {
+  readonly srsIndex: number;
   readonly nextScreen: ScreenViewType;
   readonly skippable: boolean;
 }
 
-const SCREEN_ANIMATION_DEFS: Partial<Record<ScreenViewType, ScreenAnimationDef>> = {
+const ANIMATION_SCREEN_CONFIGS: Partial<Record<ScreenViewType, AnimationScreenConfig>> = {
   [ScreenViewType.SCREEN_DEV_LOGO]: {
-    resourceIndex: 247,
+    srsIndex: 247,
     nextScreen: ScreenViewType.SCREEN_GAME_LOGO,
     skippable: true,
   },
   [ScreenViewType.SCREEN_GAME_LOGO]: {
-    resourceIndex: 248,
+    srsIndex: 248,
     nextScreen: ScreenViewType.SCREEN_MENU,
     skippable: true,
   },
   [ScreenViewType.SCREEN_GAME_FAIL]: {
-    resourceIndex: 249,
+    srsIndex: 249,
     nextScreen: ScreenViewType.SCREEN_MENU,
     skippable: false,
   },
@@ -34,19 +34,19 @@ const SCREEN_ANIMATION_DEFS: Partial<Record<ScreenViewType, ScreenAnimationDef>>
 
 export class ScreenAnimation extends BaseScreen {
   private readonly animation: ResSrs;
-  private readonly def: ScreenAnimationDef;
+  private readonly config: AnimationScreenConfig;
 
   constructor(game: Game, screenType: ScreenViewType) {
     super(game);
-    const def = SCREEN_ANIMATION_DEFS[screenType];
-    if (!def) {
+    const config = ANIMATION_SCREEN_CONFIGS[screenType];
+    if (!config) {
       throw new Error(`ScreenAnimation does not support screen type ${screenType}`);
     }
-    this.def = def;
+    this.config = config;
 
-    const resource = this.game.datLib.getSrs(1, this.def.resourceIndex);
+    const resource = this.game.datLib.getSrs(1, this.config.srsIndex);
     if (!resource) {
-      throw new Error(`Missing SRS animation 1:${this.def.resourceIndex}`);
+      throw new Error(`Missing SRS animation 1:${this.config.srsIndex}`);
     }
 
     this.animation = resource;
@@ -56,24 +56,24 @@ export class ScreenAnimation extends BaseScreen {
 
   override update(delta: number): void {
     if (this.animation.update(delta)) return;
-    this.replaceWithScreen(this.def.nextScreen);
+    this.transitionToScreen(this.config.nextScreen);
   }
 
   draw(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
-    const centerX = Math.floor((SCREEN_WIDTH - 160 /* 启动画面宽度。 */) / 2);
-    const centerY = Math.floor((SCREEN_HEIGHT - 96 /* 启动画面高度。 */) / 2);
+    const centerX = Math.floor((SCREEN_WIDTH - 160) /* 原始动画宽度 */ / 2);
+    const centerY = Math.floor((SCREEN_HEIGHT - 96) /* 原始动画高度 */ / 2);
     this.animation.draw(surface, centerX, centerY);
   }
 
   override onKey(key: KeyCode): boolean | undefined {
-    if (key === KeyCode.Cancel && this.def.skippable) {
-      this.replaceWithScreen(ScreenViewType.SCREEN_MENU);
+    if (key === KeyCode.Cancel && this.config.skippable) {
+      this.transitionToScreen(ScreenViewType.SCREEN_MENU);
     }
     return undefined;
   }
 
-  private replaceWithScreen(screenType: ScreenViewType): void {
+  private transitionToScreen(screenType: ScreenViewType): void {
     this.game.mainScene = null;
     this.game.mainSceneRuntime = null;
 

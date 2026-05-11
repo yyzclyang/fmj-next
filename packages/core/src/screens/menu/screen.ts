@@ -66,7 +66,7 @@ export class ScreenStartMenu extends BaseScreen {
     }
 
     if (key === KeyCode.Cancel) {
-      this.game.requestExit();
+      // this.game.requestExit();
       return;
     }
 

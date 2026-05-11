@@ -55,7 +55,7 @@ export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: Magi
       action.actor,
       action.magic,
       target,
-      ctx.game.magicDamageFormula,
+      ctx.game.damageFormula,
       isPlayerDefending(ctx, target)
     );
   }

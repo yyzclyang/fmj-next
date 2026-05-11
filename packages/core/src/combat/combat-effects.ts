@@ -12,7 +12,7 @@ import {
   STATUS_SLOT_SLEEP,
 } from '@/characters/status';
 import { GoodsHiddenWeapon } from '@/goods';
-import type { MagicDamageFormula } from '@/game/game-engine-options';
+import type { DamageFormula } from '@/game/game-engine-options';
 import { type BaseMagic, MagicAttack, MagicAuxiliary, MagicEnhance, MagicRestore } from '@/magic';
 import type { CombatHelpMagic, CombatThrowableGoods } from './combat-actions';
 
@@ -112,7 +112,7 @@ export function applyMagicAttack(
   actor: FightingCharacter,
   magic: MagicAttack,
   target: FightingCharacter,
-  formula: MagicDamageFormula = 'original',
+  formula: DamageFormula = 'original',
   targetIsDefending = false
 ): void {
   applyHpMagicEffect(actor, target, calcHpMagicEffect(actor, target, magic.affectHp, formula, targetIsDefending));
@@ -162,7 +162,7 @@ function calcHpMagicEffect(
   src: FightingCharacter,
   dst: FightingCharacter,
   base: number,
-  formula: MagicDamageFormula,
+  formula: DamageFormula,
   targetIsDefending: boolean
 ): number {
   if (base === 0 || dst.hp <= 0) return 0;
@@ -210,7 +210,7 @@ function calcMpMagicEffect(
   src: FightingCharacter,
   dst: FightingCharacter,
   base: number,
-  formula: MagicDamageFormula
+  formula: DamageFormula
 ): number {
   if (base === 0 || dst.mp <= 0) return 0;
   if (base < 0) {

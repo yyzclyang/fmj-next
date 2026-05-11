@@ -15,7 +15,7 @@ export type {
   DebugSnapshot,
 } from './debug/debug';
 export type { GameState } from './game/game-state';
-export type { GameEngineOptions, MagicDamageFormula } from './game/game-engine-options';
+export type { DamageFormula, GameEngineOptions } from './game/game-engine-options';
 export type { AudioPort, EngineHost, SaveStore } from './runtime/engine-host';
 export { FRAME_HEIGHT, FRAME_WIDTH } from './rendering/frame-buffer';
 export type { FrameBuffer } from './rendering/frame-buffer';

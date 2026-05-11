@@ -23,7 +23,7 @@ import {
   SCRIPT_VARIABLE_COUNT,
   type GameState,
 } from './game-state';
-import type { GameEngineOptions, MagicDamageFormula } from './game-engine-options';
+import type { DamageFormula, GameEngineOptions } from './game-engine-options';
 import {
   createSavePayload,
   CORRUPT_SAVE_MESSAGE,
@@ -66,7 +66,7 @@ export class Game {
     return new GoodsBag(this.state.goods, this.datLib);
   }
 
-  get magicDamageFormula(): MagicDamageFormula {
+  get damageFormula(): DamageFormula {
     return this.state.useOriginalDamageFormula ? 'original' : 'simplified';
   }
 
@@ -140,7 +140,8 @@ export class Game {
 
   private createInitialState(): GameState {
     const state = createInitialGameState();
-    state.useOriginalDamageFormula = this.engineOptions.magicDamageFormula !== 'simplified';
+    state.useOriginalDamageFormula = this.engineOptions.damageFormula !== 'simplified';
+    if (this.engineOptions.allowFightMiss != null) state.allowFightMiss = this.engineOptions.allowFightMiss;
     return state;
   }
 

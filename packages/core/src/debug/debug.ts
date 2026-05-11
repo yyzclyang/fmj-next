@@ -9,9 +9,9 @@ const DEFAULT_DEBUG_PLAYER_COUNT = 4;
 const DEBUG_PLAYER_INCREASE_KEYS = [
   'level',
   'hp',
-  'maxHp',
+  'hpMax',
   'mp',
-  'maxMp',
+  'mpMax',
   'attack',
   'defense',
   'agility',
@@ -75,9 +75,9 @@ export interface DebugPlayerApi {
 export interface DebugPlayerIncreaseInput {
   level?: number;
   hp?: number;
-  maxHp?: number;
+  hpMax?: number;
   mp?: number;
-  maxMp?: number;
+  mpMax?: number;
   attack?: number;
   defense?: number;
   agility?: number;
@@ -175,9 +175,9 @@ export interface DebugPlayerItem {
   name: string;
   level: number;
   hp: number;
-  maxHp: number;
+  hpMax: number;
   mp: number;
-  maxMp: number;
+  mpMax: number;
   attack: number;
   defense: number;
   agility: number;
@@ -221,7 +221,7 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
       listAll() {
         const game = getGame();
         const items = game
-          ? listAllGoods(game).map(goods => toDebugGoodsItem(goods, game.getGoodsNum(goods.type, goods.index)))
+          ? listAllGoods(game).map(goods => toDebugGoodsItem(goods, game.getGoodsCount(goods.type, goods.index)))
           : [];
         console.table(items);
         return items;
@@ -230,7 +230,7 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         if (count <= 0) return null;
         const game = getGame();
         const goods = game?.bag.addGoods(type, index, count) ?? null;
-        const item = goods ? toDebugGoodsItem(goods, game?.getGoodsNum(type, index) ?? 0) : null;
+        const item = goods ? toDebugGoodsItem(goods, game?.getGoodsCount(type, index) ?? 0) : null;
         if (item) console.table([item]);
         return item;
       },
@@ -241,7 +241,7 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         const items: DebugGoodsItem[] = [];
         for (const goods of listAllGoods(game)) {
           game.bag.addGoods(goods.type, goods.index, count);
-          items.push(toDebugGoodsItem(goods, game.getGoodsNum(goods.type, goods.index)));
+          items.push(toDebugGoodsItem(goods, game.getGoodsCount(goods.type, goods.index)));
         }
         console.table(items);
         return items;
@@ -249,7 +249,7 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
       delete(type: number, index: number, count = 1) {
         if (count <= 0) return false;
         const game = getGame();
-        const ok = game?.useGoodsNum(type, index, count) ?? false;
+        const ok = game?.consumeGoods(type, index, count) ?? false;
         console.debug(ok ? `已删除道具 ${type}-${index} x${count}` : `删除道具失败 ${type}-${index} x${count}`);
         return ok;
       },
@@ -398,8 +398,8 @@ function toCombatTriple(values: readonly number[] | undefined, name: string): [n
 
 function applyDebugPlayerState(game: Game, input: DebugCombatPlayerStateInput): void {
   const player = addDebugPlayer(game, input.id);
-  if (input.hp != null) player.hp = clampDebugInt(input.hp, 'hp', 0, player.maxHp);
-  if (input.mp != null) player.mp = clampDebugInt(input.mp, 'mp', 0, player.maxMp);
+  if (input.hp != null) player.hp = clampDebugInt(input.hp, 'hp', 0, player.hpMax);
+  if (input.mp != null) player.mp = clampDebugInt(input.mp, 'mp', 0, player.mpMax);
   applyDebugStatuses(player.immuneStatuses, input.immuneStatusFlags, input.immuneStatusRounds, 'immuneStatus');
   applyDebugStatuses(player.activeStatuses, input.activeStatusFlags, input.activeStatusRounds, 'activeStatus');
   applyDebugStatuses(player.onHitStatuses, input.onHitEffectFlags, input.onHitEffectRounds, 'onHitEffect');
@@ -430,8 +430,8 @@ function applyDebugPlayerIncrease(player: Player, input: DebugPlayerIncreaseInpu
   applied = addDebugPlayerAttribute(player, 6, input.exp, 'exp') || applied;
   applied = addDebugPlayerAttribute(player, 7, input.spirit, 'spirit') || applied;
   applied = addDebugPlayerAttribute(player, 8, input.luck, 'luck') || applied;
-  applied = addDebugPlayerAttribute(player, 10, input.maxHp, 'maxHp') || applied;
-  applied = addDebugPlayerAttribute(player, 11, input.maxMp, 'maxMp') || applied;
+  applied = addDebugPlayerAttribute(player, 10, input.hpMax, 'hpMax') || applied;
+  applied = addDebugPlayerAttribute(player, 11, input.mpMax, 'mpMax') || applied;
   if (!applied) throw new Error('player.increase 至少需要一个属性增量');
 }
 
@@ -590,9 +590,9 @@ function toDebugPlayerItem(game: Game, player: Player): DebugPlayerItem {
     name: player.name,
     level: player.level,
     hp: player.hp,
-    maxHp: player.maxHp,
+    hpMax: player.hpMax,
     mp: player.mp,
-    maxMp: player.maxMp,
+    mpMax: player.mpMax,
     attack: player.attack,
     defense: player.defense,
     agility: player.agility,
@@ -621,8 +621,8 @@ function toDebugCombatMonsterItem(monster: Monster): DebugCombatMonsterItem {
     index: monster.index,
     name: monster.name,
     level: monster.level,
-    hp: monster.maxHp,
-    mp: monster.maxMp,
+    hp: monster.hpMax,
+    mp: monster.mpMax,
     attack: monster.attack,
     defense: monster.defense,
     agility: monster.agility,

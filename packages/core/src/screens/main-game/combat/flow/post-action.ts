@@ -81,8 +81,8 @@ function getActiveStatusDiffFlags(snapshot: FighterStateSnapshot, fighter: Fight
 }
 
 function applyTurnPlayerEffects(player: Player): void {
-  if (player.hpPerRound !== 0) player.hp = clampFighterValue(player.hp + player.hpPerRound, 0, player.maxHp);
-  if (player.mpPerRound !== 0) player.mp = clampFighterValue(player.mp + player.mpPerRound, 0, player.maxMp);
+  if (player.hpPerRound !== 0) player.hp = clampFighterValue(player.hp + player.hpPerRound, 0, player.hpMax);
+  if (player.mpPerRound !== 0) player.mp = clampFighterValue(player.mp + player.mpPerRound, 0, player.mpMax);
 }
 
 function clampFighterValue(value: number, min: number, max: number): number {

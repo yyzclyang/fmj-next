@@ -94,8 +94,8 @@ class LevelUpPage implements SuccessPage {
 
     drawPanel(surface, left, top, LEVEL_FRAME_WIDTH, LEVEL_FRAME_HEIGHT);
     TextRender.drawText(surface, player.name, LEVEL_TEXT_LEFT, LEVEL_TEXT_TOP);
-    drawLevelLine(surface, this.smallNumImage, '生命', newStats.hp, oldStats.maxHp, newStats.maxHp, 1);
-    drawLevelLine(surface, this.smallNumImage, '真气', newStats.mp, oldStats.maxMp, newStats.maxMp, 2);
+    drawLevelLine(surface, this.smallNumImage, '生命', newStats.hp, oldStats.hpMax, newStats.hpMax, 1);
+    drawLevelLine(surface, this.smallNumImage, '真气', newStats.mp, oldStats.mpMax, newStats.mpMax, 2);
     drawLevelLine(surface, this.smallNumImage, '攻击', 0, oldStats.attack, newStats.attack, 3);
     drawLevelLine(surface, this.smallNumImage, '防御', 0, oldStats.defense, newStats.defense, 4);
     drawLevelLine(surface, this.smallNumImage, '身法', 0, oldStats.agility, newStats.agility, 5);
@@ -156,13 +156,13 @@ function drawLevelInfoNumbers(
   const oldStats = award.previousStats;
   const newStats = award.currentStats;
   drawSmallNum(surface, smallNumImage, newStats.hp, left + 37, top + 9);
-  drawSmallNum(surface, smallNumImage, oldStats.maxHp, left + 56, top + 9);
-  drawSmallNum(surface, smallNumImage, newStats.maxHp, left + 86, top + 9);
-  drawSmallNum(surface, smallNumImage, newStats.maxHp, left + 105, top + 9);
+  drawSmallNum(surface, smallNumImage, oldStats.hpMax, left + 56, top + 9);
+  drawSmallNum(surface, smallNumImage, newStats.hpMax, left + 86, top + 9);
+  drawSmallNum(surface, smallNumImage, newStats.hpMax, left + 105, top + 9);
   drawSmallNum(surface, smallNumImage, newStats.mp, left + 37, top + 21);
-  drawSmallNum(surface, smallNumImage, oldStats.maxMp, left + 56, top + 21);
-  drawSmallNum(surface, smallNumImage, newStats.maxMp, left + 86, top + 21);
-  drawSmallNum(surface, smallNumImage, newStats.maxMp, left + 105, top + 21);
+  drawSmallNum(surface, smallNumImage, oldStats.mpMax, left + 56, top + 21);
+  drawSmallNum(surface, smallNumImage, newStats.mpMax, left + 86, top + 21);
+  drawSmallNum(surface, smallNumImage, newStats.mpMax, left + 105, top + 21);
   drawSmallNum(surface, smallNumImage, oldStats.attack, left + 47, top + 33);
   drawSmallNum(surface, smallNumImage, newStats.attack, left + 96, top + 33);
   drawSmallNum(surface, smallNumImage, oldStats.defense, left + 47, top + 45);

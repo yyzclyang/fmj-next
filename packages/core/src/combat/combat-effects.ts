@@ -93,10 +93,10 @@ export function applyOnHitStatuses(attacker: FightingCharacter, target: Fighting
 }
 
 export function applyThrownGoods(goods: CombatThrowableGoods, target: Monster): void {
-  target.hp -= goods.affectHp;
-  target.mp -= goods.affectMp;
+  target.hp -= goods.hpDamage;
+  target.mp -= goods.mpDamage;
   if (goods instanceof GoodsHiddenWeapon) {
-    applyCombatStatuses(target, createStatusSlots(goods.effectFlags & 0x0f, goods.sumRound), 0);
+    applyCombatStatuses(target, createStatusSlots(goods.effectFlags & 0x0f, goods.effectRounds), 0);
   }
   if (target.hp < 0) target.hp = 0;
   if (target.mp < 0) target.mp = 0;
@@ -128,13 +128,13 @@ export function applyMagicAttack(
 export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter): void {
   if (magic instanceof MagicRestore) {
     if (!target.isAlive) return;
-    if (magic.hp > 0) target.hp = Math.min(target.maxHp, target.hp + magic.hp);
+    if (magic.hp > 0) target.hp = Math.min(target.hpMax, target.hp + magic.hp);
     target.activeStatuses.clearFlags(magic.cureFlags);
     return;
   }
   if (magic instanceof MagicAuxiliary) {
-    const hp = Math.trunc((target.maxHp * magic.hpPercent) / 100);
-    target.hp = target.isAlive ? Math.min(target.maxHp, target.hp + hp) : Math.min(target.maxHp, hp);
+    const hp = Math.trunc((target.hpMax * magic.hpPercent) / 100);
+    target.hp = target.isAlive ? Math.min(target.hpMax, target.hp + hp) : Math.min(target.hpMax, hp);
     if (target.hp <= 0) target.hp = 1;
     return;
   }
@@ -240,7 +240,7 @@ function applyHpMagicEffect(actor: FightingCharacter, target: FightingCharacter,
   const damage = calcBoundedEffect(target.hp, effect);
   if (damage === 0) return;
   target.hp = Math.max(0, target.hp - damage);
-  if (effect < 0) actor.hp = clampFighterValue(actor.hp + damage, 0, actor.maxHp);
+  if (effect < 0) actor.hp = clampFighterValue(actor.hp + damage, 0, actor.hpMax);
 }
 
 function applyMpMagicEffect(actor: FightingCharacter, target: FightingCharacter, effect: number): void {
@@ -248,7 +248,7 @@ function applyMpMagicEffect(actor: FightingCharacter, target: FightingCharacter,
   const damage = calcBoundedEffect(target.mp, effect);
   if (damage === 0) return;
   target.mp = Math.max(0, target.mp - damage);
-  if (effect < 0) actor.mp = clampFighterValue(actor.mp + damage, 0, actor.maxMp);
+  if (effect < 0) actor.mp = clampFighterValue(actor.mp + damage, 0, actor.mpMax);
 }
 
 function calcBoundedEffect(current: number, effect: number): number {

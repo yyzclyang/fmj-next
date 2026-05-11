@@ -5,7 +5,7 @@ import {
   GoodsEquipment,
   GoodsHiddenWeapon,
   GoodsMedicine,
-  GoodsMedicineChg4Ever,
+  GoodsMedicinePermanent,
   GoodsMedicineLife,
   GoodsStimulant,
   GoodsTudun,
@@ -327,6 +327,6 @@ export class ScreenGameMainMenu extends BaseScreen {
   }
 }
 
-function isMedicineGoods(goods: BaseGoods): goods is GoodsMedicine | GoodsMedicineLife | GoodsMedicineChg4Ever {
-  return goods instanceof GoodsMedicine || goods instanceof GoodsMedicineLife || goods instanceof GoodsMedicineChg4Ever;
+function isMedicineGoods(goods: BaseGoods): goods is GoodsMedicine | GoodsMedicineLife | GoodsMedicinePermanent {
+  return goods instanceof GoodsMedicine || goods instanceof GoodsMedicineLife || goods instanceof GoodsMedicinePermanent;
 }

@@ -63,7 +63,7 @@ class BuyGoodsCountScreen extends BaseScreen {
   }
 
   private get currentCount(): number {
-    return this.game.getGoodsNum(this.goods.type, this.goods.index) + this.buyCount;
+    return this.game.getGoodsCount(this.goods.type, this.goods.index) + this.buyCount;
   }
 
   private increase(): void {

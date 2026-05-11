@@ -7,9 +7,9 @@ export interface FightingCharacterData extends CharacterData {
   readonly magicChain: ResMagicChain | null;
   readonly learntMagicCount: number;
   readonly level: number;
-  readonly maxHp: number;
+  readonly hpMax: number;
   readonly hp: number;
-  readonly maxMp: number;
+  readonly mpMax: number;
   readonly mp: number;
   readonly attack: number;
   readonly defense: number;
@@ -26,9 +26,9 @@ export abstract class FightingCharacter extends Character {
   magicChain: ResMagicChain | null;
   learntMagicCount: number;
   level: number;
-  maxHp: number;
+  hpMax: number;
   hp: number;
-  maxMp: number;
+  mpMax: number;
   mp: number;
   attack: number;
   defense: number;
@@ -45,9 +45,9 @@ export abstract class FightingCharacter extends Character {
     this.magicChain = data.magicChain;
     this.learntMagicCount = data.learntMagicCount;
     this.level = data.level;
-    this.maxHp = data.maxHp;
+    this.hpMax = data.hpMax;
     this.hp = data.hp;
-    this.maxMp = data.maxMp;
+    this.mpMax = data.mpMax;
     this.mp = data.mp;
     this.attack = data.attack;
     this.defense = data.defense;

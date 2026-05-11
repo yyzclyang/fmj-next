@@ -41,8 +41,8 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
   const magicChain = magicChainIndex > 0 ? datLib.getMagicChain(magicChainIndex) : null;
   const learntMagicCount = buffer[offset + 9] ?? 0;
   if (magicChain) magicChain.learnNum = learntMagicCount;
-  const maxHp = readUint16(buffer, offset + 0x26);
-  const maxMp = readUint16(buffer, offset + 0x2a);
+  const hpMax = readUint16(buffer, offset + 0x26);
+  const mpMax = readUint16(buffer, offset + 0x2a);
   const attack = readUint16(buffer, offset + 0x2e);
   const defense = readUint16(buffer, offset + 0x30);
   const agility = buffer[offset + 0x36] ?? 0;
@@ -65,9 +65,9 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
     magicChain,
     learntMagicCount,
     level: buffer[offset + 0x20] ?? 0,
-    maxHp,
+    hpMax,
     hp: readUint16(buffer, offset + 0x28),
-    maxMp,
+    mpMax,
     mp: readUint16(buffer, offset + 0x2c),
     attack,
     defense,
@@ -135,9 +135,9 @@ function createMonster(datLib: DatLib, buffer: Uint8Array, offset: number): Mons
     agility: buffer[offset + 0x13] ?? 0,
     spirit: buffer[offset + 0x14] ?? 0,
     luck: buffer[offset + 0x16] ?? 0,
-    maxHp: readUint16(buffer, offset + 0x18),
+    hpMax: readUint16(buffer, offset + 0x18),
     hp: readUint16(buffer, offset + 0x1a),
-    maxMp: readUint16(buffer, offset + 0x1c),
+    mpMax: readUint16(buffer, offset + 0x1c),
     mp: readUint16(buffer, offset + 0x1e),
     attack: readUint16(buffer, offset + 0x20),
     defense: readUint16(buffer, offset + 0x22),
@@ -186,9 +186,9 @@ function createFightingCharacterDefaults(characterData: CharacterData): Fighting
     magicChain: null,
     learntMagicCount: 0,
     level: 0,
-    maxHp: 0,
+    hpMax: 0,
     hp: 0,
-    maxMp: 0,
+    mpMax: 0,
     mp: 0,
     attack: 0,
     defense: 0,

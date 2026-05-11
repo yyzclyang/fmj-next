@@ -43,7 +43,7 @@ export function getGoodsUseAnimation(game: Game, goods: CombatMedicineGoods): Re
 }
 
 export function useGoodsFromBag(game: Game, goods: BaseGoods): void {
-  if (!game.bag.useGoodsNum(goods.type, goods.index, 1)) {
+  if (!game.bag.consumeGoods(goods.type, goods.index, 1)) {
     throw new Error(`战斗使用道具时背包数量不足: GRS ${goods.type}-${goods.index}`);
   }
 }

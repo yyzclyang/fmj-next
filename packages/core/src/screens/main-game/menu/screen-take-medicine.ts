@@ -1,5 +1,5 @@
 import type { Player } from '@/characters';
-import { GoodsMedicine, GoodsMedicineChg4Ever, GoodsMedicineLife } from '@/goods';
+import { GoodsMedicine, GoodsMedicinePermanent, GoodsMedicineLife } from '@/goods';
 import type { Game } from '@/game/game';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_WHITE } from '@/rendering/color';
@@ -10,7 +10,7 @@ import { KeyCode } from '@/shared/key-code';
 import { drawPlayerState } from './screen-actor-state';
 import { getPartyPlayers } from './screen-select-actor';
 
-export type MedicineGoods = GoodsMedicine | GoodsMedicineLife | GoodsMedicineChg4Ever;
+export type MedicineGoods = GoodsMedicine | GoodsMedicineLife | GoodsMedicinePermanent;
 
 const GOODS_LEFT = 5;
 const GOODS_TOP = 10;
@@ -39,7 +39,7 @@ export class ScreenTakeMedicine extends BaseScreen {
     if (!player) return;
     drawPlayerState(surface, player, this.page, this.game.datLib.getImage(ResourceType.PIC, 2, 5));
     player.headImage?.draw(surface, 1, HEAD_LEFT, HEAD_TOP);
-    const count = this.game.getGoodsNum(this.medicine.type, this.medicine.index);
+    const count = this.game.getGoodsCount(this.medicine.type, this.medicine.index);
     if (count > 0) {
       this.medicine.image?.draw(surface, 1, GOODS_LEFT, GOODS_TOP);
       TextRender.drawText(surface, `${count}`, COUNT_LEFT, COUNT_TOP);
@@ -76,16 +76,16 @@ export class ScreenTakeMedicine extends BaseScreen {
   }
 
   private useMedicine(): void {
-    if (this.game.getGoodsNum(this.medicine.type, this.medicine.index) <= 0) {
+    if (this.game.getGoodsCount(this.medicine.type, this.medicine.index) <= 0) {
       this.close();
       return;
     }
     const target = this.players[this.actorIndex];
     if (!target) throw new Error('药物使用页没有可用角色');
-    const used = this.medicine instanceof GoodsMedicine && this.medicine.effectAll()
+    const used = this.medicine instanceof GoodsMedicine && this.medicine.affectsAllTargets()
       ? this.useMedicineForAll(target)
       : this.medicine.eat(target);
-    if (used && !this.game.bag.useGoodsNum(this.medicine.type, this.medicine.index, 1)) {
+    if (used && !this.game.bag.consumeGoods(this.medicine.type, this.medicine.index, 1)) {
       throw new Error('药物使用时背包数量不足');
     }
   }

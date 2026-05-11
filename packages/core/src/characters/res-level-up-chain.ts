@@ -3,9 +3,9 @@ import { readUint16 } from '@/lib/resource-utils';
 
 export const LEVEL_UP_RECORD_SIZE = 20;
 const LevelUpFieldOffset = {
-  MaxHp: 0,
+  HpMax: 0,
   Hp: 2,
-  MaxMp: 4,
+  MpMax: 4,
   Mp: 6,
   Attack: 8,
   Defense: 10,
@@ -35,16 +35,16 @@ export class ResLevelUpChain extends ResBase {
     this.levelData = data.levelData;
   }
 
-  getMaxHp(level: number): number {
-    return this.readLevelUint16(level, LevelUpFieldOffset.MaxHp);
+  getHpMax(level: number): number {
+    return this.readLevelUint16(level, LevelUpFieldOffset.HpMax);
   }
 
   getHp(level: number): number {
     return this.readLevelUint16(level, LevelUpFieldOffset.Hp);
   }
 
-  getMaxMp(level: number): number {
-    return this.readLevelUint16(level, LevelUpFieldOffset.MaxMp);
+  getMpMax(level: number): number {
+    return this.readLevelUint16(level, LevelUpFieldOffset.MpMax);
   }
 
   getMp(level: number): number {

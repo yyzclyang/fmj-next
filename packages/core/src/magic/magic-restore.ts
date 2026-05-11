@@ -20,7 +20,7 @@ export class MagicRestore extends BaseMagic {
     if (src.mp < this.costMp) return false;
     src.mp -= this.costMp;
     if (dst.isAlive && this.hp > 0) {
-      dst.hp = Math.min(dst.maxHp, dst.hp + this.hp);
+      dst.hp = Math.min(dst.hpMax, dst.hp + this.hp);
     }
     if (dst.isAlive) {
       dst.activeStatuses.clearFlags(this.cureFlags);

@@ -52,7 +52,7 @@ export class ScreenDiscardGoods extends BaseScreen {
   }
 
   private get count(): number {
-    return this.game.getGoodsNum(this.goods.type, this.goods.index);
+    return this.game.getGoodsCount(this.goods.type, this.goods.index);
   }
 
   private confirm(): void {
@@ -62,13 +62,13 @@ export class ScreenDiscardGoods extends BaseScreen {
       return;
     }
     if (this.selectedIndex === 0) {
-      if (!this.game.bag.useGoodsNum(this.goods.type, this.goods.index, count)) {
+      if (!this.game.bag.consumeGoods(this.goods.type, this.goods.index, count)) {
         throw new Error('全部丢弃时背包数量不足');
       }
       this.close();
       return;
     }
-    if (!this.game.bag.deleteGoods(this.goods.type, this.goods.index)) {
+    if (!this.game.bag.consumeGoods(this.goods.type, this.goods.index, 1)) {
       throw new Error('丢弃单个物品时背包数量不足');
     }
     if (count <= 1) this.close();

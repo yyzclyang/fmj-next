@@ -24,14 +24,14 @@ export class GoodsMedicine extends BaseGoods {
     this.effectFlags = data.effectFlags;
   }
 
-  override effectAll(): boolean {
+  override affectsAllTargets(): boolean {
     return (this.effectFlags & STATUS_FLAG_ATTACK_ALL) !== 0;
   }
 
   eat(player: Player): boolean {
     if (!player.isAlive) return false;
-    player.hp = Math.min(player.maxHp, player.hp + this.hp);
-    player.mp = Math.min(player.maxMp, player.mp + this.mp);
+    player.hp = Math.min(player.hpMax, player.hp + this.hp);
+    player.mp = Math.min(player.mpMax, player.mp + this.mp);
     player.activeStatuses.clearFlags(this.effectFlags);
     return true;
   }

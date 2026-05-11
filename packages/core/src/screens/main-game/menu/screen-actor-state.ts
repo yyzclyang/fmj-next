@@ -80,9 +80,9 @@ export function drawPlayerState(surface: Surface, player: Player, page: number, 
   surface.fillRect(37, y - 4, 1, STATE_LINE_HEIGHT * 10, COLOR_BLACK);
   TextRender.drawText(surface, `等级   ${player.level}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
-  TextRender.drawText(surface, `生命   ${player.hp}/${player.maxHp}`, STATE_TEXT_LEFT, y);
+  TextRender.drawText(surface, `生命   ${player.hp}/${player.hpMax}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
-  TextRender.drawText(surface, `真气   ${player.mp}/${player.maxMp}`, STATE_TEXT_LEFT, y);
+  TextRender.drawText(surface, `真气   ${player.mp}/${player.mpMax}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
   TextRender.drawText(surface, `攻击力 ${player.attack}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;

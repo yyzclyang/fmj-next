@@ -1,10 +1,10 @@
 import {
-  GoodsDecorations,
+  GoodsDecoration,
   GoodsDrama,
   GoodsEquipment,
   GoodsHiddenWeapon,
   GoodsMedicine,
-  GoodsMedicineChg4Ever,
+  GoodsMedicinePermanent,
   GoodsMedicineLife,
   GoodsStimulant,
   GoodsTudun,
@@ -27,13 +27,13 @@ export function parseGoodsResource(datLib: DatLib, buffer: Uint8Array, type: num
     case 6: {
       const magicIndex = buffer[offset + 0x1c] ?? 0;
       const magic = magicIndex > 0 ? datLib.getMagic(1, magicIndex) : null;
-      return new GoodsDecorations({
+      return new GoodsDecoration({
         ...parseGoodsEquipmentData(buffer, baseData, offset),
         mpMax: 0,
         hpMax: 0,
         effectFlags: 0,
-        mp: readInt8(buffer, offset + 0x16),
-        hp: readInt8(buffer, offset + 0x17),
+        mpPerRound: readInt8(buffer, offset + 0x16),
+        hpPerRound: readInt8(buffer, offset + 0x17),
         coopMagic: magic instanceof MagicAttack ? magic : null,
       });
     }
@@ -41,15 +41,15 @@ export function parseGoodsResource(datLib: DatLib, buffer: Uint8Array, type: num
       return new GoodsWeapon({
         ...parseGoodsEquipmentData(buffer, baseData, offset),
         animation: new ResSrs(),
-        affectMp: 0,
+        mpDamage: 0,
       });
     case 8: {
       const animationIndex = buffer[offset + 0x1a] ?? 0;
       const animationType = buffer[offset + 0x1b] ?? 0;
       return new GoodsHiddenWeapon({
         ...baseData,
-        affectHp: readInt16(buffer, offset + 0x16),
-        affectMp: readInt16(buffer, offset + 0x18),
+        hpDamage: readInt16(buffer, offset + 0x16),
+        mpDamage: readInt16(buffer, offset + 0x18),
         animation: animationIndex > 0 ? datLib.getSrs(animationType, animationIndex) : null,
         effectFlags: buffer[offset + 0x1c] ?? 0,
       });
@@ -70,7 +70,7 @@ export function parseGoodsResource(datLib: DatLib, buffer: Uint8Array, type: num
         percent: Math.min(buffer[offset + 0x17] ?? 0, 100),
       });
     case 11:
-      return new GoodsMedicineChg4Ever({
+      return new GoodsMedicinePermanent({
         ...baseData,
         mpMax: readInt8(buffer, offset + 0x16),
         hpMax: readInt8(buffer, offset + 0x17),
@@ -86,7 +86,7 @@ export function parseGoodsResource(datLib: DatLib, buffer: Uint8Array, type: num
         defensePercent: buffer[offset + 0x18] ?? 0,
         attackPercent: buffer[offset + 0x19] ?? 0,
         agilityPercent: buffer[offset + 0x1b] ?? 0,
-        forAll: ((buffer[offset + 0x1c] ?? 0) & STATUS_FLAG_ATTACK_ALL) !== 0,
+        targetAll: ((buffer[offset + 0x1c] ?? 0) & STATUS_FLAG_ATTACK_ALL) !== 0,
       });
     case 13:
       return new GoodsTudun(baseData);
@@ -102,8 +102,8 @@ function parseBaseGoodsData(datLib: DatLib, buffer: Uint8Array, offset: number):
   return {
     type,
     index: buffer[offset + 1] ?? 0,
-    enable: buffer[offset + 3] ?? 0,
-    sumRound: buffer[offset + 4] ?? 0,
+    allowedPlayerFlags: buffer[offset + 3] ?? 0,
+    effectRounds: buffer[offset + 4] ?? 0,
     image: datLib.getImage(ResourceType.GDP, type, buffer[offset + 5] ?? 0),
     name: readGbkString(buffer, offset + 6),
     buyPrice: readUint16(buffer, offset + 0x12),

@@ -672,7 +672,7 @@ export class ScriptVm {
         for (const { type, index } of goodsKeys) {
           const goods = this.game.datLib.getGoods(type, index);
           if (!goods) throw new Error(`BUY 指令引用了不存在的物品 type=${type}, index=${index}`);
-          items.push({ goods, count: this.game.getGoodsNum(type, index) });
+          items.push({ goods, count: this.game.getGoodsCount(type, index) });
         }
         process.pause();
         scene.screenStack.push(
@@ -938,7 +938,7 @@ export class ScriptVm {
       execute: () => {
         const player = this.game.getPlayer(actorId);
         if (!player) return;
-        player.hp = Math.trunc((player.maxHp * value) / 100);
+        player.hp = Math.trunc((player.hpMax * value) / 100);
       },
     };
   }
@@ -1198,7 +1198,7 @@ export class ScriptVm {
     return {
       len: 6,
       execute: process => {
-        if (!this.game.deleteGoods(type, index)) {
+        if (!this.game.consumeGoods(type, index, 1)) {
           process.gotoAddress(address);
         }
       },
@@ -1291,7 +1291,7 @@ export class ScriptVm {
     return {
       len: 6,
       execute: process => {
-        if (!this.game.deleteGoods(type, index)) {
+        if (!this.game.consumeGoods(type, index, 1)) {
           process.gotoAddress(address);
         }
       },
@@ -1355,7 +1355,7 @@ export class ScriptVm {
     return {
       len: 8,
       execute: process => {
-        if (!this.game.useGoodsNum(type, index, count)) {
+        if (!this.game.consumeGoods(type, index, count)) {
           process.gotoAddress(address);
         }
       },
@@ -1372,10 +1372,10 @@ export class ScriptVm {
     return {
       len: 10,
       execute: process => {
-        const goodsNum = this.game.getGoodsNum(type, index);
-        if (goodsNum === count) {
+        const goodsCount = this.game.getGoodsCount(type, index);
+        if (goodsCount === count) {
           process.gotoAddress(equalAddress);
-        } else if (goodsNum > count) {
+        } else if (goodsCount > count) {
           process.gotoAddress(greaterAddress);
         }
       },

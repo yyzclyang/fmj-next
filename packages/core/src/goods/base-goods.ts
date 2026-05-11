@@ -4,8 +4,8 @@ import type { ResImage } from '@/lib/res-image';
 export interface BaseGoodsData {
   readonly type: number;
   readonly index: number;
-  readonly enable: number;
-  readonly sumRound: number;
+  readonly allowedPlayerFlags: number;
+  readonly effectRounds: number;
   readonly image: ResImage | null;
   readonly name: string;
   readonly buyPrice: number;
@@ -15,8 +15,8 @@ export interface BaseGoodsData {
 }
 
 export abstract class BaseGoods extends ResBase {
-  protected enable: number;
-  sumRound: number;
+  protected allowedPlayerFlags: number;
+  effectRounds: number;
   image: ResImage | null;
   name: string;
   buyPrice: number;
@@ -28,8 +28,8 @@ export abstract class BaseGoods extends ResBase {
     super();
     this.type = data.type;
     this.index = data.index;
-    this.enable = data.enable;
-    this.sumRound = data.sumRound;
+    this.allowedPlayerFlags = data.allowedPlayerFlags;
+    this.effectRounds = data.effectRounds;
     this.image = data.image;
     this.name = data.name;
     this.buyPrice = data.buyPrice;
@@ -39,10 +39,10 @@ export abstract class BaseGoods extends ResBase {
   }
 
   canPlayerUse(playerId: number): boolean {
-    return playerId >= 1 && playerId <= 4 && (this.enable & (1 << (playerId - 1))) !== 0;
+    return playerId >= 1 && playerId <= 4 && (this.allowedPlayerFlags & (1 << (playerId - 1))) !== 0;
   }
 
-  effectAll(): boolean {
+  affectsAllTargets(): boolean {
     return false;
   }
 }

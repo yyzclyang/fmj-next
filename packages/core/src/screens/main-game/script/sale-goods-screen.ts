@@ -59,7 +59,7 @@ class SaleGoodsCountScreen extends BaseScreen {
   }
 
   private get totalCount(): number {
-    return this.game.getGoodsNum(this.goods.type, this.goods.index);
+    return this.game.getGoodsCount(this.goods.type, this.goods.index);
   }
 
   private get remainingCount(): number {
@@ -80,7 +80,7 @@ class SaleGoodsCountScreen extends BaseScreen {
 
   private confirm(): void {
     this.game.setMoney(this.money);
-    if (this.saleCount > 0 && !this.game.bag.useGoodsNum(this.goods.type, this.goods.index, this.saleCount)) {
+    if (this.saleCount > 0 && !this.game.bag.consumeGoods(this.goods.type, this.goods.index, this.saleCount)) {
       throw new Error('卖出物品时背包数量不足');
     }
     this.close();

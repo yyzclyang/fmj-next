@@ -20,7 +20,7 @@ export function createThrowGoodsSelection(
   goods: CombatThrowableGoods,
   monsters: readonly Monster[]
 ): CombatGoodsActionSelection {
-  if (goods.effectAll()) {
+  if (goods.affectsAllTargets()) {
     return {
       kind: 'action',
       action: { kind: 'throwItem', actor: player, goods, targets: monsters.filter(monster => monster.isAlive), targetAll: true },
@@ -35,7 +35,7 @@ export function createUseGoodsSelection(
   goods: CombatMedicineGoods,
   players: readonly Player[]
 ): CombatGoodsActionSelection {
-  if (goods instanceof GoodsMedicine && goods.effectAll()) {
+  if (goods instanceof GoodsMedicine && goods.affectsAllTargets()) {
     return {
       kind: 'action',
       action: { kind: 'useItem', actor: player, goods, targets: players, targetAll: true },

@@ -43,8 +43,8 @@ export interface CombatGoodsAward {
 export interface CombatLevelUpStats {
   readonly hp: number;
   readonly mp: number;
-  readonly maxHp: number;
-  readonly maxMp: number;
+  readonly hpMax: number;
+  readonly mpMax: number;
   readonly attack: number;
   readonly defense: number;
   readonly agility: number;
@@ -281,9 +281,9 @@ export class CombatRuntime {
     for (const player of players) {
       if (player.hp <= 0) player.hp = 1;
       if (player.mp <= 0) player.mp = 1;
-      player.hp += Math.trunc((player.maxHp - player.hp) / 10);
-      player.mp += Math.trunc(player.maxMp / 5);
-      if (player.mp > player.maxMp) player.mp = player.maxMp;
+      player.hp += Math.trunc((player.hpMax - player.hp) / 10);
+      player.mp += Math.trunc(player.mpMax / 5);
+      if (player.mp > player.mpMax) player.mp = player.mpMax;
     }
   }
 
@@ -316,12 +316,12 @@ export class CombatRuntime {
       if (!sprite) throw new Error(`角色缺少战斗图: ${player.name}`);
       player.activeStatuses.clearFlags(STATUS_FLAGS_ALL);
       sprite.setCombatPos(pos.x, pos.y);
-      sprite.currentFrame = player.hp <= 0 ? 12 : player.hp < player.maxHp / 4 ? 11 : 1;
+      sprite.currentFrame = player.hp <= 0 ? 12 : player.hp < player.hpMax / 4 ? 11 : 1;
     });
 
     session.monsters.forEach((monster, i) => {
-      monster.hp = monster.maxHp;
-      monster.mp = monster.maxMp;
+      monster.hp = monster.hpMax;
+      monster.mp = monster.mpMax;
       monster.activeStatuses.clearFlags(STATUS_FLAGS_ALL);
       const sprite = monster.fightingSprite;
       if (!sprite) throw new Error(`怪物缺少战斗图: ${monster.name}`);
@@ -432,8 +432,8 @@ function captureLevelUpStats(player: Player): CombatLevelUpStats {
   return {
     hp: player.hp,
     mp: player.mp,
-    maxHp: player.maxHp,
-    maxMp: player.maxMp,
+    hpMax: player.hpMax,
+    mpMax: player.mpMax,
     attack: player.attack,
     defense: player.defense,
     agility: player.agility,

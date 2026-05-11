@@ -88,7 +88,7 @@ export class ScreenChangeEquipment extends BaseScreen {
   private confirm(): void {
     if (this.selectedIndex === this.goodsList.length - 1) {
       const goods = this.goodsList[this.goodsList.length - 1];
-      if (!goods || !this.game.bag.deleteGoods(goods.type, goods.index)) {
+      if (!goods || !this.game.bag.consumeGoods(goods.type, goods.index, 1)) {
         throw new Error('确认换装时背包中缺少新装备');
       }
       const old = this.goodsList[0];

@@ -68,9 +68,9 @@ export interface SavePlayerState {
   level: number;
   learntMagicCount: number;
   magicChainLearnNum: number;
-  maxHp: number;
+  hpMax: number;
   hp: number;
-  maxMp: number;
+  mpMax: number;
   mp: number;
   attack: number;
   defense: number;
@@ -147,9 +147,9 @@ function createPlayerState(player: Player): SavePlayerState {
     level: player.level,
     learntMagicCount: player.learntMagicCount,
     magicChainLearnNum: player.magicChain?.learnNum ?? 0,
-    maxHp: player.maxHp,
+    hpMax: player.hpMax,
     hp: player.hp,
-    maxMp: player.maxMp,
+    mpMax: player.mpMax,
     mp: player.mp,
     attack: player.attack,
     defense: player.defense,

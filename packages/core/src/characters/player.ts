@@ -1,5 +1,5 @@
 import { FightingCharacter, type FightingCharacterData } from './fighting-character';
-import { EquipmentGoodsType, GoodsDecorations, type GoodsEquipment, GoodsWeapon } from '@/goods';
+import { EquipmentGoodsType, GoodsDecoration, type GoodsEquipment, GoodsWeapon } from '@/goods';
 import type { ResImage } from '@/lib/res-image';
 import type { BaseMagic } from '@/magic';
 import { toUint8 } from '@/shared/integer';
@@ -29,8 +29,8 @@ const PlayerReadableScriptAttribute = {
   FootEquipmentIndex: 20,
   Decoration1EquipmentIndex: 21,
   Decoration2EquipmentIndex: 22,
-  MaxHp: 23,
-  MaxMp: 24,
+  HpMax: 23,
+  MpMax: 24,
 } as const;
 
 const PlayerWritableScriptAttribute = {
@@ -49,8 +49,8 @@ const PlayerWritableScriptAttribute = {
   CoopMagicIndex: 12,
   HpPerRound: 13,
   MpPerRound: 14,
-  MaxHp: 15,
-  MaxMp: 16,
+  HpMax: 15,
+  MpMax: 16,
 } as const;
 
 const PlayerAdditiveScriptAttribute = {
@@ -64,8 +64,8 @@ const PlayerAdditiveScriptAttribute = {
   Spirit: 7,
   Luck: 8,
   OnHitEffectRounds: 9,
-  MaxHp: 10,
-  MaxMp: 11,
+  HpMax: 10,
+  MpMax: 11,
 } as const;
 
 export const PlayerEquipmentSlot = {
@@ -176,23 +176,23 @@ export class Player extends FightingCharacter {
     const targetLevel = this.levelUpChain.maxLevel > 0 ? Math.min(toLevel, this.levelUpChain.maxLevel) : toLevel;
 
     this.level = targetLevel;
-    const hpIncrease = this.levelUpChain.getMaxHp(targetLevel) - this.levelUpChain.getMaxHp(fromLevel);
-    const mpIncrease = this.levelUpChain.getMaxMp(targetLevel) - this.levelUpChain.getMaxMp(fromLevel);
+    const hpIncrease = this.levelUpChain.getHpMax(targetLevel) - this.levelUpChain.getHpMax(fromLevel);
+    const mpIncrease = this.levelUpChain.getMpMax(targetLevel) - this.levelUpChain.getMpMax(fromLevel);
     const attackIncrease = this.levelUpChain.getAttack(targetLevel) - this.levelUpChain.getAttack(fromLevel);
     const defenseIncrease = this.levelUpChain.getDefense(targetLevel) - this.levelUpChain.getDefense(fromLevel);
     const agilityIncrease = this.levelUpChain.getAgility(targetLevel) - this.levelUpChain.getAgility(fromLevel);
     const spiritIncrease = this.levelUpChain.getSpirit(targetLevel) - this.levelUpChain.getSpirit(fromLevel);
     const luckIncrease = this.levelUpChain.getLuck(targetLevel) - this.levelUpChain.getLuck(fromLevel);
 
-    this.maxHp += hpIncrease;
-    this.maxMp += mpIncrease;
+    this.hpMax += hpIncrease;
+    this.mpMax += mpIncrease;
     this.attack += attackIncrease;
     this.defense += defenseIncrease;
     this.agility += agilityIncrease;
     this.spirit += spiritIncrease;
     this.luck += luckIncrease;
-    this.hp = this.maxHp;
-    this.mp = this.maxMp;
+    this.hp = this.hpMax;
+    this.mp = this.mpMax;
     if (this.magicChain) {
       this.magicChain.learnNum = this.levelUpChain.getLearnMagicCount(targetLevel);
     }
@@ -247,10 +247,10 @@ export class Player extends FightingCharacter {
         return this.equipment[PlayerEquipmentSlot.Decoration1]?.index ?? 0;
       case PlayerReadableScriptAttribute.Decoration2EquipmentIndex:
         return this.equipment[PlayerEquipmentSlot.Decoration2]?.index ?? 0;
-      case PlayerReadableScriptAttribute.MaxHp:
-        return this.maxHp;
-      case PlayerReadableScriptAttribute.MaxMp:
-        return this.maxMp;
+      case PlayerReadableScriptAttribute.HpMax:
+        return this.hpMax;
+      case PlayerReadableScriptAttribute.MpMax:
+        return this.mpMax;
       default:
         return 0;
     }
@@ -303,11 +303,11 @@ export class Player extends FightingCharacter {
       case PlayerWritableScriptAttribute.MpPerRound:
         this.mpPerRound = toUint8(value);
         return;
-      case PlayerWritableScriptAttribute.MaxHp:
-        this.maxHp = value;
+      case PlayerWritableScriptAttribute.HpMax:
+        this.hpMax = value;
         return;
-      case PlayerWritableScriptAttribute.MaxMp:
-        this.maxMp = value;
+      case PlayerWritableScriptAttribute.MpMax:
+        this.mpMax = value;
         return;
     }
   }
@@ -349,11 +349,11 @@ export class Player extends FightingCharacter {
       case PlayerAdditiveScriptAttribute.OnHitEffectRounds:
         this.setOnHitEffectRounds(this.onHitEffectRoundsValue + value);
         return;
-      case PlayerAdditiveScriptAttribute.MaxHp:
-        this.maxHp += value;
+      case PlayerAdditiveScriptAttribute.HpMax:
+        this.hpMax += value;
         return;
-      case PlayerAdditiveScriptAttribute.MaxMp:
-        this.maxMp += value;
+      case PlayerAdditiveScriptAttribute.MpMax:
+        this.mpMax += value;
         return;
     }
   }
@@ -426,7 +426,7 @@ export class Player extends FightingCharacter {
       this.applyWeaponEffect(equipment, sign);
       return;
     }
-    if (equipment instanceof GoodsDecorations) {
+    if (equipment instanceof GoodsDecoration) {
       this.applyDecorationEffect(equipment, sign);
       return;
     }
@@ -434,9 +434,9 @@ export class Player extends FightingCharacter {
   }
 
   private applyEquipmentStats(equipment: GoodsEquipment, sign: 1 | -1): void {
-    if (!(equipment instanceof GoodsDecorations)) {
-      this.maxMp += equipment.mpMax * sign;
-      this.maxHp += equipment.hpMax * sign;
+    if (!(equipment instanceof GoodsDecoration)) {
+      this.mpMax += equipment.mpMax * sign;
+      this.hpMax += equipment.hpMax * sign;
     }
     this.defense += equipment.defense * sign;
     this.attack += equipment.attack * sign;
@@ -448,7 +448,7 @@ export class Player extends FightingCharacter {
   private applyWeaponEffect(equipment: GoodsWeapon, sign: 1 | -1): void {
     if (sign > 0) {
       this.onHitEffectFlagsValue = toUint8(equipment.effectFlags);
-      this.onHitEffectRoundsValue = toUint8(equipment.sumRound);
+      this.onHitEffectRoundsValue = toUint8(equipment.effectRounds);
     } else {
       this.onHitEffectFlagsValue = 0;
       this.onHitEffectRoundsValue = 0;
@@ -456,9 +456,9 @@ export class Player extends FightingCharacter {
     this.syncOnHitStatuses();
   }
 
-  private applyDecorationEffect(equipment: GoodsDecorations, sign: 1 | -1): void {
-    this.hpPerRound += equipment.hp * sign;
-    this.mpPerRound += equipment.mp * sign;
+  private applyDecorationEffect(equipment: GoodsDecoration, sign: 1 | -1): void {
+    this.hpPerRound += equipment.hpPerRound * sign;
+    this.mpPerRound += equipment.mpPerRound * sign;
     this.coopMagicIndex = sign > 0 ? (equipment.coopMagic?.index ?? 0) : 0;
   }
 

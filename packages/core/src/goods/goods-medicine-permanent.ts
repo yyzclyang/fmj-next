@@ -1,7 +1,7 @@
 import type { Player } from '@/characters';
 import { BaseGoods, type BaseGoodsData } from './base-goods';
 
-export interface GoodsMedicineChg4EverData extends BaseGoodsData {
+export interface GoodsMedicinePermanentData extends BaseGoodsData {
   readonly mpMax: number;
   readonly hpMax: number;
   readonly defense: number;
@@ -11,7 +11,7 @@ export interface GoodsMedicineChg4EverData extends BaseGoodsData {
   readonly luck: number;
 }
 
-export class GoodsMedicineChg4Ever extends BaseGoods {
+export class GoodsMedicinePermanent extends BaseGoods {
   mpMax: number;
   hpMax: number;
   defense: number;
@@ -20,7 +20,7 @@ export class GoodsMedicineChg4Ever extends BaseGoods {
   agility: number;
   luck: number;
 
-  constructor(data: GoodsMedicineChg4EverData) {
+  constructor(data: GoodsMedicinePermanentData) {
     super(data);
     this.mpMax = data.mpMax;
     this.hpMax = data.hpMax;
@@ -32,8 +32,8 @@ export class GoodsMedicineChg4Ever extends BaseGoods {
   }
 
   eat(player: Player): boolean {
-    player.maxMp += this.mpMax;
-    player.maxHp += this.hpMax;
+    player.mpMax += this.mpMax;
+    player.hpMax += this.hpMax;
     player.defense += this.defense;
     player.attack += this.attack;
     player.spirit += this.spirit;

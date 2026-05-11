@@ -184,16 +184,12 @@ export class Game {
     return goods;
   }
 
-  deleteGoods(type: number, index: number): boolean {
-    return this.bag.deleteGoods(type, index);
+  consumeGoods(type: number, index: number, count: number): boolean {
+    return this.bag.consumeGoods(type, index, count);
   }
 
-  useGoodsNum(type: number, index: number, count: number): boolean {
-    return this.bag.useGoodsNum(type, index, count);
-  }
-
-  getGoodsNum(type: number, index: number): number {
-    return this.bag.getGoodsNum(type, index);
+  getGoodsCount(type: number, index: number): number {
+    return this.bag.getGoodsCount(type, index);
   }
 
   gainMoney(value: number): void {
@@ -386,9 +382,9 @@ export class Game {
     player.level = snapshot.level;
     player.learntMagicCount = snapshot.learntMagicCount;
     if (player.magicChain) player.magicChain.learnNum = snapshot.magicChainLearnNum;
-    player.maxHp = snapshot.maxHp;
+    player.hpMax = snapshot.hpMax;
     player.hp = snapshot.hp;
-    player.maxMp = snapshot.maxMp;
+    player.mpMax = snapshot.mpMax;
     player.mp = snapshot.mp;
     player.attack = snapshot.attack;
     player.defense = snapshot.defense;

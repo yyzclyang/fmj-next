@@ -4,20 +4,20 @@ import { GoodsEquipment, type GoodsEquipmentData } from './goods-equipment';
 
 export interface GoodsWeaponData extends GoodsEquipmentData {
   readonly animation: ResSrs;
-  readonly affectMp: number;
+  readonly mpDamage: number;
 }
 
 export class GoodsWeapon extends GoodsEquipment {
   animation: ResSrs;
-  affectMp: number;
+  mpDamage: number;
 
   constructor(data: GoodsWeaponData) {
     super(data);
     this.animation = data.animation;
-    this.affectMp = data.affectMp;
+    this.mpDamage = data.mpDamage;
   }
 
-  get affectHp(): number {
+  get hpDamage(): number {
     return this.attack * 50;
   }
 

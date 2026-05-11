@@ -112,7 +112,7 @@ export class ScreenGoodsList extends BaseScreen {
 
   private drawInfo(surface: Surface, item: ScreenGoodsListItem): void {
     const goods = item.goods;
-    const count = this.mode === ScreenGoodsListMode.Buy ? item.count : this.game.getGoodsNum(goods.type, goods.index);
+    const count = this.mode === ScreenGoodsListMode.Buy ? item.count : this.game.getGoodsCount(goods.type, goods.index);
     const countText = this.mode === ScreenGoodsListMode.Buy ? `金钱:${this.game.state.money}` : `数量:${count}`;
     const price = this.mode === ScreenGoodsListMode.Buy ? goods.buyPrice : goods.sellPrice;
     TextRender.drawText(surface, countText, INFO_LEFT, 20);

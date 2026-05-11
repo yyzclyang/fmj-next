@@ -36,5 +36,5 @@ export function setPhysicalAttackFrame(actor: FightingCharacter, frame: number, 
 export function setPlayerFrameByState(player: Player): void {
   const sprite = player.fightingSprite;
   if (!sprite) return;
-  sprite.currentFrame = player.hp <= 0 ? 12 : isSleeping(player) || player.hp < player.maxHp / 4 ? 11 : 1;
+  sprite.currentFrame = player.hp <= 0 ? 12 : isSleeping(player) || player.hp < player.hpMax / 4 ? 11 : 1;
 }

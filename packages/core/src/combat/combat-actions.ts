@@ -3,7 +3,7 @@ import {
   type BaseGoods,
   GoodsHiddenWeapon,
   GoodsMedicine,
-  GoodsMedicineChg4Ever,
+  GoodsMedicinePermanent,
   GoodsMedicineLife,
   GoodsWeapon,
 } from '@/goods';
@@ -20,7 +20,7 @@ export type CombatPhase =
   | 'success';
 export type ActionIconIndex = 1 | 2 | 3 | 4;
 export type CombatActor = Player | Monster;
-export type CombatMedicineGoods = GoodsMedicine | GoodsMedicineLife | GoodsMedicineChg4Ever;
+export type CombatMedicineGoods = GoodsMedicine | GoodsMedicineLife | GoodsMedicinePermanent;
 export type CombatThrowableGoods = GoodsHiddenWeapon | GoodsWeapon;
 export type CombatHelpMagic = MagicRestore | MagicAuxiliary | MagicEnhance;
 export type CombatAction =
@@ -123,7 +123,7 @@ export interface NopAction {
 }
 
 export function isCombatMedicineGoods(goods: BaseGoods): goods is CombatMedicineGoods {
-  return goods instanceof GoodsMedicine || goods instanceof GoodsMedicineLife || goods instanceof GoodsMedicineChg4Ever;
+  return goods instanceof GoodsMedicine || goods instanceof GoodsMedicineLife || goods instanceof GoodsMedicinePermanent;
 }
 
 export function isCombatThrowableGoods(goods: BaseGoods): goods is CombatThrowableGoods {

@@ -25,7 +25,7 @@ export class GoodsBag {
     return [...this.equipList, ...this.goodsList];
   }
 
-  getGoodsNum(type: number, index: number): number {
+  getGoodsCount(type: number, index: number): number {
     return this.items.find(item => item.type === type && item.index === index)?.count ?? 0;
   }
 
@@ -43,11 +43,7 @@ export class GoodsBag {
     return goods;
   }
 
-  deleteGoods(type: number, index: number): boolean {
-    return this.useGoodsNum(type, index, 1);
-  }
-
-  useGoodsNum(type: number, index: number, count: number): boolean {
+  consumeGoods(type: number, index: number, count: number): boolean {
     if (!isKnownGoodsType(type) || count <= 0) return false;
     const itemIndex = this.items.findIndex(item => item.type === type && item.index === index);
     if (itemIndex < 0) return false;

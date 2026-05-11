@@ -104,9 +104,9 @@ export class CombatUi {
     }
     player.headImage?.draw(surface, 1, PLAYER_HEAD_LEFT, PLAYER_HEAD_TOP);
     drawSmallNum(surface, this.smallNumImage, player.hp, PLAYER_INFO_LEFT + 30, PLAYER_INFO_TOP + 6);
-    drawSmallNum(surface, this.smallNumImage, player.maxHp, PLAYER_INFO_LEFT + 59, PLAYER_INFO_TOP + 6);
+    drawSmallNum(surface, this.smallNumImage, player.hpMax, PLAYER_INFO_LEFT + 59, PLAYER_INFO_TOP + 6);
     drawSmallNum(surface, this.smallNumImage, player.mp, PLAYER_INFO_LEFT + 30, PLAYER_INFO_TOP + 17);
-    drawSmallNum(surface, this.smallNumImage, player.maxMp, PLAYER_INFO_LEFT + 59, PLAYER_INFO_TOP + 17);
+    drawSmallNum(surface, this.smallNumImage, player.mpMax, PLAYER_INFO_LEFT + 59, PLAYER_INFO_TOP + 17);
   }
 
   private drawPlayerIndicator(surface: Surface, state: CombatUiState): void {

@@ -14,11 +14,10 @@ export class GoodsMedicineLife extends BaseGoods {
   }
 
   eat(player: Player): boolean {
-    const value = Math.trunc((player.maxHp * this.percent) / 100);
-    player.hp = player.hp <= 0 ? value : player.hp + value;
-    if (player.hp > player.maxHp) player.hp = player.maxHp;
+    player.hp = (player.hp <= 0 ? 0 : player.hp) + Math.trunc((player.hpMax * this.percent) / 100);
+    if (player.hp > player.hpMax) player.hp = player.hpMax;
     if (player.hp <= 0) player.hp = 1;
-    if (player.mp > player.maxMp) player.mp = player.maxMp;
+    if (player.mp > player.mpMax) player.mp = player.mpMax;
     return true;
   }
 }

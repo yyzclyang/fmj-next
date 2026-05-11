@@ -1,5 +1,4 @@
 import type { Game } from '@/game/game';
-import { Direction, toDirection } from '@/characters';
 import type { ResGut } from '@/lib/res-gut';
 import { SaveLoadOperation, ScreenSaveLoadGame } from '@/screens/main-game/menu/screen-save-load-game';
 import {
@@ -9,98 +8,13 @@ import {
   ScriptMenuScreen,
 } from '@/screens/main-game/script';
 import { toInt16 } from '@/shared/integer';
+import type { CommandBuilder } from './script-command';
+import { toNpcStepDirection } from './script-direction';
+import { COMMAND, getCommandName } from './script-opcodes';
 import { type ScriptCommand, ScriptProcess } from './script-process';
 import { ScriptReader } from './script-reader';
 
 const IGNORE_SET_FIGHT_MISS = false;
-
-const COMMAND = {
-  MUSIC: 0,
-  LOADMAP: 1,
-  CREATEACTOR: 2,
-  DELETENPC: 3,
-  MAPEVENT: 4,
-  ACTOREVENT: 5,
-  MOVE: 6,
-  ACTORMOVE: 7,
-  ACTORSPEED: 8,
-  CALLBACK: 9,
-  GOTO: 10,
-  IF: 11,
-  SET: 12,
-  SAY: 13,
-  STARTCHAPTER: 14,
-  SCREENR: 15,
-  SCREENS: 16,
-  SCREENA: 17,
-  EVENT: 18,
-  MONEY: 19,
-  GAMEOVER: 20,
-  IFCMP: 21,
-  ADD: 22,
-  SUB: 23,
-  SETCONTROLID: 24,
-  GUTEVENT: 25,
-  SETEVENT: 26,
-  CLREVENT: 27,
-  BUY: 28,
-  FACETOFACE: 29,
-  MOVIE: 30,
-  CHOICE: 31,
-  CREATEBOX: 32,
-  DELETEBOX: 33,
-  GAINGOODS: 34,
-  INITFIGHT: 35,
-  FIGHTENABLE: 36,
-  FIGHTDISENABLE: 37,
-  CREATENPC: 38,
-  ENTERFIGHT: 39,
-  DELETEACTOR: 40,
-  GAINMONEY: 41,
-  USEMONEY: 42,
-  SETMONEY: 43,
-  LEARNMAGIC: 44,
-  SALE: 45,
-  NPCMOVEMOD: 46,
-  MESSAGE: 47,
-  DELETEGOODS: 48,
-  RESUMEACTORHP: 49,
-  ACTORLAYERUP: 50,
-  BOXOPEN: 51,
-  DELALLNPC: 52,
-  NPCSTEP: 53,
-  SETSCENENAME: 54,
-  SHOWSCENENAME: 55,
-  SHOWSCREEN: 56,
-  USEGOODS: 57,
-  ATTRIBTEST: 58,
-  ATTRIBSET: 59,
-  ATTRIBADD: 60,
-  SHOWGUT: 61,
-  USEGOODSNUM: 62,
-  RANDRADE: 63,
-  MENU: 64,
-  TESTMONEY: 65,
-  CALLCHAPTER: 66,
-  DISCMP: 67,
-  RETURN: 68,
-  TIMEMSG: 69,
-  DISABLESAVE: 70,
-  ENABLESAVE: 71,
-  GAMESAVE: 72,
-  SETEVENTTIMER: 73,
-  ENABLESHOWPOS: 74,
-  DISABLESHOWPOS: 75,
-  SETTO: 76,
-  TESTGOODSNUM: 77,
-  SETFIGHTMISS: 78,
-  SETARMSTOSS: 79,
-} as const;
-
-type CommandBuilder = {
-  readonly len: number;
-  readonly execute: (process: ScriptProcess) => void;
-};
 
 // 按 Kotlin ScriptVM 指令表迁移；个别基线自身也未落地的指令在对应 cmd 中保留兼容降级说明。
 export class ScriptVm {
@@ -1096,9 +1010,7 @@ export class ScriptVm {
   private cmdMenu(reader: ScriptReader): CommandBuilder {
     const variableIndex = reader.readUint16(0);
     const menuText = reader.readCString(2);
-    const items = menuText.text
-      .split(' ')
-      .filter(item => item.length > 0);
+    const items = menuText.text.split(' ').filter(item => item.length > 0);
 
     return {
       len: 2 + menuText.byteLength,
@@ -1223,7 +1135,11 @@ export class ScriptVm {
     return {
       len: 6,
       execute: process => {
-        const operation = this.game.mainSceneRuntime?.createActorPoseOperation(actorId, toNpcStepDirection(faceTo), step);
+        const operation = this.game.mainSceneRuntime?.createActorPoseOperation(
+          actorId,
+          toNpcStepDirection(faceTo),
+          step
+        );
         if (!operation) return;
         process.wait(operation);
       },
@@ -1382,23 +1298,16 @@ export class ScriptVm {
   }
 }
 
-function getCommandName(opcode: number): string {
-  for (const [name, value] of Object.entries(COMMAND)) {
-    if (value === opcode) return name;
-  }
-  return `UNKNOWN_${opcode}`;
-}
-
-function wrapCompileError(scriptName: string, commandName: string, opcode: number, offset: number, error: unknown): Error {
+function wrapCompileError(
+  scriptName: string,
+  commandName: string,
+  opcode: number,
+  offset: number,
+  error: unknown
+): Error {
   const prefix = `${scriptName} ${commandName} opcode=${opcode} offset=${offset}`;
   if (error instanceof Error) {
     return new Error(`${prefix}: ${error.message}`, { cause: error });
   }
   return new Error(`${prefix}: ${String(error)}`);
-}
-
-function toNpcStepDirection(faceTo: number): Direction {
-  // NPCSTEP 的朝向参数是 0..3，比角色资源里的 Direction 编码少 1。
-  if (faceTo < 0 || faceTo > 3) return Direction.South;
-  return toDirection(faceTo + 1);
 }

@@ -1,4 +1,3 @@
-import type { Player } from '@/characters';
 import {
   STATUS_SLOT_POISON,
   STATUS_SLOT_DEFENSE,
@@ -7,7 +6,8 @@ import {
   STATUS_SLOT_CONFUSE,
   STATUS_SLOT_SLEEP,
   STATUS_SLOT_AGILITY,
-} from '@/combat/combat-constants';
+} from '@/characters/status';
+import type { Player } from '@/characters';
 import type { Game } from '@/game/game';
 import type { ResImage } from '@/lib/res-image';
 import { ResourceType } from '@/lib/resource-utils';

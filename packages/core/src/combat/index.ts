@@ -12,5 +12,4 @@ export {
   type CombatWinSettlement,
 } from './combat-runtime';
 export * from './combat-actions';
-export * from './combat-constants';
 export * from './combat-effects';

@@ -1,5 +1,6 @@
 import type { Game } from '@/game/game';
 import type { Monster, Player } from '@/characters';
+import { STATUS_FLAGS_ALL } from '@/characters/status';
 import type { CombatBackgroundIds, CombatEnterFightParams } from '@/combat/combat-runtime';
 import type { BaseGoods } from '@/goods';
 import { ResourceType } from '@/lib/resource-utils';
@@ -436,14 +437,14 @@ function applyDebugPlayerIncrease(player: Player, input: DebugPlayerIncreaseInpu
 
 function addDebugPlayerAttribute(player: Player, type: number, value: number | undefined, name: string): boolean {
   if (value == null) return false;
-  player.addAttribute(type, assertDebugInt(value, name));
+  player.addScriptAttribute(type, assertDebugInt(value, name));
   return true;
 }
 
 function applyDebugStatuses(statuses: Player['immuneStatuses'], flags: number | undefined, round: number | undefined, name: string): void {
   if (flags == null) return;
   const value = assertDebugNonNegativeInt(flags, `${name}Flags`);
-  statuses.clearFlags(0xff);
+  statuses.clearFlags(STATUS_FLAGS_ALL);
   if (value !== 0) statuses.addFlags(value, round == null ? 99 : assertDebugNonNegativeInt(round, `${name}Rounds`));
 }
 

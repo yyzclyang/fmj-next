@@ -1,5 +1,5 @@
 import type { FightingCharacter, Monster, Player } from '@/characters';
-import { STATUS_FLAG_ATTACK_ALL } from '@/combat/combat-constants';
+import { STATUS_FLAG_ATTACK_ALL } from '@/characters/status';
 import { isConfusing, isSleeping } from '@/combat/combat-effects';
 import type {
   CombatAction,

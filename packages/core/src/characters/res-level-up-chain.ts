@@ -1,6 +1,21 @@
 import { ResBase } from '@/lib/res-base';
 import { readUint16 } from '@/lib/resource-utils';
 
+export const LEVEL_UP_RECORD_SIZE = 20;
+const LevelUpFieldOffset = {
+  MaxHp: 0,
+  Hp: 2,
+  MaxMp: 4,
+  Mp: 6,
+  Attack: 8,
+  Defense: 10,
+  NextLevelExp: 14,
+  Agility: 16,
+  Spirit: 17,
+  Luck: 18,
+  LearnMagicCount: 19,
+} as const;
+
 export interface ResLevelUpChainData {
   readonly type: number;
   readonly index: number;
@@ -21,54 +36,54 @@ export class ResLevelUpChain extends ResBase {
   }
 
   getMaxHp(level: number): number {
-    return this.readLevelUint16(level, 0);
+    return this.readLevelUint16(level, LevelUpFieldOffset.MaxHp);
   }
 
   getHp(level: number): number {
-    return this.readLevelUint16(level, 2);
+    return this.readLevelUint16(level, LevelUpFieldOffset.Hp);
   }
 
   getMaxMp(level: number): number {
-    return this.readLevelUint16(level, 4);
+    return this.readLevelUint16(level, LevelUpFieldOffset.MaxMp);
   }
 
   getMp(level: number): number {
-    return this.readLevelUint16(level, 6);
+    return this.readLevelUint16(level, LevelUpFieldOffset.Mp);
   }
 
   getAttack(level: number): number {
-    return this.readLevelUint16(level, 8);
+    return this.readLevelUint16(level, LevelUpFieldOffset.Attack);
   }
 
   getDefense(level: number): number {
-    return this.readLevelUint16(level, 10);
+    return this.readLevelUint16(level, LevelUpFieldOffset.Defense);
   }
 
   getNextLevelExp(level: number): number {
     if (level < 1 || level > this.maxLevel) return 0;
-    const exp = this.readLevelUint16(level, 14);
+    const exp = this.readLevelUint16(level, LevelUpFieldOffset.NextLevelExp);
     return exp > 0 ? exp : Math.trunc(100 * 1.5 ** level);
   }
 
   getAgility(level: number): number {
-    return this.readLevelByte(level, 16);
+    return this.readLevelByte(level, LevelUpFieldOffset.Agility);
   }
 
   getSpirit(level: number): number {
-    return this.readLevelByte(level, 17);
+    return this.readLevelByte(level, LevelUpFieldOffset.Spirit);
   }
 
   getLuck(level: number): number {
-    return this.readLevelByte(level, 18);
+    return this.readLevelByte(level, LevelUpFieldOffset.Luck);
   }
 
   getLearnMagicCount(level: number): number {
-    return this.readLevelByte(level, 19);
+    return this.readLevelByte(level, LevelUpFieldOffset.LearnMagicCount);
   }
 
   private getLevelOffset(level: number, fieldOffset: number): number | null {
     if (level < 1 || level > this.maxLevel) return null;
-    const offset = (level - 1) * 20 /* 每级升级数据 20 字节。 */ + fieldOffset;
+    const offset = (level - 1) * LEVEL_UP_RECORD_SIZE + fieldOffset;
     return offset < this.levelData.length ? offset : null;
   }
 

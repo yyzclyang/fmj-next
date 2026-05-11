@@ -1,5 +1,5 @@
 import { isSealed } from '@/combat/combat-effects';
-import { STATUS_FLAG_ATTACK_ALL } from '@/combat/combat-constants';
+import { STATUS_FLAG_ATTACK_ALL } from '@/characters/status';
 import type {
   CombatAction,
   CombatHelpMagic,

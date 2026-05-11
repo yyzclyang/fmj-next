@@ -1,19 +1,19 @@
 import { Monster, Player, type FightingCharacter } from '@/characters';
+import {
+  STATUS_FLAG_CONFUSE,
+  STATUS_FLAG_POISON,
+  STATUS_FLAG_SEAL,
+  STATUS_FLAG_SLEEP,
+  STATUS_FLAG_ATTACK_ALL,
+  STATUS_SLOT_AGILITY,
+  STATUS_SLOT_ATTACK,
+  STATUS_SLOT_DEFENSE,
+  STATUS_SLOT_POISON,
+  STATUS_SLOT_SLEEP,
+} from '@/characters/status';
 import { GoodsHiddenWeapon } from '@/goods';
 import type { MagicDamageFormula } from '@/game/game-engine-options';
 import { type BaseMagic, MagicAttack, MagicAuxiliary, MagicEnhance, MagicRestore } from '@/magic';
-import {
-  STATUS_SLOT_POISON,
-  STATUS_SLOT_DEFENSE,
-  STATUS_SLOT_ATTACK,
-  STATUS_SLOT_SLEEP,
-  STATUS_SLOT_AGILITY,
-  STATUS_FLAG_SPECIAL_DAMAGE_REDUCTION,
-  STATUS_FLAG_POISON,
-  STATUS_FLAG_SEAL,
-  STATUS_FLAG_CONFUSE,
-  STATUS_FLAG_SLEEP,
-} from './combat-constants';
 import type { CombatHelpMagic, CombatThrowableGoods } from './combat-actions';
 
 export function hasActiveStatus(actor: FightingCharacter, flags: number): boolean {
@@ -70,7 +70,12 @@ export function calcPhysicalDamage(
   return Math.max(1, damage);
 }
 
-export function randomMiss(attacker: FightingCharacter, target: FightingCharacter, enabled: boolean, allowMiss = true): boolean {
+export function randomMiss(
+  attacker: FightingCharacter,
+  target: FightingCharacter,
+  enabled: boolean,
+  allowMiss = true
+): boolean {
   if (!enabled || !allowMiss) return false;
   let attackerAgility = getComputedAgility(attacker);
   let targetAgility = getComputedAgility(target);
@@ -112,7 +117,11 @@ export function applyMagicAttack(
 ): void {
   applyHpMagicEffect(actor, target, calcHpMagicEffect(actor, target, magic.affectHp, formula, targetIsDefending));
   applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.affectMp, formula));
-  applyCombatStatuses(target, createStatusSlots(magic.statusFlags & 0x0f, (magic.statusFlags >> 4) & 0x0f), target.luck);
+  applyCombatStatuses(
+    target,
+    createStatusSlots(magic.statusFlags & 0x0f, (magic.statusFlags >> 4) & 0x0f),
+    target.luck
+  );
   applyAttributeMagicEffect(target, -magic.attackPercent, -magic.defensePercent, -magic.agilityPercent, 0);
 }
 
@@ -130,7 +139,13 @@ export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter
     return;
   }
   if (magic instanceof MagicEnhance && target.isAlive) {
-    applyAttributeMagicEffect(target, magic.attackPercent, magic.defensePercent, magic.agilityPercent, magic.statusRound);
+    applyAttributeMagicEffect(
+      target,
+      magic.attackPercent,
+      magic.defensePercent,
+      magic.agilityPercent,
+      magic.statusRound
+    );
   }
 }
 
@@ -177,7 +192,7 @@ function calcHpMagicEffectOriginal(
 }
 
 function hasSpecialDamageReduction(target: FightingCharacter, targetIsDefending: boolean): boolean {
-  return target instanceof Player && (targetIsDefending || target.immuneStatuses.hasAnyFlag(STATUS_FLAG_SPECIAL_DAMAGE_REDUCTION));
+  return target instanceof Player && (targetIsDefending || target.immuneStatuses.hasAnyFlag(STATUS_FLAG_ATTACK_ALL));
 }
 
 function calcHpMagicEffectSimplified(
@@ -273,7 +288,11 @@ function createStatusSlots(flags: number, round: number) {
   };
 }
 
-function applyCombatStatuses(target: FightingCharacter, src: { slots: readonly { value: number; round: number }[] }, luck: number): void {
+function applyCombatStatuses(
+  target: FightingCharacter,
+  src: { slots: readonly { value: number; round: number }[] },
+  luck: number
+): void {
   const resist = Math.sqrt(Math.max(0, luck) / 100);
   for (let i = STATUS_SLOT_SLEEP; i <= STATUS_SLOT_POISON; i += 1) {
     if (Math.random() + 0.01 < resist) continue;

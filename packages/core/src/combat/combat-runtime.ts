@@ -1,5 +1,6 @@
 import type { Game } from '@/game/game';
 import type { Monster, Player } from '@/characters';
+import { STATUS_FLAGS_ALL } from '@/characters/status';
 import type { BaseGoods } from '@/goods';
 import { Bitmap } from '@/rendering/bitmap';
 import { COLOR_BLACK, type Color } from '@/rendering/color';
@@ -313,7 +314,7 @@ export class CombatRuntime {
       const pos = PLAYER_POS[Math.min(i, PLAYER_POS.length - 1)]!;
       const sprite = player.fightingSprite;
       if (!sprite) throw new Error(`角色缺少战斗图: ${player.name}`);
-      player.activeStatuses.clearFlags(0xff);
+      player.activeStatuses.clearFlags(STATUS_FLAGS_ALL);
       sprite.setCombatPos(pos.x, pos.y);
       sprite.currentFrame = player.hp <= 0 ? 12 : player.hp < player.maxHp / 4 ? 11 : 1;
     });
@@ -321,7 +322,7 @@ export class CombatRuntime {
     session.monsters.forEach((monster, i) => {
       monster.hp = monster.maxHp;
       monster.mp = monster.maxMp;
-      monster.activeStatuses.clearFlags(0xff);
+      monster.activeStatuses.clearFlags(STATUS_FLAGS_ALL);
       const sprite = monster.fightingSprite;
       if (!sprite) throw new Error(`怪物缺少战斗图: ${monster.name}`);
       const posIndex = session.monsters.length === 1 ? 1 : i;

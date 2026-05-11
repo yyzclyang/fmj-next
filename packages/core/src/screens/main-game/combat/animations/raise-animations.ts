@@ -6,7 +6,7 @@ import {
   STATUS_FLAG_CONFUSE,
   STATUS_FLAG_SLEEP,
   STATUS_FLAG_AGILITY,
-} from '@/combat/combat-constants';
+} from '@/characters/status';
 import type { FightingCharacter } from '@/characters';
 import type { Game } from '@/game/game';
 import type { ResImage } from '@/lib/res-image';

@@ -5,7 +5,7 @@ import type { BaseMagic } from '@/magic';
 import { toUint8 } from '@/shared/integer';
 import type { ResLevelUpChain } from './res-level-up-chain';
 
-const PlayerReadableAttribute = {
+const PlayerReadableScriptAttribute = {
   Level: 0,
   Attack: 1,
   Defense: 2,
@@ -33,7 +33,7 @@ const PlayerReadableAttribute = {
   MaxMp: 24,
 } as const;
 
-const PlayerWritableAttribute = {
+const PlayerWritableScriptAttribute = {
   Level: 0,
   Attack: 1,
   Defense: 2,
@@ -53,7 +53,7 @@ const PlayerWritableAttribute = {
   MaxMp: 16,
 } as const;
 
-const PlayerAdditiveAttribute = {
+const PlayerAdditiveScriptAttribute = {
   Level: 0,
   Attack: 1,
   Defense: 2,
@@ -199,160 +199,160 @@ export class Player extends FightingCharacter {
     return true;
   }
 
-  getAttribute(attribute: number): number {
+  getScriptAttribute(attribute: number): number {
     switch (attribute) {
-      case PlayerReadableAttribute.Level:
+      case PlayerReadableScriptAttribute.Level:
         return this.level;
-      case PlayerReadableAttribute.Attack:
+      case PlayerReadableScriptAttribute.Attack:
         return this.attack;
-      case PlayerReadableAttribute.Defense:
+      case PlayerReadableScriptAttribute.Defense:
         return this.defense;
-      case PlayerReadableAttribute.Agility:
+      case PlayerReadableScriptAttribute.Agility:
         return this.agility;
-      case PlayerReadableAttribute.Hp:
+      case PlayerReadableScriptAttribute.Hp:
         return this.hp;
-      case PlayerReadableAttribute.Mp:
+      case PlayerReadableScriptAttribute.Mp:
         return this.mp;
-      case PlayerReadableAttribute.Exp:
+      case PlayerReadableScriptAttribute.Exp:
         return this.exp;
-      case PlayerReadableAttribute.Spirit:
+      case PlayerReadableScriptAttribute.Spirit:
         return this.spirit;
-      case PlayerReadableAttribute.Luck:
+      case PlayerReadableScriptAttribute.Luck:
         return this.luck;
-      case PlayerReadableAttribute.OnHitEffectRounds:
+      case PlayerReadableScriptAttribute.OnHitEffectRounds:
         return this.onHitEffectRoundsValue;
-      case PlayerReadableAttribute.ImmuneStatusFlags:
+      case PlayerReadableScriptAttribute.ImmuneStatusFlags:
         return this.immuneStatuses.toFlags();
-      case PlayerReadableAttribute.OnHitEffectFlags:
+      case PlayerReadableScriptAttribute.OnHitEffectFlags:
         return this.onHitEffectFlagsValue;
-      case PlayerReadableAttribute.CoopMagicIndex:
+      case PlayerReadableScriptAttribute.CoopMagicIndex:
         return this.coopMagicIndex;
-      case PlayerReadableAttribute.HpPerRound:
+      case PlayerReadableScriptAttribute.HpPerRound:
         return this.hpPerRound;
-      case PlayerReadableAttribute.MpPerRound:
+      case PlayerReadableScriptAttribute.MpPerRound:
         return this.mpPerRound;
-      case PlayerReadableAttribute.HeadEquipmentIndex:
+      case PlayerReadableScriptAttribute.HeadEquipmentIndex:
         return this.equipment[PlayerEquipmentSlot.Head]?.index ?? 0;
-      case PlayerReadableAttribute.BodyEquipmentIndex:
+      case PlayerReadableScriptAttribute.BodyEquipmentIndex:
         return this.equipment[PlayerEquipmentSlot.Body]?.index ?? 0;
-      case PlayerReadableAttribute.ShoulderEquipmentIndex:
+      case PlayerReadableScriptAttribute.ShoulderEquipmentIndex:
         return this.equipment[PlayerEquipmentSlot.Shoulder]?.index ?? 0;
-      case PlayerReadableAttribute.WristEquipmentIndex:
+      case PlayerReadableScriptAttribute.WristEquipmentIndex:
         return this.equipment[PlayerEquipmentSlot.Wrist]?.index ?? 0;
-      case PlayerReadableAttribute.HandEquipmentIndex:
+      case PlayerReadableScriptAttribute.HandEquipmentIndex:
         return this.equipment[PlayerEquipmentSlot.Hand]?.index ?? 0;
-      case PlayerReadableAttribute.FootEquipmentIndex:
+      case PlayerReadableScriptAttribute.FootEquipmentIndex:
         return this.equipment[PlayerEquipmentSlot.Foot]?.index ?? 0;
-      case PlayerReadableAttribute.Decoration1EquipmentIndex:
+      case PlayerReadableScriptAttribute.Decoration1EquipmentIndex:
         return this.equipment[PlayerEquipmentSlot.Decoration1]?.index ?? 0;
-      case PlayerReadableAttribute.Decoration2EquipmentIndex:
+      case PlayerReadableScriptAttribute.Decoration2EquipmentIndex:
         return this.equipment[PlayerEquipmentSlot.Decoration2]?.index ?? 0;
-      case PlayerReadableAttribute.MaxHp:
+      case PlayerReadableScriptAttribute.MaxHp:
         return this.maxHp;
-      case PlayerReadableAttribute.MaxMp:
+      case PlayerReadableScriptAttribute.MaxMp:
         return this.maxMp;
       default:
         return 0;
     }
   }
 
-  setAttribute(attribute: number, value: number): void {
+  setScriptAttribute(attribute: number, value: number): void {
     switch (attribute) {
-      case PlayerWritableAttribute.Level:
+      case PlayerWritableScriptAttribute.Level:
         this.setLevel(value);
         return;
-      case PlayerWritableAttribute.Attack:
+      case PlayerWritableScriptAttribute.Attack:
         this.attack = value;
         return;
-      case PlayerWritableAttribute.Defense:
+      case PlayerWritableScriptAttribute.Defense:
         this.defense = value;
         return;
-      case PlayerWritableAttribute.Agility:
+      case PlayerWritableScriptAttribute.Agility:
         this.agility = value;
         return;
-      case PlayerWritableAttribute.Hp:
+      case PlayerWritableScriptAttribute.Hp:
         this.hp = value;
         return;
-      case PlayerWritableAttribute.Mp:
+      case PlayerWritableScriptAttribute.Mp:
         this.mp = value;
         return;
-      case PlayerWritableAttribute.Exp:
+      case PlayerWritableScriptAttribute.Exp:
         this.exp = value;
         return;
-      case PlayerWritableAttribute.Spirit:
+      case PlayerWritableScriptAttribute.Spirit:
         this.spirit = value;
         return;
-      case PlayerWritableAttribute.Luck:
+      case PlayerWritableScriptAttribute.Luck:
         this.luck = value;
         return;
-      case PlayerWritableAttribute.OnHitEffectRounds:
+      case PlayerWritableScriptAttribute.OnHitEffectRounds:
         this.setOnHitEffectRounds(value);
         return;
-      case PlayerWritableAttribute.ImmuneStatusFlags:
+      case PlayerWritableScriptAttribute.ImmuneStatusFlags:
         this.immuneStatuses.replaceWithFlags(toUint8(value), 0);
         return;
-      case PlayerWritableAttribute.OnHitEffectFlags:
+      case PlayerWritableScriptAttribute.OnHitEffectFlags:
         this.setOnHitEffectFlags(value);
         return;
-      case PlayerWritableAttribute.CoopMagicIndex:
+      case PlayerWritableScriptAttribute.CoopMagicIndex:
         this.coopMagicIndex = toUint8(value);
         return;
-      case PlayerWritableAttribute.HpPerRound:
+      case PlayerWritableScriptAttribute.HpPerRound:
         this.hpPerRound = toUint8(value);
         return;
-      case PlayerWritableAttribute.MpPerRound:
+      case PlayerWritableScriptAttribute.MpPerRound:
         this.mpPerRound = toUint8(value);
         return;
-      case PlayerWritableAttribute.MaxHp:
+      case PlayerWritableScriptAttribute.MaxHp:
         this.maxHp = value;
         return;
-      case PlayerWritableAttribute.MaxMp:
+      case PlayerWritableScriptAttribute.MaxMp:
         this.maxMp = value;
         return;
     }
   }
 
-  addAttribute(attribute: number, value: number): void {
-    if (this.levelUpChain?.maxLevel === 0 && attribute === PlayerAdditiveAttribute.Exp) {
+  addScriptAttribute(attribute: number, value: number): void {
+    if (this.levelUpChain?.maxLevel === 0 && attribute === PlayerAdditiveScriptAttribute.Exp) {
       this.exp -= 150 + Math.trunc(this.exp * 0.1);
       return;
     }
 
     switch (attribute) {
-      case PlayerAdditiveAttribute.Level:
+      case PlayerAdditiveScriptAttribute.Level:
         this.setLevel(this.level + value);
         return;
-      case PlayerAdditiveAttribute.Attack:
+      case PlayerAdditiveScriptAttribute.Attack:
         this.attack += value;
         return;
-      case PlayerAdditiveAttribute.Defense:
+      case PlayerAdditiveScriptAttribute.Defense:
         this.defense += value;
         return;
-      case PlayerAdditiveAttribute.Agility:
+      case PlayerAdditiveScriptAttribute.Agility:
         this.agility += value;
         return;
-      case PlayerAdditiveAttribute.Hp:
+      case PlayerAdditiveScriptAttribute.Hp:
         this.hp += value;
         return;
-      case PlayerAdditiveAttribute.Mp:
+      case PlayerAdditiveScriptAttribute.Mp:
         this.mp += value;
         return;
-      case PlayerAdditiveAttribute.Exp:
+      case PlayerAdditiveScriptAttribute.Exp:
         this.exp += value;
         return;
-      case PlayerAdditiveAttribute.Spirit:
+      case PlayerAdditiveScriptAttribute.Spirit:
         this.spirit += value;
         return;
-      case PlayerAdditiveAttribute.Luck:
+      case PlayerAdditiveScriptAttribute.Luck:
         this.luck += value;
         return;
-      case PlayerAdditiveAttribute.OnHitEffectRounds:
+      case PlayerAdditiveScriptAttribute.OnHitEffectRounds:
         this.setOnHitEffectRounds(this.onHitEffectRoundsValue + value);
         return;
-      case PlayerAdditiveAttribute.MaxHp:
+      case PlayerAdditiveScriptAttribute.MaxHp:
         this.maxHp += value;
         return;
-      case PlayerAdditiveAttribute.MaxMp:
+      case PlayerAdditiveScriptAttribute.MaxMp:
         this.maxMp += value;
         return;
     }
@@ -363,10 +363,8 @@ export class Player extends FightingCharacter {
   }
 
   getCurrentEquipment(type: number): GoodsEquipment | null {
-    for (let slot = 0; slot < PLAYER_EQUIPMENT_SLOT_GOODS_TYPES.length; slot += 1) {
-      if (PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[slot] === type) return this.equipment[slot] ?? null;
-    }
-    return null;
+    const slot = this.findEquipmentSlot(type);
+    return slot == null ? null : (this.equipment[slot] ?? null);
   }
 
   hasEquipment(type: number, index: number): boolean {
@@ -382,28 +380,24 @@ export class Player extends FightingCharacter {
   }
 
   hasEquipmentSpace(type: number): boolean {
-    if (type === EquipmentGoodsType.Decoration) {
-      return [PlayerEquipmentSlot.Decoration1, PlayerEquipmentSlot.Decoration2].some(i => this.equipment[i] == null);
-    }
-    return PLAYER_EQUIPMENT_SLOT_GOODS_TYPES.some(
-      (goodsType, slot) => goodsType === type && this.equipment[slot] == null
-    );
+    return this.findEquipmentSlot(type, slot => this.equipment[slot] == null) != null;
   }
 
   putOnEquipment(goods: GoodsEquipment, at?: number): number | null {
     if (at != null) return this.putOnEquipmentAt(goods, at);
-    for (let slot = 0; slot < PLAYER_EQUIPMENT_SLOT_GOODS_TYPES.length; slot += 1) {
-      if (PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[slot] === goods.type && this.equipment[slot] == null)
-        return this.putOnEquipmentAt(goods, slot);
-    }
-    return null;
+    const slot = this.findEquipmentSlot(goods.type, i => this.equipment[i] == null);
+    return slot == null ? null : this.putOnEquipmentAt(goods, slot);
   }
 
   takeOffEquipment(type: number, index?: number): GoodsEquipment | null {
     if (index != null) return this.takeOffEquipmentAt(index);
+    const slot = this.findEquipmentSlot(type, i => this.equipment[i] != null);
+    return slot == null ? null : this.takeOffEquipmentAt(slot);
+  }
+
+  private findEquipmentSlot(type: number, predicate?: (slot: number) => boolean): number | null {
     for (let slot = 0; slot < PLAYER_EQUIPMENT_SLOT_GOODS_TYPES.length; slot += 1) {
-      if (PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[slot] === type && this.equipment[slot] != null)
-        return this.takeOffEquipmentAt(slot);
+      if (PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[slot] === type && (!predicate || predicate(slot))) return slot;
     }
     return null;
   }

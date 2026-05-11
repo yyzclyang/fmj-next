@@ -1,4 +1,4 @@
-import { STATUS_FLAG_ATTACK_ALL } from '@/combat/combat-constants';
+import { STATUS_FLAG_ATTACK_ALL } from '@/characters/status';
 import type { CombatAction } from '@/combat/combat-actions';
 import { isSealed } from '@/combat/combat-effects';
 import type { Monster, Player } from '@/characters';

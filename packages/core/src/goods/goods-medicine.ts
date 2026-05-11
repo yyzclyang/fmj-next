@@ -1,5 +1,5 @@
 import type { Player } from '@/characters';
-import { STATUS_FLAG_ATTACK_ALL } from '@/combat/combat-constants';
+import { STATUS_FLAG_ATTACK_ALL } from '@/characters/status';
 import type { ResSrs } from '@/lib/res-srs';
 import { BaseGoods, type BaseGoodsData } from './base-goods';
 

@@ -1,5 +1,5 @@
 import type { ResSrs } from '@/lib/res-srs';
-import { STATUS_FLAG_ATTACK_ALL } from '@/combat/combat-constants';
+import { STATUS_FLAG_ATTACK_ALL } from '@/characters/status';
 import { GoodsEquipment, type GoodsEquipmentData } from './goods-equipment';
 
 export interface GoodsWeaponData extends GoodsEquipmentData {

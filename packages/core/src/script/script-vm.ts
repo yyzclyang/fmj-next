@@ -1310,7 +1310,7 @@ export class ScriptVm {
       execute: process => {
         const player = this.game.getPlayer(actorId);
         if (!player) return;
-        const currentValue = player.getAttribute(type);
+        const currentValue = player.getScriptAttribute(type);
         if (currentValue < value) {
           process.gotoAddress(lessAddress);
         } else if (currentValue > value) {
@@ -1328,7 +1328,7 @@ export class ScriptVm {
     return {
       len: 6,
       execute: () => {
-        this.game.getPlayer(actorId)?.setAttribute(type, value);
+        this.game.getPlayer(actorId)?.setScriptAttribute(type, value);
       },
     };
   }
@@ -1341,7 +1341,7 @@ export class ScriptVm {
     return {
       len: 6,
       execute: () => {
-        this.game.getPlayer(actorId)?.addAttribute(type, value);
+        this.game.getPlayer(actorId)?.addScriptAttribute(type, value);
       },
     };
   }

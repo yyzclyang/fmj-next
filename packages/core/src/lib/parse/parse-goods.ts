@@ -13,7 +13,7 @@ import {
   type BaseGoodsData,
   type GoodsEquipmentData,
 } from '@/goods';
-import { STATUS_FLAG_ATTACK_ALL } from '@/combat/combat-constants';
+import { STATUS_FLAG_ATTACK_ALL } from '@/characters/status';
 import { MagicAttack } from '@/magic';
 import type { DatLib } from '../dat-lib';
 import { ResSrs } from '../res-srs';

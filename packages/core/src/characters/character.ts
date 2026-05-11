@@ -35,6 +35,21 @@ export const CharacterState = {
 
 export type CharacterState = (typeof CharacterState)[keyof typeof CharacterState];
 
+export function toCharacterState(value: number): CharacterState {
+  switch (value) {
+    case 1:
+      return CharacterState.ForceMove;
+    case 2:
+      return CharacterState.Walking;
+    case 3:
+      return CharacterState.Pause;
+    case 4:
+      return CharacterState.Active;
+    default:
+      return CharacterState.Stop;
+  }
+}
+
 export interface CharacterData {
   readonly type: number;
   readonly index: number;

@@ -1,6 +1,6 @@
 import type { Game } from '@/game/game';
 import type { CombatEnterFightParams, CombatInitFightParams, CombatRuntimeSnapshot } from '@/combat';
-import { CharacterState, Direction, mapCharacterState, type Player, type WalkingSprite } from '@/characters';
+import { CharacterState, Direction, toCharacterState, type Player, type WalkingSprite } from '@/characters';
 import type { ResImage } from '@/lib/res-image';
 import type { ResMap } from '@/lib/res-map';
 import { ResourceType } from '@/lib/resource-utils';
@@ -524,7 +524,7 @@ export class MainSceneRuntime {
   setNpcMoveMode(id: number, state: number): void {
     const obj = this.sceneObjectsValue.get(id);
     if (!obj) return;
-    obj.state = mapCharacterState(state);
+    obj.state = toCharacterState(state);
     obj.stateElapsed = 0;
     obj.pauseRemaining = obj.delay * 100;
   }

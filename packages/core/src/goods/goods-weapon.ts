@@ -1,4 +1,5 @@
 import type { ResSrs } from '@/lib/res-srs';
+import { STATUS_FLAG_ATTACK_ALL } from '@/combat/combat-constants';
 import { GoodsEquipment, type GoodsEquipmentData } from './goods-equipment';
 
 export interface GoodsWeaponData extends GoodsEquipmentData {
@@ -21,6 +22,6 @@ export class GoodsWeapon extends GoodsEquipment {
   }
 
   attackAll(): boolean {
-    return (this.bitEffect & 0x10) !== 0;
+    return (this.effectFlags & STATUS_FLAG_ATTACK_ALL) !== 0;
   }
 }

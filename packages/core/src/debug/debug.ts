@@ -107,12 +107,12 @@ export interface DebugCombatPlayerStateInput {
   id: number;
   hp?: number;
   mp?: number;
-  immuneStatusMask?: number;
+  immuneStatusFlags?: number;
   immuneStatusRounds?: number;
-  activeStatusMask?: number;
+  activeStatusFlags?: number;
   activeStatusRounds?: number;
-  onHitStatusMask?: number;
-  onHitStatusRounds?: number;
+  onHitEffectFlags?: number;
+  onHitEffectRounds?: number;
 }
 
 export interface DebugCombatStartOptions {
@@ -399,9 +399,9 @@ function applyDebugPlayerState(game: Game, input: DebugCombatPlayerStateInput): 
   const player = addDebugPlayer(game, input.id);
   if (input.hp != null) player.hp = clampDebugInt(input.hp, 'hp', 0, player.maxHp);
   if (input.mp != null) player.mp = clampDebugInt(input.mp, 'mp', 0, player.maxMp);
-  applyDebugStatuses(player.immuneStatuses, input.immuneStatusMask, input.immuneStatusRounds, 'immuneStatus');
-  applyDebugStatuses(player.activeStatuses, input.activeStatusMask, input.activeStatusRounds, 'activeStatus');
-  applyDebugStatuses(player.onHitStatuses, input.onHitStatusMask, input.onHitStatusRounds, 'onHitStatus');
+  applyDebugStatuses(player.immuneStatuses, input.immuneStatusFlags, input.immuneStatusRounds, 'immuneStatus');
+  applyDebugStatuses(player.activeStatuses, input.activeStatusFlags, input.activeStatusRounds, 'activeStatus');
+  applyDebugStatuses(player.onHitStatuses, input.onHitEffectFlags, input.onHitEffectRounds, 'onHitEffect');
 }
 
 function resolveDebugPlayers(game: Game, actorIds: readonly number[], input: DebugPlayerIncreaseInput): Player[] {
@@ -442,7 +442,7 @@ function addDebugPlayerAttribute(player: Player, type: number, value: number | u
 
 function applyDebugStatuses(statuses: Player['immuneStatuses'], flags: number | undefined, round: number | undefined, name: string): void {
   if (flags == null) return;
-  const value = assertDebugNonNegativeInt(flags, `${name}Mask`);
+  const value = assertDebugNonNegativeInt(flags, `${name}Flags`);
   statuses.clearFlags(0xff);
   if (value !== 0) statuses.addFlags(value, round == null ? 99 : assertDebugNonNegativeInt(round, `${name}Rounds`));
 }

@@ -1,6 +1,6 @@
-import { ResImage } from '@/lib/res-image';
+import { type ResImage } from '@/lib/res-image';
 
-// 战斗图在角色资源解析时绑定图片，和 Kotlin FightingSprite 一样持有 ResImage。
+// 战斗图在角色资源解析时绑定图片
 export class FightingSprite {
   currentFrame = 1;
   combatX = 0;

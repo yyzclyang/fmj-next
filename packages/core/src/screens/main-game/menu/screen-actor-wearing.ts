@@ -1,4 +1,4 @@
-import { PLAYER_EQUIPMENT_TYPES, type Player } from '@/characters';
+import { PLAYER_EQUIPMENT_SLOT_GOODS_TYPES, PlayerEquipmentSlot, type Player } from '@/characters';
 import { GoodsEquipment } from '@/goods';
 import type { Game } from '@/game/game';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
@@ -12,16 +12,63 @@ import { ScreenChangeEquipment } from './screen-change-equipment';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from './screen-goods-list';
 import { getPartyPlayers } from './screen-select-actor';
 
-const SLOT_NAMES = ['装饰', '装饰', '护腕', '脚蹬', '手持', '身穿', '肩披', '头戴'] as const;
-const SLOT_POSITIONS = [
-  { x: 80, y: 20 },
-  { x: 60, y: 60 },
-  { x: 110, y: 100 },
-  { x: 150, y: 120 },
-  { x: 200, y: 100 },
-  { x: 240, y: 60 },
-  { x: 220, y: 25 },
-  { x: 140, y: 10 },
+const WEARING_SLOTS = [
+  {
+    slot: PlayerEquipmentSlot.Decoration1,
+    name: '装饰',
+    x: 80,
+    y: 20,
+    goodsType: PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[PlayerEquipmentSlot.Decoration1],
+  },
+  {
+    slot: PlayerEquipmentSlot.Decoration2,
+    name: '装饰',
+    x: 60,
+    y: 60,
+    goodsType: PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[PlayerEquipmentSlot.Decoration2],
+  },
+  {
+    slot: PlayerEquipmentSlot.Wrist,
+    name: '护腕',
+    x: 110,
+    y: 100,
+    goodsType: PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[PlayerEquipmentSlot.Wrist],
+  },
+  {
+    slot: PlayerEquipmentSlot.Foot,
+    name: '脚蹬',
+    x: 150,
+    y: 120,
+    goodsType: PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[PlayerEquipmentSlot.Foot],
+  },
+  {
+    slot: PlayerEquipmentSlot.Hand,
+    name: '手持',
+    x: 200,
+    y: 100,
+    goodsType: PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[PlayerEquipmentSlot.Hand],
+  },
+  {
+    slot: PlayerEquipmentSlot.Body,
+    name: '身穿',
+    x: 240,
+    y: 60,
+    goodsType: PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[PlayerEquipmentSlot.Body],
+  },
+  {
+    slot: PlayerEquipmentSlot.Shoulder,
+    name: '肩披',
+    x: 220,
+    y: 25,
+    goodsType: PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[PlayerEquipmentSlot.Shoulder],
+  },
+  {
+    slot: PlayerEquipmentSlot.Head,
+    name: '头戴',
+    x: 140,
+    y: 10,
+    goodsType: PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[PlayerEquipmentSlot.Head],
+  },
 ] as const;
 const SLOT_SIZE = 32;
 const INFO_LEFT = 20;
@@ -94,7 +141,8 @@ export class ScreenActorWearing extends BaseScreen {
     this.drawSlots(surface, player);
     this.drawActor(surface, player);
     if (this.showingDescription) {
-      this.drawDescription(surface, player.equipment[this.currentItem] ?? null);
+      const slot = WEARING_SLOTS[this.currentItem];
+      this.drawDescription(surface, slot ? (player.equipment[slot.slot] ?? null) : null);
     }
   }
 
@@ -123,7 +171,7 @@ export class ScreenActorWearing extends BaseScreen {
 
   private moveItem(step: number): void {
     const next = this.currentItem + step;
-    if (next < 0 || next >= SLOT_NAMES.length) return;
+    if (next < 0 || next >= WEARING_SLOTS.length) return;
     this.currentItem = next;
     this.showingDescription = false;
   }
@@ -136,7 +184,8 @@ export class ScreenActorWearing extends BaseScreen {
   }
 
   private handleEnter(): void {
-    const equipment = this.players[this.actorIndex]?.equipment[this.currentItem] ?? null;
+    const slot = WEARING_SLOTS[this.currentItem];
+    const equipment = slot ? (this.players[this.actorIndex]?.equipment[slot.slot] ?? null) : null;
     if (!this.showingDescription && equipment) {
       this.showingDescription = true;
       return;
@@ -146,13 +195,12 @@ export class ScreenActorWearing extends BaseScreen {
   }
 
   private drawSlots(surface: Surface, player: Player): void {
-    for (let i = 0; i < SLOT_POSITIONS.length; i += 1) {
-      const pos = SLOT_POSITIONS[i];
-      const equipment = player.equipment[i] ?? null;
-      equipment?.image?.draw(surface, 1, pos.x + 1, pos.y + 1);
+    for (const slot of WEARING_SLOTS) {
+      const equipment = player.equipment[slot.slot] ?? null;
+      equipment?.image?.draw(surface, 1, slot.x + 1, slot.y + 1);
     }
-    const pos = SLOT_POSITIONS[this.currentItem];
-    if (pos) drawSelectedSlot(surface, pos.x, pos.y);
+    const slot = WEARING_SLOTS[this.currentItem];
+    if (slot) drawSelectedSlot(surface, slot.x, slot.y);
   }
 
   private drawActor(surface: Surface, player: Player): void {
@@ -162,7 +210,7 @@ export class ScreenActorWearing extends BaseScreen {
       drawMenuFrame(surface, 140, 40, 24, 24);
     }
     TextRender.drawText(surface, player.name, 140, 80);
-    TextRender.drawText(surface, SLOT_NAMES[this.currentItem] ?? '', 200, 60);
+    TextRender.drawText(surface, WEARING_SLOTS[this.currentItem]?.name ?? '', 200, 60);
   }
 
   private drawDescription(surface: Surface, equipment: GoodsEquipment | null): void {
@@ -192,17 +240,22 @@ export class ScreenActorWearing extends BaseScreen {
   }
 
   private getEquipmentList(player: Player): ScreenGoodsListItem[] {
-    const goodsType = PLAYER_EQUIPMENT_TYPES[this.currentItem];
+    const slot = WEARING_SLOTS[this.currentItem];
+    if (!slot) return [];
     return this.game.bag.equipList.filter(
       (item): item is ScreenGoodsListItem =>
-        item.goods instanceof GoodsEquipment && item.goods.type === goodsType && item.goods.canPlayerUse(player.index)
+        item.goods instanceof GoodsEquipment &&
+        item.goods.type === slot.goodsType &&
+        item.goods.canPlayerUse(player.index)
     );
   }
 
   private openChangeEquipmentScreen(player: Player, goods: ScreenGoodsListItem['goods']): void {
     if (!(goods instanceof GoodsEquipment)) throw new Error('穿戴页选择了非装备物品');
+    const slot = WEARING_SLOTS[this.currentItem];
+    if (!slot) throw new Error('穿戴页当前槽位不存在');
     this.screenStack.clear();
-    this.screenStack.push(new ScreenChangeEquipment(this.game, player, goods, this.currentItem));
+    this.screenStack.push(new ScreenChangeEquipment(this.game, player, goods, slot.slot));
   }
 }
 

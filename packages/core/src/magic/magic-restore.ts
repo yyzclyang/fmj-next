@@ -3,17 +3,17 @@ import { BaseMagic, type BaseMagicData } from './base-magic';
 
 export interface MagicRestoreData extends BaseMagicData {
   readonly hp: number;
-  readonly cureMask: number;
+  readonly cureFlags: number;
 }
 
 export class MagicRestore extends BaseMagic {
   hp: number;
-  cureMask: number;
+  cureFlags: number;
 
   constructor(data: MagicRestoreData) {
     super(data);
     this.hp = data.hp;
-    this.cureMask = data.cureMask;
+    this.cureFlags = data.cureFlags;
   }
 
   use(src: FightingCharacter, dst: FightingCharacter): boolean {
@@ -23,7 +23,7 @@ export class MagicRestore extends BaseMagic {
       dst.hp = Math.min(dst.maxHp, dst.hp + this.hp);
     }
     if (dst.isAlive) {
-      dst.activeStatuses.clearFlags(this.cureMask);
+      dst.activeStatuses.clearFlags(this.cureFlags);
     }
     return true;
   }

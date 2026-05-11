@@ -1,5 +1,15 @@
 import { BaseGoods, type BaseGoodsData } from './base-goods';
 
+export const EquipmentGoodsType = {
+  Head: 1,
+  Body: 2,
+  Foot: 3,
+  Shoulder: 4,
+  Wrist: 5,
+  Decoration: 6,
+  Hand: 7,
+} as const;
+
 export interface GoodsEquipmentData extends BaseGoodsData {
   readonly mpMax: number;
   readonly hpMax: number;
@@ -7,7 +17,7 @@ export interface GoodsEquipmentData extends BaseGoodsData {
   readonly attack: number;
   readonly spirit: number;
   readonly agility: number;
-  readonly bitEffect: number;
+  readonly effectFlags: number;
   readonly luck: number;
 }
 
@@ -18,7 +28,7 @@ export class GoodsEquipment extends BaseGoods {
   attack: number;
   spirit: number;
   agility: number;
-  bitEffect: number;
+  effectFlags: number;
   luck: number;
 
   constructor(data: GoodsEquipmentData) {
@@ -29,7 +39,7 @@ export class GoodsEquipment extends BaseGoods {
     this.attack = data.attack;
     this.spirit = data.spirit;
     this.agility = data.agility;
-    this.bitEffect = data.bitEffect;
+    this.effectFlags = data.effectFlags;
     this.luck = data.luck;
   }
 }

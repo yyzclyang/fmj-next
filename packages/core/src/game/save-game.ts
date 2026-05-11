@@ -78,8 +78,8 @@ export interface SavePlayerState {
   spirit: number;
   luck: number;
   exp: number;
-  onHitStatusRounds: number;
-  onHitStatusMask: number;
+  onHitEffectRounds: number;
+  onHitEffectFlags: number;
   coopMagicIndex: number;
   hpPerRound: number;
   mpPerRound: number;
@@ -136,6 +136,7 @@ export function createSavePayload(
 }
 
 function createPlayerState(player: Player): SavePlayerState {
+  const onHitEffect = player.getOnHitEffectConfig();
   return {
     index: player.index,
     state: player.state,
@@ -156,13 +157,13 @@ function createPlayerState(player: Player): SavePlayerState {
     spirit: player.spirit,
     luck: player.luck,
     exp: player.exp,
-    onHitStatusRounds: player.onHitStatusRounds,
-    onHitStatusMask: player.onHitStatusMask,
+    onHitEffectRounds: onHitEffect.rounds,
+    onHitEffectFlags: onHitEffect.flags,
     coopMagicIndex: player.coopMagicIndex,
     hpPerRound: player.hpPerRound,
     mpPerRound: player.mpPerRound,
     equipment: player.equipment.map(goods => (goods ? { type: goods.type, index: goods.index } : null)),
-    privateMagics: player.getPrivateLearntMagicKeys(),
+    privateMagics: player.getPrivateLearntMagicRefs(),
     immuneStatuses: cloneStatusSlots(player.immuneStatuses.slots),
     activeStatuses: cloneStatusSlots(player.activeStatuses.slots),
   };

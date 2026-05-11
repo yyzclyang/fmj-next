@@ -37,7 +37,7 @@ export function parseMagicResource(datLib: DatLib, buffer: Uint8Array, type: num
       return new MagicRestore({
         ...baseData,
         hp: readUint16(buffer, offset + 0x12),
-        cureMask: buffer[offset + 0x18] ?? 0,
+        cureFlags: buffer[offset + 0x18] ?? 0,
       });
     case 4:
       return new MagicAuxiliary({

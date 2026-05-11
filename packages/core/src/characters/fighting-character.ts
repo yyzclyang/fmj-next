@@ -1,7 +1,7 @@
+import type { ResMagicChain } from '@/magic';
 import { Character, type CharacterData } from './character';
 import { StatusSlots } from './status';
 import type { FightingSprite } from './fighting-sprite';
-import type { ResMagicChain } from '@/magic';
 
 export interface FightingCharacterData extends CharacterData {
   readonly magicChain: ResMagicChain | null;

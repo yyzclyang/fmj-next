@@ -13,7 +13,7 @@ export class Npc extends Character {
   }
 }
 
-export function mapCharacterState(value: number): CharacterState {
+export function toCharacterState(value: number): CharacterState {
   switch (value) {
     case 1:
       return CharacterState.ForceMove;

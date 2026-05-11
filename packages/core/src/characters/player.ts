@@ -1,16 +1,103 @@
-import { Direction, type Direction as DirectionValue } from './character';
 import { FightingCharacter, type FightingCharacterData } from './fighting-character';
-import { GoodsDecorations, type GoodsEquipment, GoodsWeapon } from '@/goods';
+import { EquipmentGoodsType, GoodsDecorations, type GoodsEquipment, GoodsWeapon } from '@/goods';
 import type { ResImage } from '@/lib/res-image';
 import type { BaseMagic } from '@/magic';
 import { toUint8 } from '@/shared/integer';
 import type { ResLevelUpChain } from './res-level-up-chain';
 
-export const PLAYER_EQUIPMENT_TYPES = [6, 6, 5, 3, 7, 2, 4, 1] as const;
+const PlayerReadableAttribute = {
+  Level: 0,
+  Attack: 1,
+  Defense: 2,
+  Agility: 3,
+  Hp: 4,
+  Mp: 5,
+  Exp: 6,
+  Spirit: 7,
+  Luck: 8,
+  OnHitEffectRounds: 9,
+  ImmuneStatusFlags: 10,
+  OnHitEffectFlags: 11,
+  CoopMagicIndex: 12,
+  HpPerRound: 13,
+  MpPerRound: 14,
+  HeadEquipmentIndex: 15,
+  BodyEquipmentIndex: 16,
+  ShoulderEquipmentIndex: 17,
+  WristEquipmentIndex: 18,
+  HandEquipmentIndex: 19,
+  FootEquipmentIndex: 20,
+  Decoration1EquipmentIndex: 21,
+  Decoration2EquipmentIndex: 22,
+  MaxHp: 23,
+  MaxMp: 24,
+} as const;
 
-export interface PlayerMagicKey {
+const PlayerWritableAttribute = {
+  Level: 0,
+  Attack: 1,
+  Defense: 2,
+  Agility: 3,
+  Hp: 4,
+  Mp: 5,
+  Exp: 6,
+  Spirit: 7,
+  Luck: 8,
+  OnHitEffectRounds: 9,
+  ImmuneStatusFlags: 10,
+  OnHitEffectFlags: 11,
+  CoopMagicIndex: 12,
+  HpPerRound: 13,
+  MpPerRound: 14,
+  MaxHp: 15,
+  MaxMp: 16,
+} as const;
+
+const PlayerAdditiveAttribute = {
+  Level: 0,
+  Attack: 1,
+  Defense: 2,
+  Agility: 3,
+  Hp: 4,
+  Mp: 5,
+  Exp: 6,
+  Spirit: 7,
+  Luck: 8,
+  OnHitEffectRounds: 9,
+  MaxHp: 10,
+  MaxMp: 11,
+} as const;
+
+export const PlayerEquipmentSlot = {
+  Decoration1: 0,
+  Decoration2: 1,
+  Wrist: 2,
+  Foot: 3,
+  Hand: 4,
+  Body: 5,
+  Shoulder: 6,
+  Head: 7,
+} as const;
+
+export const PLAYER_EQUIPMENT_SLOT_GOODS_TYPES = [
+  EquipmentGoodsType.Decoration,
+  EquipmentGoodsType.Decoration,
+  EquipmentGoodsType.Wrist,
+  EquipmentGoodsType.Foot,
+  EquipmentGoodsType.Hand,
+  EquipmentGoodsType.Body,
+  EquipmentGoodsType.Shoulder,
+  EquipmentGoodsType.Head,
+] as const;
+
+export interface PlayerMagicRef {
   readonly type: number;
   readonly index: number;
+}
+
+export interface PlayerOnHitEffectConfig {
+  readonly flags: number;
+  readonly rounds: number;
 }
 
 export interface PlayerData extends FightingCharacterData {
@@ -18,8 +105,8 @@ export interface PlayerData extends FightingCharacterData {
   readonly levelUpChain: ResLevelUpChain | null;
   readonly exp: number;
   readonly equipment: Array<GoodsEquipment | null>;
-  readonly onHitStatusRounds: number;
-  readonly onHitStatusMask: number;
+  readonly onHitEffectRounds: number;
+  readonly onHitEffectFlags: number;
   readonly coopMagicIndex: number;
   readonly hpPerRound: number;
   readonly mpPerRound: number;
@@ -30,11 +117,11 @@ export class Player extends FightingCharacter {
   levelUpChain: ResLevelUpChain | null;
   exp: number;
   readonly equipment: Array<GoodsEquipment | null>;
-  onHitStatusRounds: number;
-  onHitStatusMask: number;
   coopMagicIndex: number;
   hpPerRound: number;
   mpPerRound: number;
+  private onHitEffectRoundsValue: number;
+  private onHitEffectFlagsValue: number;
   private readonly privateLearntMagics: BaseMagic[] = [];
 
   constructor(data: PlayerData) {
@@ -43,8 +130,8 @@ export class Player extends FightingCharacter {
     this.levelUpChain = data.levelUpChain;
     this.exp = data.exp;
     this.equipment = data.equipment;
-    this.onHitStatusRounds = data.onHitStatusRounds;
-    this.onHitStatusMask = data.onHitStatusMask;
+    this.onHitEffectRoundsValue = data.onHitEffectRounds;
+    this.onHitEffectFlagsValue = data.onHitEffectFlags;
     this.coopMagicIndex = data.coopMagicIndex;
     this.hpPerRound = data.hpPerRound;
     this.mpPerRound = data.mpPerRound;
@@ -60,13 +147,23 @@ export class Player extends FightingCharacter {
     this.privateLearntMagics.push(magic);
   }
 
-  getPrivateLearntMagicKeys(): PlayerMagicKey[] {
+  getPrivateLearntMagicRefs(): PlayerMagicRef[] {
     return this.privateLearntMagics.map(magic => ({ type: magic.type, index: magic.index }));
   }
 
   restorePrivateLearntMagics(magics: readonly BaseMagic[]): void {
     this.privateLearntMagics.length = 0;
     this.privateLearntMagics.push(...magics);
+  }
+
+  getOnHitEffectConfig(): PlayerOnHitEffectConfig {
+    return { flags: this.onHitEffectFlagsValue, rounds: this.onHitEffectRoundsValue };
+  }
+
+  restoreOnHitEffectConfig(flags: number, rounds: number): void {
+    this.onHitEffectFlagsValue = toUint8(flags);
+    this.onHitEffectRoundsValue = toUint8(rounds);
+    this.syncOnHitStatuses();
   }
 
   setLevel(level: number): void {
@@ -102,160 +199,160 @@ export class Player extends FightingCharacter {
     return true;
   }
 
-  getAttribute(type: number): number {
-    switch (type) {
-      case 0:
+  getAttribute(attribute: number): number {
+    switch (attribute) {
+      case PlayerReadableAttribute.Level:
         return this.level;
-      case 1:
+      case PlayerReadableAttribute.Attack:
         return this.attack;
-      case 2:
+      case PlayerReadableAttribute.Defense:
         return this.defense;
-      case 3:
+      case PlayerReadableAttribute.Agility:
         return this.agility;
-      case 4:
+      case PlayerReadableAttribute.Hp:
         return this.hp;
-      case 5:
+      case PlayerReadableAttribute.Mp:
         return this.mp;
-      case 6:
+      case PlayerReadableAttribute.Exp:
         return this.exp;
-      case 7:
+      case PlayerReadableAttribute.Spirit:
         return this.spirit;
-      case 8:
+      case PlayerReadableAttribute.Luck:
         return this.luck;
-      case 9:
-        return this.onHitStatusRounds;
-      case 10:
+      case PlayerReadableAttribute.OnHitEffectRounds:
+        return this.onHitEffectRoundsValue;
+      case PlayerReadableAttribute.ImmuneStatusFlags:
         return this.immuneStatuses.toFlags();
-      case 11:
-        return this.onHitStatusMask;
-      case 12:
+      case PlayerReadableAttribute.OnHitEffectFlags:
+        return this.onHitEffectFlagsValue;
+      case PlayerReadableAttribute.CoopMagicIndex:
         return this.coopMagicIndex;
-      case 13:
+      case PlayerReadableAttribute.HpPerRound:
         return this.hpPerRound;
-      case 14:
+      case PlayerReadableAttribute.MpPerRound:
         return this.mpPerRound;
-      case 15:
-        return this.equipment[7]?.index ?? 0;
-      case 16:
-        return this.equipment[5]?.index ?? 0;
-      case 17:
-        return this.equipment[6]?.index ?? 0;
-      case 18:
-        return this.equipment[2]?.index ?? 0;
-      case 19:
-        return this.equipment[4]?.index ?? 0;
-      case 20:
-        return this.equipment[3]?.index ?? 0;
-      case 21:
-        return this.equipment[0]?.index ?? 0;
-      case 22:
-        return this.equipment[1]?.index ?? 0;
-      case 23:
+      case PlayerReadableAttribute.HeadEquipmentIndex:
+        return this.equipment[PlayerEquipmentSlot.Head]?.index ?? 0;
+      case PlayerReadableAttribute.BodyEquipmentIndex:
+        return this.equipment[PlayerEquipmentSlot.Body]?.index ?? 0;
+      case PlayerReadableAttribute.ShoulderEquipmentIndex:
+        return this.equipment[PlayerEquipmentSlot.Shoulder]?.index ?? 0;
+      case PlayerReadableAttribute.WristEquipmentIndex:
+        return this.equipment[PlayerEquipmentSlot.Wrist]?.index ?? 0;
+      case PlayerReadableAttribute.HandEquipmentIndex:
+        return this.equipment[PlayerEquipmentSlot.Hand]?.index ?? 0;
+      case PlayerReadableAttribute.FootEquipmentIndex:
+        return this.equipment[PlayerEquipmentSlot.Foot]?.index ?? 0;
+      case PlayerReadableAttribute.Decoration1EquipmentIndex:
+        return this.equipment[PlayerEquipmentSlot.Decoration1]?.index ?? 0;
+      case PlayerReadableAttribute.Decoration2EquipmentIndex:
+        return this.equipment[PlayerEquipmentSlot.Decoration2]?.index ?? 0;
+      case PlayerReadableAttribute.MaxHp:
         return this.maxHp;
-      case 24:
+      case PlayerReadableAttribute.MaxMp:
         return this.maxMp;
       default:
         return 0;
     }
   }
 
-  setAttribute(type: number, value: number): void {
-    switch (type) {
-      case 0:
+  setAttribute(attribute: number, value: number): void {
+    switch (attribute) {
+      case PlayerWritableAttribute.Level:
         this.setLevel(value);
         return;
-      case 1:
+      case PlayerWritableAttribute.Attack:
         this.attack = value;
         return;
-      case 2:
+      case PlayerWritableAttribute.Defense:
         this.defense = value;
         return;
-      case 3:
+      case PlayerWritableAttribute.Agility:
         this.agility = value;
         return;
-      case 4:
+      case PlayerWritableAttribute.Hp:
         this.hp = value;
         return;
-      case 5:
+      case PlayerWritableAttribute.Mp:
         this.mp = value;
         return;
-      case 6:
+      case PlayerWritableAttribute.Exp:
         this.exp = value;
         return;
-      case 7:
+      case PlayerWritableAttribute.Spirit:
         this.spirit = value;
         return;
-      case 8:
+      case PlayerWritableAttribute.Luck:
         this.luck = value;
         return;
-      case 9:
-        this.setOnHitStatusRounds(value);
+      case PlayerWritableAttribute.OnHitEffectRounds:
+        this.setOnHitEffectRounds(value);
         return;
-      case 10:
+      case PlayerWritableAttribute.ImmuneStatusFlags:
         this.immuneStatuses.replaceWithFlags(toUint8(value), 0);
         return;
-      case 11:
-        this.setOnHitStatusMask(value);
+      case PlayerWritableAttribute.OnHitEffectFlags:
+        this.setOnHitEffectFlags(value);
         return;
-      case 12:
+      case PlayerWritableAttribute.CoopMagicIndex:
         this.coopMagicIndex = toUint8(value);
         return;
-      case 13:
+      case PlayerWritableAttribute.HpPerRound:
         this.hpPerRound = toUint8(value);
         return;
-      case 14:
+      case PlayerWritableAttribute.MpPerRound:
         this.mpPerRound = toUint8(value);
         return;
-      case 15:
+      case PlayerWritableAttribute.MaxHp:
         this.maxHp = value;
         return;
-      case 16:
+      case PlayerWritableAttribute.MaxMp:
         this.maxMp = value;
         return;
     }
   }
 
-  addAttribute(type: number, value: number): void {
-    if (this.levelUpChain?.maxLevel === 0 && type === 6) {
+  addAttribute(attribute: number, value: number): void {
+    if (this.levelUpChain?.maxLevel === 0 && attribute === PlayerAdditiveAttribute.Exp) {
       this.exp -= 150 + Math.trunc(this.exp * 0.1);
       return;
     }
 
-    switch (type) {
-      case 0:
+    switch (attribute) {
+      case PlayerAdditiveAttribute.Level:
         this.setLevel(this.level + value);
         return;
-      case 1:
+      case PlayerAdditiveAttribute.Attack:
         this.attack += value;
         return;
-      case 2:
+      case PlayerAdditiveAttribute.Defense:
         this.defense += value;
         return;
-      case 3:
+      case PlayerAdditiveAttribute.Agility:
         this.agility += value;
         return;
-      case 4:
+      case PlayerAdditiveAttribute.Hp:
         this.hp += value;
         return;
-      case 5:
+      case PlayerAdditiveAttribute.Mp:
         this.mp += value;
         return;
-      case 6:
+      case PlayerAdditiveAttribute.Exp:
         this.exp += value;
         return;
-      case 7:
+      case PlayerAdditiveAttribute.Spirit:
         this.spirit += value;
         return;
-      case 8:
+      case PlayerAdditiveAttribute.Luck:
         this.luck += value;
         return;
-      case 9:
-        this.setOnHitStatusRounds(this.onHitStatusRounds + value);
+      case PlayerAdditiveAttribute.OnHitEffectRounds:
+        this.setOnHitEffectRounds(this.onHitEffectRoundsValue + value);
         return;
-      case 10:
+      case PlayerAdditiveAttribute.MaxHp:
         this.maxHp += value;
         return;
-      case 11:
+      case PlayerAdditiveAttribute.MaxMp:
         this.maxMp += value;
         return;
     }
@@ -266,45 +363,53 @@ export class Player extends FightingCharacter {
   }
 
   getCurrentEquipment(type: number): GoodsEquipment | null {
-    for (let i = 0; i < PLAYER_EQUIPMENT_TYPES.length; i += 1) {
-      if (PLAYER_EQUIPMENT_TYPES[i] === type) return this.equipment[i] ?? null;
+    for (let slot = 0; slot < PLAYER_EQUIPMENT_SLOT_GOODS_TYPES.length; slot += 1) {
+      if (PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[slot] === type) return this.equipment[slot] ?? null;
     }
     return null;
   }
 
   hasEquipment(type: number, index: number): boolean {
-    if (type === 6) {
-      return [0, 1].every(i => {
+    if (type === EquipmentGoodsType.Decoration) {
+      return [PlayerEquipmentSlot.Decoration1, PlayerEquipmentSlot.Decoration2].every(i => {
         const equipment = this.equipment[i];
         return equipment?.type === type && equipment.index === index;
       });
     }
-    return this.equipment.some((equipment, i) => i >= 2 && equipment?.type === type && equipment.index === index);
+    return this.equipment.some(
+      (equipment, i) => i >= PlayerEquipmentSlot.Wrist && equipment?.type === type && equipment.index === index
+    );
   }
 
   hasEquipmentSpace(type: number): boolean {
-    if (type === 6) return this.equipment[0] == null || this.equipment[1] == null;
-    return PLAYER_EQUIPMENT_TYPES.some((slotType, i) => slotType === type && this.equipment[i] == null);
+    if (type === EquipmentGoodsType.Decoration) {
+      return [PlayerEquipmentSlot.Decoration1, PlayerEquipmentSlot.Decoration2].some(i => this.equipment[i] == null);
+    }
+    return PLAYER_EQUIPMENT_SLOT_GOODS_TYPES.some(
+      (goodsType, slot) => goodsType === type && this.equipment[slot] == null
+    );
   }
 
   putOnEquipment(goods: GoodsEquipment, at?: number): number | null {
     if (at != null) return this.putOnEquipmentAt(goods, at);
-    for (let i = 0; i < PLAYER_EQUIPMENT_TYPES.length; i += 1) {
-      if (PLAYER_EQUIPMENT_TYPES[i] === goods.type && this.equipment[i] == null) return this.putOnEquipmentAt(goods, i);
+    for (let slot = 0; slot < PLAYER_EQUIPMENT_SLOT_GOODS_TYPES.length; slot += 1) {
+      if (PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[slot] === goods.type && this.equipment[slot] == null)
+        return this.putOnEquipmentAt(goods, slot);
     }
     return null;
   }
 
   takeOffEquipment(type: number, index?: number): GoodsEquipment | null {
     if (index != null) return this.takeOffEquipmentAt(index);
-    for (let i = 0; i < PLAYER_EQUIPMENT_TYPES.length; i += 1) {
-      if (PLAYER_EQUIPMENT_TYPES[i] === type && this.equipment[i] != null) return this.takeOffEquipmentAt(i);
+    for (let slot = 0; slot < PLAYER_EQUIPMENT_SLOT_GOODS_TYPES.length; slot += 1) {
+      if (PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[slot] === type && this.equipment[slot] != null)
+        return this.takeOffEquipmentAt(slot);
     }
     return null;
   }
 
   private putOnEquipmentAt(goods: GoodsEquipment, index: number): number | null {
-    if (PLAYER_EQUIPMENT_TYPES[index] !== goods.type) {
+    if (PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[index] !== goods.type) {
       throw new Error(`装备类型 ${goods.type} 不能放入槽位 ${index}`);
     }
     if (this.equipment[index] != null) return null;
@@ -322,6 +427,19 @@ export class Player extends FightingCharacter {
   }
 
   private applyEquipmentEffect(equipment: GoodsEquipment, sign: 1 | -1): void {
+    this.applyEquipmentStats(equipment, sign);
+    if (equipment instanceof GoodsWeapon) {
+      this.applyWeaponEffect(equipment, sign);
+      return;
+    }
+    if (equipment instanceof GoodsDecorations) {
+      this.applyDecorationEffect(equipment, sign);
+      return;
+    }
+    this.applyEquipmentImmunity(equipment, sign);
+  }
+
+  private applyEquipmentStats(equipment: GoodsEquipment, sign: 1 | -1): void {
     if (!(equipment instanceof GoodsDecorations)) {
       this.maxMp += equipment.mpMax * sign;
       this.maxHp += equipment.hpMax * sign;
@@ -331,58 +449,41 @@ export class Player extends FightingCharacter {
     this.spirit += equipment.spirit * sign;
     this.agility += equipment.agility * sign;
     this.luck += equipment.luck * sign;
-    if (equipment instanceof GoodsWeapon) {
-      if (sign > 0) {
-        this.onHitStatusMask = toUint8(equipment.bitEffect);
-        this.onHitStatusRounds = toUint8(equipment.sumRound);
-      } else {
-        this.onHitStatusMask = 0;
-        this.onHitStatusRounds = 0;
-      }
-      this.syncOnHitStatuses();
-      return;
-    }
-    if (equipment instanceof GoodsDecorations) {
-      this.hpPerRound += equipment.hp * sign;
-      this.mpPerRound += equipment.mp * sign;
-      this.coopMagicIndex = sign > 0 ? equipment.coopMagic?.index ?? 0 : 0;
-      return;
-    }
-
-    if (sign > 0) this.immuneStatuses.addFlags(equipment.bitEffect, 0);
-    else this.immuneStatuses.removeFlags(equipment.bitEffect);
   }
 
-  private setOnHitStatusRounds(value: number): void {
-    this.onHitStatusRounds = toUint8(value);
+  private applyWeaponEffect(equipment: GoodsWeapon, sign: 1 | -1): void {
+    if (sign > 0) {
+      this.onHitEffectFlagsValue = toUint8(equipment.effectFlags);
+      this.onHitEffectRoundsValue = toUint8(equipment.sumRound);
+    } else {
+      this.onHitEffectFlagsValue = 0;
+      this.onHitEffectRoundsValue = 0;
+    }
     this.syncOnHitStatuses();
   }
 
-  private setOnHitStatusMask(value: number): void {
-    this.onHitStatusMask = toUint8(value);
+  private applyDecorationEffect(equipment: GoodsDecorations, sign: 1 | -1): void {
+    this.hpPerRound += equipment.hp * sign;
+    this.mpPerRound += equipment.mp * sign;
+    this.coopMagicIndex = sign > 0 ? (equipment.coopMagic?.index ?? 0) : 0;
+  }
+
+  private applyEquipmentImmunity(equipment: GoodsEquipment, sign: 1 | -1): void {
+    if (sign > 0) this.immuneStatuses.addFlags(equipment.effectFlags, 0);
+    else this.immuneStatuses.removeFlags(equipment.effectFlags);
+  }
+
+  private setOnHitEffectRounds(value: number): void {
+    this.onHitEffectRoundsValue = toUint8(value);
     this.syncOnHitStatuses();
   }
 
-  syncScriptAttributes(): void {
+  private setOnHitEffectFlags(value: number): void {
+    this.onHitEffectFlagsValue = toUint8(value);
     this.syncOnHitStatuses();
   }
 
   private syncOnHitStatuses(): void {
-    this.onHitStatuses.replaceWithFlags(this.onHitStatusMask, this.onHitStatusRounds);
-  }
-}
-
-export function mapDirection(value: number): DirectionValue {
-  switch (value) {
-    case 1:
-      return Direction.North;
-    case 2:
-      return Direction.East;
-    case 3:
-      return Direction.South;
-    case 4:
-      return Direction.West;
-    default:
-      return Direction.North;
+    this.onHitStatuses.replaceWithFlags(this.onHitEffectFlagsValue, this.onHitEffectRoundsValue);
   }
 }

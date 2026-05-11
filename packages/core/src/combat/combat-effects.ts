@@ -91,7 +91,7 @@ export function applyThrownGoods(goods: CombatThrowableGoods, target: Monster): 
   target.hp -= goods.affectHp;
   target.mp -= goods.affectMp;
   if (goods instanceof GoodsHiddenWeapon) {
-    applyCombatStatuses(target, createStatusSlots(goods.bitMask & 0x0f, goods.sumRound), 0);
+    applyCombatStatuses(target, createStatusSlots(goods.effectFlags & 0x0f, goods.sumRound), 0);
   }
   if (target.hp < 0) target.hp = 0;
   if (target.mp < 0) target.mp = 0;
@@ -120,7 +120,7 @@ export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter
   if (magic instanceof MagicRestore) {
     if (!target.isAlive) return;
     if (magic.hp > 0) target.hp = Math.min(target.maxHp, target.hp + magic.hp);
-    target.activeStatuses.clearFlags(magic.cureMask);
+    target.activeStatuses.clearFlags(magic.cureFlags);
     return;
   }
   if (magic instanceof MagicAuxiliary) {

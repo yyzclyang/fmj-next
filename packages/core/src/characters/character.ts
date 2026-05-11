@@ -10,6 +10,21 @@ export const Direction = {
 
 export type Direction = (typeof Direction)[keyof typeof Direction];
 
+export function toDirection(value: number): Direction {
+  switch (value) {
+    case 1:
+      return Direction.North;
+    case 2:
+      return Direction.East;
+    case 3:
+      return Direction.South;
+    case 4:
+      return Direction.West;
+    default:
+      return Direction.North;
+  }
+}
+
 export const CharacterState = {
   Stop: 0,
   ForceMove: 1,

@@ -6,8 +6,8 @@ import {
   Npc,
   Player,
   SceneObj,
-  mapCharacterState,
-  mapDirection,
+  toCharacterState,
+  toDirection,
   type CarryGoods,
   type CharacterData,
   type FightingCharacterData,
@@ -56,7 +56,7 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
       index,
       name: readGbkString(buffer, offset + 0x0a),
       state: CharacterState.Stop,
-      direction: mapDirection(buffer[offset + 2] ?? 0),
+      direction: toDirection(buffer[offset + 2] ?? 0),
       step: buffer[offset + 3] ?? 0,
       mapX: buffer[offset + 5] ?? 0,
       mapY: buffer[offset + 6] ?? 0,
@@ -80,8 +80,8 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
     levelUpChain: datLib.getLevelUpChain(index),
     exp: readUint16(buffer, offset + 0x32),
     equipment,
-    onHitStatusRounds: buffer[offset + 0x39] ?? 0,
-    onHitStatusMask: buffer[offset + 0x22] ?? 0,
+    onHitEffectRounds: buffer[offset + 0x39] ?? 0,
+    onHitEffectFlags: buffer[offset + 0x22] ?? 0,
     coopMagicIndex: buffer[offset + 0x23] ?? 0,
     hpPerRound: buffer[offset + 0x24] ?? 0,
     mpPerRound: buffer[offset + 0x25] ?? 0,
@@ -92,13 +92,13 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
 
 function createNpc(datLib: DatLib, buffer: Uint8Array, offset: number): Npc {
   const delay = buffer[offset + 0x15] ?? 0;
-  const state = delay === 0 ? CharacterState.Stop : mapCharacterState(buffer[offset + 4] ?? 0);
+  const state = delay === 0 ? CharacterState.Stop : toCharacterState(buffer[offset + 4] ?? 0);
   return new Npc({
     type: buffer[offset] ?? 0,
     index: buffer[offset + 1] ?? 0,
     name: readGbkString(buffer, offset + 9),
     state,
-    direction: mapDirection(buffer[offset + 2] ?? 0),
+    direction: toDirection(buffer[offset + 2] ?? 0),
     step: buffer[offset + 3] ?? 0,
     mapX: 0,
     mapY: 0,
@@ -170,7 +170,7 @@ function createSceneObj(datLib: DatLib, buffer: Uint8Array, offset: number): Sce
     type: buffer[offset] ?? 0,
     index: buffer[offset + 1] ?? 0,
     name: readGbkString(buffer, offset + 9),
-    state: mapCharacterState(buffer[offset + 4] ?? 0),
+    state: toCharacterState(buffer[offset + 4] ?? 0),
     direction: Direction.North,
     step: buffer[offset + 3] ?? 0,
     mapX: 0,

@@ -3,7 +3,7 @@ export type { BaseGoodsData } from './base-goods';
 export { GoodsDecorations } from './goods-decorations';
 export type { GoodsDecorationsData } from './goods-decorations';
 export { GoodsDrama } from './goods-drama';
-export { GoodsEquipment } from './goods-equipment';
+export { EquipmentGoodsType, GoodsEquipment } from './goods-equipment';
 export type { GoodsEquipmentData } from './goods-equipment';
 export { GoodsHiddenWeapon } from './goods-hidden-weapon';
 export type { GoodsHiddenWeaponData } from './goods-hidden-weapon';

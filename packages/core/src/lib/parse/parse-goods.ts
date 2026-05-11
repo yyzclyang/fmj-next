@@ -13,6 +13,7 @@ import {
   type BaseGoodsData,
   type GoodsEquipmentData,
 } from '@/goods';
+import { STATUS_FLAG_ATTACK_ALL } from '@/combat/combat-constants';
 import { MagicAttack } from '@/magic';
 import type { DatLib } from '../dat-lib';
 import { ResSrs } from '../res-srs';
@@ -30,7 +31,7 @@ export function parseGoodsResource(datLib: DatLib, buffer: Uint8Array, type: num
         ...parseGoodsEquipmentData(buffer, baseData, offset),
         mpMax: 0,
         hpMax: 0,
-        bitEffect: 0,
+        effectFlags: 0,
         mp: readInt8(buffer, offset + 0x16),
         hp: readInt8(buffer, offset + 0x17),
         coopMagic: magic instanceof MagicAttack ? magic : null,
@@ -50,7 +51,7 @@ export function parseGoodsResource(datLib: DatLib, buffer: Uint8Array, type: num
         affectHp: readInt16(buffer, offset + 0x16),
         affectMp: readInt16(buffer, offset + 0x18),
         animation: animationIndex > 0 ? datLib.getSrs(animationType, animationIndex) : null,
-        bitMask: buffer[offset + 0x1c] ?? 0,
+        effectFlags: buffer[offset + 0x1c] ?? 0,
       });
     }
     case 9: {
@@ -60,7 +61,7 @@ export function parseGoodsResource(datLib: DatLib, buffer: Uint8Array, type: num
         hp: readUint16(buffer, offset + 0x16),
         mp: readUint16(buffer, offset + 0x18),
         animation: animationIndex > 0 ? datLib.getSrs(2, animationIndex) : null,
-        bitMask: buffer[offset + 0x1c] ?? 0,
+        effectFlags: buffer[offset + 0x1c] ?? 0,
       });
     }
     case 10:
@@ -85,7 +86,7 @@ export function parseGoodsResource(datLib: DatLib, buffer: Uint8Array, type: num
         defensePercent: buffer[offset + 0x18] ?? 0,
         attackPercent: buffer[offset + 0x19] ?? 0,
         agilityPercent: buffer[offset + 0x1b] ?? 0,
-        forAll: ((buffer[offset + 0x1c] ?? 0) & 0x10) !== 0,
+        forAll: ((buffer[offset + 0x1c] ?? 0) & STATUS_FLAG_ATTACK_ALL) !== 0,
       });
     case 13:
       return new GoodsTudun(baseData);
@@ -121,7 +122,7 @@ function parseGoodsEquipmentData(buffer: Uint8Array, baseData: BaseGoodsData, of
     attack: readInt8(buffer, offset + 0x19),
     spirit: readInt8(buffer, offset + 0x1a),
     agility: readInt8(buffer, offset + 0x1b),
-    bitEffect: buffer[offset + 0x1c] ?? 0,
+    effectFlags: buffer[offset + 0x1c] ?? 0,
     luck: readInt8(buffer, offset + 0x1d),
   };
 }

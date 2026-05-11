@@ -395,8 +395,7 @@ export class Game {
     player.spirit = snapshot.spirit;
     player.luck = snapshot.luck;
     player.exp = snapshot.exp;
-    player.onHitStatusRounds = snapshot.onHitStatusRounds;
-    player.onHitStatusMask = snapshot.onHitStatusMask;
+    player.restoreOnHitEffectConfig(snapshot.onHitEffectFlags, snapshot.onHitEffectRounds);
     player.coopMagicIndex = snapshot.coopMagicIndex;
     player.hpPerRound = snapshot.hpPerRound;
     player.mpPerRound = snapshot.mpPerRound;
@@ -404,7 +403,6 @@ export class Game {
     player.restorePrivateLearntMagics(snapshot.privateMagics.map(ref => this.getSaveMagic(ref)));
     restoreStatusSlots(player.immuneStatuses.slots, snapshot.immuneStatuses);
     restoreStatusSlots(player.activeStatuses.slots, snapshot.activeStatuses);
-    player.syncScriptAttributes();
   }
 
   private restorePlayerEquipment(player: Player, equipmentRefs: readonly (SaveResourceRef | null)[]): void {

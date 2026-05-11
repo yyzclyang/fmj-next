@@ -2,8 +2,8 @@ import { createDebugApi } from '@/debug/debug';
 import { Game } from '@/game/game';
 import type { GameEngineOptions } from '@/game/game-engine-options';
 import type { GameState } from '@/game/game-state';
-import { createFrameBuffer, type FrameBuffer } from '@/rendering/frame-buffer';
-import { FIXED_STEP_MS } from '@/shared/constants';
+import { createPixelBuffer, type PixelBuffer } from '@/rendering/pixel-buffer';
+import { FIXED_STEP_MS, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
 import type { EngineHost } from './engine-host';
 
@@ -14,7 +14,7 @@ export interface BootOptions {
 
 export class Engine {
   readonly debug = createDebugApi(() => this.game);
-  private readonly emptyBuffer = createFrameBuffer();
+  private readonly emptyBuffer = createPixelBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
   private accumulatorMs = 0;
   private game: Game | null = null;
   private readonly host: EngineHost;
@@ -23,7 +23,7 @@ export class Engine {
     this.host = host;
   }
 
-  get frameBuffer(): FrameBuffer {
+  get frameBuffer(): PixelBuffer {
     return this.game?.frameBuffer ?? this.emptyBuffer;
   }
 

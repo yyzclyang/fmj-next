@@ -1,8 +1,8 @@
 import type { Game } from '@/game/game';
+import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
-import { drawMenuFrame } from '../ui-utils';
 import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
 
 const SYSTEM_ITEMS = ['读入进度', '存储进度', '游戏设置', '结束游戏'] as const;
@@ -27,7 +27,7 @@ export class ScreenMenuSystem extends BaseScreen {
   }
 
   override draw(surface: Surface): void {
-    drawMenuFrame(surface, 39, 29, 71, SYSTEM_ITEMS.length * LINE_GAP + TEXT_PADDING * 2);
+    drawInsetPanel(surface, 39, 29, 71, SYSTEM_ITEMS.length * LINE_GAP + TEXT_PADDING * 2);
     drawVerticalMenu(surface, {
       items: SYSTEM_ITEMS,
       selectedIndex: this.selectedIndex,

@@ -1,10 +1,10 @@
 import type { BaseGoods } from '@/goods';
 import type { Game } from '@/game/game';
+import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawSelectedText, drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
-import { drawMenuFrame } from '../ui-utils';
 
 const FRAME_LEFT = 25;
 const FRAME_TOP = 35;
@@ -27,11 +27,11 @@ export class ScreenDiscardGoods extends BaseScreen {
   }
 
   override draw(surface: Surface): void {
-    drawMenuFrame(surface, FRAME_LEFT, FRAME_TOP, FRAME_WIDTH, FRAME_HEIGHT);
-    TextRender.drawText(surface, '确认丢弃?', TEXT_LEFT, 38);
-    TextRender.drawText(surface, `数量:${this.count}`, TEXT_LEFT, 54);
-    const firstDraw = this.selectedIndex === 0 ? TextRender.drawSelText : TextRender.drawText;
-    const secondDraw = this.selectedIndex === 1 ? TextRender.drawSelText : TextRender.drawText;
+    drawInsetPanel(surface, FRAME_LEFT, FRAME_TOP, FRAME_WIDTH, FRAME_HEIGHT);
+    drawText(surface, '确认丢弃?', TEXT_LEFT, 38);
+    drawText(surface, `数量:${this.count}`, TEXT_LEFT, 54);
+    const firstDraw = this.selectedIndex === 0 ? drawSelectedText : drawText;
+    const secondDraw = this.selectedIndex === 1 ? drawSelectedText : drawText;
     firstDraw(surface, '全部丢弃', FIRST_OPTION_LEFT, OPTION_TOP);
     secondDraw(surface, '丢弃1个', SECOND_OPTION_LEFT, OPTION_TOP);
   }

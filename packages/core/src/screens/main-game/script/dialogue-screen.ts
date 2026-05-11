@@ -3,17 +3,16 @@ import type { ResImage } from '@/lib/res-image';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import {
-  drawTipFrame,
+  drawTipPanel,
   TIP_FRAME_WIDTH,
   TIP_LINE_GAP,
   TIP_MAX_LINES,
   TIP_TEXT_PADDING_X,
   TIP_TEXT_TOP_PADDING,
   TIP_TEXT_WIDTH,
-  wrapTextBlock,
 } from '../ui-utils';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 
@@ -69,7 +68,7 @@ export class ScriptDialogueScreen extends BaseScreen {
     for (let i = 0; i < page.length; i += 1) {
       const lineLayout = layout.lines[i];
       if (!lineLayout) continue;
-      TextRender.drawText(surface, page[i] ?? '', lineLayout.left, lineLayout.top);
+      drawText(surface, page[i] ?? '', lineLayout.left, lineLayout.top);
     }
   }
 
@@ -112,9 +111,9 @@ export class ScriptTimedMessageScreen extends BaseScreen {
     const height = lineCount * TIP_LINE_GAP + 20;
     const left = Math.floor((SCREEN_WIDTH - TIP_FRAME_WIDTH) / 2);
     const top = Math.floor((SCREEN_HEIGHT - height) / 2);
-    drawTipFrame(surface, left, top, height);
+    drawTipPanel(surface, left, top, height);
     for (let index = 0; index < lineCount; index += 1) {
-      TextRender.drawText(
+      drawText(
         surface,
         this.lines[index] ?? '',
         left + TIP_TEXT_PADDING_X,

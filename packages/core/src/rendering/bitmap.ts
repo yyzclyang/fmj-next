@@ -1,9 +1,11 @@
+import type { PixelBuffer } from './pixel-buffer';
+
 export class Bitmap {
   readonly width: number;
   readonly height: number;
-  readonly pixels: Uint8ClampedArray;
+  readonly pixels: PixelBuffer;
 
-  constructor(width: number, height: number, pixels: Uint8ClampedArray) {
+  constructor(width: number, height: number, pixels: PixelBuffer) {
     this.width = width;
     this.height = height;
     this.pixels = pixels;

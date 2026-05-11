@@ -12,11 +12,11 @@ import {
 } from '@/goods';
 import type { Game } from '@/game/game';
 import { type BaseMagic, MagicRestore } from '@/magic';
+import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
-import { drawMenuFrame } from '../ui-utils';
 import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
 import { ScreenActorState } from './screen-actor-state';
 import { ScreenActorWearing } from './screen-actor-wearing';
@@ -56,9 +56,9 @@ export class ScreenGameMainMenu extends BaseScreen {
   }
 
   override draw(surface: Surface): void {
-    drawMenuFrame(surface, MONEY_FRAME_LEFT, MONEY_FRAME_TOP, MONEY_FRAME_WIDTH, MONEY_FRAME_HEIGHT);
-    TextRender.drawText(surface, `金钱:${this.game.state.money}`, MONEY_FRAME_LEFT + 3, MONEY_FRAME_TOP + 3);
-    drawMenuFrame(surface, MENU_LEFT, MENU_TOP, MENU_WIDTH, MENU_HEIGHT);
+    drawInsetPanel(surface, MONEY_FRAME_LEFT, MONEY_FRAME_TOP, MONEY_FRAME_WIDTH, MONEY_FRAME_HEIGHT);
+    drawText(surface, `金钱:${this.game.state.money}`, MONEY_FRAME_LEFT + 3, MONEY_FRAME_TOP + 3);
+    drawInsetPanel(surface, MENU_LEFT, MENU_TOP, MENU_WIDTH, MENU_HEIGHT);
     drawVerticalMenu(surface, {
       items: IN_GAME_MENU_OPTIONS,
       selectedIndex: this.currentSelection,

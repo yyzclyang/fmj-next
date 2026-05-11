@@ -1,7 +1,7 @@
 import type { BaseGoods } from '@/goods';
 import type { Game } from '@/game/game';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from '../menu/screen-goods-list';
@@ -39,10 +39,10 @@ class BuyGoodsCountScreen extends BaseScreen {
 
   override draw(surface: Surface): void {
     drawTradeFrame(surface);
-    TextRender.drawText(surface, `金钱：${this.money}`, TRADE_TEXT_LEFT, 24);
-    TextRender.drawText(surface, this.goods.name, TRADE_TEXT_LEFT, 40);
-    TextRender.drawText(surface, `: ${this.currentCount}`, 93, 40);
-    TextRender.drawText(surface, `买入个数　：${this.buyCount}`, TRADE_TEXT_LEFT, 56);
+    drawText(surface, `金钱：${this.money}`, TRADE_TEXT_LEFT, 24);
+    drawText(surface, this.goods.name, TRADE_TEXT_LEFT, 40);
+    drawText(surface, `: ${this.currentCount}`, 93, 40);
+    drawText(surface, `买入个数　：${this.buyCount}`, TRADE_TEXT_LEFT, 56);
   }
 
   override onKey(key: KeyCode): boolean | undefined {

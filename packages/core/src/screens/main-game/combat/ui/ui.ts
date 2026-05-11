@@ -4,11 +4,11 @@ import type { Game } from '@/game/game';
 import type { ResImage } from '@/lib/res-image';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
+import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawSelectedText, drawText, getTextWidth } from '@/rendering/text-render';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { drawVerticalMenu } from '@/screens/main-game/menu/menu-select';
-import { drawMenuFrame, getTextWidth } from '@/screens/main-game/ui-utils';
 import { COMBAT_GOODS_ITEMS, MISC_ITEMS } from './menu-items';
 import { drawSmallNum } from './render-utils';
 import { CombatStatusUi } from './status-ui';
@@ -80,8 +80,8 @@ export class CombatUi {
   drawMessage(surface: Surface, message: string): void {
     const width = getTextWidth(message) + 8;
     const left = Math.trunc((SCREEN_WIDTH - width) / 2);
-    drawMenuFrame(surface, left, 18, width, 24);
-    TextRender.drawText(surface, message, left + 4, 22);
+    drawInsetPanel(surface, left, 18, width, 24);
+    drawText(surface, message, left + 4, 22);
   }
 
   private drawActionIcon(surface: Surface, state: CombatUiState): void {
@@ -90,8 +90,8 @@ export class CombatUi {
       icon.draw(surface, state.actionIconIndex, MENU_ICON_LEFT, SCREEN_HEIGHT - icon.height - MENU_ICON_BOTTOM);
       return;
     }
-    drawMenuFrame(surface, 18, SCREEN_HEIGHT - 48, 36, 28);
-    TextRender.drawText(surface, ['攻', '法', '杂', '合'][state.actionIconIndex - 1]!, 28, SCREEN_HEIGHT - 42);
+    drawInsetPanel(surface, 18, SCREEN_HEIGHT - 48, 36, 28);
+    drawText(surface, ['攻', '法', '杂', '合'][state.actionIconIndex - 1]!, 28, SCREEN_HEIGHT - 42);
   }
 
   private drawPlayerInfo(surface: Surface, state: CombatUiState): void {
@@ -100,7 +100,7 @@ export class CombatUi {
     if (this.playerInfoBg) {
       this.playerInfoBg.draw(surface, 1, PLAYER_INFO_LEFT, PLAYER_INFO_TOP);
     } else {
-      drawMenuFrame(surface, PLAYER_INFO_LEFT, PLAYER_INFO_TOP, 72, 36);
+      drawInsetPanel(surface, PLAYER_INFO_LEFT, PLAYER_INFO_TOP, 72, 36);
     }
     player.headImage?.draw(surface, 1, PLAYER_HEAD_LEFT, PLAYER_HEAD_TOP);
     drawSmallNum(surface, this.smallNumImage, player.hp, PLAYER_INFO_LEFT + 30, PLAYER_INFO_TOP + 6);
@@ -137,15 +137,15 @@ export class CombatUi {
   }
 
   private drawMiscMenu(surface: Surface, state: CombatUiState): void {
-    drawMenuFrame(surface, MISC_LEFT, MISC_TOP, MISC_WIDTH, MISC_ITEMS.length * LINE_GAP + MISC_PADDING * 2);
+    drawInsetPanel(surface, MISC_LEFT, MISC_TOP, MISC_WIDTH, MISC_ITEMS.length * LINE_GAP + MISC_PADDING * 2);
     for (let i = 0; i < MISC_ITEMS.length; i += 1) {
-      const draw = i === state.miscIndex ? TextRender.drawSelText : TextRender.drawText;
+      const draw = i === state.miscIndex ? drawSelectedText : drawText;
       draw(surface, MISC_ITEMS[i]!, MISC_LEFT + MISC_PADDING, MISC_TOP + MISC_PADDING + i * LINE_GAP);
     }
   }
 
   private drawCombatGoodsMenu(surface: Surface, state: CombatUiState): void {
-    drawMenuFrame(
+    drawInsetPanel(
       surface,
       GOODS_MENU_LEFT,
       GOODS_MENU_TOP,

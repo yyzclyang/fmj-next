@@ -4,7 +4,7 @@ import { STATUS_FLAGS_ALL } from '@/characters/status';
 import type { BaseGoods } from '@/goods';
 import { Bitmap } from '@/rendering/bitmap';
 import { COLOR_BLACK, type Color } from '@/rendering/color';
-import { clearFrameBuffer, createFrameBuffer } from '@/rendering/frame-buffer';
+import { createPixelBuffer, fillPixelBuffer } from '@/rendering/pixel-buffer';
 import { Surface } from '@/rendering/surface';
 import { ResourceType } from '@/lib/resource-utils';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
@@ -343,8 +343,8 @@ export class CombatRuntime {
     if (!bitmap) throw new Error(`战斗背景没有可绘制位图: PIC 4-${ids.scrb}`);
     const width = Math.max(bitmap.width, Math.floor(SCREEN_WIDTH / 2));
     const height = Math.max(bitmap.height, Math.floor(SCREEN_HEIGHT / 2));
-    const pixels = new Uint8ClampedArray(width * height * 4);
-    clearFrameBuffer(pixels, COLOR_BLACK);
+    const pixels = createPixelBuffer(width, height);
+    fillPixelBuffer(pixels, COLOR_BLACK);
     const surface = new Surface(width, height, pixels);
 
     surface.drawBitmap(bitmap, 0, 0);
@@ -467,8 +467,8 @@ function createEmptyBackground(): Bitmap {
 }
 
 function createSolidBackground(color: Color): Bitmap {
-  const pixels = createFrameBuffer();
-  clearFrameBuffer(pixels, color);
+  const pixels = createPixelBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
+  fillPixelBuffer(pixels, color);
   return new Bitmap(SCREEN_WIDTH, SCREEN_HEIGHT, pixels);
 }
 

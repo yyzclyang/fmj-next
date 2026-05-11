@@ -2,10 +2,9 @@ import { type BaseMagic } from '@/magic';
 import type { Game } from '@/game/game';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
-import { wrapTextBlock } from '../ui-utils';
 import { moveSelectionClamp } from './menu-select';
 
 export interface ScreenMagicCallbacks {
@@ -48,7 +47,7 @@ export class ScreenMagic extends BaseScreen {
     this.drawMagicItems(surface);
     this.drawDescription(surface);
     const magic = this.currentMagic;
-    if (magic) TextRender.drawText(surface, `耗真气:${magic.costMp}`, COST_LEFT, COST_TOP);
+    if (magic) drawText(surface, `耗真气:${magic.costMp}`, COST_LEFT, COST_TOP);
     drawRect(surface, LIST_LEFT, LIST_TOP, LIST_WIDTH, LIST_HEIGHT);
     drawRect(surface, DESCRIPTION_LEFT, DESCRIPTION_TOP, DESCRIPTION_WIDTH, DESCRIPTION_HEIGHT);
   }
@@ -85,7 +84,7 @@ export class ScreenMagic extends BaseScreen {
     for (let i = 0; i < showCount; i += 1) {
       const index = this.firstItemIndex + i;
       const y = ITEM_TOP + i * ITEM_GAP;
-      TextRender.drawText(surface, this.magics[index]?.name ?? '', ITEM_TEXT_LEFT, y);
+      drawText(surface, this.magics[index]?.name ?? '', ITEM_TEXT_LEFT, y);
       if (index === this.currentItemIndex) drawMagicCursor(surface, LIST_LEFT + 4, y + 2);
     }
   }
@@ -96,7 +95,7 @@ export class ScreenMagic extends BaseScreen {
     const lines = wrapTextBlock(magic.description, DESCRIPTION_WIDTH);
     const visible = lines.slice(this.descriptionLine, this.descriptionLine + DESCRIPTION_LINES);
     for (let i = 0; i < visible.length; i += 1) {
-      TextRender.drawText(surface, visible[i] ?? '', DESCRIPTION_LEFT, DESCRIPTION_TOP + i * 16);
+      drawText(surface, visible[i] ?? '', DESCRIPTION_LEFT, DESCRIPTION_TOP + i * 16);
     }
   }
 
@@ -137,10 +136,7 @@ export class ScreenMagic extends BaseScreen {
 }
 
 function drawRect(surface: Surface, left: number, top: number, width: number, height: number): void {
-  surface.fillRect(left, top, width, 1, COLOR_BLACK);
-  surface.fillRect(left, top + height - 1, width, 1, COLOR_BLACK);
-  surface.fillRect(left, top, 1, height, COLOR_BLACK);
-  surface.fillRect(left + width - 1, top, 1, height, COLOR_BLACK);
+  surface.strokeRect(left, top, width, height, COLOR_BLACK);
 }
 
 function drawMagicCursor(surface: Surface, left: number, top: number): void {

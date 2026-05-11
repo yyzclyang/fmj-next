@@ -1,9 +1,9 @@
 import type { Player } from '@/characters';
 import type { Game } from '@/game/game';
+import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
-import { drawMenuFrame } from '../ui-utils';
 import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
 
 const LINE_GAP = 16;
@@ -27,7 +27,7 @@ export class ScreenSelectActor extends BaseScreen {
   }
 
   override draw(surface: Surface): void {
-    drawMenuFrame(surface, 39, 29, 86, this.players.length * LINE_GAP + TEXT_PADDING * 2);
+    drawInsetPanel(surface, 39, 29, 86, this.players.length * LINE_GAP + TEXT_PADDING * 2);
     drawVerticalMenu(surface, {
       items: this.players.map(player => player.name),
       selectedIndex: this.selectedIndex,

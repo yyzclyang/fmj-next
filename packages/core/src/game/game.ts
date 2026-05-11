@@ -5,11 +5,12 @@ import { CharacterState, Direction, Player } from '@/characters';
 import type { StatusSlot } from '@/characters';
 import { GoodsBag } from '@/goods/goods-bag';
 import { Surface } from '@/rendering/surface';
-import { type FrameBuffer, FRAME_HEIGHT, FRAME_WIDTH } from '@/rendering/frame-buffer';
+import type { PixelBuffer } from '@/rendering/pixel-buffer';
 import type { EngineHost } from '@/runtime/engine-host';
 import { MainSceneRuntime, type MainSceneRuntimeSnapshot } from '@/screens/main-game/runtime';
 import { ScriptVm } from '@/script/script-vm';
 import { KeyCode } from '@/shared/key-code';
+import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { ScreenMainGame } from '@/screens/main-game/screen';
 import { ScreenAnimation } from '@/screens/animation/screen';
 import { ScreenMenu } from '@/screens/menu/screen';
@@ -46,7 +47,7 @@ export class Game {
   mainSceneRuntime: MainSceneRuntime | null = null;
   private readonly boxEventMap = new Map<string, number>();
   private pendingBoxEventKey: string | null = null;
-  private readonly surface = new Surface(FRAME_WIDTH, FRAME_HEIGHT);
+  private readonly surface = new Surface(SCREEN_WIDTH, SCREEN_HEIGHT);
   readonly screenStack = new ScreenStack();
   private readonly host: EngineHost;
   readonly engineOptions: GameEngineOptions;
@@ -58,7 +59,7 @@ export class Game {
     this.datLib = new DatLib(datLibBuffer);
   }
 
-  get frameBuffer(): FrameBuffer {
+  get frameBuffer(): PixelBuffer {
     return this.surface.buffer;
   }
 

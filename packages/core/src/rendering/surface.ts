@@ -1,25 +1,48 @@
-import { fillRect as fillFrameRect, clearFrameBuffer, createFrameBuffer, type FrameBuffer } from './frame-buffer';
 import type { Bitmap } from './bitmap';
 import type { Color } from './color';
+import { createPixelBuffer, fillPixelBuffer, PIXEL_CHANNELS, type PixelBuffer } from './pixel-buffer';
 
-// Surface 是对帧缓冲区的绘制封装，core 内部只通过它操作像素。
+// Surface 表示一块可绘制的像素平面，core 内部只通过它操作像素。
 export class Surface {
   readonly width: number;
   readonly height: number;
-  readonly buffer: FrameBuffer;
+  readonly buffer: PixelBuffer;
 
-  constructor(width: number, height: number, buffer: FrameBuffer = createFrameBuffer()) {
+  constructor(width: number, height: number, buffer: PixelBuffer = createPixelBuffer(width, height)) {
     this.width = width;
     this.height = height;
     this.buffer = buffer;
   }
 
   drawColor(color: Color): void {
-    clearFrameBuffer(this.buffer, color);
+    fillPixelBuffer(this.buffer, color);
   }
 
   fillRect(x: number, y: number, width: number, height: number, color: Color): void {
-    fillFrameRect(this.buffer, x, y, width, height, color);
+    const left = Math.max(0, x);
+    const top = Math.max(0, y);
+    const right = Math.min(this.width, x + width);
+    const bottom = Math.min(this.height, y + height);
+    if (left >= right || top >= bottom) return;
+
+    const [r, g, b, a] = color;
+    for (let py = top; py < bottom; py += 1) {
+      for (let px = left; px < right; px += 1) {
+        const offset = (py * this.width + px) * PIXEL_CHANNELS;
+        this.buffer[offset] = r;
+        this.buffer[offset + 1] = g;
+        this.buffer[offset + 2] = b;
+        this.buffer[offset + 3] = a;
+      }
+    }
+  }
+
+  strokeRect(x: number, y: number, width: number, height: number, color: Color): void {
+    if (width <= 0 || height <= 0) return;
+    this.fillRect(x, y, width, 1, color);
+    this.fillRect(x, y + height - 1, width, 1, color);
+    this.fillRect(x, y, 1, height, color);
+    this.fillRect(x + width - 1, y, 1, height, color);
   }
 
   blendColor(color: Color, opacity: number): void {
@@ -27,7 +50,7 @@ export class Surface {
     if (alpha <= 0) return;
 
     const inverse = 255 - alpha;
-    for (let offset = 0; offset < this.buffer.length; offset += 4) {
+    for (let offset = 0; offset < this.buffer.length; offset += PIXEL_CHANNELS) {
       this.buffer[offset] = Math.trunc(((this.buffer[offset] ?? 0) * inverse + color[0] * alpha) / 255);
       this.buffer[offset + 1] = Math.trunc(((this.buffer[offset + 1] ?? 0) * inverse + color[1] * alpha) / 255);
       this.buffer[offset + 2] = Math.trunc(((this.buffer[offset + 2] ?? 0) * inverse + color[2] * alpha) / 255);
@@ -36,19 +59,23 @@ export class Surface {
   }
 
   drawBitmap(bitmap: Bitmap, left: number, top: number): void {
-    for (let y = 0; y < bitmap.height; y += 1) {
+    const startX = Math.max(0, -left);
+    const startY = Math.max(0, -top);
+    const endX = Math.min(bitmap.width, this.width - left);
+    const endY = Math.min(bitmap.height, this.height - top);
+    if (startX >= endX || startY >= endY) return;
+
+    for (let y = startY; y < endY; y += 1) {
       const py = top + y;
-      if (py < 0 || py >= this.height) continue;
 
-      for (let x = 0; x < bitmap.width; x += 1) {
+      for (let x = startX; x < endX; x += 1) {
         const px = left + x;
-        if (px < 0 || px >= this.width) continue;
 
-        const srcOffset = (y * bitmap.width + x) * 4;
+        const srcOffset = (y * bitmap.width + x) * PIXEL_CHANNELS;
         const alpha = bitmap.pixels[srcOffset + 3];
         if (alpha === 0) continue;
 
-        const dstOffset = (py * this.width + px) * 4;
+        const dstOffset = (py * this.width + px) * PIXEL_CHANNELS;
         this.buffer[dstOffset] = bitmap.pixels[srcOffset];
         this.buffer[dstOffset + 1] = bitmap.pixels[srcOffset + 1];
         this.buffer[dstOffset + 2] = bitmap.pixels[srcOffset + 2];

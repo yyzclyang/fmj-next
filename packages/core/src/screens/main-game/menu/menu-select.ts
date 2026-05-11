@@ -1,5 +1,5 @@
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawSelectedText, drawText } from '@/rendering/text-render';
 
 export interface VerticalMenuOptions {
   readonly items: readonly string[];
@@ -13,7 +13,7 @@ export interface VerticalMenuOptions {
 export function drawVerticalMenu(surface: Surface, options: VerticalMenuOptions): void {
   const { items, selectedIndex, left, top, lineGap } = options;
   for (let i = 0; i < items.length; i += 1) {
-    const draw = i === selectedIndex ? TextRender.drawSelText : TextRender.drawText;
+    const draw = i === selectedIndex ? drawSelectedText : drawText;
     draw(surface, items[i] ?? '', left, top + i * lineGap);
   }
 }

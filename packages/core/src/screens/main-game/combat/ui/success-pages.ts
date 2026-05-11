@@ -4,9 +4,8 @@ import type { ResImage } from '@/lib/res-image';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawText, getTextWidth } from '@/rendering/text-render';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
-import { getTextWidth } from '@/screens/main-game/ui-utils';
 import { drawSmallNum } from './render-utils';
 
 export interface SuccessPage {
@@ -60,7 +59,7 @@ class MessagePage implements SuccessPage {
 
   draw(surface: Surface): void {
     drawMessageFrame(surface, this.left, this.top, this.width);
-    TextRender.drawText(surface, this.text, this.left + 4, this.top + 4);
+    drawText(surface, this.text, this.left + 4, this.top + 4);
   }
 }
 
@@ -93,7 +92,7 @@ class LevelUpPage implements SuccessPage {
     }
 
     drawPanel(surface, left, top, LEVEL_FRAME_WIDTH, LEVEL_FRAME_HEIGHT);
-    TextRender.drawText(surface, player.name, LEVEL_TEXT_LEFT, LEVEL_TEXT_TOP);
+    drawText(surface, player.name, LEVEL_TEXT_LEFT, LEVEL_TEXT_TOP);
     drawLevelLine(surface, this.smallNumImage, '生命', newStats.hp, oldStats.hpMax, newStats.hpMax, 1);
     drawLevelLine(surface, this.smallNumImage, '真气', newStats.mp, oldStats.mpMax, newStats.mpMax, 2);
     drawLevelLine(surface, this.smallNumImage, '攻击', 0, oldStats.attack, newStats.attack, 3);
@@ -122,8 +121,8 @@ class LearnMagicPage implements SuccessPage {
     } else {
       drawPanel(surface, 82, 56, 156, 80);
     }
-    TextRender.drawText(surface, this.playerName, Math.floor((SCREEN_WIDTH - getTextWidth(this.playerName)) / 2), 64);
-    TextRender.drawText(surface, this.magicName, Math.floor((SCREEN_WIDTH - getTextWidth(this.magicName)) / 2), 104);
+    drawText(surface, this.playerName, Math.floor((SCREEN_WIDTH - getTextWidth(this.playerName)) / 2), 64);
+    drawText(surface, this.magicName, Math.floor((SCREEN_WIDTH - getTextWidth(this.magicName)) / 2), 104);
   }
 }
 
@@ -137,12 +136,12 @@ function drawLevelLine(
   line: number
 ): void {
   const top = LEVEL_TEXT_TOP + line * LEVEL_LINE_GAP;
-  TextRender.drawText(surface, label, LEVEL_TEXT_LEFT, top);
+  drawText(surface, label, LEVEL_TEXT_LEFT, top);
   if (current > 0) {
     drawSmallNum(surface, smallNumImage, current, LEVEL_TEXT_LEFT + 40, top);
   }
   drawSmallNum(surface, smallNumImage, oldValue, LEVEL_TEXT_LEFT + 72, top);
-  TextRender.drawText(surface, '>', LEVEL_TEXT_LEFT + 102, top);
+  drawText(surface, '>', LEVEL_TEXT_LEFT + 102, top);
   drawSmallNum(surface, smallNumImage, newValue, LEVEL_TEXT_LEFT + 120, top);
 }
 
@@ -185,10 +184,7 @@ function drawMessageFrame(surface: Surface, left: number, top: number, width: nu
 
 function drawPanel(surface: Surface, left: number, top: number, width: number, height: number): void {
   surface.fillRect(left, top, width, height, COLOR_WHITE);
-  surface.fillRect(left, top, width, 1, COLOR_BLACK);
-  surface.fillRect(left, top + height - 1, width, 1, COLOR_BLACK);
-  surface.fillRect(left, top, 1, height, COLOR_BLACK);
-  surface.fillRect(left + width - 1, top, 1, height, COLOR_BLACK);
+  surface.strokeRect(left, top, width, height, COLOR_BLACK);
 }
 
 function formatRight(value: number, width: number): string {

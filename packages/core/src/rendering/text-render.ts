@@ -18,36 +18,67 @@ const asc16Buffer = decodeBase64(ASC16_BASE64);
 const hzk16Buffer = decodeBase64(HZK16_BASE64);
 const hzkOffsets = createHzkOffsets();
 
-export class TextRender {
-  static drawText(surface: Surface, text: string, left: number, top: number): void {
-    drawText(surface, text, left, top, COLOR_BLACK, COLOR_WHITE);
-  }
-
-  static drawSelText(surface: Surface, text: string, left: number, top: number): void {
-    drawText(surface, text, left, top, COLOR_WHITE, COLOR_BLACK);
-  }
-
-  static textHeightForWidth(text: string, width: number): number {
-    if (text.length === 0) return 0;
-    if (width <= 0) return GLYPH_HEIGHT;
-
-    let height = GLYPH_HEIGHT;
-    let lineWidth = 0;
-
-    for (const char of text) {
-      if (char === '\0') break;
-      if (lineWidth >= width) {
-        height += GLYPH_HEIGHT;
-        lineWidth = 0;
-      }
-      lineWidth += getCharWidth(char);
-    }
-
-    return height;
-  }
+export function drawText(surface: Surface, text: string, left: number, top: number): void {
+  drawTextWithColors(surface, text, left, top, COLOR_BLACK, COLOR_WHITE);
 }
 
-function drawText(surface: Surface, text: string, left: number, top: number, fgColor: Color, bgColor: Color): void {
+export function drawSelectedText(surface: Surface, text: string, left: number, top: number): void {
+  drawTextWithColors(surface, text, left, top, COLOR_WHITE, COLOR_BLACK);
+}
+
+export function textHeightForWidth(text: string, width: number): number {
+  if (text.length === 0) return 0;
+  return wrapTextBlock(text, width).length * GLYPH_HEIGHT;
+}
+
+export function getTextWidth(text: string): number {
+  let width = 0;
+  for (const char of text) {
+    if (char === '\0') break;
+    width += getCharWidth(char);
+  }
+  return width;
+}
+
+export function wrapTextBlock(text: string, maxWidth: number): string[] {
+  const lines: string[] = [];
+  for (const line of text.split('\n')) {
+    const wrapped = wrapTextLine(line, maxWidth);
+    if (wrapped.length === 0) {
+      lines.push('');
+      continue;
+    }
+    lines.push(...wrapped);
+  }
+  return lines;
+}
+
+function wrapTextLine(text: string, maxWidth: number): string[] {
+  if (text.length === 0) return [''];
+
+  const lines: string[] = [];
+  let current = '';
+  let width = 0;
+
+  for (const char of text) {
+    if (char === '\0') break;
+    const charWidth = getCharWidth(char);
+    if (current.length > 0 && width + charWidth > maxWidth) {
+      lines.push(current);
+      current = char;
+      width = charWidth;
+      continue;
+    }
+
+    current += char;
+    width += charWidth;
+  }
+
+  if (current.length > 0) lines.push(current);
+  return lines;
+}
+
+function drawTextWithColors(surface: Surface, text: string, left: number, top: number, fgColor: Color, bgColor: Color): void {
   let x = left;
 
   for (const char of text) {

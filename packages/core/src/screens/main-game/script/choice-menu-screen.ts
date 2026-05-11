@@ -1,10 +1,10 @@
 import type { Game } from '@/game/game';
+import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawSelectedText, drawText, getTextWidth } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
-import { drawMenuFrame, getTextWidth } from '../ui-utils';
 
 const FRAME_PADDING_X = 3;
 const FRAME_PADDING_Y = 3;
@@ -39,7 +39,7 @@ export class ScriptChoiceScreen extends BaseScreen {
 
   override draw(surface: Surface): void {
     const width = Math.max(...this.options.map(getTextWidth)) + FRAME_PADDING_X * 2;
-    drawMenuFrame(surface, this.left, this.top, width, LINE_GAP * this.options.length + FRAME_PADDING_Y * 2);
+    drawInsetPanel(surface, this.left, this.top, width, LINE_GAP * this.options.length + FRAME_PADDING_Y * 2);
     this.drawOptions(surface);
   }
 
@@ -60,7 +60,7 @@ export class ScriptChoiceScreen extends BaseScreen {
 
   private drawOptions(surface: Surface): void {
     for (let i = 0; i < this.options.length; i += 1) {
-      const draw = i === this.selectedIndex ? TextRender.drawSelText : TextRender.drawText;
+      const draw = i === this.selectedIndex ? drawSelectedText : drawText;
       draw(surface, this.options[i] ?? '', this.textLeft, this.textTop + i * LINE_GAP);
     }
   }
@@ -96,9 +96,9 @@ export class ScriptMenuScreen extends BaseScreen {
   }
 
   override draw(surface: Surface): void {
-    drawMenuFrame(surface, this.left, this.top, this.frameWidth, this.frameHeight);
+    drawInsetPanel(surface, this.left, this.top, this.frameWidth, this.frameHeight);
     for (let i = 0; i < this.items.length; i += 1) {
-      const draw = i === this.selectedIndex ? TextRender.drawSelText : TextRender.drawText;
+      const draw = i === this.selectedIndex ? drawSelectedText : drawText;
       draw(surface, this.items[i] ?? '', this.textLeft, this.textTop + i * LINE_GAP);
     }
   }

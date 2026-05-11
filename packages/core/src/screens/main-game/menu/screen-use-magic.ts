@@ -5,10 +5,9 @@ import { MagicRestore } from '@/magic';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
-import { wrapTextBlock } from '../ui-utils';
 import { drawPlayerState } from './screen-actor-state';
 import { getPartyPlayers } from './screen-select-actor';
 
@@ -72,7 +71,7 @@ export class ScreenUseMagic extends BaseScreen {
   private drawMagicName(surface: Surface): void {
     const lines = wrapTextBlock(this.magic.name, NAME_WIDTH);
     for (let i = 0; i < lines.length; i += 1) {
-      TextRender.drawText(surface, lines[i] ?? '', NAME_LEFT, NAME_TOP + i * 16);
+      drawText(surface, lines[i] ?? '', NAME_LEFT, NAME_TOP + i * 16);
     }
   }
 

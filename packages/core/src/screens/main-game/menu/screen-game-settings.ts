@@ -1,9 +1,9 @@
 import type { Game } from '@/game/game';
+import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawSelectedText, drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
-import { drawMenuFrame } from '../ui-utils';
 import { moveSelectionWrap } from './menu-select';
 
 const SETTINGS_ITEMS = ['地图信息', '穿墙模式', '原版伤害', 'Miss 判定'] as const;
@@ -23,15 +23,15 @@ export class ScreenGameSettings extends BaseScreen {
   }
 
   override draw(surface: Surface): void {
-    drawMenuFrame(surface, FRAME_LEFT, FRAME_TOP, FRAME_WIDTH, FRAME_HEIGHT);
-    TextRender.drawText(surface, '游戏设置', FRAME_LEFT + 8, FRAME_TOP + 8);
+    drawInsetPanel(surface, FRAME_LEFT, FRAME_TOP, FRAME_WIDTH, FRAME_HEIGHT);
+    drawText(surface, '游戏设置', FRAME_LEFT + 8, FRAME_TOP + 8);
     for (let i = 0; i < SETTINGS_ITEMS.length; i += 1) {
       const item = SETTINGS_ITEMS[i]!;
       const y = FRAME_TOP + 28 + i * LINE_GAP;
-      const draw = i === this.selectedIndex ? TextRender.drawSelText : TextRender.drawText;
+      const draw = i === this.selectedIndex ? drawSelectedText : drawText;
       draw(surface, item, FRAME_LEFT + 8, y);
       const status = this.getStatusText(item);
-      if (status) TextRender.drawText(surface, status, FRAME_LEFT + 104, y);
+      if (status) drawText(surface, status, FRAME_LEFT + 104, y);
     }
   }
 

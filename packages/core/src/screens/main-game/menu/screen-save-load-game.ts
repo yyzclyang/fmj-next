@@ -2,12 +2,12 @@ import type { Game } from '@/game/game';
 import { SAVE_SLOT_COUNT, type SaveSlotSummary } from '@/game/save-game';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_WHITE } from '@/rendering/color';
+import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawSelectedText, drawText, getTextWidth } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
-import { drawMenuFrame, getTextWidth } from '../ui-utils';
 import { moveSelectionWrap } from './menu-select';
 
 export const SaveLoadOperation = {
@@ -101,17 +101,17 @@ export class ScreenSaveLoadGame extends BaseScreen {
   }
 
   private drawTitle(surface: Surface): void {
-    drawMenuFrame(surface, TITLE_LEFT, TITLE_TOP, SLOT_WIDTH, TITLE_HEIGHT);
-    TextRender.drawText(surface, this.titleText, TITLE_LEFT + 5, TITLE_TOP + 8);
+    drawInsetPanel(surface, TITLE_LEFT, TITLE_TOP, SLOT_WIDTH, TITLE_HEIGHT);
+    drawText(surface, this.titleText, TITLE_LEFT + 5, TITLE_TOP + 8);
   }
 
   private drawSlots(surface: Surface): void {
     for (let i = 0; i < SAVE_SLOT_COUNT; i += 1) {
       const top = SLOT_TOP + i * SLOT_HEIGHT;
       const slot = this.getSlotView(i);
-      drawMenuFrame(surface, SLOT_LEFT, top, SLOT_WIDTH, SLOT_HEIGHT);
-      TextRender.drawText(surface, `${i + 1}.`, SLOT_NUMBER_LEFT, top + SLOT_TEXT_TOP_OFFSET);
-      const draw = i === this.selectedIndex ? TextRender.drawSelText : TextRender.drawText;
+      drawInsetPanel(surface, SLOT_LEFT, top, SLOT_WIDTH, SLOT_HEIGHT);
+      drawText(surface, `${i + 1}.`, SLOT_NUMBER_LEFT, top + SLOT_TEXT_TOP_OFFSET);
+      const draw = i === this.selectedIndex ? drawSelectedText : drawText;
       this.drawHeads(surface, slot.summary, top);
       draw(surface, this.getSlotText(slot), this.getSlotTextLeft(slot.summary), top + SLOT_TEXT_TOP_OFFSET);
     }
@@ -181,8 +181,8 @@ export class ScreenSaveLoadGame extends BaseScreen {
   }
 
   private drawMessage(surface: Surface, text: string): void {
-    drawMenuFrame(surface, MESSAGE_BOX_LEFT, MESSAGE_BOX_TOP, MESSAGE_BOX_WIDTH, MESSAGE_BOX_HEIGHT);
-    TextRender.drawText(surface, fitText(text, MESSAGE_BOX_WIDTH - 12), MESSAGE_TEXT_LEFT, MESSAGE_TEXT_TOP);
+    drawInsetPanel(surface, MESSAGE_BOX_LEFT, MESSAGE_BOX_TOP, MESSAGE_BOX_WIDTH, MESSAGE_BOX_HEIGHT);
+    drawText(surface, fitText(text, MESSAGE_BOX_WIDTH - 12), MESSAGE_TEXT_LEFT, MESSAGE_TEXT_TOP);
   }
 
   private getErrorMessage(error: unknown, fallback: string): string {
@@ -207,12 +207,12 @@ class ScreenOverwriteSaveConfirm extends BaseScreen {
   }
 
   override draw(surface: Surface): void {
-    drawMenuFrame(surface, MESSAGE_BOX_LEFT, MESSAGE_BOX_TOP, MESSAGE_BOX_WIDTH, MESSAGE_BOX_HEIGHT);
-    TextRender.drawText(surface, '覆盖原进度?', MESSAGE_TEXT_LEFT, MESSAGE_TEXT_TOP);
-    drawMenuFrame(surface, YES_BOX_LEFT, OPTION_BOX_TOP, OPTION_BOX_WIDTH, OPTION_BOX_HEIGHT);
-    drawMenuFrame(surface, NO_BOX_LEFT, OPTION_BOX_TOP, OPTION_BOX_WIDTH, OPTION_BOX_HEIGHT);
-    const drawYes = this.selectedIndex === 0 ? TextRender.drawSelText : TextRender.drawText;
-    const drawNo = this.selectedIndex === 1 ? TextRender.drawSelText : TextRender.drawText;
+    drawInsetPanel(surface, MESSAGE_BOX_LEFT, MESSAGE_BOX_TOP, MESSAGE_BOX_WIDTH, MESSAGE_BOX_HEIGHT);
+    drawText(surface, '覆盖原进度?', MESSAGE_TEXT_LEFT, MESSAGE_TEXT_TOP);
+    drawInsetPanel(surface, YES_BOX_LEFT, OPTION_BOX_TOP, OPTION_BOX_WIDTH, OPTION_BOX_HEIGHT);
+    drawInsetPanel(surface, NO_BOX_LEFT, OPTION_BOX_TOP, OPTION_BOX_WIDTH, OPTION_BOX_HEIGHT);
+    const drawYes = this.selectedIndex === 0 ? drawSelectedText : drawText;
+    const drawNo = this.selectedIndex === 1 ? drawSelectedText : drawText;
     drawYes(surface, '是 ', YES_TEXT_LEFT, OPTION_TEXT_TOP);
     drawNo(surface, '否 ', NO_TEXT_LEFT, OPTION_TEXT_TOP);
   }

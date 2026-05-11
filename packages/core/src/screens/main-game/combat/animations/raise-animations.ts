@@ -13,7 +13,7 @@ import type { ResImage } from '@/lib/res-image';
 import type { ResSrs } from '@/lib/res-srs';
 import { ResourceType } from '@/lib/resource-utils';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawText } from '@/rendering/text-render';
 import { FRAME_INTERVAL } from './animation-sprite';
 import type { CombatActionAnimation } from './animation-types';
 
@@ -78,7 +78,7 @@ export class MissCombatAnimation implements CombatActionAnimation {
       this.image.draw(surface, 1, this.x, this.y + this.dy);
       return;
     }
-    TextRender.drawText(surface, 'Miss', this.x, this.y + this.dy);
+    drawText(surface, 'Miss', this.x, this.y + this.dy);
   }
 }
 
@@ -149,7 +149,7 @@ function drawSignedSmallNum(
   top: number
 ): void {
   if (!signImage || !smallNumImage) {
-    TextRender.drawText(surface, num > 0 ? `+${num}` : `${num}`, left, top);
+    drawText(surface, num > 0 ? `+${num}` : `${num}`, left, top);
     return;
   }
   signImage.draw(surface, 1, left, top);

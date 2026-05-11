@@ -1,12 +1,12 @@
-import { FRAME_HEIGHT, FRAME_WIDTH, type FrameBuffer } from '@fmj-next/core';
+import { SCREEN_HEIGHT, SCREEN_WIDTH, type PixelBuffer } from '@fmj-next/core';
 
 export class CanvasPresenter {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly imageData: ImageData;
 
   constructor(canvas: HTMLCanvasElement) {
-    canvas.width = FRAME_WIDTH;
-    canvas.height = FRAME_HEIGHT;
+    canvas.width = SCREEN_WIDTH;
+    canvas.height = SCREEN_HEIGHT;
 
     const ctx = canvas.getContext('2d');
     if (!ctx) {
@@ -15,10 +15,10 @@ export class CanvasPresenter {
 
     ctx.imageSmoothingEnabled = false;
     this.ctx = ctx;
-    this.imageData = ctx.createImageData(FRAME_WIDTH, FRAME_HEIGHT);
+    this.imageData = ctx.createImageData(SCREEN_WIDTH, SCREEN_HEIGHT);
   }
 
-  present(frameBuffer: FrameBuffer): void {
+  present(frameBuffer: PixelBuffer): void {
     this.imageData.data.set(frameBuffer);
     this.ctx.putImageData(this.imageData, 0, 0);
   }

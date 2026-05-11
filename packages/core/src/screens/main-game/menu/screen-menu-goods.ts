@@ -1,8 +1,8 @@
 import type { Game } from '@/game/game';
+import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
-import { drawMenuFrame } from '../ui-utils';
 import { drawVerticalMenu, moveSelectionClamp } from './menu-select';
 
 const GOODS_ITEMS = ['使用', '装备', '丢弃'] as const;
@@ -26,7 +26,7 @@ export class ScreenMenuGoods extends BaseScreen {
   }
 
   override draw(surface: Surface): void {
-    drawMenuFrame(surface, 39, 39, 39, 55);
+    drawInsetPanel(surface, 39, 39, 39, 55);
     drawVerticalMenu(surface, {
       items: GOODS_ITEMS,
       selectedIndex: this.selectedIndex,

@@ -11,9 +11,9 @@ import type { Player } from '@/characters';
 import type { Game } from '@/game/game';
 import type { ResImage } from '@/lib/res-image';
 import { ResourceType } from '@/lib/resource-utils';
+import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
-import { drawMenuFrame } from '@/screens/main-game/ui-utils';
 import { drawSmallNum } from './render-utils';
 
 export interface CombatStatusUiState {
@@ -55,7 +55,7 @@ export class CombatStatusUi {
     if (bg) {
       bg.draw(surface, 1, x, y);
     } else {
-      drawMenuFrame(surface, x, y, width, height);
+      drawInsetPanel(surface, x, y, width, height);
     }
     player.headImage?.draw(surface, 1, x + 7, y + 4);
     drawSmallNum(surface, this.smallNumImage, player.hp, x + 50, y + 9);

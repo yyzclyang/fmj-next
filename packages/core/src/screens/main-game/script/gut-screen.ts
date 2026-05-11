@@ -3,11 +3,10 @@ import type { ResImage } from '@/lib/res-image';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
-import { wrapTextBlock } from '../ui-utils';
 
 interface GutState {
   topImage: ResImage | null;
@@ -81,7 +80,7 @@ export class ScriptGutScreen extends BaseScreen {
     for (let i = 0; i < this.gut.lines.length; i += 1) {
       const top = this.gut.scrollY + i * 16;
       if (top + 16 <= layout.textTop || top >= layout.textBottom) continue;
-      TextRender.drawText(surface, this.gut.lines[i] ?? '', layout.textLeft, top);
+      drawText(surface, this.gut.lines[i] ?? '', layout.textLeft, top);
     }
 
     if (layout.textTop > 0) {

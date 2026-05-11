@@ -1,7 +1,7 @@
 import type { Game } from '@/game/game';
 import { COLOR_BLACK, COLOR_WHITE, type Color } from '@/rendering/color';
 import { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawText, getTextWidth, wrapTextBlock } from '@/rendering/text-render';
 import { Direction, type WalkingSprite } from '@/characters';
 import type { Facing, MainSceneRuntime, SceneObject } from './runtime';
 import {
@@ -17,15 +17,13 @@ import { clamp } from '@/shared/math';
 import { ScreenGameMainMenu } from './menu';
 import { ScriptDialogueScreen, ScriptGutScreen, ScriptTimedMessageScreen } from './script';
 import {
-  drawTipFrame,
-  getTextWidth,
+  drawTipPanel,
   TIP_FRAME_WIDTH,
   TIP_LINE_GAP,
   TIP_MAX_LINES,
   TIP_TEXT_PADDING_X,
   TIP_TEXT_TOP_PADDING,
   TIP_TEXT_WIDTH,
-  wrapTextBlock,
 } from './ui-utils';
 
 interface TipState {
@@ -301,10 +299,10 @@ export class ScreenMainGame extends BaseScreen {
   private drawMapInfo(surface: Surface): void {
     if (!this.game.state.showPosition) return;
     const mapName = this.game.state.sceneName || this.runtime.currentMap?.mapName || 'Map';
-    TextRender.drawText(surface, mapName, MAP_INFO_LEFT, MAP_INFO_TOP);
+    drawText(surface, mapName, MAP_INFO_LEFT, MAP_INFO_TOP);
 
     if (!this.runtime.hasPlayer) return;
-    TextRender.drawText(
+    drawText(
       surface,
       `${this.runtime.playerMapX},${this.runtime.playerMapY}`,
       MAP_INFO_LEFT,
@@ -323,13 +321,13 @@ export class ScreenMainGame extends BaseScreen {
     const tip = this.tip;
     if (!tip) return;
     const layout = getTipLayout(tip);
-    drawTipFrame(surface, layout.left, layout.top, layout.height);
+    drawTipPanel(surface, layout.left, layout.top, layout.height);
     for (let i = 0; i < layout.lines.length; i += 1) {
       const line = layout.lines[i] ?? '';
       const textWidth = getTextWidth(line);
       const left =
         tip.kind === 'information' ? layout.left + Math.floor((TIP_FRAME_WIDTH - textWidth) / 2) : layout.textLeft;
-      TextRender.drawText(surface, line, left, layout.textTop + i * TIP_LINE_GAP);
+      drawText(surface, line, left, layout.textTop + i * TIP_LINE_GAP);
     }
   }
 
@@ -392,9 +390,9 @@ class InGameMessageScreen extends BaseScreen {
     const height = lineCount * TIP_LINE_GAP + 20;
     const left = Math.floor((SCREEN_WIDTH - TIP_FRAME_WIDTH) / 2);
     const top = Math.floor((SCREEN_HEIGHT - height) / 2);
-    drawTipFrame(surface, left, top, height);
+    drawTipPanel(surface, left, top, height);
     for (let index = 0; index < lineCount; index += 1) {
-      TextRender.drawText(surface, this.lines[index] ?? '', left + TIP_TEXT_PADDING_X, top + 2 + index * TIP_LINE_GAP);
+      drawText(surface, this.lines[index] ?? '', left + TIP_TEXT_PADDING_X, top + 2 + index * TIP_LINE_GAP);
     }
   }
 

@@ -2,12 +2,12 @@ import { PLAYER_EQUIPMENT_SLOT_GOODS_TYPES, PlayerEquipmentSlot, type Player } f
 import { GoodsEquipment } from '@/goods';
 import type { Game } from '@/game/game';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
+import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
-import { drawMenuFrame, wrapTextBlock } from '../ui-utils';
 import { ScreenChangeEquipment } from './screen-change-equipment';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from './screen-goods-list';
 import { getPartyPlayers } from './screen-select-actor';
@@ -207,23 +207,23 @@ export class ScreenActorWearing extends BaseScreen {
     if (player.headImage) {
       player.headImage.draw(surface, 1, 140, 40);
     } else {
-      drawMenuFrame(surface, 140, 40, 24, 24);
+      drawInsetPanel(surface, 140, 40, 24, 24);
     }
-    TextRender.drawText(surface, player.name, 140, 80);
-    TextRender.drawText(surface, WEARING_SLOTS[this.currentItem]?.name ?? '', 200, 60);
+    drawText(surface, player.name, 140, 80);
+    drawText(surface, WEARING_SLOTS[this.currentItem]?.name ?? '', 200, 60);
   }
 
   private drawDescription(surface: Surface, equipment: GoodsEquipment | null): void {
-    drawMenuFrame(surface, INFO_LEFT, INFO_TOP, INFO_WIDTH, INFO_HEIGHT);
+    drawInsetPanel(surface, INFO_LEFT, INFO_TOP, INFO_WIDTH, INFO_HEIGHT);
     if (!equipment) {
-      TextRender.drawText(surface, '未装备', INFO_LEFT + 5, INFO_TOP + 5);
+      drawText(surface, '未装备', INFO_LEFT + 5, INFO_TOP + 5);
       return;
     }
 
-    TextRender.drawText(surface, `装备:${equipment.name}`, INFO_LEFT + 5, INFO_TOP + 5);
+    drawText(surface, `装备:${equipment.name}`, INFO_LEFT + 5, INFO_TOP + 5);
     const lines = wrapTextBlock(equipment.description, INFO_WIDTH - 10).slice(0, 3);
     for (let i = 0; i < lines.length; i += 1) {
-      TextRender.drawText(surface, lines[i] ?? '', INFO_LEFT + 5, INFO_TOP + 22 + i * 16);
+      drawText(surface, lines[i] ?? '', INFO_LEFT + 5, INFO_TOP + 22 + i * 16);
     }
   }
 

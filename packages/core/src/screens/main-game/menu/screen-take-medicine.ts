@@ -4,7 +4,7 @@ import type { Game } from '@/game/game';
 import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
 import { drawPlayerState } from './screen-actor-state';
@@ -42,7 +42,7 @@ export class ScreenTakeMedicine extends BaseScreen {
     const count = this.game.getGoodsCount(this.medicine.type, this.medicine.index);
     if (count > 0) {
       this.medicine.image?.draw(surface, 1, GOODS_LEFT, GOODS_TOP);
-      TextRender.drawText(surface, `${count}`, COUNT_LEFT, COUNT_TOP);
+      drawText(surface, `${count}`, COUNT_LEFT, COUNT_TOP);
     }
   }
 

@@ -2,10 +2,9 @@ import type { BaseGoods } from '@/goods';
 import type { Game } from '@/game/game';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
-import { TextRender } from '@/rendering/text-render';
+import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
-import { wrapTextBlock } from '../ui-utils';
 
 export const ScreenGoodsListMode = {
   Sale: 'sale',
@@ -115,9 +114,9 @@ export class ScreenGoodsList extends BaseScreen {
     const count = this.mode === ScreenGoodsListMode.Buy ? item.count : this.game.getGoodsCount(goods.type, goods.index);
     const countText = this.mode === ScreenGoodsListMode.Buy ? `金钱:${this.game.state.money}` : `数量:${count}`;
     const price = this.mode === ScreenGoodsListMode.Buy ? goods.buyPrice : goods.sellPrice;
-    TextRender.drawText(surface, countText, INFO_LEFT, 20);
-    TextRender.drawText(surface, `名称:${goods.name}`, INFO_LEFT, 38);
-    TextRender.drawText(surface, `价格:${price}`, INFO_LEFT, 55);
+    drawText(surface, countText, INFO_LEFT, 20);
+    drawText(surface, `名称:${goods.name}`, INFO_LEFT, 38);
+    drawText(surface, `价格:${price}`, INFO_LEFT, 55);
   }
 
   private drawItems(surface: Surface, list: readonly ScreenGoodsListItem[]): void {
@@ -133,7 +132,7 @@ export class ScreenGoodsList extends BaseScreen {
     const lines = wrapTextBlock(`说明:${goods.description}`, DESC_WIDTH);
     const visible = lines.slice(this.descriptionLine, this.descriptionLine + DESC_LINES);
     for (let i = 0; i < visible.length; i += 1) {
-      TextRender.drawText(surface, visible[i] ?? '', DESC_LEFT, DESC_TOP + i * 16);
+      drawText(surface, visible[i] ?? '', DESC_LEFT, DESC_TOP + i * 16);
     }
   }
 
@@ -219,10 +218,7 @@ function drawGoodsListFrame(surface: Surface): void {
 }
 
 function drawRect(surface: Surface, left: number, top: number, width: number, height: number): void {
-  surface.fillRect(left, top, width, 1, COLOR_BLACK);
-  surface.fillRect(left, top + height - 1, width, 1, COLOR_BLACK);
-  surface.fillRect(left, top, 1, height, COLOR_BLACK);
-  surface.fillRect(left + width - 1, top, 1, height, COLOR_BLACK);
+  surface.strokeRect(left, top, width, height, COLOR_BLACK);
 }
 
 function drawTriangleCursor(surface: Surface, left: number, top: number): void {

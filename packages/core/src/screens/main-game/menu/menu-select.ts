@@ -1,3 +1,4 @@
+import { COLOR_BLACK } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
 import { drawSelectedText, drawText } from '@/rendering/text-render';
 
@@ -26,4 +27,10 @@ export function moveSelectionWrap(index: number, step: number, count: number): n
 export function moveSelectionClamp(index: number, step: number, count: number): number {
   if (count <= 0) return 0;
   return Math.max(0, Math.min(count - 1, index + step));
+}
+
+export function drawTriangleCursor(surface: Surface, left: number, top: number): void {
+  for (let i = 0; i < 7; i += 1) {
+    surface.fillRect(left + i, top + i, 1, 13 - i * 2, COLOR_BLACK);
+  }
 }

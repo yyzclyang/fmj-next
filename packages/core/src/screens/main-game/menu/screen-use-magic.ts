@@ -8,8 +8,8 @@ import type { Surface } from '@/rendering/surface';
 import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
+import { getPartyPlayers } from './party-utils';
 import { drawPlayerState } from './screen-actor-state';
-import { getPartyPlayers } from './screen-select-actor';
 
 const NAME_LEFT = 4;
 const NAME_TOP = 4;
@@ -20,8 +20,7 @@ const HEAD_TOP = 60;
 // 场景菜单只允许恢复型魔法，目标选择页沿用角色状态页显示。
 export class ScreenUseMagic extends BaseScreen {
   private readonly players: Player[];
-  private page = 0;
-  private actorIndex = 0;
+  private selectedPlayerIndex = 0;
 
   constructor(
     game: Game,
@@ -35,9 +34,9 @@ export class ScreenUseMagic extends BaseScreen {
   override draw(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
     this.drawMagicName(surface);
-    const actor = this.players[this.actorIndex];
+    const actor = this.players[this.selectedPlayerIndex];
     if (!actor) return;
-    drawPlayerState(surface, actor, this.page, this.game.datLib.getImage(ResourceType.PIC, 2, 5));
+    drawPlayerState(surface, actor, this.game.datLib.getImage(ResourceType.PIC, 2, 5));
     actor.headImage?.draw(surface, 1, HEAD_LEFT, HEAD_TOP);
   }
 
@@ -49,10 +48,6 @@ export class ScreenUseMagic extends BaseScreen {
       case KeyCode.Right:
         this.moveActor(1);
         return;
-      case KeyCode.PageUp:
-      case KeyCode.PageDown:
-        this.page = 1 - this.page;
-        return;
       case KeyCode.Enter:
         this.useMagic();
         return;
@@ -63,9 +58,9 @@ export class ScreenUseMagic extends BaseScreen {
   }
 
   private moveActor(step: number): void {
-    const next = this.actorIndex + step;
+    const next = this.selectedPlayerIndex + step;
     if (next < 0 || next >= this.players.length) return;
-    this.actorIndex = next;
+    this.selectedPlayerIndex = next;
   }
 
   private drawMagicName(surface: Surface): void {
@@ -92,7 +87,7 @@ export class ScreenUseMagic extends BaseScreen {
 
   private getTargets(): Player[] {
     if (this.magic.targetAll) return this.players.filter(player => player.isAlive);
-    const target = this.players[this.actorIndex];
+    const target = this.players[this.selectedPlayerIndex];
     if (!target) throw new Error('魔法使用页没有可用角色');
     return [target];
   }

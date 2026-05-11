@@ -7,7 +7,8 @@ import type { Surface } from '@/rendering/surface';
 import { drawText, getTextWidth } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
-import { getPartyPlayers } from './screen-select-actor';
+import { drawTriangleCursor } from './menu-select';
+import { getPartyPlayers } from './party-utils';
 
 const HEAD_LEFT = 10;
 const HEAD_TOP = 2;
@@ -19,8 +20,7 @@ const STATE_LINE_HEIGHT = 19;
 // 状态页挂在主菜单子栈里，退出后会回到一级主菜单。
 export class ScreenActorState extends BaseScreen {
   private readonly players: Player[];
-  private currentPlayer = 0;
-  private page = 0;
+  private selectedPlayerIndex = 0;
 
   constructor(game: Game) {
     super(game);
@@ -30,7 +30,7 @@ export class ScreenActorState extends BaseScreen {
   override draw(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
     this.drawPlayerList(surface);
-    const player = this.players[this.currentPlayer];
+    const player = this.players[this.selectedPlayerIndex];
     if (!player) return;
     this.drawDetails(surface, player);
   }
@@ -43,10 +43,6 @@ export class ScreenActorState extends BaseScreen {
       case KeyCode.Down:
         this.movePlayer(1);
         return;
-      case KeyCode.PageUp:
-      case KeyCode.PageDown:
-        this.page = 1 - this.page;
-        return;
       case KeyCode.Cancel:
         this.close();
         return;
@@ -55,7 +51,7 @@ export class ScreenActorState extends BaseScreen {
 
   private movePlayer(step: number): void {
     if (this.players.length === 0) return;
-    this.currentPlayer = (this.currentPlayer + step + this.players.length) % this.players.length;
+    this.selectedPlayerIndex = (this.selectedPlayerIndex + step + this.players.length) % this.players.length;
   }
 
   private drawPlayerList(surface: Surface): void {
@@ -64,17 +60,16 @@ export class ScreenActorState extends BaseScreen {
       drawHead(surface, this.players[i], HEAD_LEFT, top);
     }
     if (this.players.length > 0) {
-      drawTriangleCursor(surface, 3, 10 + HEAD_GAP * this.currentPlayer);
+      drawTriangleCursor(surface, 3, 10 + HEAD_GAP * this.selectedPlayerIndex);
     }
   }
 
   private drawDetails(surface: Surface, player: Player): void {
-    drawPlayerState(surface, player, this.page, this.game.datLib.getImage(ResourceType.PIC, 2, 5));
+    drawPlayerState(surface, player, this.game.datLib.getImage(ResourceType.PIC, 2, 5));
   }
 }
 
-export function drawPlayerState(surface: Surface, player: Player, page: number, smallNumImage: ResImage | null): void {
-  void page;
+export function drawPlayerState(surface: Surface, player: Player, smallNumImage: ResImage | null): void {
   let y = STATE_START_Y;
   surface.fillRect(37, y - 4, 1, STATE_LINE_HEIGHT * 10, COLOR_BLACK);
   drawText(surface, `等级   ${player.level}`, STATE_TEXT_LEFT, y);
@@ -141,11 +136,5 @@ function getImmunityText(player: Player): string {
 function drawHead(surface: Surface, player: Player | undefined, left: number, top: number): void {
   if (player?.headImage) {
     player.headImage.draw(surface, 1, left, top);
-  }
-}
-
-function drawTriangleCursor(surface: Surface, left: number, top: number): void {
-  for (let i = 0; i < 7; i += 1) {
-    surface.fillRect(left + i, top + i, 1, 13 - i * 2, COLOR_BLACK);
   }
 }

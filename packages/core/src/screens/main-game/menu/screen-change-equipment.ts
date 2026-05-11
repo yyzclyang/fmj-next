@@ -2,10 +2,11 @@ import type { Player } from '@/characters';
 import type { GoodsEquipment } from '@/goods';
 import type { Game } from '@/game/game';
 import { ResourceType } from '@/lib/resource-utils';
-import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
+import { COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
+import { drawTriangleCursor } from './menu-select';
 import { drawPlayerState } from './screen-actor-state';
 
 const GOODS_LEFT = 8;
@@ -20,7 +21,6 @@ const HEAD_TOP = 60;
 export class ScreenChangeEquipment extends BaseScreen {
   private readonly goodsList: readonly GoodsEquipment[];
   private selectedIndex = 0;
-  private page = 0;
   private equippedSlotIndex: number | null = null;
   private finished = false;
 
@@ -44,7 +44,7 @@ export class ScreenChangeEquipment extends BaseScreen {
 
   override draw(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
-    drawPlayerState(surface, this.player, this.page, this.game.datLib.getImage(ResourceType.PIC, 2, 5));
+    drawPlayerState(surface, this.player, this.game.datLib.getImage(ResourceType.PIC, 2, 5));
     this.player.headImage?.draw(surface, 1, HEAD_LEFT, HEAD_TOP);
     for (let i = 0; i < this.goodsList.length; i += 1) {
       this.goodsList[i]?.image?.draw(surface, 1, GOODS_LEFT, GOODS_TOP + GOODS_GAP * i);
@@ -59,10 +59,6 @@ export class ScreenChangeEquipment extends BaseScreen {
         return;
       case KeyCode.Down:
         this.previewEquipment(1);
-        return;
-      case KeyCode.PageUp:
-      case KeyCode.PageDown:
-        this.page = 1 - this.page;
         return;
       case KeyCode.Enter:
         this.confirm();
@@ -141,11 +137,5 @@ export class ScreenChangeEquipment extends BaseScreen {
     if (goods.eventId === 0) return;
     if (enabled) this.game.setEvent(goods.eventId);
     else this.game.clearEvent(goods.eventId);
-  }
-}
-
-function drawTriangleCursor(surface: Surface, left: number, top: number): void {
-  for (let i = 0; i < 7; i += 1) {
-    surface.fillRect(left + i, top + i, 1, 13 - i * 2, COLOR_BLACK);
   }
 }

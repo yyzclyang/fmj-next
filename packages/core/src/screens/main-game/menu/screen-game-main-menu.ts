@@ -18,8 +18,8 @@ import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
 import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
+import { ScreenActorEquipment } from './screen-actor-equipment';
 import { ScreenActorState } from './screen-actor-state';
-import { ScreenActorWearing } from './screen-actor-wearing';
 import { ScreenChangeEquipment } from './screen-change-equipment';
 import { ScreenDiscardGoods } from './screen-discard-goods';
 import { ScreenGameSettings } from './screen-game-settings';
@@ -29,7 +29,8 @@ import { ScreenMenuGoods, type GoodsMenuItem } from './screen-menu-goods';
 import { ScreenMenuProperties, type PropertyMenuItem } from './screen-menu-properties';
 import { ScreenMenuSystem, type SystemMenuItem } from './screen-menu-system';
 import { SaveLoadOperation, ScreenSaveLoadGame } from './screen-save-load-game';
-import { getPartyPlayers, ScreenSelectActor } from './screen-select-actor';
+import { getPartyPlayers } from './party-utils';
+import { ScreenSelectActor } from './screen-select-actor';
 import { ScreenSelectGoodsActor } from './screen-select-goods-actor';
 import { ScreenTakeMedicine } from './screen-take-medicine';
 import { ScreenUseMagic } from './screen-use-magic';
@@ -49,7 +50,7 @@ const MENU_LINE_GAP = 16;
 
 // 游戏内菜单是主场景的子 screen，后续二级菜单也从这里继续 push。
 export class ScreenGameMainMenu extends BaseScreen {
-  private currentSelection = 0;
+  private selectedIndex = 0;
 
   constructor(game: Game) {
     super(game);
@@ -61,7 +62,7 @@ export class ScreenGameMainMenu extends BaseScreen {
     drawInsetPanel(surface, MENU_LEFT, MENU_TOP, MENU_WIDTH, MENU_HEIGHT);
     drawVerticalMenu(surface, {
       items: IN_GAME_MENU_OPTIONS,
-      selectedIndex: this.currentSelection,
+      selectedIndex: this.selectedIndex,
       left: MENU_TEXT_LEFT,
       top: MENU_ITEM_TOP,
       lineGap: MENU_LINE_GAP,
@@ -86,11 +87,11 @@ export class ScreenGameMainMenu extends BaseScreen {
   }
 
   private moveSelection(step: number): void {
-    this.currentSelection = moveSelectionWrap(this.currentSelection, step, IN_GAME_MENU_OPTIONS.length);
+    this.selectedIndex = moveSelectionWrap(this.selectedIndex, step, IN_GAME_MENU_OPTIONS.length);
   }
 
   private confirmSelection(): void {
-    const option = IN_GAME_MENU_OPTIONS[this.currentSelection];
+    const option = IN_GAME_MENU_OPTIONS[this.selectedIndex];
     switch (option) {
       case '属性':
         this.screenStack.push(
@@ -147,7 +148,7 @@ export class ScreenGameMainMenu extends BaseScreen {
         this.openChildScreen(new ScreenActorState(this.game));
         return;
       case '穿戴':
-        this.openChildScreen(new ScreenActorWearing(this.game));
+        this.openChildScreen(new ScreenActorEquipment(this.game));
         return;
     }
   }
@@ -170,7 +171,7 @@ export class ScreenGameMainMenu extends BaseScreen {
         this.openChildScreen(new ScreenGameSettings(this.game));
         return;
       case '结束游戏':
-        this.finishMenuAction(`确认系统菜单:${item}`);
+        this.game.returnToMenu();
         return;
     }
   }
@@ -320,13 +321,10 @@ export class ScreenGameMainMenu extends BaseScreen {
     this.screenStack.clear();
     this.screenStack.push(screen);
   }
-
-  private finishMenuAction(message: string): void {
-    console.log(message);
-    this.close();
-  }
 }
 
 function isMedicineGoods(goods: BaseGoods): goods is GoodsMedicine | GoodsMedicineLife | GoodsMedicinePermanent {
-  return goods instanceof GoodsMedicine || goods instanceof GoodsMedicineLife || goods instanceof GoodsMedicinePermanent;
+  return (
+    goods instanceof GoodsMedicine || goods instanceof GoodsMedicineLife || goods instanceof GoodsMedicinePermanent
+  );
 }

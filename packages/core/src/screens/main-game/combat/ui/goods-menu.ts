@@ -9,7 +9,12 @@ import type { Game } from '@/game/game';
 import { GoodsEquipment, GoodsHiddenWeapon, GoodsWeapon } from '@/goods';
 import type { ScreenStack } from '@/screens/screen-stack';
 import { ScreenChangeEquipment } from '@/screens/main-game/menu/screen-change-equipment';
-import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from '@/screens/main-game/menu/screen-goods-list';
+import {
+  ScreenGoodsList,
+  ScreenGoodsListMode,
+  type ScreenGoodsListActions,
+  type ScreenGoodsListItem,
+} from '@/screens/main-game/menu/screen-goods-list';
 import { ScreenSelectActor } from '@/screens/main-game/menu/screen-select-actor';
 
 interface CombatGoodsMenuOptions {
@@ -31,7 +36,7 @@ export class CombatGoodsMenu {
     if (list.length === 0) return;
     this.screenStack.push(
       new ScreenGoodsList(this.game, () => this.getEquipmentList(), ScreenGoodsListMode.Use, {
-        onConfirm: (item, _index, screen) => this.confirmEquipment(item, screen),
+        onConfirm: item => this.confirmEquipment(item),
         onCancel: this.options.onCancel,
       })
     );
@@ -45,13 +50,13 @@ export class CombatGoodsMenu {
     }
     this.screenStack.push(
       new ScreenGoodsList(this.game, () => this.getCombatGoodsList(kind), ScreenGoodsListMode.Use, {
-        onConfirm: (item, _index, screen) => this.confirmCombatGoods(kind, item, screen),
+        onConfirm: (item, actions) => this.confirmCombatGoods(kind, item, actions),
         onCancel: this.options.onCancel,
       })
     );
   }
 
-  private confirmEquipment(item: ScreenGoodsListItem, _screen: ScreenGoodsList): void {
+  private confirmEquipment(item: ScreenGoodsListItem): void {
     if (!(item.goods instanceof GoodsEquipment)) throw new Error('战斗装备列表选择了非装备物品');
     const goods = item.goods;
     const players = this.options.players.filter(player => goods.canPlayerUse(player.index));
@@ -98,15 +103,15 @@ export class CombatGoodsMenu {
     return this.game.bag.goodsList.filter(item => isCombatMedicineGoods(item.goods));
   }
 
-  private confirmCombatGoods(kind: 'throw' | 'use', item: ScreenGoodsListItem, screen: ScreenGoodsList): void {
-    if (this.screenStack.current !== screen) throw new Error('确认战斗道具时当前 Screen 不是道具列表');
-    this.screenStack.pop();
+  private confirmCombatGoods(kind: 'throw' | 'use', item: ScreenGoodsListItem, actions: ScreenGoodsListActions): void {
     if (kind === 'throw') {
       if (!isCombatThrowableGoods(item.goods)) throw new Error('战斗投掷列表选择了不可投掷物品');
+      actions.close();
       this.options.onConfirmThrowGoods(item.goods);
       return;
     }
     if (!isCombatMedicineGoods(item.goods)) throw new Error('战斗使用列表选择了不可使用物品');
+    actions.close();
     this.options.onConfirmUseGoods(item.goods);
   }
 

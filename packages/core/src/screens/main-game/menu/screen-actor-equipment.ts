@@ -8,9 +8,9 @@ import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
+import { getPartyPlayers } from './party-utils';
 import { ScreenChangeEquipment } from './screen-change-equipment';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from './screen-goods-list';
-import { getPartyPlayers } from './screen-select-actor';
 
 const WEARING_SLOTS = [
   {
@@ -75,11 +75,11 @@ const INFO_LEFT = 20;
 const INFO_WIDTH = SCREEN_WIDTH - 40;
 const INFO_HEIGHT = 80;
 const INFO_TOP = SCREEN_HEIGHT - INFO_HEIGHT - 10;
-const CHUANDAI_WIDTH = 22;
-const CHUANDAI_HEIGHT = 39;
-const CHUANDAI_LEFT = SCREEN_WIDTH - CHUANDAI_WIDTH - 10;
-const CHUANDAI_TOP = SCREEN_HEIGHT - CHUANDAI_HEIGHT - 10;
-const CHUANDAI_BITMAP = [
+const WEARING_LABEL_WIDTH = 22;
+const WEARING_LABEL_HEIGHT = 39;
+const WEARING_LABEL_LEFT = SCREEN_WIDTH - WEARING_LABEL_WIDTH - 10;
+const WEARING_LABEL_TOP = SCREEN_HEIGHT - WEARING_LABEL_HEIGHT - 10;
+const WEARING_LABEL_BITMAP = [
   '.........###..........',
   '...##..#############..',
   '..#####........#####..',
@@ -122,10 +122,10 @@ const CHUANDAI_BITMAP = [
 ] as const;
 
 // 穿戴页展示装备槽位，确认后从同类型物品列表进入换装页。
-export class ScreenActorWearing extends BaseScreen {
+export class ScreenActorEquipment extends BaseScreen {
   private readonly players: Player[];
-  private actorIndex = 0;
-  private currentItem = 0;
+  private selectedPlayerIndex = 0;
+  private selectedSlotIndex = 0;
   private showingDescription = false;
 
   constructor(game: Game) {
@@ -135,13 +135,13 @@ export class ScreenActorWearing extends BaseScreen {
 
   override draw(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
-    const player = this.players[this.actorIndex];
+    const player = this.players[this.selectedPlayerIndex];
     if (!player) return;
-    drawChuandai(surface);
+    drawWearingLabel(surface);
     this.drawSlots(surface, player);
     this.drawActor(surface, player);
     if (this.showingDescription) {
-      const slot = WEARING_SLOTS[this.currentItem];
+      const slot = WEARING_SLOTS[this.selectedSlotIndex];
       this.drawDescription(surface, slot ? (player.equipment[slot.slot] ?? null) : null);
     }
   }
@@ -170,22 +170,22 @@ export class ScreenActorWearing extends BaseScreen {
   }
 
   private moveItem(step: number): void {
-    const next = this.currentItem + step;
+    const next = this.selectedSlotIndex + step;
     if (next < 0 || next >= WEARING_SLOTS.length) return;
-    this.currentItem = next;
+    this.selectedSlotIndex = next;
     this.showingDescription = false;
   }
 
   private moveActor(step: number): void {
-    const next = this.actorIndex + step;
+    const next = this.selectedPlayerIndex + step;
     if (next < 0 || next >= this.players.length) return;
-    this.actorIndex = next;
+    this.selectedPlayerIndex = next;
     this.showingDescription = false;
   }
 
   private handleEnter(): void {
-    const slot = WEARING_SLOTS[this.currentItem];
-    const equipment = slot ? (this.players[this.actorIndex]?.equipment[slot.slot] ?? null) : null;
+    const slot = WEARING_SLOTS[this.selectedSlotIndex];
+    const equipment = slot ? (this.players[this.selectedPlayerIndex]?.equipment[slot.slot] ?? null) : null;
     if (!this.showingDescription && equipment) {
       this.showingDescription = true;
       return;
@@ -199,7 +199,7 @@ export class ScreenActorWearing extends BaseScreen {
       const equipment = player.equipment[slot.slot] ?? null;
       equipment?.image?.draw(surface, 1, slot.x + 1, slot.y + 1);
     }
-    const slot = WEARING_SLOTS[this.currentItem];
+    const slot = WEARING_SLOTS[this.selectedSlotIndex];
     if (slot) drawSelectedSlot(surface, slot.x, slot.y);
   }
 
@@ -210,7 +210,7 @@ export class ScreenActorWearing extends BaseScreen {
       drawInsetPanel(surface, 140, 40, 24, 24);
     }
     drawText(surface, player.name, 140, 80);
-    drawText(surface, WEARING_SLOTS[this.currentItem]?.name ?? '', 200, 60);
+    drawText(surface, WEARING_SLOTS[this.selectedSlotIndex]?.name ?? '', 200, 60);
   }
 
   private drawDescription(surface: Surface, equipment: GoodsEquipment | null): void {
@@ -228,7 +228,7 @@ export class ScreenActorWearing extends BaseScreen {
   }
 
   private openEquipmentList(): void {
-    const player = this.players[this.actorIndex];
+    const player = this.players[this.selectedPlayerIndex];
     if (!player) return;
     const items = this.getEquipmentList(player);
     if (items.length === 0) return;
@@ -240,7 +240,7 @@ export class ScreenActorWearing extends BaseScreen {
   }
 
   private getEquipmentList(player: Player): ScreenGoodsListItem[] {
-    const slot = WEARING_SLOTS[this.currentItem];
+    const slot = WEARING_SLOTS[this.selectedSlotIndex];
     if (!slot) return [];
     return this.game.bag.equipList.filter(
       (item): item is ScreenGoodsListItem =>
@@ -252,7 +252,7 @@ export class ScreenActorWearing extends BaseScreen {
 
   private openChangeEquipmentScreen(player: Player, goods: ScreenGoodsListItem['goods']): void {
     if (!(goods instanceof GoodsEquipment)) throw new Error('穿戴页选择了非装备物品');
-    const slot = WEARING_SLOTS[this.currentItem];
+    const slot = WEARING_SLOTS[this.selectedSlotIndex];
     if (!slot) throw new Error('穿戴页当前槽位不存在');
     this.screenStack.clear();
     this.screenStack.push(new ScreenChangeEquipment(this.game, player, goods, slot.slot));
@@ -266,12 +266,12 @@ function drawSelectedSlot(surface: Surface, left: number, top: number): void {
   surface.fillRect(left + SLOT_SIZE, top, 1, SLOT_SIZE + 1, COLOR_BLACK);
 }
 
-function drawChuandai(surface: Surface): void {
-  for (let y = 0; y < CHUANDAI_BITMAP.length; y += 1) {
-    const row = CHUANDAI_BITMAP[y] ?? '';
+function drawWearingLabel(surface: Surface): void {
+  for (let y = 0; y < WEARING_LABEL_BITMAP.length; y += 1) {
+    const row = WEARING_LABEL_BITMAP[y] ?? '';
     for (let x = 0; x < row.length; x += 1) {
       if (row[x] === '#') {
-        surface.fillRect(CHUANDAI_LEFT + x, CHUANDAI_TOP + y, 1, 1, COLOR_BLACK);
+        surface.fillRect(WEARING_LABEL_LEFT + x, WEARING_LABEL_TOP + y, 1, 1, COLOR_BLACK);
       }
     }
   }

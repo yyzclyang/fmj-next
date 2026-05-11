@@ -30,7 +30,7 @@ const COST_TOP = 165;
 // 魔法列表按 Kotlin ScreenMagic：上方五行列表，下方说明，底部显示真气消耗。
 export class ScreenMagic extends BaseScreen {
   private firstItemIndex = 0;
-  private currentItemIndex = 0;
+  private selectedItemIndex = 0;
   private descriptionLine = 0;
 
   constructor(
@@ -46,7 +46,7 @@ export class ScreenMagic extends BaseScreen {
     surface.drawColor(COLOR_WHITE);
     this.drawMagicItems(surface);
     this.drawDescription(surface);
-    const magic = this.currentMagic;
+    const magic = this.selectedMagic;
     if (magic) drawText(surface, `耗真气:${magic.costMp}`, COST_LEFT, COST_TOP);
     drawRect(surface, LIST_LEFT, LIST_TOP, LIST_WIDTH, LIST_HEIGHT);
     drawRect(surface, DESCRIPTION_LEFT, DESCRIPTION_TOP, DESCRIPTION_WIDTH, DESCRIPTION_HEIGHT);
@@ -75,8 +75,8 @@ export class ScreenMagic extends BaseScreen {
     }
   }
 
-  private get currentMagic(): BaseMagic | undefined {
-    return this.magics[this.currentItemIndex];
+  private get selectedMagic(): BaseMagic | undefined {
+    return this.magics[this.selectedItemIndex];
   }
 
   private drawMagicItems(surface: Surface): void {
@@ -85,12 +85,12 @@ export class ScreenMagic extends BaseScreen {
       const index = this.firstItemIndex + i;
       const y = ITEM_TOP + i * ITEM_GAP;
       drawText(surface, this.magics[index]?.name ?? '', ITEM_TEXT_LEFT, y);
-      if (index === this.currentItemIndex) drawMagicCursor(surface, LIST_LEFT + 4, y + 2);
+      if (index === this.selectedItemIndex) drawMagicCursor(surface, LIST_LEFT + 4, y + 2);
     }
   }
 
   private drawDescription(surface: Surface): void {
-    const magic = this.currentMagic;
+    const magic = this.selectedMagic;
     if (!magic) return;
     const lines = wrapTextBlock(magic.description, DESCRIPTION_WIDTH);
     const visible = lines.slice(this.descriptionLine, this.descriptionLine + DESCRIPTION_LINES);
@@ -100,18 +100,18 @@ export class ScreenMagic extends BaseScreen {
   }
 
   private moveItem(step: number): void {
-    const next = moveSelectionClamp(this.currentItemIndex, step, this.magics.length);
-    if (next === this.currentItemIndex) return;
-    this.currentItemIndex = next;
-    if (this.currentItemIndex < this.firstItemIndex) this.firstItemIndex = this.currentItemIndex;
-    if (this.currentItemIndex >= this.firstItemIndex + ITEM_NUM) {
-      this.firstItemIndex = this.currentItemIndex - ITEM_NUM + 1;
+    const next = moveSelectionClamp(this.selectedItemIndex, step, this.magics.length);
+    if (next === this.selectedItemIndex) return;
+    this.selectedItemIndex = next;
+    if (this.selectedItemIndex < this.firstItemIndex) this.firstItemIndex = this.selectedItemIndex;
+    if (this.selectedItemIndex >= this.firstItemIndex + ITEM_NUM) {
+      this.firstItemIndex = this.selectedItemIndex - ITEM_NUM + 1;
     }
     this.descriptionLine = 0;
   }
 
   private pageDescription(step: number): void {
-    const magic = this.currentMagic;
+    const magic = this.selectedMagic;
     if (!magic) return;
     const lines = wrapTextBlock(magic.description, DESCRIPTION_WIDTH);
     const maxLine = Math.max(0, lines.length - DESCRIPTION_LINES);
@@ -119,7 +119,7 @@ export class ScreenMagic extends BaseScreen {
   }
 
   private confirm(): void {
-    const magic = this.currentMagic;
+    const magic = this.selectedMagic;
     if (!magic) return;
     if (this.mp < magic.costMp) {
       this.showMessage('真气不足');

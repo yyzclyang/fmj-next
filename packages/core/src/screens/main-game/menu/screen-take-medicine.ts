@@ -7,8 +7,8 @@ import type { Surface } from '@/rendering/surface';
 import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
+import { getPartyPlayers } from './party-utils';
 import { drawPlayerState } from './screen-actor-state';
-import { getPartyPlayers } from './screen-select-actor';
 
 export type MedicineGoods = GoodsMedicine | GoodsMedicineLife | GoodsMedicinePermanent;
 
@@ -22,8 +22,7 @@ const HEAD_TOP = 60;
 // 药物使用页保留在物品列表之上，方便连续给角色使用同一种物品。
 export class ScreenTakeMedicine extends BaseScreen {
   private readonly players: Player[];
-  private page = 0;
-  private actorIndex = 0;
+  private selectedPlayerIndex = 0;
 
   constructor(
     game: Game,
@@ -35,9 +34,9 @@ export class ScreenTakeMedicine extends BaseScreen {
 
   override draw(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
-    const player = this.players[this.actorIndex];
+    const player = this.players[this.selectedPlayerIndex];
     if (!player) return;
-    drawPlayerState(surface, player, this.page, this.game.datLib.getImage(ResourceType.PIC, 2, 5));
+    drawPlayerState(surface, player, this.game.datLib.getImage(ResourceType.PIC, 2, 5));
     player.headImage?.draw(surface, 1, HEAD_LEFT, HEAD_TOP);
     const count = this.game.getGoodsCount(this.medicine.type, this.medicine.index);
     if (count > 0) {
@@ -48,12 +47,6 @@ export class ScreenTakeMedicine extends BaseScreen {
 
   override onKey(key: KeyCode): boolean | undefined {
     switch (key) {
-      case KeyCode.PageDown:
-        this.page = 1;
-        return;
-      case KeyCode.PageUp:
-        this.page = 0;
-        return;
       case KeyCode.Left:
         this.moveActor(-1);
         return;
@@ -70,9 +63,9 @@ export class ScreenTakeMedicine extends BaseScreen {
   }
 
   private moveActor(step: number): void {
-    const next = this.actorIndex + step;
+    const next = this.selectedPlayerIndex + step;
     if (next < 0 || next >= this.players.length) return;
-    this.actorIndex = next;
+    this.selectedPlayerIndex = next;
   }
 
   private useMedicine(): void {
@@ -80,11 +73,12 @@ export class ScreenTakeMedicine extends BaseScreen {
       this.close();
       return;
     }
-    const target = this.players[this.actorIndex];
+    const target = this.players[this.selectedPlayerIndex];
     if (!target) throw new Error('药物使用页没有可用角色');
-    const used = this.medicine instanceof GoodsMedicine && this.medicine.affectsAllTargets()
-      ? this.useMedicineForAll(target)
-      : this.medicine.eat(target);
+    const used =
+      this.medicine instanceof GoodsMedicine && this.medicine.affectsAllTargets()
+        ? this.useMedicineForAll(target)
+        : this.medicine.eat(target);
     if (used && !this.game.bag.consumeGoods(this.medicine.type, this.medicine.index, 1)) {
       throw new Error('药物使用时背包数量不足');
     }

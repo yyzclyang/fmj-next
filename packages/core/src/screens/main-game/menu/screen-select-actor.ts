@@ -66,7 +66,3 @@ export class ScreenSelectActor extends BaseScreen {
     this.callbacks.onConfirm(player);
   }
 }
-
-export function getPartyPlayers(game: Game): Player[] {
-  return game.state.partyActorIds.map(id => game.getPlayer(id)).filter((player): player is Player => player != null);
-}

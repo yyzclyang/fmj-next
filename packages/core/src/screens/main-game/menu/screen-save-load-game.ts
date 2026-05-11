@@ -125,7 +125,6 @@ export class ScreenSaveLoadGame extends BaseScreen {
         this.message = this.getErrorMessage(error, '存档损坏');
         return;
       }
-      console.log(`读取进度:${this.selectedIndex + 1}`);
       return;
     }
     const slot = this.getSlotView(this.selectedIndex);
@@ -146,7 +145,6 @@ export class ScreenSaveLoadGame extends BaseScreen {
     this.close();
     this.onComplete?.();
     this.showMessage('已存档');
-    console.log(`保存进度:${this.selectedIndex + 1}`);
   }
 
   private get titleText(): string {

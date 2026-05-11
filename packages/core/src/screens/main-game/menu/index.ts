@@ -1,5 +1,5 @@
 export { ScreenActorState } from './screen-actor-state';
-export { ScreenActorWearing } from './screen-actor-wearing';
+export { ScreenActorEquipment } from './screen-actor-equipment';
 export { ScreenChangeEquipment } from './screen-change-equipment';
 export { ScreenDiscardGoods } from './screen-discard-goods';
 export { ScreenGameMainMenu } from './screen-game-main-menu';

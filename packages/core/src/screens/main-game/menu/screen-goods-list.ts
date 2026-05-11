@@ -5,6 +5,7 @@ import type { Surface } from '@/rendering/surface';
 import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
+import { drawTriangleCursor } from './menu-select';
 
 export const ScreenGoodsListMode = {
   Sale: 'sale',
@@ -19,8 +20,13 @@ export interface ScreenGoodsListItem {
   readonly count: number;
 }
 
+export interface ScreenGoodsListActions {
+  openChildScreen(screen: BaseScreen): void;
+  close(): void;
+}
+
 export interface ScreenGoodsListCallbacks {
-  onConfirm(item: ScreenGoodsListItem, index: number, screen: ScreenGoodsList): void;
+  onConfirm(item: ScreenGoodsListItem, actions: ScreenGoodsListActions): void;
   onCancel?(): void;
 }
 
@@ -44,9 +50,9 @@ const DESC_LINES = 5;
 // 物品列表沿用 Kotlin ScreenGoodsList 的 320x192 适配布局，选择结果交给上层处理。
 export class ScreenGoodsList extends BaseScreen {
   private firstDisplayItemIndex = 0;
-  private currentItemIndex = 0;
+  private selectedItemIndex = 0;
   private descriptionLine = 0;
-  private currentGoodsKey = '';
+  private selectedGoodsKey = '';
 
   constructor(
     game: Game,
@@ -56,7 +62,7 @@ export class ScreenGoodsList extends BaseScreen {
     initialCursorIndex = 0
   ) {
     super(game);
-    this.currentItemIndex = initialCursorIndex;
+    this.selectedItemIndex = initialCursorIndex;
   }
 
   override onEnter(): void {
@@ -74,13 +80,13 @@ export class ScreenGoodsList extends BaseScreen {
     drawGoodsListFrame(surface);
     const list = this.getGoodsList();
     this.syncCursor(list);
-    const item = list[this.currentItemIndex];
+    const item = list[this.selectedItemIndex];
     if (!item) return;
     this.drawInfo(surface, item);
     drawTriangleCursor(
       surface,
       CURSOR_LEFT,
-      ITEM_TOP + ITEM_GAP * (this.currentItemIndex - this.firstDisplayItemIndex)
+      ITEM_TOP + ITEM_GAP * (this.selectedItemIndex - this.firstDisplayItemIndex)
     );
     this.drawItems(surface, list);
     this.drawDescription(surface, item.goods);
@@ -139,9 +145,9 @@ export class ScreenGoodsList extends BaseScreen {
   private showNextItem(): void {
     const list = this.getGoodsList();
     this.syncCursor(list);
-    if (this.currentItemIndex + 1 >= list.length) return;
-    this.currentItemIndex += 1;
-    if (this.currentItemIndex >= this.firstDisplayItemIndex + ITEM_NUMBER_PER_PAGE) {
+    if (this.selectedItemIndex + 1 >= list.length) return;
+    this.selectedItemIndex += 1;
+    if (this.selectedItemIndex >= this.firstDisplayItemIndex + ITEM_NUMBER_PER_PAGE) {
       this.firstDisplayItemIndex += 1;
     }
     this.descriptionLine = 0;
@@ -149,9 +155,9 @@ export class ScreenGoodsList extends BaseScreen {
 
   private showPreviousItem(): void {
     this.syncCursor(this.getGoodsList());
-    if (this.currentItemIndex <= 0) return;
-    this.currentItemIndex -= 1;
-    if (this.currentItemIndex < this.firstDisplayItemIndex) {
+    if (this.selectedItemIndex <= 0) return;
+    this.selectedItemIndex -= 1;
+    if (this.selectedItemIndex < this.firstDisplayItemIndex) {
       this.firstDisplayItemIndex -= 1;
     }
     this.descriptionLine = 0;
@@ -160,7 +166,7 @@ export class ScreenGoodsList extends BaseScreen {
   private pageDescription(step: number): void {
     const list = this.getGoodsList();
     this.syncCursor(list);
-    const item = list[this.currentItemIndex];
+    const item = list[this.selectedItemIndex];
     if (!item) return;
     const lines = wrapTextBlock(`说明:${item.goods.description}`, DESC_WIDTH);
     const maxLine = Math.max(0, lines.length - DESC_LINES);
@@ -170,9 +176,12 @@ export class ScreenGoodsList extends BaseScreen {
   private confirm(): void {
     const list = this.getGoodsList();
     this.syncCursor(list);
-    const item = list[this.currentItemIndex];
+    const item = list[this.selectedItemIndex];
     if (!item) return;
-    this.callbacks.onConfirm(item, this.currentItemIndex, this);
+    this.callbacks.onConfirm(item, {
+      openChildScreen: screen => this.screenStack.push(screen),
+      close: () => this.close(),
+    });
   }
 
   private cancel(): void {
@@ -186,24 +195,24 @@ export class ScreenGoodsList extends BaseScreen {
 
   private syncCursor(list: readonly ScreenGoodsListItem[]): void {
     if (list.length === 0) {
-      this.currentItemIndex = 0;
+      this.selectedItemIndex = 0;
       this.firstDisplayItemIndex = 0;
       this.descriptionLine = 0;
-      this.currentGoodsKey = '';
+      this.selectedGoodsKey = '';
       return;
     }
-    if (this.currentItemIndex >= list.length) this.currentItemIndex = list.length - 1;
-    if (this.currentItemIndex < 0) this.currentItemIndex = 0;
+    if (this.selectedItemIndex >= list.length) this.selectedItemIndex = list.length - 1;
+    if (this.selectedItemIndex < 0) this.selectedItemIndex = 0;
     const maxFirst = Math.max(0, list.length - ITEM_NUMBER_PER_PAGE);
     if (this.firstDisplayItemIndex > maxFirst) this.firstDisplayItemIndex = maxFirst;
-    if (this.currentItemIndex < this.firstDisplayItemIndex) this.firstDisplayItemIndex = this.currentItemIndex;
-    if (this.currentItemIndex >= this.firstDisplayItemIndex + ITEM_NUMBER_PER_PAGE) {
-      this.firstDisplayItemIndex = this.currentItemIndex - ITEM_NUMBER_PER_PAGE + 1;
+    if (this.selectedItemIndex < this.firstDisplayItemIndex) this.firstDisplayItemIndex = this.selectedItemIndex;
+    if (this.selectedItemIndex >= this.firstDisplayItemIndex + ITEM_NUMBER_PER_PAGE) {
+      this.firstDisplayItemIndex = this.selectedItemIndex - ITEM_NUMBER_PER_PAGE + 1;
     }
-    const item = list[this.currentItemIndex];
+    const item = list[this.selectedItemIndex];
     const key = item ? `${item.goods.type}:${item.goods.index}` : '';
-    if (key !== this.currentGoodsKey) {
-      this.currentGoodsKey = key;
+    if (key !== this.selectedGoodsKey) {
+      this.selectedGoodsKey = key;
       this.descriptionLine = 0;
     }
   }
@@ -219,10 +228,4 @@ function drawGoodsListFrame(surface: Surface): void {
 
 function drawRect(surface: Surface, left: number, top: number, width: number, height: number): void {
   surface.strokeRect(left, top, width, height, COLOR_BLACK);
-}
-
-function drawTriangleCursor(surface: Surface, left: number, top: number): void {
-  for (let i = 0; i < 7; i += 1) {
-    surface.fillRect(left + i, top + i, 1, 13 - i * 2, COLOR_BLACK);
-  }
 }

@@ -10,12 +10,12 @@ import { drawTradeFrame, showTradeMessage, TRADE_TEXT_LEFT } from './ui-utils';
 // SALE 指令使用动态背包列表，卖出后列表会自动反映数量变化。
 export function createScriptSaleGoodsScreen(game: Game, onClose: () => void): ScreenGoodsList {
   return new ScreenGoodsList(game, () => getSaleGoodsList(game), ScreenGoodsListMode.Sale, {
-    onConfirm: (item, _index, screen) => {
+    onConfirm: (item, actions) => {
       if (item.goods instanceof GoodsDrama) {
         showTradeMessage(game, '任务物品!');
         return;
       }
-      screen.screenStack.push(new SaleGoodsCountScreen(game, item.goods));
+      actions.openChildScreen(new SaleGoodsCountScreen(game, item.goods));
     },
     onCancel: onClose,
   });

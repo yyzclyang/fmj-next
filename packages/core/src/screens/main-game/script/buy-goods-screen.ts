@@ -14,12 +14,12 @@ export function createScriptBuyGoodsScreen(
   onClose: () => void
 ): ScreenGoodsList {
   return new ScreenGoodsList(game, items, ScreenGoodsListMode.Buy, {
-    onConfirm: (item, _index, screen) => {
+    onConfirm: (item, actions) => {
       if (game.state.money < item.goods.buyPrice) {
         showTradeMessage(game, '金钱不足!');
         return;
       }
-      screen.screenStack.push(new BuyGoodsCountScreen(game, item.goods));
+      actions.openChildScreen(new BuyGoodsCountScreen(game, item.goods));
     },
     onCancel: onClose,
   });

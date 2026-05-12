@@ -4,14 +4,18 @@ import type { Surface } from '@/rendering/surface';
 import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
+import { createLogger } from '@/utils/logger';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from '../menu/screen-goods-list';
 import { drawTradePanel, showTradeMessage, TRADE_PANEL_TEXT_LEFT } from './ui-utils';
+
+const logger = createLogger('交易');
 
 // SALE 指令使用动态背包列表，卖出后列表会自动反映数量变化。
 export function createScriptSaleGoodsScreen(game: Game, onClose: () => void): ScreenGoodsList {
   return new ScreenGoodsList(game, () => getSaleGoodsList(game), ScreenGoodsListMode.Sale, {
     onConfirm: (item, actions) => {
       if (item.goods instanceof GoodsDrama) {
+        logger.log('卖出', `任务物品禁止出售 ${item.goods.name}`);
         showTradeMessage(game, '任务物品!');
         return;
       }
@@ -79,9 +83,13 @@ class SaleGoodsCountScreen extends BaseScreen {
   }
 
   private confirm(): void {
+    const beforeMoney = this.game.state.money;
     this.game.setMoney(this.money);
     if (this.saleCount > 0 && !this.game.bag.consumeGoods(this.goods.type, this.goods.index, this.saleCount)) {
       throw new Error('卖出物品时背包数量不足');
+    }
+    if (this.saleCount > 0) {
+      logger.log('卖出', `${this.goods.name} x${this.saleCount} 金钱=${beforeMoney}->${this.money}`);
     }
     this.close();
   }

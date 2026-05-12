@@ -8,6 +8,7 @@ import { drawSelectedText, drawText, getTextWidth } from '@/rendering/text-rende
 import { BaseScreen } from '@/screens/base-screen';
 import { SCREEN_WIDTH } from '@/utils/constants';
 import { KeyCode } from '@/utils/key-code';
+import { createLogger } from '@/utils/logger';
 import { moveSelectionWrap } from './menu-select';
 
 export const SaveLoadOperation = {
@@ -17,6 +18,7 @@ export const SaveLoadOperation = {
 
 export type SaveLoadOperation = (typeof SaveLoadOperation)[keyof typeof SaveLoadOperation];
 
+const logger = createLogger('存档页');
 const TITLE_LEFT = 20;
 const TITLE_TOP = 10;
 const TITLE_HEIGHT = 25;
@@ -123,6 +125,7 @@ export class ScreenSaveLoadGame extends BaseScreen {
         if (!this.game.loadSlot(this.selectedIndex)) return;
       } catch (error) {
         this.message = this.getErrorMessage(error, '存档损坏');
+        logger.warn('读档', `失败，槽位=${this.selectedIndex}: ${this.message}`);
         return;
       }
       return;
@@ -140,6 +143,7 @@ export class ScreenSaveLoadGame extends BaseScreen {
       this.game.saveSlot(this.selectedIndex);
     } catch (error) {
       this.message = this.getErrorMessage(error, '存档失败');
+      logger.warn('存档', `失败，槽位=${this.selectedIndex}: ${this.message}`);
       return;
     }
     this.close();

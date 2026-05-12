@@ -1,10 +1,13 @@
 import type { Game } from '@/game/game';
 import type { ResGut } from '@/lib/res-gut';
+import { createLogger } from '@/utils/logger';
 import type { CommandBuilder } from './script-command-builder';
 import { compileScriptCommand } from './script-command-registry';
 import { getCommandName } from './script-opcodes';
 import { type ScriptCommand, ScriptProcess } from './script-process';
 import { ScriptReader } from './script-reader';
+
+const logger = createLogger('脚本');
 
 export class ScriptVm {
   constructor(private readonly game: Game) {}
@@ -13,10 +16,16 @@ export class ScriptVm {
     const res = this.game.datLib.getGut(type, index);
     const scriptName = `GUT ${type}:${index}`;
     if (!res) {
+      logger.warn('加载', `${scriptName} 缺失`);
       return new ScriptProcess(`${scriptName} (missing)`, [], [], new Map<number, number>(), 0);
     }
 
-    return this.compile(res, scriptName);
+    try {
+      return this.compile(res, scriptName);
+    } catch (error) {
+      logger.error('编译', `${scriptName} 失败`, error);
+      throw error;
+    }
   }
 
   private compile(gut: ResGut, scriptName: string): ScriptProcess {
@@ -54,6 +63,10 @@ export class ScriptVm {
       return addressIndexMap.get(address - headerSize) ?? -1;
     });
 
+    logger.log(
+      '编译',
+      `${scriptName} commands=${commands.length}, events=${eventIndex.filter(index => index >= 0).length}/${eventIndex.length}, bytes=${code.length}`
+    );
     return new ScriptProcess(scriptName, commands, eventIndex, addressIndexMap, headerSize);
   }
 }

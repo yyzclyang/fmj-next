@@ -8,6 +8,7 @@ import type { Surface } from '@/rendering/surface';
 import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
+import { createLogger } from '@/utils/logger';
 import { getPartyPlayers } from './party-utils';
 import { drawPlayerState } from './screen-actor-state';
 
@@ -16,6 +17,7 @@ const NAME_TOP = 4;
 const NAME_WIDTH = 33;
 const HEAD_LEFT = 5;
 const HEAD_TOP = 60;
+const logger = createLogger('菜单');
 
 // 场景菜单只允许恢复型魔法，目标选择页沿用角色状态页显示。
 export class ScreenUseMagic extends BaseScreen {
@@ -73,15 +75,23 @@ export class ScreenUseMagic extends BaseScreen {
   private useMagic(): void {
     const targets = this.getTargets();
     if (targets.length === 0) {
+      logger.log('法术', `使用 ${this.magic.name} 失败: 没有目标`);
       this.close();
       return;
     }
     if (this.caster.mp < this.magic.costMp) {
+      logger.log('法术', `使用 ${this.magic.name} 失败: ${this.caster.name} 真气 ${this.caster.mp}<${this.magic.costMp}`);
       this.showMessage('真气不足');
       return;
     }
+    const beforeMp = this.caster.mp;
+    const before = this.describeTargets(targets);
     this.caster.mp = Math.max(0, this.caster.mp - this.magic.costMp);
     for (const target of targets) applyRestoreMagic(this.magic, target);
+    logger.log(
+      '法术',
+      `${this.caster.name} 使用 ${this.magic.name} 真气=${beforeMp}->${this.caster.mp} 前=${before} 后=${this.describeTargets(targets)}`
+    );
     this.close();
   }
 
@@ -96,5 +106,9 @@ export class ScreenUseMagic extends BaseScreen {
     const mainScene = this.game.mainScene;
     if (!mainScene) throw new Error('主场景不存在，无法显示魔法消息');
     mainScene.showMessage(text, 1000);
+  }
+
+  private describeTargets(players: readonly Player[]): string {
+    return players.map(player => `${player.name}:${player.hp}/${player.hpMax},${player.mp}/${player.mpMax}`).join('|');
   }
 }

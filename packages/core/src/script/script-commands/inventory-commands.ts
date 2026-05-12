@@ -1,9 +1,13 @@
 import type { Game } from '@/game/game';
 import { createScriptBuyGoodsScreen } from '@/screens/main-game/script/buy-goods-screen';
 import { createScriptSaleGoodsScreen } from '@/screens/main-game/script/sale-goods-screen';
+import { createLogger } from '@/utils/logger';
 import type { CommandBuilder } from '../script-command-builder';
 import { COMMAND } from '../script-opcodes';
+import type { ScriptProcess } from '../script-process';
 import type { ScriptReader } from '../script-reader';
+
+const logger = createLogger('脚本命令');
 
 export function compileInventoryCommand(game: Game, reader: ScriptReader, opcode: number): CommandBuilder | null {
   switch (opcode) {
@@ -88,6 +92,10 @@ function cmdGainGoods(game: Game, reader: ScriptReader): CommandBuilder {
     len: 4,
     execute: () => {
       const goods = game.gainGoods(type, index);
+      logger.log(
+        '物品',
+        goods ? `GAINGOODS ${goods.name} GRS ${type}-${index}` : `GAINGOODS 失败 GRS ${type}-${index}`
+      );
       if (goods) {
         game.mainSceneRuntime?.collectFacingBox();
       }
@@ -142,9 +150,7 @@ function cmdDeleteGoods(game: Game, reader: ScriptReader): CommandBuilder {
   return {
     len: 6,
     execute: process => {
-      if (!game.consumeGoods(type, index, 1)) {
-        process.gotoAddress(address);
-      }
+      consumeGoodsOrJump(game, process, 'DELETEGOODS', type, index, 1, address);
     },
   };
 }
@@ -157,9 +163,7 @@ function cmdUseGoods(game: Game, reader: ScriptReader): CommandBuilder {
   return {
     len: 6,
     execute: process => {
-      if (!game.consumeGoods(type, index, 1)) {
-        process.gotoAddress(address);
-      }
+      consumeGoodsOrJump(game, process, 'USEGOODS', type, index, 1, address);
     },
   };
 }
@@ -173,9 +177,7 @@ function cmdUseGoodsNum(game: Game, reader: ScriptReader): CommandBuilder {
   return {
     len: 8,
     execute: process => {
-      if (!game.consumeGoods(type, index, count)) {
-        process.gotoAddress(address);
-      }
+      consumeGoodsOrJump(game, process, 'USEGOODSNUM', type, index, count, address);
     },
   };
 }
@@ -187,11 +189,32 @@ function cmdTestMoney(game: Game, reader: ScriptReader): CommandBuilder {
   return {
     len: 6,
     execute: process => {
-      if (game.state.money < value) {
+      const matched = game.state.money < value;
+      if (matched) {
+        logger.log('分支', `TESTMONEY 金钱=${game.state.money}, 值=${value}, 地址=${address}`);
         process.gotoAddress(address);
       }
     },
   };
+}
+
+function consumeGoodsOrJump(
+  game: Game,
+  process: ScriptProcess,
+  commandName: string,
+  type: number,
+  index: number,
+  count: number,
+  address: number
+): void {
+  const before = game.getGoodsCount(type, index);
+  const consumed = game.consumeGoods(type, index, count);
+  logger.log(
+    '物品',
+    `${commandName} GRS ${type}-${index} 数量=${count} ${before}->${game.getGoodsCount(type, index)}, ` +
+      `已消耗=${consumed}${consumed ? '' : ` 地址=${address}`}`
+  );
+  if (!consumed) process.gotoAddress(address);
 }
 
 function cmdTestGoodsNum(game: Game, reader: ScriptReader): CommandBuilder {
@@ -206,8 +229,16 @@ function cmdTestGoodsNum(game: Game, reader: ScriptReader): CommandBuilder {
     execute: process => {
       const goodsCount = game.getGoodsCount(type, index);
       if (goodsCount === count) {
+        logger.log(
+          '分支',
+          `TESTGOODSNUM GRS ${type}-${index} 数量=${goodsCount} == ${count}, 地址=${equalAddress}`
+        );
         process.gotoAddress(equalAddress);
       } else if (goodsCount > count) {
+        logger.log(
+          '分支',
+          `TESTGOODSNUM GRS ${type}-${index} 数量=${goodsCount} > ${count}, 地址=${greaterAddress}`
+        );
         process.gotoAddress(greaterAddress);
       }
     },

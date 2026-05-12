@@ -9,6 +9,7 @@ import {
 } from '@/characters';
 import { GoodsEquipment, type BaseGoods } from '@/goods';
 import type { BaseMagic, ResMagicChain } from '@/magic';
+import { createLogger } from '@/utils/logger';
 import {
   parseMonsterResource,
   parseNpcResource,
@@ -27,6 +28,8 @@ import { isImageResourceType, type ResImage } from './res-image';
 import type { ResMap } from './res-map';
 import type { ResSrs } from './res-srs';
 import { ResourceType, serializeResourceKey, type ResourceKey } from './resource-utils';
+
+const logger = createLogger('资源');
 
 export class DatLib {
   private readonly offsets = new Map<string, number>();
@@ -127,6 +130,7 @@ export class DatLib {
   private loadOffsets(): void {
     let keyPtr = 0x10;
     let offsetPtr = 0x2000;
+    let invalidCount = 0;
 
     while (keyPtr + 2 < this.buffer.length && this.buffer[keyPtr] !== 0xff) {
       const resType = this.buffer[keyPtr] as ResourceType;
@@ -141,10 +145,31 @@ export class DatLib {
         const key = { resType, type, index };
         this.offsets.set(serializeResourceKey(key), offset);
         this.resourceKeys.push(key);
+      } else {
+        invalidCount += 1;
       }
 
       keyPtr += 3;
       offsetPtr += 3;
     }
+    logger.log('索引', `资源=${this.resourceKeys.length}, 无效偏移=${invalidCount}, ${this.formatResourceTypeCounts()}`);
   }
+
+  private formatResourceTypeCounts(): string {
+    const counts = new Map<ResourceType, number>();
+    for (const key of this.resourceKeys) {
+      counts.set(key.resType, (counts.get(key.resType) ?? 0) + 1);
+    }
+    return [...counts]
+      .sort(([a], [b]) => a - b)
+      .map(([resType, count]) => `${getResourceTypeName(resType)}=${count}`)
+      .join(', ');
+  }
+}
+
+function getResourceTypeName(resType: ResourceType): string {
+  for (const [name, value] of Object.entries(ResourceType)) {
+    if (value === resType) return name;
+  }
+  return `UNKNOWN_${resType}`;
 }

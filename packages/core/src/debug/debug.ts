@@ -4,8 +4,10 @@ import { STATUS_FLAGS_ALL } from '@/characters/status';
 import type { CombatBackgroundIds, CombatEnterFightParams } from '@/combat/combat-runtime';
 import type { BaseGoods } from '@/goods';
 import { ResourceType } from '@/lib/resource-utils';
+import { createLogger } from '@/utils/logger';
 
 const DEFAULT_DEBUG_PLAYER_COUNT = 4;
+const logger = createLogger('调试');
 const DEBUG_PLAYER_INCREASE_KEYS = [
   'level',
   'hp',
@@ -250,14 +252,14 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         if (count <= 0) return false;
         const game = getGame();
         const ok = game?.consumeGoods(type, index, count) ?? false;
-        console.debug(ok ? `已删除道具 ${type}-${index} x${count}` : `删除道具失败 ${type}-${index} x${count}`);
+        logger.log('背包', ok ? `已删除道具 ${type}-${index} x${count}` : `删除道具失败 ${type}-${index} x${count}`);
         return ok;
       },
       addMoney(value: number) {
         const game = getGame();
         if (!game) return 0;
         game.setMoney(game.state.money + assertDebugInt(value, 'money'));
-        console.debug(`当前金钱:${game.state.money}`);
+        logger.log('背包', `当前金钱:${game.state.money}`);
         return game.state.money;
       },
     },
@@ -299,10 +301,10 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         if (!runtime) throw new Error('主场景运行时不存在，无法调试启动脚本');
         if (offset == null) {
           runtime.startChapter(type, index);
-          console.debug(`已启动脚本 GUT ${type}-${index}`);
+          logger.log('脚本', `已启动 GUT ${type}-${index}`);
         } else {
           runtime.startChapterAtOffset(type, index, offset);
-          console.debug(`已启动脚本 GUT ${type}-${index} offset=${offset}`);
+          logger.log('脚本', `已启动 GUT ${type}-${index} 偏移=${offset}`);
         }
         return true;
       },
@@ -339,7 +341,7 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         };
         applyDebugCombatSetup(game, options);
         runtime.startDebugCombat(params);
-        console.debug(`已进入调试战斗 monster=${ids.join(',')} bg=${background.scrb}`);
+        logger.log('战斗', `已进入 怪物=${ids.join(',')} 背景=${background.scrb}`);
         return true;
       },
       setEncounterRate(rate?: number | null) {
@@ -347,7 +349,7 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         if (!game) return 0;
         const nextRate = rate == null ? null : assertDebugRate(rate, 'encounterRate');
         const currentRate = game.combat.setRandomEncounterRate(nextRate);
-        console.debug(`当前遇敌几率:${currentRate}`);
+        logger.log('战斗', `当前遇敌几率:${currentRate}`);
         return currentRate;
       },
     },

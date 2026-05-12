@@ -1,6 +1,9 @@
 import type { GameGoodsState } from '@/game/game-state';
 import type { DatLib } from '@/lib/dat-lib';
+import { createLogger } from '@/utils/logger';
 import { BaseGoods } from './base-goods';
+
+const logger = createLogger('背包');
 
 export interface GoodsBagItem {
   readonly goods: BaseGoods;
@@ -30,9 +33,15 @@ export class GoodsBag {
   }
 
   addGoods(type: number, index: number, count = 1): BaseGoods | null {
-    if (!isKnownGoodsType(type) || count <= 0) return null;
+    if (!isKnownGoodsType(type) || count <= 0) {
+      logger.warn('物品', `增加失败 GRS ${type}-${index} 数量=${count}`);
+      return null;
+    }
     const goods = this.resolveGoods(type, index);
-    if (!goods) return null;
+    if (!goods) {
+      logger.warn('物品', `增加失败，资源缺失 GRS ${type}-${index} 数量=${count}`);
+      return null;
+    }
 
     const item = this.items.find(i => i.type === type && i.index === index);
     if (item) {
@@ -44,12 +53,21 @@ export class GoodsBag {
   }
 
   consumeGoods(type: number, index: number, count: number): boolean {
-    if (!isKnownGoodsType(type) || count <= 0) return false;
+    if (!isKnownGoodsType(type) || count <= 0) {
+      logger.warn('物品', `消耗失败 GRS ${type}-${index} 数量=${count}`);
+      return false;
+    }
     const itemIndex = this.items.findIndex(item => item.type === type && item.index === index);
-    if (itemIndex < 0) return false;
+    if (itemIndex < 0) {
+      logger.warn('物品', `消耗失败，背包缺少 GRS ${type}-${index} 数量=${count}`);
+      return false;
+    }
 
     const item = this.items[itemIndex];
-    if (!item || item.count < count) return false;
+    if (!item || item.count < count) {
+      logger.warn('物品', `消耗失败 GRS ${type}-${index} 数量=${item?.count ?? 0}<${count}`);
+      return false;
+    }
     item.count -= count;
     if (item.count <= 0) {
       this.items.splice(itemIndex, 1);

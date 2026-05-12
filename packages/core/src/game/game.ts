@@ -16,6 +16,7 @@ import { ScreenSrsTransition } from '@/screens/srs-transition/screen-srs-transit
 import { ScreenStartMenu } from '@/screens/start-menu/screen-start-menu';
 import { ScreenStack } from '@/screens/screen-stack';
 import { ScreenViewType } from '@/screens/screen-view-type';
+import { createLogger } from '@/utils/logger';
 import {
   cloneGameState,
   createInitialGameState,
@@ -38,6 +39,8 @@ import {
   type SaveSlotSummary,
 } from './save-game';
 
+const logger = createLogger('游戏');
+
 export class Game {
   readonly datLib: DatLib;
   readonly combat = new CombatRuntime(this);
@@ -57,6 +60,10 @@ export class Game {
     this.engineOptions = engineOptions;
     this.state = this.createInitialState();
     this.datLib = new DatLib(datLibBuffer);
+    logger.log(
+      '初始化',
+      `DAT=${datLibBuffer.byteLength} bytes, 伤害公式=${this.damageFormula}, 允许Miss=${this.state.allowFightMiss}`
+    );
   }
 
   get frameBuffer(): PixelBuffer {
@@ -86,21 +93,27 @@ export class Game {
     if (!runtimeSnapshot) throw new Error('主场景不存在，无法存档');
     const payload = createSavePayload(this.state, slot, runtimeSnapshot);
     this.host.saveStore.write(slot, encodeSavePayload(payload));
+    logger.log('存档', `槽位=${slot}, 场景=${this.state.sceneName || '未命名'}, 队伍=${this.state.partyActorIds.join(',')}`);
     return payload.summary;
   }
 
   loadSlot(slot: number): boolean {
     const payload = this.readSavePayload(slot);
-    if (!payload) return false;
+    if (!payload) {
+      logger.log('读档', `槽位=${slot} 为空`);
+      return false;
+    }
     try {
       this.applyLoadedState(toLoadedGameState(payload), payload.state.players ?? [], payload.state.mainScene ?? null);
     } catch {
       throw new Error(CORRUPT_SAVE_MESSAGE);
     }
+    logger.log('读档', `槽位=${slot}, 保存时间=${payload.summary.savedAt}, 场景=${this.state.sceneName || '未命名'}`);
     return true;
   }
 
   start(): void {
+    logger.log('启动', '进入开发 Logo');
     this.mainScene = null;
     this.mainSceneRuntime = null;
     this.combat.reset();
@@ -121,6 +134,7 @@ export class Game {
   }
 
   startNewGame(): void {
+    logger.log('新游戏', '重置状态并进入开场章节');
     this.boxEventMap.clear();
     this.pendingBoxEventKey = null;
     this.combat.reset();
@@ -130,6 +144,7 @@ export class Game {
   }
 
   returnToMenu(): void {
+    logger.log('菜单', '返回开始菜单');
     this.mainScene = null;
     this.mainSceneRuntime = null;
     this.screenStack.replaceAll(new ScreenStartMenu(this));
@@ -151,6 +166,10 @@ export class Game {
     playerSnapshots: readonly SavePlayerState[] = [],
     runtimeSnapshot: MainSceneRuntimeSnapshot | null = null
   ): void {
+    logger.log(
+      '状态',
+      `应用读档状态 地图=${state.mapType}:${state.mapIndex}, 脚本=${state.scriptType}:${state.scriptIndex}, 运行时=${runtimeSnapshot ? '有' : '无'}`
+    );
     this.boxEventMap.clear();
     this.pendingBoxEventKey = null;
     this.combat.reset();
@@ -221,9 +240,15 @@ export class Game {
   }
 
   addActor(actorId: number): Player | null {
-    if (actorId <= 0) return null;
+    if (actorId <= 0) {
+      logger.warn('队伍', `添加角色失败，角色 id 非法: ${actorId}`);
+      return null;
+    }
     const player = this.getPlayer(actorId);
-    if (!player) return null;
+    if (!player) {
+      logger.warn('队伍', `添加角色失败，资源缺失: ${actorId}`);
+      return null;
+    }
     // Kotlin 版 CREATEACTOR 只从 playerList 去重后追加，控制角色始终是队首。
     this.state.partyActorIds = this.state.partyActorIds.filter(id => id !== actorId);
     this.state.partyActorIds.push(actorId);
@@ -237,15 +262,22 @@ export class Game {
   }
 
   setControlPlayer(actorId: number): Player | null {
-    if (!this.state.partyActorIds.includes(actorId)) return null;
+    if (!this.state.partyActorIds.includes(actorId)) {
+      logger.warn('队伍', `设置控制角色失败，不在队伍中: ${actorId}`);
+      return null;
+    }
     const player = this.getPlayer(actorId);
-    if (!player) return null;
+    if (!player) {
+      logger.warn('队伍', `设置控制角色失败，资源缺失: ${actorId}`);
+      return null;
+    }
     this.state.partyActorIds = [actorId, ...this.state.partyActorIds.filter(id => id !== actorId)];
     this.state.controlActorId = actorId;
     return player;
   }
 
   playMusic(type: number, index: number): void {
+    logger.log('音乐', `播放 ${type}:${index}`);
     this.host.audio.playMusic(`${type}:${index}`);
   }
 
@@ -277,17 +309,26 @@ export class Game {
   }
 
   setVariable(index: number, value: number): void {
-    if (!this.isValidVariableIndex(index)) return;
+    if (!this.isValidVariableIndex(index)) {
+      logger.warn('脚本变量', `SET 越界 index=${index}, value=${value}`);
+      return;
+    }
     this.state.scriptVariables[index] = value;
   }
 
   addVariable(index: number, value: number): void {
-    if (!this.isValidVariableIndex(index)) return;
+    if (!this.isValidVariableIndex(index)) {
+      logger.warn('脚本变量', `ADD 越界 index=${index}, value=${value}`);
+      return;
+    }
     this.state.scriptVariables[index] = (this.state.scriptVariables[index] ?? 0) + value;
   }
 
   subVariable(index: number, value: number): void {
-    if (!this.isValidVariableIndex(index)) return;
+    if (!this.isValidVariableIndex(index)) {
+      logger.warn('脚本变量', `SUB 越界 index=${index}, value=${value}`);
+      return;
+    }
     this.state.scriptVariables[index] = (this.state.scriptVariables[index] ?? 0) - value;
   }
 
@@ -328,6 +369,7 @@ export class Game {
   }
 
   private replaceWithMainScene(): void {
+    logger.log('场景', '进入主场景');
     this.mainSceneRuntime = new MainSceneRuntime(this);
     this.mainScene = new ScreenMainGame(this, this.mainSceneRuntime);
     this.screenStack.replaceAll(this.mainScene);
@@ -363,7 +405,10 @@ export class Game {
 
   private assertCanSaveGame(): void {
     const blockedMessage = this.getSaveBlockedMessage();
-    if (blockedMessage) throw new Error(blockedMessage);
+    if (blockedMessage) {
+      logger.warn('存档', `阻止存档: ${blockedMessage}`);
+      throw new Error(blockedMessage);
+    }
   }
 
   private restorePlayerSnapshots(snapshots: readonly SavePlayerState[]): void {

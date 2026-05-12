@@ -1,7 +1,10 @@
 import type { Game } from '@/game/game';
+import { createLogger } from '@/utils/logger';
 import type { CommandBuilder } from '../script-command-builder';
 import { COMMAND } from '../script-opcodes';
 import type { ScriptReader } from '../script-reader';
+
+const logger = createLogger('脚本命令');
 
 export function compileFlowCommand(game: Game, reader: ScriptReader, opcode: number): CommandBuilder | null {
   switch (opcode) {
@@ -72,6 +75,7 @@ function cmdIf(game: Game, reader: ScriptReader): CommandBuilder {
         game.rememberBoxEvent(boxKey, eventId);
       }
       if (game.hasEvent(eventId)) {
+        logger.log('分支', `IF 事件=${eventId} 地址=${address}`);
         process.gotoAddress(address);
       }
     },
@@ -96,7 +100,9 @@ function cmdEvent(reader: ScriptReader): CommandBuilder {
   return {
     len: 2,
     execute: process => {
-      if (!process.triggerEvent(eventId)) {
+      const triggered = process.triggerEvent(eventId);
+      if (!triggered) {
+        logger.warn('事件', `EVENT 事件=${eventId} 未触发，停止脚本`);
         process.stop();
       }
     },
@@ -111,7 +117,10 @@ function cmdIfCmp(game: Game, reader: ScriptReader): CommandBuilder {
   return {
     len: 6,
     execute: process => {
-      if (game.getVariable(index) === value) {
+      const currentValue = game.getVariable(index);
+      const matched = currentValue === value;
+      if (matched) {
+        logger.log('分支', `IFCMP 变量[${index}]=${currentValue}, 值=${value}, 地址=${address}`);
         process.gotoAddress(address);
       }
     },
@@ -150,10 +159,14 @@ function cmdGutEvent(game: Game, reader: ScriptReader): CommandBuilder {
     len: 4,
     execute: process => {
       const runtime = game.mainSceneRuntime;
-      if (!runtime) return;
+      if (!runtime) {
+        logger.warn('脚本', `GUTEVENT GUT 1:${gutId} 事件=${eventId} 已跳过: 主场景运行时缺失`);
+        return;
+      }
       process.pause();
       const child = runtime.callChapter(1, gutId, process);
       if (!child.triggerEvent(eventId)) {
+        logger.warn('脚本', `GUTEVENT 事件=${eventId} 未触发，返回父脚本`);
         runtime.returnToParentScript(child);
       }
     },
@@ -189,7 +202,10 @@ function cmdRandRate(reader: ScriptReader): CommandBuilder {
   return {
     len: 4,
     execute: process => {
-      if (Math.trunc(Math.random() * 1000) <= rate) {
+      const roll = Math.trunc(Math.random() * 1000);
+      const matched = roll <= rate;
+      if (matched) {
+        logger.log('分支', `RANDRADE 随机=${roll}, 比率=${rate}, 地址=${address}`);
         process.gotoAddress(address);
       }
     },
@@ -204,7 +220,10 @@ function cmdCallChapter(game: Game, reader: ScriptReader): CommandBuilder {
     len: 4,
     execute: process => {
       const runtime = game.mainSceneRuntime;
-      if (!runtime) return;
+      if (!runtime) {
+        logger.warn('脚本', `CALLCHAPTER GUT ${type}:${index} 已跳过: 主场景运行时缺失`);
+        return;
+      }
       process.pause();
       runtime.callChapter(type, index, process);
     },
@@ -222,8 +241,10 @@ function cmdDisCmp(game: Game, reader: ScriptReader): CommandBuilder {
     execute: process => {
       const currentValue = game.getVariable(variableIndex);
       if (currentValue < value) {
+        logger.log('分支', `DISCMP 变量[${variableIndex}]=${currentValue} < ${value}, 地址=${lessAddress}`);
         process.gotoAddress(lessAddress);
       } else if (currentValue > value) {
+        logger.log('分支', `DISCMP 变量[${variableIndex}]=${currentValue} > ${value}, 地址=${greaterAddress}`);
         process.gotoAddress(greaterAddress);
       }
     },
@@ -234,7 +255,9 @@ function cmdReturn(game: Game): CommandBuilder {
   return {
     len: 0,
     execute: process => {
-      if (!game.mainSceneRuntime?.returnToParentScript(process)) {
+      const returned = game.mainSceneRuntime?.returnToParentScript(process) ?? false;
+      if (!returned) {
+        logger.warn('脚本', 'RETURN 未返回父脚本，停止当前脚本');
         process.stop();
       }
     },
@@ -260,7 +283,8 @@ function cmdSetTo(game: Game, reader: ScriptReader): CommandBuilder {
   return {
     len: 4,
     execute: () => {
-      game.setVariable(targetIndex, game.getVariable(sourceIndex));
+      const sourceValue = game.getVariable(sourceIndex);
+      game.setVariable(targetIndex, sourceValue);
     },
   };
 }

@@ -17,6 +17,7 @@ import type { Surface } from '@/rendering/surface';
 import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
+import { createLogger } from '@/utils/logger';
 import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
 import { ScreenActorEquipment } from './screen-actor-equipment';
 import { ScreenActorState } from './screen-actor-state';
@@ -47,6 +48,7 @@ const MENU_HEIGHT = 70;
 const MENU_TEXT_LEFT = 12;
 const MENU_ITEM_TOP = 27;
 const MENU_LINE_GAP = 16;
+const logger = createLogger('菜单');
 
 // 游戏内菜单是主场景的子 screen，后续二级菜单也从这里继续 push。
 export class ScreenGameMenu extends BaseScreen {
@@ -135,7 +137,11 @@ export class ScreenGameMenu extends BaseScreen {
       return;
     }
     const player = players[0];
-    if (player) this.openMagicScreen(player);
+    if (player) {
+      this.openMagicScreen(player);
+      return;
+    }
+    logger.warn('魔法', '没有可用队伍角色');
   }
 
   private closeSubMenu(): void {
@@ -161,6 +167,7 @@ export class ScreenGameMenu extends BaseScreen {
       case '存储进度': {
         const blockedMessage = this.game.getSaveBlockedMessage();
         if (blockedMessage) {
+          logger.warn('系统', `存档被阻止: ${blockedMessage}`);
           this.showMenuMessage(blockedMessage);
           return;
         }
@@ -185,7 +192,10 @@ export class ScreenGameMenu extends BaseScreen {
 
   private openMagicScreen(player: Player): void {
     const magics = player.getAllLearnedMagics();
-    if (magics.length === 0) return;
+    if (magics.length === 0) {
+      logger.log('魔法', `${player.name} 没有可用法术`);
+      return;
+    }
     this.screenStack.push(
       new ScreenMagicList(this.game, magics, player.mp, {
         onConfirm: magic => this.confirmMagic(player, magic),
@@ -198,6 +208,7 @@ export class ScreenGameMenu extends BaseScreen {
       this.screenStack.push(new ScreenUseMagic(this.game, magic, player));
       return;
     }
+    logger.log('魔法', `${player.name} ${magic.name} 此处无法使用`);
     this.showMenuMessage('此处无法使用!');
   }
 
@@ -233,6 +244,7 @@ export class ScreenGameMenu extends BaseScreen {
 
   private useGoods(goods: BaseGoods): void {
     if (goods instanceof GoodsHiddenWeapon || goods instanceof GoodsStimulant) {
+      logger.log('物品', `${goods.name} 只能在战斗中使用`);
       this.showMenuMessage('战斗中才能使用!');
       return;
     }
@@ -248,6 +260,7 @@ export class ScreenGameMenu extends BaseScreen {
       this.screenStack.push(new ScreenTakeMedicine(this.game, goods));
       return;
     }
+    logger.log('物品', `${goods.name} 当前无法使用`);
     this.showMenuMessage('当前无法使用!');
   }
 
@@ -256,6 +269,7 @@ export class ScreenGameMenu extends BaseScreen {
     // Kotlin 版物品装备分支按可装备人数决定是否弹出角色选择。
     const players = getPartyPlayers(this.game).filter(player => goods.canPlayerUse(player.index));
     if (players.length === 0) {
+      logger.log('装备', `${goods.name} 没有可装备角色`);
       this.showMenuMessage('不能装备!');
       return;
     }
@@ -272,6 +286,7 @@ export class ScreenGameMenu extends BaseScreen {
 
   private confirmGoodsEquipmentActor(player: Player, goods: GoodsEquipment): void {
     if (player.hasEquipment(goods.type, goods.index)) {
+      logger.log('装备', `${player.name} 已装备 ${goods.name}`);
       this.showMenuMessage('已装备!');
       return;
     }
@@ -283,6 +298,7 @@ export class ScreenGameMenu extends BaseScreen {
 
   private openGoodsEquipmentScreen(player: Player, goods: GoodsEquipment): void {
     if (player.hasEquipment(goods.type, goods.index)) {
+      logger.log('装备', `${player.name} 已装备 ${goods.name}`);
       this.showMenuMessage('已装备!');
       return;
     }
@@ -292,6 +308,7 @@ export class ScreenGameMenu extends BaseScreen {
   private useDramaGoods(goods: GoodsDrama): void {
     const gut = this.game.datLib.getGut(255, goods.index);
     if (!gut) {
+      logger.warn('物品', `剧情物品缺少 GUT 255:${goods.index}`);
       this.showMenuMessage('当前无法使用!');
       return;
     }
@@ -305,9 +322,11 @@ export class ScreenGameMenu extends BaseScreen {
     const runtime = this.game.mainSceneRuntime;
     if (!runtime) throw new Error('主场景运行时不存在，无法使用土遁');
     if (!runtime.triggerEvent(255)) {
+      logger.log('物品', '土遁事件 255 未触发');
       this.showMenuMessage('当前无法使用!');
       return;
     }
+    logger.log('物品', '土遁事件 255 已触发');
     this.close();
   }
 

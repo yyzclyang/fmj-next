@@ -2,6 +2,7 @@ import type { CombatAction } from '@/combat/combat-actions';
 import { isConfusing, isSealed, isSleeping } from '@/combat/combat-effects';
 import type { CombatSession } from '@/combat/combat-runtime';
 import type { Game } from '@/game/game';
+import { createLogger } from '@/utils/logger';
 import { type CombatPrepareContext, type PreparedCombatAction, noPreparedAction } from './action-preparer-types';
 import { restoreActionGoods } from '../flow/action-utils';
 import { prepareUseItemAction, prepareThrowItemAction } from './prepare-goods';
@@ -22,6 +23,8 @@ import {
 
 export type { PreparedCombatAction } from './action-preparer-types';
 
+const logger = createLogger('战斗');
+
 interface CombatActionPreparerOptions {
   readonly game: Game;
   readonly session: CombatSession;
@@ -36,21 +39,26 @@ export class CombatActionPreparer {
   prepare(action: CombatAction): PreparedCombatAction {
     const ctx = this.context;
     if (!action.actor.isAlive) {
+      logger.log('改写', `${action.actor.name} 已倒下，跳过 ${formatActionKind(action)}`);
       restoreActionGoods(this.game, action);
       return noPreparedAction();
     }
     if (action.kind !== 'flee' && isSleeping(action.actor)) {
+      logger.log('改写', `${action.actor.name} 睡眠，${formatActionKind(action)} 改为空动作`);
       restoreActionGoods(this.game, action);
       return prepareNopAction(ctx, action.actor);
     }
     if (action.kind !== 'flee' && isConfusing(action.actor)) {
+      logger.log('改写', `${action.actor.name} 混乱，${formatActionKind(action)} 改为攻击自己`);
       restoreActionGoods(this.game, action);
       return prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target: action.actor });
     }
     if ((action.kind === 'magicAttack' || action.kind === 'magicHelp') && isSealed(action.actor)) {
+      logger.log('改写', `${action.actor.name} 封咒，回滚法术 ${action.magic.name}`);
       return prepareRolledBackMagicAction(ctx, action);
     }
     if (action.kind === 'specialMagic' && isSealed(action.actor)) {
+      logger.log('改写', `${action.actor.name} 封咒，特殊法术 ${action.magic.name} 改为普攻`);
       return prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target: action.target });
     }
     if (action.kind === 'nop') return prepareNopAction(ctx, action.actor);
@@ -89,5 +97,30 @@ export class CombatActionPreparer {
       actionInterval: this.actionInterval,
       setMessage: message => this.setMessage(message),
     };
+  }
+}
+
+function formatActionKind(action: CombatAction): string {
+  switch (action.kind) {
+    case 'attack':
+      return `普攻 ${action.target.name}`;
+    case 'attackAll':
+      return '群攻';
+    case 'defend':
+      return '防御';
+    case 'flee':
+      return '逃跑';
+    case 'throwItem':
+      return `投掷 ${action.goods.name}`;
+    case 'useItem':
+      return `使用 ${action.goods.name}`;
+    case 'magicAttack':
+    case 'magicHelp':
+    case 'specialMagic':
+      return `法术 ${action.magic.name}`;
+    case 'coop':
+      return `合体 ${action.magic?.name ?? '无'}`;
+    case 'nop':
+      return '空动作';
   }
 }

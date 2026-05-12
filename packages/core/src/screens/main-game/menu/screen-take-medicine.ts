@@ -7,6 +7,7 @@ import type { Surface } from '@/rendering/surface';
 import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
+import { createLogger } from '@/utils/logger';
 import { getPartyPlayers } from './party-utils';
 import { drawPlayerState } from './screen-actor-state';
 
@@ -18,6 +19,7 @@ const COUNT_LEFT = 13;
 const COUNT_TOP = 35;
 const HEAD_LEFT = 5;
 const HEAD_TOP = 60;
+const logger = createLogger('菜单');
 
 // 药物使用页保留在物品列表之上，方便连续给角色使用同一种物品。
 export class ScreenTakeMedicine extends BaseScreen {
@@ -70,15 +72,21 @@ export class ScreenTakeMedicine extends BaseScreen {
 
   private useMedicine(): void {
     if (this.game.getGoodsCount(this.medicine.type, this.medicine.index) <= 0) {
+      logger.log('物品', `用药关闭: ${this.medicine.name} 数量不足`);
       this.close();
       return;
     }
     const target = this.players[this.selectedPlayerIndex];
     if (!target) throw new Error('药物使用页没有可用角色');
+    const before = this.describeTargets(this.getTargetsPreview(target));
     const used =
       this.medicine instanceof GoodsMedicine && this.medicine.affectsAllTargets()
         ? this.useMedicineForAll(target)
         : this.medicine.eat(target);
+    logger.log(
+      '物品',
+      `使用 ${this.medicine.name} 目标=${target.name} 生效=${used} 前=${before} 后=${this.describeTargets(this.getTargetsPreview(target))}`
+    );
     if (used && !this.game.bag.consumeGoods(this.medicine.type, this.medicine.index, 1)) {
       throw new Error('药物使用时背包数量不足');
     }
@@ -91,5 +99,15 @@ export class ScreenTakeMedicine extends BaseScreen {
       if (player) this.medicine.eat(player);
     }
     return true;
+  }
+
+  private getTargetsPreview(selectedPlayer: Player): Player[] {
+    return this.medicine instanceof GoodsMedicine && this.medicine.affectsAllTargets()
+      ? this.players.filter(player => player.isAlive)
+      : [selectedPlayer];
+  }
+
+  private describeTargets(players: readonly Player[]): string {
+    return players.map(player => `${player.name}:${player.hp}/${player.hpMax},${player.mp}/${player.mpMax}`).join('|');
   }
 }

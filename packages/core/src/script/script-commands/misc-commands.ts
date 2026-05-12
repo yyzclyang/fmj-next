@@ -10,11 +10,11 @@ export function compileMiscCommand(game: Game, reader: ScriptReader, opcode: num
     case COMMAND.MAPEVENT:
       return cmdMapEvent(reader);
     case COMMAND.SCREENR:
-      return cmdIgnoredScreenFilter();
+      return cmdIgnoredScreenFilter('SCREENR');
     case COMMAND.SCREENS:
       return cmdSetMapScreen(game, reader);
     case COMMAND.SCREENA:
-      return cmdIgnoredScreenFilter();
+      return cmdIgnoredScreenFilter('SCREENA');
     case COMMAND.SETCONTROLID:
       return cmdSetControlPlayer(game, reader);
     case COMMAND.FACETOFACE:
@@ -56,11 +56,11 @@ function cmdMapEvent(reader: ScriptReader): CommandBuilder {
   };
 }
 
-function cmdIgnoredScreenFilter(): CommandBuilder {
+function cmdIgnoredScreenFilter(commandName: string): CommandBuilder {
   return {
     len: 1,
     // C/Kotlin 基线都没有实际屏幕滤镜，这里只消耗 opcode 参数。
-    execute: () => undefined,
+    execute: () => void commandName,
   };
 }
 

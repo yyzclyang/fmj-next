@@ -5,6 +5,7 @@ import type { Surface } from '@/rendering/surface';
 import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
+import { createLogger } from '@/utils/logger';
 import { drawTriangleCursor } from './menu-select';
 
 export const ScreenGoodsListMode = {
@@ -46,6 +47,7 @@ const DESC_LEFT = 85;
 const DESC_TOP = 85;
 const DESC_WIDTH = 210;
 const DESC_LINES = 5;
+const logger = createLogger('菜单');
 
 // 物品列表沿用 Kotlin ScreenGoodsList 的 320x192 适配布局，选择结果交给上层处理。
 export class ScreenGoodsList extends BaseScreen {
@@ -178,6 +180,7 @@ export class ScreenGoodsList extends BaseScreen {
     this.syncCursor(list);
     const item = list[this.selectedItemIndex];
     if (!item) return;
+    logger.log('物品', `${this.modeText}确认 ${item.goods.name} GRS ${item.goods.type}-${item.goods.index}`);
     this.callbacks.onConfirm(item, {
       openChildScreen: screen => this.screenStack.push(screen),
       close: () => this.close(),
@@ -185,8 +188,20 @@ export class ScreenGoodsList extends BaseScreen {
   }
 
   private cancel(): void {
+    logger.log('物品', `${this.modeText}取消`);
     this.close();
     this.callbacks.onCancel?.();
+  }
+
+  private get modeText(): string {
+    switch (this.mode) {
+      case ScreenGoodsListMode.Sale:
+        return '卖出';
+      case ScreenGoodsListMode.Buy:
+        return '买入';
+      case ScreenGoodsListMode.Use:
+        return '使用';
+    }
   }
 
   private getGoodsList(): readonly ScreenGoodsListItem[] {

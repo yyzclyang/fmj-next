@@ -3,10 +3,12 @@ import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
+import { createLogger } from '@/utils/logger';
 import { drawVerticalMenu, moveSelectionClamp } from './menu-select';
 
 const GOODS_ITEMS = ['使用', '装备', '丢弃'] as const;
 const LINE_GAP = 16;
+const logger = createLogger('菜单');
 export type GoodsMenuItem = (typeof GOODS_ITEMS)[number];
 
 export interface ScreenMenuGoodsCallbacks {
@@ -48,6 +50,7 @@ export class ScreenMenuGoods extends BaseScreen {
         this.confirm();
         return;
       case KeyCode.Cancel:
+        logger.log('物品', '物品菜单取消');
         this.callbacks.onCancel();
         return;
     }
@@ -59,6 +62,7 @@ export class ScreenMenuGoods extends BaseScreen {
 
   private confirm(): void {
     const item = GOODS_ITEMS[this.selectedIndex];
+    logger.log('物品', `物品菜单选择 ${item}`);
     this.callbacks.onConfirm(item);
   }
 }

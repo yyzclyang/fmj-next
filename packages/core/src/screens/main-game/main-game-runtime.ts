@@ -8,6 +8,7 @@ import type { ScreenOverlay } from '@/screens/screen-overlay';
 import type { ScriptOperation, ScriptProcess, ScriptProcessSnapshot } from '@/script/script-process';
 import { MAP_VIEW_TILE_HEIGHT, MAP_VIEW_TILE_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
 import { KeyCode } from '@/utils/key-code';
+import { createLogger } from '@/utils/logger';
 import { clamp } from '@/utils/math';
 import { ScreenCombat } from './combat/screen-combat';
 
@@ -70,6 +71,7 @@ const ACTIVE_POSE_INTERVAL = 100;
 const MOVIE_BASE_WIDTH = 160;
 const MOVIE_BASE_HEIGHT = 96;
 const WALL_WALKING_BOUNDARY_OFFSET = 4;
+const logger = createLogger('主场景');
 
 export interface MovieParams {
   readonly type: number;
@@ -96,6 +98,7 @@ export class MainSceneRuntime {
   private readonly actorMoveIntervals = new Map<number, number>();
 
   constructor(private readonly game: Game) {
+    logger.log('初始化', `地图=${this.game.state.mapType}:${this.game.state.mapIndex}`);
     if (this.game.state.mapType > 0 && this.game.state.mapIndex > 0) {
       this.loadMap(
         this.game.state.mapType,
@@ -170,6 +173,7 @@ export class MainSceneRuntime {
     const blockedMessage = this.getSaveBlockedMessage();
     if (blockedMessage) throw new Error(blockedMessage);
     this.syncVisiblePlayer();
+    logger.log('快照', `对象=${this.sceneObjectsValue.size}, 玩家=${this.playerActorIdValue}`);
     return {
       scriptProcess: this.scriptProcess?.createSnapshot() ?? null,
       combat: this.game.combat.createSnapshot(),
@@ -183,6 +187,10 @@ export class MainSceneRuntime {
   }
 
   restoreSnapshot(snapshot: MainSceneRuntimeSnapshot): void {
+    logger.log(
+      '恢复',
+      `对象=${snapshot.sceneObjects.length}, 玩家=${snapshot.playerActorId}, 脚本=${snapshot.scriptProcess ? '有' : '无'}`
+    );
     this.game.combat.restoreSnapshot(snapshot.combat);
     this.sceneObjectsValue.clear();
     for (const obj of snapshot.sceneObjects) {
@@ -238,6 +246,7 @@ export class MainSceneRuntime {
   }
 
   startChapter(type: number, index: number): void {
+    logger.log('脚本', `startChapter GUT ${type}:${index}`);
     this.scriptProcess?.stop();
     this.overlayValue = null;
     this.game.clearPendingBoxEvent();
@@ -250,6 +259,7 @@ export class MainSceneRuntime {
 
   startChapterAtOffset(type: number, index: number, offset: number): void {
     if (!Number.isInteger(offset) || offset < 0) throw new Error(`脚本偏移非法: ${offset}`);
+    logger.log('脚本', `startChapter GUT ${type}:${index} 偏移=${offset}`);
     this.scriptProcess?.stop();
     this.overlayValue = null;
     this.game.clearPendingBoxEvent();
@@ -265,6 +275,7 @@ export class MainSceneRuntime {
   }
 
   callChapter(type: number, index: number, parentProcess = this.scriptProcess): ScriptProcess {
+    logger.log('脚本', `callChapter GUT ${type}:${index}, 父进程=${parentProcess ? '有' : '无'}`);
     const childProcess = this.game.scriptVm.loadScript(type, index);
     childProcess.parent = parentProcess;
     this.scriptProcess = childProcess;
@@ -273,14 +284,17 @@ export class MainSceneRuntime {
   }
 
   initFight(params: CombatInitFightParams): void {
+    logger.log('遇敌', `初始化 怪物=${params.monsterTypes.filter(type => type > 0).join(',')} 背景=${params.scrb}`);
     this.game.combat.initFight(params);
   }
 
   fightEnable(): void {
+    logger.log('遇敌', '开启随机战斗');
     this.game.combat.fightEnable();
   }
 
   fightDisable(): void {
+    logger.log('遇敌', '关闭随机战斗');
     this.game.combat.fightDisable();
   }
 
@@ -288,10 +302,15 @@ export class MainSceneRuntime {
     const scene = this.game.mainScene;
     if (!scene) throw new Error('主场景不存在，无法进入战斗');
     if (this.scriptProcess !== process) throw new Error('只有当前脚本进程可以启动战斗');
+    logger.log(
+      '战斗',
+      `进入 怪物=${params.monsterTypes.filter(type => type > 0).join(',')}, 最大回合=${params.roundMax}, 胜利=${params.winAddress}, 失败=${params.lossAddress}`
+    );
     process.pause();
     const session = this.game.combat.enterFight(
       params,
       result => {
+        logger.log('战斗', `结束 结果=${result}`);
         if (result === 'win') {
           process.gotoAddress(params.winAddress);
         } else if (result === 'loss') {
@@ -300,6 +319,7 @@ export class MainSceneRuntime {
         process.start();
       },
       eventId => {
+        logger.log('战斗', `回合事件=${eventId}`);
         if (!process.triggerEvent(eventId)) return;
         process.step(0);
       }
@@ -310,27 +330,35 @@ export class MainSceneRuntime {
   startDebugCombat(params: CombatEnterFightParams): void {
     const scene = this.game.mainScene;
     if (!scene) throw new Error('主场景不存在，无法调试进入战斗');
+    logger.log('调试战斗', `进入 怪物=${params.monsterTypes.filter(type => type > 0).join(',')} 背景=${params.background.scrb}`);
     const session = this.game.combat.enterFight(
       params,
       result => {
-        console.debug(`调试战斗结束: ${result} win=${params.winAddress} loss=${params.lossAddress}`);
+        logger.log('调试战斗', `结束 结果=${result} 胜利=${params.winAddress} 失败=${params.lossAddress}`);
         if (result === 'loss') scene.showMessage('战斗失败');
       },
       eventId => {
-        console.debug(`调试战斗回合事件: ${eventId}`);
+        logger.log('调试战斗', `回合事件=${eventId}`);
       }
     );
     scene.screenStack.push(new ScreenCombat(this.game, session, { allowDebugWin: true }));
   }
 
   returnToParentScript(process: ScriptProcess): boolean {
-    if (this.scriptProcess !== process) return false;
+    if (this.scriptProcess !== process) {
+      logger.warn('脚本', 'returnToParent 已忽略: process 不是当前进程');
+      return false;
+    }
     const parent = process.parent;
     process.parent = null;
     process.stop();
-    if (!parent) return true;
+    if (!parent) {
+      logger.log('脚本', 'returnToParent 无父进程');
+      return true;
+    }
     this.scriptProcess = parent;
     parent.start();
+    logger.log('脚本', 'returnToParent 恢复父进程');
     return true;
   }
 
@@ -350,6 +378,7 @@ export class MainSceneRuntime {
     this.game.state.mapScreenX = screenX;
     this.game.state.mapScreenY = screenY;
     this.game.state.sceneName = mapRes.mapName;
+    logger.log('地图', `加载 ${type}:${index} ${mapRes.mapName || '未命名'} 屏幕=(${screenX},${screenY})`);
 
     if (this.hasPlayerValue) {
       this.setPlayerMapPosition(screenX + PLAYER_SCREEN_X, screenY + PLAYER_SCREEN_Y);
@@ -379,6 +408,7 @@ export class MainSceneRuntime {
 
   createNpc(id: number, resId: number, x: number, y: number): void {
     const npcRes = this.game.datLib.getNpc(resId);
+    if (!npcRes) logger.warn('对象', `CREATENPC 资源缺失 ARS 2-${resId}, 编号=${id}`);
     const walkingSprite = npcRes?.walkingSprite ?? null;
     const direction = npcRes?.direction ?? Direction.South;
     const step = npcRes?.step ?? 0;
@@ -404,6 +434,7 @@ export class MainSceneRuntime {
 
   createBox(id: number, resId: number, x: number, y: number): void {
     const boxRes = this.game.datLib.getSceneObj(resId);
+    if (!boxRes) logger.warn('对象', `CREATEBOX 资源缺失 ARS 4-${resId}, 编号=${id}`);
     const walkingSprite = boxRes?.walkingSprite ?? null;
     const direction = boxRes?.direction ?? Direction.North;
     const state = boxRes?.state ?? CharacterState.Stop;
@@ -466,7 +497,10 @@ export class MainSceneRuntime {
     }
 
     const obj = this.sceneObjectsValue.get(id);
-    if (!obj) return;
+    if (!obj) {
+      this.warnMissingActor('MOVE', id);
+      return;
+    }
     obj.x = x;
     obj.y = y;
   }
@@ -497,7 +531,10 @@ export class MainSceneRuntime {
 
   setActorEvent(actorId: number, eventId: number): void {
     const obj = this.sceneObjectsValue.get(actorId);
-    if (!obj) return;
+    if (!obj) {
+      this.warnMissingActor('ACTOREVENT', actorId);
+      return;
+    }
     obj.eventId = eventId;
   }
 
@@ -512,7 +549,14 @@ export class MainSceneRuntime {
   faceActorTowardActor(actorId: number, targetActorId: number): void {
     const actor = this.getActorPosition(actorId);
     const target = this.getActorPosition(targetActorId);
-    if (!actor || !target) return;
+    if (!actor) {
+      this.warnMissingActor('FACETOFACE 来源', actorId);
+      return;
+    }
+    if (!target) {
+      this.warnMissingActor('FACETOFACE 目标', targetActorId);
+      return;
+    }
     if (actor.x === target.x && actor.y === target.y) return;
 
     const facing = getFacingToward(actor.x, actor.y, target.x, target.y);
@@ -521,7 +565,10 @@ export class MainSceneRuntime {
 
   setNpcMoveMode(id: number, state: number): void {
     const obj = this.sceneObjectsValue.get(id);
-    if (!obj) return;
+    if (!obj) {
+      this.warnMissingActor('NPCMOVEMOD', id);
+      return;
+    }
     obj.state = toCharacterState(state);
     obj.stateElapsed = 0;
     obj.pauseRemaining = obj.delay * 100;
@@ -536,14 +583,20 @@ export class MainSceneRuntime {
     }
 
     const obj = this.sceneObjectsValue.get(id);
-    if (!obj) return;
+    if (!obj) {
+      this.warnMissingActor('NPCSTEP', id);
+      return;
+    }
     obj.direction = facing;
     obj.step = step;
   }
 
   createActorPoseOperation(id: number, facing: Facing, step: number): ScriptOperation | null {
     const actor = this.getActorPosition(id);
-    if (!actor) return null;
+    if (!actor) {
+      this.warnMissingActor('NPCSTEP', id);
+      return null;
+    }
     this.setActorPose(id, facing, step);
     if (id !== 0 && !this.isActorVisible(id)) return null;
 
@@ -559,7 +612,10 @@ export class MainSceneRuntime {
 
   playMovie(params: MovieParams, process: ScriptProcess): void {
     const movieAnimation = this.game.datLib.getSrs(params.type, params.index);
-    if (!movieAnimation) return;
+    if (!movieAnimation) {
+      logger.warn('动画', `MOVIE 资源缺失 SRS ${params.type}:${params.index}`);
+      return;
+    }
 
     movieAnimation.setIteratorNum(5);
     movieAnimation.start();
@@ -596,7 +652,10 @@ export class MainSceneRuntime {
 
   openBox(id: number): void {
     const obj = this.sceneObjectsValue.get(id);
-    if (!obj || obj.kind !== 'box') return;
+    if (!obj || obj.kind !== 'box') {
+      logger.warn('对象', `BOXOPEN 目标不是箱子，编号=${id}`);
+      return;
+    }
     obj.step = Math.max(obj.step, 1);
   }
 
@@ -685,7 +744,14 @@ export class MainSceneRuntime {
       this.tryStartRandomCombat();
       return;
     }
-    this.scriptProcess?.triggerEvent(eventId + 40);
+    const scriptEventId = eventId + 40;
+    const triggered = this.scriptProcess?.triggerEvent(scriptEventId) ?? false;
+    const message = `坐标=(${x},${y}) 地图事件=${eventId} 脚本事件=${scriptEventId}`;
+    if (triggered) {
+      logger.log('地图事件', message);
+    } else {
+      logger.warn('地图事件', `${message} 未触发`);
+    }
   }
 
   private tryStartRandomCombat(): void {
@@ -707,14 +773,25 @@ export class MainSceneRuntime {
     const obj = this.getSceneObjectAt(pos.x, pos.y);
     if (obj) {
       if (obj.kind === 'box') {
-        if (this.game.isBoxCollected(this.getBoxEventKey(obj.x, obj.y, obj.resId))) return;
+        if (this.game.isBoxCollected(this.getBoxEventKey(obj.x, obj.y, obj.resId))) {
+          logger.log('对象事件', `箱子已收集，编号=${obj.id}, 事件=${obj.eventId}`);
+          return;
+        }
         this.game.setPendingBoxEvent(this.getBoxEventKey(obj.x, obj.y, obj.resId));
       } else {
         this.game.clearPendingBoxEvent();
       }
+      if (obj.eventId <= 0) {
+        logger.log('对象事件', `${obj.kind} 编号=${obj.id} 无事件`);
+        this.game.clearPendingBoxEvent();
+        return;
+      }
       const triggered = this.scriptProcess?.triggerEvent(obj.eventId) ?? false;
       if (!triggered) {
+        logger.warn('对象事件', `${obj.kind} 编号=${obj.id} 事件=${obj.eventId} 未触发`);
         this.game.clearPendingBoxEvent();
+      } else {
+        logger.log('对象事件', `${obj.kind} 编号=${obj.id} 事件=${obj.eventId}`);
       }
       return;
     }
@@ -1055,6 +1132,10 @@ export class MainSceneRuntime {
     const screenX = pos.x - this.game.state.mapScreenX;
     const screenY = pos.y - this.game.state.mapScreenY;
     return screenX >= 0 && screenX < MAP_VIEW_TILE_WIDTH && screenY >= 0 && screenY < MAP_VIEW_TILE_HEIGHT;
+  }
+
+  private warnMissingActor(action: string, id: number): void {
+    logger.warn('对象', `${action} 目标不存在，编号=${id}`);
   }
 }
 

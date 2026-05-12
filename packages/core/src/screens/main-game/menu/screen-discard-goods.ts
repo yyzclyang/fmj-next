@@ -5,6 +5,7 @@ import type { Surface } from '@/rendering/surface';
 import { drawSelectedText, drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
+import { createLogger } from '@/utils/logger';
 
 const FRAME_LEFT = 25;
 const FRAME_TOP = 35;
@@ -14,6 +15,7 @@ const TEXT_LEFT = 28;
 const FIRST_OPTION_LEFT = 28;
 const SECOND_OPTION_LEFT = 95;
 const OPTION_TOP = 70;
+const logger = createLogger('菜单');
 
 // 丢弃确认框按 Kotlin 保留“全部丢弃 / 丢弃1个”两个动作。
 export class ScreenDiscardGoods extends BaseScreen {
@@ -62,12 +64,14 @@ export class ScreenDiscardGoods extends BaseScreen {
       return;
     }
     if (this.selectedIndex === 0) {
+      logger.log('物品', `丢弃全部 ${this.goods.name} GRS ${this.goods.type}-${this.goods.index} 数量=${count}`);
       if (!this.game.bag.consumeGoods(this.goods.type, this.goods.index, count)) {
         throw new Error('全部丢弃时背包数量不足');
       }
       this.close();
       return;
     }
+    logger.log('物品', `丢弃1个 ${this.goods.name} GRS ${this.goods.type}-${this.goods.index}`);
     if (!this.game.bag.consumeGoods(this.goods.type, this.goods.index, 1)) {
       throw new Error('丢弃单个物品时背包数量不足');
     }

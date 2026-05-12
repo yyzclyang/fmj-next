@@ -4,8 +4,11 @@ import type { Surface } from '@/rendering/surface';
 import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
+import { createLogger } from '@/utils/logger';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from '../menu/screen-goods-list';
 import { drawTradePanel, showTradeMessage, TRADE_PANEL_TEXT_LEFT } from './ui-utils';
+
+const logger = createLogger('交易');
 
 // BUY 指令先打开商品列表，数量确认页只在确认时提交背包和金钱变化。
 export function createScriptBuyGoodsScreen(
@@ -16,6 +19,7 @@ export function createScriptBuyGoodsScreen(
   return new ScreenGoodsList(game, items, ScreenGoodsListMode.Buy, {
     onConfirm: (item, actions) => {
       if (game.state.money < item.goods.buyPrice) {
+        logger.log('买入', `金钱不足 ${item.goods.name} 价格=${item.goods.buyPrice} 金钱=${game.state.money}`);
         showTradeMessage(game, '金钱不足!');
         return;
       }
@@ -83,9 +87,13 @@ class BuyGoodsCountScreen extends BaseScreen {
   }
 
   private confirm(): void {
+    const beforeMoney = this.game.state.money;
     this.game.setMoney(this.money);
     if (this.buyCount > 0 && !this.game.bag.addGoods(this.goods.type, this.goods.index, this.buyCount)) {
       throw new Error('买入物品失败');
+    }
+    if (this.buyCount > 0) {
+      logger.log('买入', `${this.goods.name} x${this.buyCount} 金钱=${beforeMoney}->${this.money}`);
     }
     this.close();
   }

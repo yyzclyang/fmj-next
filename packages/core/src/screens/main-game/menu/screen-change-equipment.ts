@@ -6,6 +6,7 @@ import { COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
+import { createLogger } from '@/utils/logger';
 import { drawTriangleCursor } from './menu-select';
 import { drawPlayerState } from './screen-actor-state';
 
@@ -16,6 +17,7 @@ const CURSOR_LEFT = 1;
 const CURSOR_TOP = 10;
 const HEAD_LEFT = 5;
 const HEAD_TOP = 60;
+const logger = createLogger('菜单');
 
 // 换装页临时切换新旧装备，让属性面板实时反映确认前的选择。
 export class ScreenChangeEquipment extends BaseScreen {
@@ -82,6 +84,7 @@ export class ScreenChangeEquipment extends BaseScreen {
   }
 
   private confirm(): void {
+    const selected = this.goodsList[this.selectedIndex];
     if (this.selectedIndex === this.goodsList.length - 1) {
       const goods = this.goodsList[this.goodsList.length - 1];
       if (!goods || !this.game.bag.consumeGoods(goods.type, goods.index, 1)) {
@@ -92,11 +95,16 @@ export class ScreenChangeEquipment extends BaseScreen {
         throw new Error('确认换装时旧装备无法放回背包');
       }
     }
+    logger.log(
+      '装备',
+      `${this.player.name} 确认装备 ${selected?.name ?? '未知装备'} 槽位=${this.equippedSlotIndex ?? '未知'}`
+    );
     this.finished = true;
     this.close();
   }
 
   private cancel(): void {
+    logger.log('装备', `${this.player.name} 取消换装`);
     this.restoreOriginalEquipment();
     this.finished = true;
     this.close();

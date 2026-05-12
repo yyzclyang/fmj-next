@@ -1,9 +1,12 @@
 import type { Game } from '@/game/game';
 import { SaveLoadOperation, ScreenSaveLoadGame } from '@/screens/main-game/menu/screen-save-load-game';
 import { ScriptChoiceScreen, ScriptMenuScreen } from '@/screens/main-game/script/choice-menu-screen';
+import { createLogger } from '@/utils/logger';
 import type { CommandBuilder } from '../script-command-builder';
 import { COMMAND } from '../script-opcodes';
 import type { ScriptReader } from '../script-reader';
+
+const logger = createLogger('脚本命令');
 
 export function compileUiCommand(game: Game, reader: ScriptReader, opcode: number): CommandBuilder | null {
   switch (opcode) {
@@ -71,6 +74,7 @@ function cmdChoice(game: Game, reader: ScriptReader): CommandBuilder {
       process.pause();
       scene.screenStack.push(
         new ScriptChoiceScreen(game, firstChoice, secondChoice, choiceIndex => {
+          logger.log('界面', `CHOICE 选择=${choiceIndex}`);
           if (choiceIndex === 1) process.gotoAddress(address);
           process.start();
         })
@@ -128,6 +132,7 @@ function cmdMenu(game: Game, reader: ScriptReader): CommandBuilder {
       process.pause();
       scene.screenStack.push(
         new ScriptMenuScreen(game, items, menuValue => {
+          logger.log('界面', `MENU 选择=${menuValue} -> 变量[${variableIndex}]`);
           game.setVariable(variableIndex, menuValue);
           process.start();
         })
@@ -170,10 +175,12 @@ function cmdGameSave(game: Game): CommandBuilder {
       const scene = game.mainScene;
       if (!scene) throw new Error('主场景不存在，无法打开脚本存档页');
       if (game.state.disableSave) {
+        logger.warn('存档', 'GAMESAVE 已阻止: 当前不能存档');
         scene.showMessage('当前不能存档');
         return;
       }
       if (process.parent) {
+        logger.warn('存档', 'GAMESAVE 已阻止: 副本中不能存档');
         scene.showMessage('副本中不能存档');
         return;
       }

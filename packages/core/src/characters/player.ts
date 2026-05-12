@@ -2,7 +2,7 @@ import { FightingCharacter, type FightingCharacterData } from './fighting-charac
 import { EquipmentGoodsType, GoodsDecoration, type GoodsEquipment, GoodsWeapon } from '@/goods';
 import type { ResImage } from '@/lib/res-image';
 import type { BaseMagic } from '@/magic';
-import { toUint8 } from '@/shared/integer';
+import { toUint8 } from '@/utils/integer';
 import type { ResLevelUpChain } from './res-level-up-chain';
 
 const PlayerReadableScriptAttribute = {

@@ -1,6 +1,12 @@
 import type { FightingCharacter, Monster, Player } from '@/characters';
 import type { AttackAction, CombatAction, CoopAction } from '@/combat/combat-actions';
 import {
+  captureCombatLogStates,
+  logCombatAction,
+  logCombatFighterEffects,
+  logCombatMiss,
+} from '@/combat/combat-log';
+import {
   applyMagicAttack,
   applyOnHitStatuses,
   calcPhysicalDamage,
@@ -27,7 +33,7 @@ export function prepareDefendAction(
   action: CombatAction & { kind: 'defend' }
 ): PreparedCombatAction {
   action.actor.fightingSprite!.currentFrame = 9;
-  console.log(`[战斗动作] ${action.actor.name}防御`);
+  logCombatAction(`${action.actor.name}防御`);
   return preparedAction(action, new StaticCombatAnimation(ctx.actionInterval));
 }
 
@@ -35,7 +41,7 @@ export function prepareFleeAction(
   ctx: CombatPrepareContext,
   action: CombatAction & { kind: 'flee' }
 ): PreparedCombatAction {
-  console.log(`[战斗动作] ${action.actor.name}${action.succeed ? '逃跑成功' : '逃跑失败'}`);
+  logCombatAction(`${action.actor.name}${action.succeed ? '逃跑成功' : '逃跑失败'}`);
   return preparedAction(action, new FleeCombatAnimation(action.actor, action.succeed));
 }
 
@@ -48,6 +54,7 @@ export function prepareAttackAction(ctx: CombatPrepareContext, action: AttackAct
     action.target = nextTarget;
   }
   const before = captureFighterStates([action.target]);
+  const logBefore = captureCombatLogStates([action.target]);
   const missed = isMissed(ctx.game, action.actor, action.target, action.actor !== action.target);
   const targetIsPlayer = ctx.session.players.includes(action.target as Player);
   const targetIsDefending = targetIsPlayer && ctx.session.isPlayerDefending(action.target as Player);
@@ -65,7 +72,12 @@ export function prepareAttackAction(ctx: CombatPrepareContext, action: AttackAct
       : createRaiseAnimations(ctx.game, before, [action.target]),
     targetIsPlayer: ctx.session.players.includes(action.target as Player),
   });
-  console.log(`[战斗伤害] ${action.actor.name}攻击${action.target.name} ${missed ? 'Miss' : damage}`);
+  logCombatAction(`${action.actor.name}攻击${action.target.name}`);
+  if (missed) {
+    logCombatMiss(action.actor, action.target);
+  } else {
+    logCombatFighterEffects(`${action.actor.name}攻击${action.target.name}`, logBefore, [action.target]);
+  }
   return preparedAction(action, animation);
 }
 
@@ -76,10 +88,13 @@ export function prepareAttackAllAction(
   const targets = action.targets.filter(target => target.isAlive);
   if (targets.length === 0) return noPreparedAction();
   const before = captureFighterStates(targets);
+  const logBefore = captureCombatLogStates(targets);
   const misses: CombatActionAnimation[] = [];
+  const missedTargets: FightingCharacter[] = [];
   for (const target of targets) {
     if (isMissed(ctx.game, action.actor, target)) {
       misses.push(createMissAnimation(ctx.game, target));
+      missedTargets.push(target);
       continue;
     }
     const targetIsPlayer = ctx.session.players.includes(target as Player);
@@ -99,7 +114,9 @@ export function prepareAttackAllAction(
     raiseAnimations: [...createRaiseAnimations(ctx.game, before, targets), ...misses],
     targetIsPlayer: ctx.session.players.includes(targets[0] as Player),
   });
-  console.log(`[战斗动作] ${action.actor.name}攻击全体`);
+  logCombatAction(`${action.actor.name}攻击全体`);
+  for (const target of missedTargets) logCombatMiss(action.actor, target);
+  logCombatFighterEffects(`${action.actor.name}攻击全体`, logBefore, targets);
   return preparedAction(action, animation);
 }
 
@@ -111,27 +128,33 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
     : action.targets.filter(monster => monster.isAlive);
   if (targets.length === 0) return noPreparedAction();
   const before = captureFighterStates([...actors, ...targets]);
+  const effectFighters = [...targets, ...actors];
+  const logBefore = captureCombatLogStates(effectFighters);
   const misses: CombatActionAnimation[] = [];
+  const missedPairs: Array<{ actor: FightingCharacter; target: FightingCharacter }> = [];
+  const actionLabel = action.magic ? `${actors[0]!.name}等施展${action.magic.name}` : `${actors[0]!.name}等合击`;
   if (action.magic) {
     for (const actor of actors) {
       if (!spendMagicMp(actor, action.magic)) {
         ctx.setMessage('真气不足');
+        logCombatAction(`${actor.name}施展${action.magic.name}失败: 真气不足`);
         continue;
       }
       for (const target of targets) {
         if (isMissed(ctx.game, actor, target)) {
           misses.push(createMissAnimation(ctx.game, target));
+          missedPairs.push({ actor, target });
           continue;
         }
         applyMagicAttack(actor, action.magic, target, ctx.game.damageFormula);
       }
     }
-    console.log(`[战斗动作] ${actors[0]!.name}等施展${action.magic.name}`);
   } else {
     for (const actor of actors) {
       for (const target of targets) {
         if (isMissed(ctx.game, actor, target)) {
           misses.push(createMissAnimation(ctx.game, target));
+          missedPairs.push({ actor, target });
           continue;
         }
         const damage = Math.trunc(calcPhysicalDamage(actor, target, false) * 1.6);
@@ -139,8 +162,10 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
         applyOnHitStatuses(actor, target);
       }
     }
-    console.log(`[战斗动作] ${actors[0]!.name}等合击`);
   }
+  logCombatAction(actionLabel);
+  for (const item of missedPairs) logCombatMiss(item.actor, item.target, action.magic ? `施展${action.magic.name}攻击` : '合击');
+  logCombatFighterEffects(actionLabel, logBefore, effectFighters);
   return preparedAction(
     action,
     new CoopCombatAnimation({
@@ -154,7 +179,7 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
 }
 
 export function prepareNopAction(ctx: CombatPrepareContext, actor: FightingCharacter): PreparedCombatAction {
-  console.log(`[战斗动作] ${actor.name}无法行动`);
+  logCombatAction(`${actor.name}无法行动`);
   return preparedAction(
     { kind: 'nop', actor: actor as Player | Monster },
     new StaticCombatAnimation(ctx.actionInterval)

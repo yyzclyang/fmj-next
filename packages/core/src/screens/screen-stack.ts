@@ -1,5 +1,5 @@
 import type { Surface } from '@/rendering/surface';
-import type { KeyCode } from '@/shared/key-code';
+import type { KeyCode } from '@/utils/key-code';
 import type { BaseScreen } from './base-screen';
 
 export class ScreenStack {

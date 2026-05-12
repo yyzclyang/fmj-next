@@ -6,7 +6,7 @@ import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
 import { drawText, getTextWidth } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
-import { KeyCode } from '@/shared/key-code';
+import { KeyCode } from '@/utils/key-code';
 import { drawTriangleCursor } from './menu-select';
 import { getPartyPlayers } from './party-utils';
 

@@ -12,7 +12,7 @@ import type { Monster, Player } from '@/characters';
 import type { Game } from '@/game/game';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
-import { KeyCode } from '@/shared/key-code';
+import { KeyCode } from '@/utils/key-code';
 import { CombatActionPreparer } from './prepare/action-preparer';
 import { CombatActionQueue, type CombatActionQueueResult } from './flow/action-queue';
 import { useGoodsFromBag } from './flow/action-utils';

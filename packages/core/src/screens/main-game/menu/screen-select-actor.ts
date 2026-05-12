@@ -3,7 +3,7 @@ import type { Game } from '@/game/game';
 import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
-import { KeyCode } from '@/shared/key-code';
+import { KeyCode } from '@/utils/key-code';
 import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
 
 const LINE_GAP = 16;

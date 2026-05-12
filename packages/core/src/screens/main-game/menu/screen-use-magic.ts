@@ -7,7 +7,7 @@ import { COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
 import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
-import { KeyCode } from '@/shared/key-code';
+import { KeyCode } from '@/utils/key-code';
 import { getPartyPlayers } from './party-utils';
 import { drawPlayerState } from './screen-actor-state';
 

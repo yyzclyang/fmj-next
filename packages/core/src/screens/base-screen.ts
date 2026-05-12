@@ -1,6 +1,6 @@
 import type { Game } from '@/game/game';
 import type { Surface } from '@/rendering/surface';
-import type { KeyCode } from '@/shared/key-code';
+import type { KeyCode } from '@/utils/key-code';
 import { ScreenStack } from './screen-stack';
 
 export abstract class BaseScreen {

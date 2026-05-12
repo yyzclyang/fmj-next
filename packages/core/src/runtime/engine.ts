@@ -2,8 +2,8 @@ import { createDebugApi } from '@/debug/debug';
 import { Game } from '@/game/game';
 import type { GameEngineOptions } from '@/game/game-engine-options';
 import { createPixelBuffer, type PixelBuffer } from '@/rendering/pixel-buffer';
-import { FIXED_STEP_MS, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
-import { KeyCode } from '@/shared/key-code';
+import { FIXED_STEP_MS, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
+import { KeyCode } from '@/utils/key-code';
 import type { EngineHost } from './engine-host';
 
 export interface EngineBootOptions {

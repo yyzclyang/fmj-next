@@ -3,7 +3,7 @@ import type { Game } from '@/game/game';
 import type { Surface } from '@/rendering/surface';
 import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
-import { KeyCode } from '@/shared/key-code';
+import { KeyCode } from '@/utils/key-code';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from '../menu/screen-goods-list';
 import { drawTradePanel, showTradeMessage, TRADE_PANEL_TEXT_LEFT } from './ui-utils';
 

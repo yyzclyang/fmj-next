@@ -3,8 +3,8 @@ import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { drawSelectedText, drawText, getTextWidth, TEXT_LINE_HEIGHT } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
-import { KeyCode } from '@/shared/key-code';
+import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
+import { KeyCode } from '@/utils/key-code';
 
 const FRAME_PADDING_X = 3;
 const FRAME_PADDING_Y = 3;

@@ -14,7 +14,7 @@ import {
   TIP_TEXT_TOP_PADDING,
   TIP_TEXT_WIDTH,
 } from '../ui-utils';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
+import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
 
 const DIALOG_LEFT = 18;
 const DIALOG_WIDTH = 284;

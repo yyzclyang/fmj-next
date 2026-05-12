@@ -2,7 +2,7 @@ import type { Game } from '@/game/game';
 import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
-import { KeyCode } from '@/shared/key-code';
+import { KeyCode } from '@/utils/key-code';
 import { drawVerticalMenu } from './menu-select';
 
 const PROPERTY_ITEMS = ['状态', '穿戴'] as const;

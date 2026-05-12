@@ -5,8 +5,8 @@ import { COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
 import { drawText, TEXT_LINE_HEIGHT, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
-import { KeyCode } from '@/shared/key-code';
+import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
+import { KeyCode } from '@/utils/key-code';
 
 interface GutState {
   topImage: ResImage | null;

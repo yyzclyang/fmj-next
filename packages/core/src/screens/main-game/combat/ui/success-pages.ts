@@ -5,7 +5,7 @@ import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
 import { drawText, getTextWidth, TEXT_LINE_HEIGHT } from '@/rendering/text-render';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
+import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
 import { drawSmallNum } from './render-utils';
 
 export interface SuccessPage {

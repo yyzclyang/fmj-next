@@ -1,4 +1,5 @@
 import type { ThrowItemAction, UseItemAction } from '@/combat/combat-actions';
+import { captureCombatLogStates, logCombatAction, logCombatFighterEffects } from '@/combat/combat-log';
 import { applyThrownGoods } from '@/combat/combat-effects';
 import { GoodsMedicineLife } from '@/goods';
 import { CastCombatAnimation } from '../animations/cast-animation';
@@ -23,6 +24,7 @@ export function prepareThrowItemAction(ctx: CombatPrepareContext, action: ThrowI
   }
 
   const before = captureFighterStates(finalTargets);
+  const logBefore = captureCombatLogStates(finalTargets);
   for (const target of finalTargets) {
     applyThrownGoods(action.goods, target);
   }
@@ -34,7 +36,9 @@ export function prepareThrowItemAction(ctx: CombatPrepareContext, action: ThrowI
     raiseAnimations: createRaiseAnimations(ctx.game, before, finalTargets),
     hitTargets: true,
   });
-  console.log(`[战斗动作] ${action.actor.name}投掷${action.goods.name}`);
+  const actionLabel = `${action.actor.name}投掷${action.goods.name}`;
+  logCombatAction(actionLabel);
+  logCombatFighterEffects(actionLabel, logBefore, finalTargets);
   return preparedAction(action, animation);
 }
 
@@ -51,6 +55,7 @@ export function prepareUseItemAction(ctx: CombatPrepareContext, action: UseItemA
   }
 
   const before = captureFighterStates(finalTargets);
+  const logBefore = captureCombatLogStates(finalTargets);
   for (const target of finalTargets) {
     action.goods.eat(target);
   }
@@ -62,6 +67,8 @@ export function prepareUseItemAction(ctx: CombatPrepareContext, action: UseItemA
     raiseAnimations: createRaiseAnimations(ctx.game, before, finalTargets),
     hitTargets: false,
   });
-  console.log(`[战斗动作] ${action.actor.name}使用${action.goods.name}`);
+  const actionLabel = `${action.actor.name}使用${action.goods.name}`;
+  logCombatAction(actionLabel);
+  logCombatFighterEffects(actionLabel, logBefore, finalTargets);
   return preparedAction(action, animation);
 }

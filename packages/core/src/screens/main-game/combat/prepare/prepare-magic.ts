@@ -1,4 +1,11 @@
 import type { MagicAttackAction, MagicHelpAction, SpecialMagicAction } from '@/combat/combat-actions';
+import {
+  captureCombatLogStates,
+  logCombatAction,
+  logCombatEffect,
+  logCombatFighterEffects,
+  logCombatMiss,
+} from '@/combat/combat-log';
 import { applyMagicAttack, applyMagicHelp, spendMagicMp } from '@/combat/combat-effects';
 import type { Player } from '@/characters';
 import { MagicAuxiliary } from '@/magic';
@@ -44,17 +51,21 @@ export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: Magi
   }
   if (finalTargets.length === 0) return noPreparedAction();
   const before = captureFighterStates([action.actor, ...finalTargets]);
+  const logBefore = captureCombatLogStates([action.actor, ...finalTargets]);
   const misses: CombatActionAnimation[] = [];
+  const missedTargets: Array<(typeof finalTargets)[number]> = [];
   const singleMissed =
     !action.targetAll && finalTargets.length === 1 && isMissed(ctx.game, action.actor, finalTargets[0]!);
   if (!singleMissed && !spendMagicMp(action.actor, action.magic)) {
     ctx.setMessage('真气不足');
+    logCombatAction(`${action.actor.name}施展${action.magic.name}失败: 真气不足`);
     return preparedAction(action, new StaticCombatAnimation(ctx.actionInterval));
   }
 
   for (const target of finalTargets) {
     if (singleMissed || (action.targetAll && isMissed(ctx.game, action.actor, target))) {
       misses.push(createMissAnimation(ctx.game, target));
+      missedTargets.push(target);
       continue;
     }
     applyMagicAttack(action.actor, action.magic, target, ctx.game.damageFormula, isPlayerDefending(ctx, target));
@@ -67,7 +78,10 @@ export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: Magi
     raiseAnimations: [...createRaiseAnimations(ctx.game, before, [...finalTargets, action.actor]), ...misses],
     hitTargets: true,
   });
-  console.log(`[战斗动作] ${action.actor.name}施展${action.magic.name}`);
+  const actionLabel = `${action.actor.name}施展${action.magic.name}`;
+  logCombatAction(actionLabel);
+  for (const target of missedTargets) logCombatMiss(action.actor, target, `施展${action.magic.name}攻击`);
+  logCombatFighterEffects(actionLabel, logBefore, [action.actor, ...finalTargets]);
   return preparedAction(action, animation);
 }
 
@@ -80,8 +94,10 @@ export function prepareMagicHelpAction(ctx: CombatPrepareContext, action: MagicH
     finalTargets = replacement ? [replacement] : [];
   }
   if (finalTargets.length === 0) return noPreparedAction();
+  const logBefore = captureCombatLogStates([action.actor, ...finalTargets]);
   if (!spendMagicMp(action.actor, action.magic)) {
     ctx.setMessage('真气不足');
+    logCombatAction(`${action.actor.name}施展${action.magic.name}失败: 真气不足`);
     return preparedAction(action, new StaticCombatAnimation(ctx.actionInterval));
   }
 
@@ -97,7 +113,9 @@ export function prepareMagicHelpAction(ctx: CombatPrepareContext, action: MagicH
     raiseAnimations: createRaiseAnimations(ctx.game, before, finalTargets),
     hitTargets: false,
   });
-  console.log(`[战斗动作] ${action.actor.name}施展${action.magic.name}`);
+  const actionLabel = `${action.actor.name}施展${action.magic.name}`;
+  logCombatAction(actionLabel);
+  logCombatFighterEffects(actionLabel, logBefore, [action.actor, ...finalTargets]);
   return preparedAction(action, animation);
 }
 
@@ -108,12 +126,14 @@ export function prepareSpecialMagicAction(ctx: CombatPrepareContext, action: Spe
     action.target = target;
   }
   const steal = action.target.tryStealGoods();
+  logCombatAction(`${action.actor.name}施展${action.magic.name}`);
   if (steal) {
     const goods = ctx.game.bag.addGoods(steal.type, steal.index, 1);
     if (!goods) throw new Error(`战斗偷取物品不存在: GRS ${steal.type}-${steal.index}`);
     ctx.setMessage(`获得${goods.name}`);
+    logCombatEffect(`${action.actor.name}从${action.target.name}获得${goods.name}`);
   } else {
-    console.log(`[战斗动作] ${action.actor.name}施展${action.magic.name}`);
+    logCombatEffect(`${action.actor.name}偷取${action.target.name}失败`);
   }
   return preparedAction(
     action,

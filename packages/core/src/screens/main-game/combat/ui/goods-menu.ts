@@ -4,6 +4,7 @@ import {
   type CombatMedicineGoods,
   type CombatThrowableGoods,
 } from '@/combat/combat-actions';
+import { logCombatMenu } from '@/combat/combat-log';
 import type { Player } from '@/characters';
 import type { Game } from '@/game/game';
 import { GoodsEquipment, GoodsHiddenWeapon, GoodsWeapon } from '@/goods';
@@ -45,7 +46,7 @@ export class CombatGoodsMenu {
   openGoodsList(kind: 'throw' | 'use'): void {
     const list = this.getCombatGoodsList(kind);
     if (list.length === 0) {
-      console.log(`[战斗菜单] ${kind === 'throw' ? '没有可投掷道具' : '没有可用道具'}`);
+      logCombatMenu(kind === 'throw' ? '没有可投掷道具' : '没有可用道具');
       return;
     }
     this.screenStack.push(

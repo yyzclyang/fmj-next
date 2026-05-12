@@ -2,7 +2,7 @@ import type { Game } from '@/game/game';
 import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
-import { KeyCode } from '@/shared/key-code';
+import { KeyCode } from '@/utils/key-code';
 import { drawVerticalMenu, moveSelectionClamp } from './menu-select';
 
 const GOODS_ITEMS = ['使用', '装备', '丢弃'] as const;

@@ -7,8 +7,15 @@ import { COLOR_BLACK, type Color } from '@/rendering/color';
 import { createPixelBuffer, fillPixelBuffer } from '@/rendering/pixel-buffer';
 import { Surface } from '@/rendering/surface';
 import { ResourceType } from '@/lib/resource-utils';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
+import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
 import type { CombatAction } from './combat-actions';
+import {
+  captureCombatLogStates,
+  logCombatFighterEffects,
+  logCombatFinish,
+  logCombatSettlement,
+  logCombatStart,
+} from './combat-log';
 
 export interface CombatBackgroundIds {
   readonly scrb: number;
@@ -266,14 +273,18 @@ export class CombatRuntime {
     );
     this.prepareFighters(session);
     this.activeSession = session;
+    logCombatStart(params, isRandomFight, session.players, session.monsters);
     return session;
   }
 
   finish(session: CombatSession, result: CombatFinishResult): void {
     if (this.activeSession !== session) throw new Error('结束了不属于当前运行时的战斗');
     if (result === 'win') session.settleWin();
+    logCombatFinish(result);
+    const recoverBefore = captureCombatLogStates(session.players);
     this.activeSession = null;
     this.recoverPlayersAfterFight(session.players);
+    logCombatFighterEffects('战斗结束恢复', recoverBefore, session.players);
     session.notifyFinish(result);
   }
 
@@ -366,12 +377,14 @@ export class CombatRuntime {
     const exp = session.monsters.reduce((sum, monster) => sum + monster.exp, 0);
     const money = session.monsters.reduce((sum, monster) => sum + monster.money, 0);
     this.game.state.money += money;
-    return {
+    const settlement = {
       exp,
       money,
       goods: this.applyDrops(session),
       levelUps: this.applyExperience(session.players, exp),
     };
+    logCombatSettlement(settlement);
+    return settlement;
   }
 
   private applyExperience(players: readonly Player[], exp: number): CombatLevelUpAward[] {

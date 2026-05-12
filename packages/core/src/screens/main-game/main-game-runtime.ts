@@ -6,9 +6,9 @@ import type { ResMap } from '@/lib/res-map';
 import { ResourceType } from '@/lib/resource-utils';
 import type { ScreenOverlay } from '@/screens/screen-overlay';
 import type { ScriptOperation, ScriptProcess, ScriptProcessSnapshot } from '@/script/script-process';
-import { MAP_VIEW_TILE_HEIGHT, MAP_VIEW_TILE_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
-import { KeyCode } from '@/shared/key-code';
-import { clamp } from '@/shared/math';
+import { MAP_VIEW_TILE_HEIGHT, MAP_VIEW_TILE_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
+import { KeyCode } from '@/utils/key-code';
+import { clamp } from '@/utils/math';
 import { ScreenCombat } from './combat/screen-combat';
 
 export type Facing = Direction;

@@ -1,3 +1,5 @@
+import { createLogger } from '@/utils/logger';
+
 export interface ScriptCommand {
   readonly opcode: number;
   readonly offset: number;
@@ -19,6 +21,7 @@ export interface ScriptProcessSnapshot {
 }
 
 const MAX_STEPS_PER_TICK = 2048;
+const logger = createLogger('脚本');
 
 // 最小脚本进程只负责顺序执行、事件跳转和地址跳转。
 export class ScriptProcess {
@@ -112,7 +115,7 @@ export class ScriptProcess {
       const indexBefore = this.currentIndex;
       const command = this.commands[this.currentIndex];
       if (!command) throw new Error(`${this.scriptName}: 脚本指令索引不存在 index=${this.currentIndex}`);
-      console.log(`[脚本执行] ${this.describeCommand(command, indexBefore)}`);
+      logger.log('执行', this.describeCommand(command, indexBefore));
       try {
         command.execute(this);
       } catch (error) {
@@ -209,6 +212,6 @@ export class ScriptProcess {
   }
 
   private warn(message: string): void {
-    console.warn(`[ScriptProcess] ${this.describeCurrentCommand()}: ${message}`);
+    logger.warn('进程', `${this.describeCurrentCommand()}: ${message}`);
   }
 }

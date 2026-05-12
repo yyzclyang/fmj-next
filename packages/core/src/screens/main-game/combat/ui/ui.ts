@@ -7,7 +7,7 @@ import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { drawText, getTextWidth, TEXT_LINE_HEIGHT } from '@/rendering/text-render';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
+import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
 import { drawVerticalMenu } from '@/screens/main-game/menu/menu-select';
 import { COMBAT_GOODS_ITEMS, MISC_ITEMS } from './menu-items';
 import { drawSmallNum } from './render-utils';

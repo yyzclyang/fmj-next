@@ -3,7 +3,7 @@ import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { drawSelectedText, drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
-import { KeyCode } from '@/shared/key-code';
+import { KeyCode } from '@/utils/key-code';
 import { moveSelectionWrap } from './menu-select';
 
 const SETTINGS_ITEMS = ['地图信息', '穿墙模式', '原版伤害', 'Miss 判定'] as const;

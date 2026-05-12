@@ -13,7 +13,7 @@ import type { ResImage } from '@/lib/res-image';
 import { ResourceType } from '@/lib/resource-utils';
 import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
+import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
 import { drawSmallNum } from './render-utils';
 
 export interface CombatStatusUiState {

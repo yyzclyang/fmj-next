@@ -6,8 +6,8 @@ import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { drawSelectedText, drawText, getTextWidth } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
-import { SCREEN_WIDTH } from '@/shared/constants';
-import { KeyCode } from '@/shared/key-code';
+import { SCREEN_WIDTH } from '@/utils/constants';
+import { KeyCode } from '@/utils/key-code';
 import { moveSelectionWrap } from './menu-select';
 
 export const SaveLoadOperation = {

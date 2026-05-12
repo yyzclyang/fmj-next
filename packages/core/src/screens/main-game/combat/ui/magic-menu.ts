@@ -6,6 +6,7 @@ import {
   type MonsterTargetMode,
   type PlayerTargetMode,
 } from '@/combat/combat-actions';
+import { logCombatMenu } from '@/combat/combat-log';
 import type { Game } from '@/game/game';
 import { type BaseMagic, MagicAttack, MagicAuxiliary, MagicSpecial } from '@/magic';
 import type { ScreenStack } from '@/screens/screen-stack';
@@ -68,7 +69,7 @@ export class CombatMagicMenu {
       this.options.setPhase('selectTarget');
       return;
     }
-    console.log(`[战斗菜单] 此魔法暂未接入: ${magic.name}`);
+    logCombatMenu(`此魔法暂未接入: ${magic.name}`);
   }
 
   private confirmAttackMagic(player: Player, magic: MagicAttack): void {

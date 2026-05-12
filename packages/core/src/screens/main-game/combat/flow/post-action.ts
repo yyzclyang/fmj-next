@@ -1,5 +1,6 @@
 import { Player, type FightingCharacter, type Monster } from '@/characters';
 import type { CombatAction } from '@/combat/combat-actions';
+import { captureCombatLogStates, logCombatFighterEffects } from '@/combat/combat-log';
 import { applyPoisonPostEffect, decayFighterStatuses } from '@/combat/combat-effects';
 import type { Game } from '@/game/game';
 import type { CombatActionAnimation } from '../animations/animation-types';
@@ -50,12 +51,14 @@ export function finishActionState(game: Game, action: CombatAction): CombatActio
   const actors = action.kind === 'coop' ? action.actors : [action.actor];
   const aliveActors = actors.filter(actor => actor.isAlive);
   const before = captureFighterStates(aliveActors);
+  const logBefore = captureCombatLogStates(aliveActors);
   for (const actor of aliveActors) {
     if (actor instanceof Player) applyTurnPlayerEffects(actor);
     applyPoisonPostEffect(actor);
   }
   const raises = createRaiseAnimations(game, before, aliveActors);
   for (const actor of actors) decayFighterStatuses(actor);
+  logCombatFighterEffects('动作后状态', logBefore, aliveActors);
   return raises.length > 0 ? new RaiseGroupCombatAnimation(raises, aliveActors) : null;
 }
 

@@ -4,8 +4,8 @@ import type { ResSrs } from '@/lib/res-srs';
 import { ResourceType } from '@/lib/resource-utils';
 import type { Surface } from '@/rendering/surface';
 import { COLOR_WHITE } from '@/rendering/color';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
-import { KeyCode } from '@/shared/key-code';
+import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
+import { KeyCode } from '@/utils/key-code';
 import { BaseScreen } from '../base-screen';
 import { SaveLoadOperation, ScreenSaveLoadGame } from '../main-game/menu/screen-save-load-game';
 

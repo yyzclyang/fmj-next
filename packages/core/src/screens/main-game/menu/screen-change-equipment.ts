@@ -5,7 +5,7 @@ import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_WHITE } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
-import { KeyCode } from '@/shared/key-code';
+import { KeyCode } from '@/utils/key-code';
 import { drawTriangleCursor } from './menu-select';
 import { drawPlayerState } from './screen-actor-state';
 

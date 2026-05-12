@@ -4,7 +4,7 @@ import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { drawSelectedText, drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
-import { KeyCode } from '@/shared/key-code';
+import { KeyCode } from '@/utils/key-code';
 
 const FRAME_LEFT = 25;
 const FRAME_TOP = 35;

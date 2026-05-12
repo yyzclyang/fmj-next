@@ -16,7 +16,7 @@ import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
-import { KeyCode } from '@/shared/key-code';
+import { KeyCode } from '@/utils/key-code';
 import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
 import { ScreenActorEquipment } from './screen-actor-equipment';
 import { ScreenActorState } from './screen-actor-state';

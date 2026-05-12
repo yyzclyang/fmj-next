@@ -18,5 +18,5 @@ export type { GameState } from './game/game-state';
 export type { DamageFormula, GameEngineOptions } from './game/game-engine-options';
 export type { AudioPort, EngineHost, SaveStore } from './runtime/engine-host';
 export type { PixelBuffer } from './rendering/pixel-buffer';
-export { SCREEN_HEIGHT, SCREEN_WIDTH } from './shared/constants';
-export { KeyCode } from './shared/key-code';
+export { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
+export { KeyCode } from '@/utils/key-code';

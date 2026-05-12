@@ -1,7 +1,7 @@
 import type { Player, Monster } from '@/characters';
 import type { ActionIconIndex, CombatPhase, PlayerTargetMode } from '@/combat/combat-actions';
 import { isSealed } from '@/combat/combat-effects';
-import { KeyCode } from '@/shared/key-code';
+import { KeyCode } from '@/utils/key-code';
 import { moveSelectionWrap } from '@/screens/main-game/menu/menu-select';
 import { selectAliveMonsterIndex, selectTargetPlayerIndex } from '../actions/targeting';
 import { COMBAT_GOODS_ITEMS, MISC_ITEMS } from '../ui/menu-items';

@@ -10,10 +10,10 @@ import {
   MAP_VIEW_TILE_WIDTH,
   SCREEN_HEIGHT,
   SCREEN_WIDTH,
-} from '@/shared/constants';
-import { KeyCode } from '@/shared/key-code';
+} from '@/utils/constants';
+import { KeyCode } from '@/utils/key-code';
 import { BaseScreen } from '@/screens/base-screen';
-import { clamp } from '@/shared/math';
+import { clamp } from '@/utils/math';
 import { ScreenGameMenu } from './menu/screen-game-menu';
 import { ScriptDialogueScreen, ScriptTimedMessageScreen } from './script/dialogue-screen';
 import { ScriptGutScreen } from './script/gut-screen';

@@ -29,7 +29,7 @@ export function prepareDefendAction(
   action: CombatAction & { kind: 'defend' }
 ): PreparedCombatAction {
   action.actor.fightingSprite!.currentFrame = 9;
-  ctx.setMessage(`${action.actor.name}防御`);
+  console.log(`[战斗动作] ${action.actor.name}防御`);
   return preparedAction(action, new StaticCombatAnimation(ctx.actionInterval));
 }
 
@@ -37,7 +37,7 @@ export function prepareFleeAction(
   ctx: CombatPrepareContext,
   action: CombatAction & { kind: 'flee' }
 ): PreparedCombatAction {
-  ctx.setMessage(`${action.actor.name}${action.succeed ? '逃跑成功' : '逃跑失败'}`);
+  console.log(`[战斗动作] ${action.actor.name}${action.succeed ? '逃跑成功' : '逃跑失败'}`);
   return preparedAction(action, new FleeCombatAnimation(action.actor, action.succeed));
 }
 
@@ -67,7 +67,7 @@ export function prepareAttackAction(ctx: CombatPrepareContext, action: AttackAct
       : createRaiseAnimations(ctx.game, before, [action.target]),
     targetIsPlayer: ctx.session.players.includes(action.target as Player),
   });
-  ctx.setMessage(`${action.actor.name}攻击${action.target.name} ${missed ? 'Miss' : damage}`);
+  console.log(`[战斗伤害] ${action.actor.name}攻击${action.target.name} ${missed ? 'Miss' : damage}`);
   return preparedAction(action, animation);
 }
 
@@ -101,7 +101,7 @@ export function prepareAttackAllAction(
     raiseAnimations: [...createRaiseAnimations(ctx.game, before, targets), ...misses],
     targetIsPlayer: ctx.session.players.includes(targets[0] as Player),
   });
-  ctx.setMessage(`${action.actor.name}攻击全体`);
+  console.log(`[战斗动作] ${action.actor.name}攻击全体`);
   return preparedAction(action, animation);
 }
 
@@ -128,7 +128,7 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
         applyMagicAttack(actor, action.magic, target, ctx.game.damageFormula);
       }
     }
-    ctx.setMessage(`${actors[0]!.name}等施展${action.magic.name}`);
+    console.log(`[战斗动作] ${actors[0]!.name}等施展${action.magic.name}`);
   } else {
     for (const actor of actors) {
       for (const target of targets) {
@@ -141,7 +141,7 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
         applyOnHitStatuses(actor, target);
       }
     }
-    ctx.setMessage(`${actors[0]!.name}等合击`);
+    console.log(`[战斗动作] ${actors[0]!.name}等合击`);
   }
   return preparedAction(
     action,
@@ -156,7 +156,7 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
 }
 
 export function prepareNopAction(ctx: CombatPrepareContext, actor: FightingCharacter): PreparedCombatAction {
-  ctx.setMessage(`${actor.name}无法行动`);
+  console.log(`[战斗动作] ${actor.name}无法行动`);
   return preparedAction(
     { kind: 'nop', actor: actor as Player | Monster },
     new StaticCombatAnimation(ctx.actionInterval)

@@ -34,7 +34,7 @@ export function prepareThrowItemAction(ctx: CombatPrepareContext, action: ThrowI
     raiseAnimations: createRaiseAnimations(ctx.game, before, finalTargets),
     hitTargets: true,
   });
-  ctx.setMessage(`${action.actor.name}投掷${action.goods.name}`);
+  console.log(`[战斗动作] ${action.actor.name}投掷${action.goods.name}`);
   return preparedAction(action, animation);
 }
 
@@ -62,6 +62,6 @@ export function prepareUseItemAction(ctx: CombatPrepareContext, action: UseItemA
     raiseAnimations: createRaiseAnimations(ctx.game, before, finalTargets),
     hitTargets: false,
   });
-  ctx.setMessage(`${action.actor.name}使用${action.goods.name}`);
+  console.log(`[战斗动作] ${action.actor.name}使用${action.goods.name}`);
   return preparedAction(action, animation);
 }

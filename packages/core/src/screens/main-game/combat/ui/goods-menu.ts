@@ -45,7 +45,7 @@ export class CombatGoodsMenu {
   openGoodsList(kind: 'throw' | 'use'): void {
     const list = this.getCombatGoodsList(kind);
     if (list.length === 0) {
-      this.options.setMessage(kind === 'throw' ? '没有可投掷道具' : '没有可用道具');
+      console.log(`[战斗菜单] ${kind === 'throw' ? '没有可投掷道具' : '没有可用道具'}`);
       return;
     }
     this.screenStack.push(

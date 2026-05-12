@@ -68,7 +68,7 @@ export class CombatMagicMenu {
       this.options.setPhase('selectTarget');
       return;
     }
-    this.options.setMessage('此魔法暂未接入');
+    console.log(`[战斗菜单] 此魔法暂未接入: ${magic.name}`);
   }
 
   private confirmAttackMagic(player: Player, magic: MagicAttack): void {

@@ -112,6 +112,7 @@ export class ScriptProcess {
       const indexBefore = this.currentIndex;
       const command = this.commands[this.currentIndex];
       if (!command) throw new Error(`${this.scriptName}: 脚本指令索引不存在 index=${this.currentIndex}`);
+      console.log(`[脚本执行] ${this.describeCommand(command, indexBefore)}`);
       try {
         command.execute(this);
       } catch (error) {

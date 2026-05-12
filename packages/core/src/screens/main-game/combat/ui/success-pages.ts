@@ -19,7 +19,7 @@ const LEVEL_FRAME_HEIGHT = 120;
 const LEVEL_TEXT_LEFT = Math.floor((SCREEN_WIDTH - LEVEL_FRAME_WIDTH) / 2) + 12;
 const LEVEL_TEXT_TOP = Math.floor((SCREEN_HEIGHT - LEVEL_FRAME_HEIGHT) / 2) + 8;
 
-// 结算页绘制拆到这里，ScreenCombatSuccess 只负责逐页播放。
+// 结算页绘制拆到这里，CombatSuccessSequence 只负责逐页播放。
 export function createCombatSuccessVisiblePages(settlement: CombatWinSettlement): SuccessPage[] {
   return [
     new MessagePage(`获得经验${formatRight(settlement.exp, 9)}`, 18),

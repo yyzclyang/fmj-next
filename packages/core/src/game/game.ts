@@ -7,13 +7,13 @@ import { GoodsBag } from '@/goods/goods-bag';
 import { Surface } from '@/rendering/surface';
 import type { PixelBuffer } from '@/rendering/pixel-buffer';
 import type { EngineHost } from '@/runtime/engine-host';
-import { MainSceneRuntime, type MainSceneRuntimeSnapshot } from '@/screens/main-game/runtime';
+import { MainSceneRuntime, type MainSceneRuntimeSnapshot } from '@/screens/main-game/main-game-runtime';
 import { ScriptVm } from '@/script/script-vm';
 import { KeyCode } from '@/shared/key-code';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
-import { ScreenMainGame } from '@/screens/main-game/screen';
-import { ScreenAnimation } from '@/screens/animation/screen';
-import { ScreenStartMenu } from '@/screens/menu/screen';
+import { ScreenMainGame } from '@/screens/main-game/screen-main-game';
+import { ScreenSrsTransition } from '@/screens/srs-transition/screen-srs-transition';
+import { ScreenStartMenu } from '@/screens/start-menu/screen-start-menu';
 import { ScreenStack } from '@/screens/screen-stack';
 import { ScreenViewType } from '@/screens/screen-view-type';
 import {
@@ -104,7 +104,7 @@ export class Game {
     this.mainScene = null;
     this.mainSceneRuntime = null;
     this.combat.reset();
-    this.screenStack.replaceAll(new ScreenAnimation(this, ScreenViewType.DevLogo));
+    this.screenStack.replaceAll(new ScreenSrsTransition(this, ScreenViewType.DevLogo));
     this.draw();
   }
 

@@ -2,7 +2,9 @@ import type { MagicAttackAction, MagicHelpAction, SpecialMagicAction } from '@/c
 import { applyMagicAttack, applyMagicHelp, spendMagicMp } from '@/combat/combat-effects';
 import type { Player } from '@/characters';
 import { MagicAuxiliary } from '@/magic';
-import { CastCombatAnimation, StaticCombatAnimation, type CombatActionAnimation } from '../animations';
+import type { CombatActionAnimation } from '../animations/animation-types';
+import { CastCombatAnimation } from '../animations/cast-animation';
+import { StaticCombatAnimation } from '../animations/raise-animations';
 import {
   type CombatPrepareContext,
   type PreparedCombatAction,

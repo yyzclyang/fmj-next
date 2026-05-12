@@ -1,6 +1,6 @@
 import { createInitialGameState, type GameGoodsState, type GameState } from './game-state';
 import type { StatusSlot, Player } from '@/characters';
-import type { MainSceneRuntimeSnapshot } from '@/screens/main-game/runtime';
+import type { MainSceneRuntimeSnapshot } from '@/screens/main-game/main-game-runtime';
 
 export const SAVE_SLOT_COUNT = 5;
 export const CORRUPT_SAVE_MESSAGE = '存档损坏';

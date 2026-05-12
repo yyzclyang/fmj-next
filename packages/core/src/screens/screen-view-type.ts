@@ -1,7 +1,7 @@
 export const ScreenViewType = {
   DevLogo: 0,
   GameLogo: 1,
-  Menu: 2,
+  StartMenu: 2,
   MainGame: 3,
   GameFail: 4,
   SaveGame: 5,

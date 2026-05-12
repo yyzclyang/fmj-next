@@ -9,7 +9,7 @@ import {
 import type { Game } from '@/game/game';
 import { type BaseMagic, MagicAttack, MagicAuxiliary, MagicSpecial } from '@/magic';
 import type { ScreenStack } from '@/screens/screen-stack';
-import { ScreenMagic } from '@/screens/main-game/menu/screen-magic';
+import { ScreenMagicList } from '@/screens/main-game/menu/screen-magic-list';
 import { getFirstTargetPlayerIndex } from '../actions/targeting';
 
 interface CombatMagicMenuOptions {
@@ -38,7 +38,7 @@ export class CombatMagicMenu {
     const magics = player.getAllLearnedMagics();
     if (magics.length === 0) return;
     this.options.screenStack.push(
-      new ScreenMagic(this.options.game, magics, player.mp, {
+      new ScreenMagicList(this.options.game, magics, player.mp, {
         onConfirm: magic => this.confirm(magic),
       })
     );
@@ -47,7 +47,7 @@ export class CombatMagicMenu {
   private confirm(magic: BaseMagic): void {
     const player = this.options.getCurrentPlayer();
     if (!player) throw new Error('确认战斗魔法时缺少当前角色');
-    if (!(this.options.screenStack.current instanceof ScreenMagic))
+    if (!(this.options.screenStack.current instanceof ScreenMagicList))
       throw new Error('确认战斗魔法时当前 Screen 不是魔法列表');
     this.options.screenStack.pop();
     if (player.mp < magic.costMp) {

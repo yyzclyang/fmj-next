@@ -7,7 +7,7 @@ import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/shared/key-code';
 import { moveSelectionClamp } from './menu-select';
 
-export interface ScreenMagicCallbacks {
+export interface ScreenMagicListCallbacks {
   onConfirm(magic: BaseMagic): void;
 }
 
@@ -27,8 +27,8 @@ const DESCRIPTION_LINES = 2;
 const COST_LEFT = 10;
 const COST_TOP = 165;
 
-// 魔法列表按 Kotlin ScreenMagic：上方五行列表，下方说明，底部显示真气消耗。
-export class ScreenMagic extends BaseScreen {
+// 魔法列表按 Kotlin ScreenMagicList：上方五行列表，下方说明，底部显示真气消耗。
+export class ScreenMagicList extends BaseScreen {
   private firstItemIndex = 0;
   private selectedItemIndex = 0;
   private descriptionLine = 0;
@@ -37,7 +37,7 @@ export class ScreenMagic extends BaseScreen {
     game: Game,
     private readonly magics: readonly BaseMagic[],
     private readonly mp: number,
-    private readonly callbacks: ScreenMagicCallbacks
+    private readonly callbacks: ScreenMagicListCallbacks
   ) {
     super(game);
   }

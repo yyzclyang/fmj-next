@@ -43,7 +43,7 @@ import {
 } from './actions/targeting';
 import { CombatRenderer } from './ui/renderer';
 import { completeRound, triggerRoundEvent } from './flow/round';
-import { ScreenCombatSuccess } from './ui/screen-combat-success';
+import { CombatSuccessSequence } from './ui/combat-success-sequence';
 
 export interface ScreenCombatOptions {
   readonly allowDebugWin?: boolean;
@@ -60,7 +60,7 @@ export class ScreenCombat extends BaseScreen {
   private readonly inputHandler: CombatInputHandler;
   private readonly magicMenu: CombatMagicMenu;
   private readonly menuController: CombatMenuController;
-  private successScreen: ScreenCombatSuccess | null = null;
+  private successScreen: CombatSuccessSequence | null = null;
   private lossAnimation: CombatLossAnimation | null = null;
   private phase: CombatPhase = 'selectAction';
   private currentPlayerIndex = 0;
@@ -495,7 +495,7 @@ export class ScreenCombat extends BaseScreen {
 
   private startSuccess(): void {
     this.phase = 'success';
-    this.successScreen = new ScreenCombatSuccess(this.game, this.session.settleWin());
+    this.successScreen = new CombatSuccessSequence(this.game, this.session.settleWin());
   }
 
   private finishOrStartLoss(result: CombatFinishResult): void {

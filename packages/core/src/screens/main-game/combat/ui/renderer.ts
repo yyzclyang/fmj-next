@@ -4,15 +4,15 @@ import type { CombatSession } from '@/combat/combat-runtime';
 import type { Game } from '@/game/game';
 import { COLOR_BLACK } from '@/rendering/color';
 import type { Surface } from '@/rendering/surface';
-import type { CombatActionAnimation } from '../animations';
+import type { CombatActionAnimation } from '../animations/animation-types';
 import { CombatUi } from './ui';
-import type { ScreenCombatSuccess } from './screen-combat-success';
+import type { CombatSuccessSequence } from './combat-success-sequence';
 
 interface CombatRendererState {
   readonly session: CombatSession;
   readonly phase: CombatPhase;
   readonly autoAttack: boolean;
-  readonly successScreen: ScreenCombatSuccess | null;
+  readonly successScreen: CombatSuccessSequence | null;
   readonly animation: CombatActionAnimation | null;
   readonly actionIconIndex: ActionIconIndex;
   readonly miscIndex: number;

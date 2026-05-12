@@ -3,7 +3,7 @@ import type { CombatFinishResult, CombatSession } from '@/combat/combat-runtime'
 import { isConfusing, isSleeping } from '@/combat/combat-effects';
 import type { Game } from '@/game/game';
 import { createMonsterAction } from '../actions/monster-ai';
-import type { CombatActionAnimation } from '../animations';
+import type { CombatActionAnimation } from '../animations/animation-types';
 import { clearActionQueueAndRestoreItems, getActionPriority, restoreActionGoods } from './action-utils';
 import { type CombatActionPreparer, type PreparedCombatAction } from '../prepare/action-preparer';
 import { finishActionState, resetFighterFrames } from './post-action';

@@ -6,15 +6,15 @@ import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/shared/constants';
 import { KeyCode } from '@/shared/key-code';
 import { BaseScreen } from '../base-screen';
 import { ScreenViewType } from '../screen-view-type';
-import { ScreenStartMenu } from '../menu/screen';
+import { ScreenStartMenu } from '../start-menu/screen-start-menu';
 
-interface AnimationScreenConfig {
+interface SrsTransitionConfig {
   readonly srsIndex: number;
   readonly nextScreen: ScreenViewType;
   readonly skippable: boolean;
 }
 
-const ANIMATION_SCREEN_CONFIGS: Partial<Record<ScreenViewType, AnimationScreenConfig>> = {
+const SRS_TRANSITION_CONFIGS: Partial<Record<ScreenViewType, SrsTransitionConfig>> = {
   [ScreenViewType.DevLogo]: {
     srsIndex: 247,
     nextScreen: ScreenViewType.GameLogo,
@@ -22,25 +22,25 @@ const ANIMATION_SCREEN_CONFIGS: Partial<Record<ScreenViewType, AnimationScreenCo
   },
   [ScreenViewType.GameLogo]: {
     srsIndex: 248,
-    nextScreen: ScreenViewType.Menu,
+    nextScreen: ScreenViewType.StartMenu,
     skippable: true,
   },
   [ScreenViewType.GameFail]: {
     srsIndex: 249,
-    nextScreen: ScreenViewType.Menu,
+    nextScreen: ScreenViewType.StartMenu,
     skippable: false,
   },
 };
 
-export class ScreenAnimation extends BaseScreen {
+export class ScreenSrsTransition extends BaseScreen {
   private readonly animation: ResSrs;
-  private readonly config: AnimationScreenConfig;
+  private readonly config: SrsTransitionConfig;
 
   constructor(game: Game, screenType: ScreenViewType) {
     super(game);
-    const config = ANIMATION_SCREEN_CONFIGS[screenType];
+    const config = SRS_TRANSITION_CONFIGS[screenType];
     if (!config) {
-      throw new Error(`ScreenAnimation does not support screen type ${screenType}`);
+      throw new Error(`ScreenSrsTransition does not support screen type ${screenType}`);
     }
     this.config = config;
 
@@ -68,7 +68,7 @@ export class ScreenAnimation extends BaseScreen {
 
   override onKey(key: KeyCode): boolean | undefined {
     if (key === KeyCode.Cancel && this.config.skippable) {
-      this.transitionToScreen(ScreenViewType.Menu);
+      this.transitionToScreen(ScreenViewType.StartMenu);
     }
     return undefined;
   }
@@ -81,13 +81,13 @@ export class ScreenAnimation extends BaseScreen {
       case ScreenViewType.DevLogo:
       case ScreenViewType.GameLogo:
       case ScreenViewType.GameFail:
-        this.game.screenStack.replaceAll(new ScreenAnimation(this.game, screenType));
+        this.game.screenStack.replaceAll(new ScreenSrsTransition(this.game, screenType));
         return;
-      case ScreenViewType.Menu:
+      case ScreenViewType.StartMenu:
         this.game.screenStack.replaceAll(new ScreenStartMenu(this.game));
         return;
       default:
-        throw new Error(`ScreenAnimation cannot transition to screen type ${screenType}`);
+        throw new Error(`ScreenSrsTransition cannot transition to screen type ${screenType}`);
     }
   }
 }

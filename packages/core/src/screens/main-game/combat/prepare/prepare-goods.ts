@@ -1,7 +1,7 @@
 import type { ThrowItemAction, UseItemAction } from '@/combat/combat-actions';
 import { applyThrownGoods } from '@/combat/combat-effects';
 import { GoodsMedicineLife } from '@/goods';
-import { CastCombatAnimation } from '../animations';
+import { CastCombatAnimation } from '../animations/cast-animation';
 import {
   type CombatPrepareContext,
   type PreparedCombatAction,

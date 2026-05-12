@@ -5,7 +5,8 @@ import type { Game } from '@/game/game';
 import type { BaseGoods } from '@/goods';
 import { GoodsMedicine } from '@/goods';
 import type { ResSrs } from '@/lib/res-srs';
-import { MissCombatAnimation, type CombatActionAnimation, type CombatPoint } from '../animations';
+import type { CombatActionAnimation, CombatPoint } from '../animations/animation-types';
+import { MissCombatAnimation } from '../animations/raise-animations';
 
 // 动作工具只处理战斗执行阶段的通用细节，避免 ScreenCombat 同时承担背包和动画杂务。
 export function getActionPriority(action: CombatAction): number {

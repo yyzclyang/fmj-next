@@ -7,13 +7,11 @@ import {
   isSleeping,
   spendMagicMp,
 } from '@/combat/combat-effects';
-import {
-  CoopCombatAnimation,
-  FleeCombatAnimation,
-  PhysicalCombatAnimation,
-  StaticCombatAnimation,
-  type CombatActionAnimation,
-} from '../animations';
+import type { CombatActionAnimation } from '../animations/animation-types';
+import { CoopCombatAnimation } from '../animations/coop-animation';
+import { FleeCombatAnimation } from '../animations/flee-animation';
+import { PhysicalCombatAnimation } from '../animations/physical-animation';
+import { StaticCombatAnimation } from '../animations/raise-animations';
 import {
   type CombatPrepareContext,
   type PreparedCombatAction,

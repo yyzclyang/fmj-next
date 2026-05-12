@@ -3,7 +3,7 @@ import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
 import { Surface } from '@/rendering/surface';
 import { drawText, getTextWidth, wrapTextBlock } from '@/rendering/text-render';
 import { Direction, type WalkingSprite } from '@/characters';
-import type { Facing, MainSceneRuntime, SceneObject } from './runtime';
+import type { Facing, MainSceneRuntime, SceneObject } from './main-game-runtime';
 import {
   MAP_TILE_SIZE,
   MAP_VIEW_TILE_HEIGHT,
@@ -14,8 +14,9 @@ import {
 import { KeyCode } from '@/shared/key-code';
 import { BaseScreen } from '@/screens/base-screen';
 import { clamp } from '@/shared/math';
-import { ScreenGameMainMenu } from './menu';
-import { ScriptDialogueScreen, ScriptGutScreen, ScriptTimedMessageScreen } from './script';
+import { ScreenGameMenu } from './menu/screen-game-menu';
+import { ScriptDialogueScreen, ScriptTimedMessageScreen } from './script/dialogue-screen';
+import { ScriptGutScreen } from './script/gut-screen';
 import {
   drawTipPanel,
   TIP_FRAME_WIDTH,
@@ -121,7 +122,7 @@ export class ScreenMainGame extends BaseScreen {
         return;
       case KeyCode.Cancel:
         if (this.runtime.canOpenInGameMenu) {
-          this.screenStack.push(new ScreenGameMainMenu(this.game));
+          this.screenStack.push(new ScreenGameMenu(this.game));
         }
         return;
       case KeyCode.Search:

@@ -1,5 +1,6 @@
 import type { Game } from '@/game/game';
-import { createScriptBuyGoodsScreen, createScriptSaleGoodsScreen } from '@/screens/main-game/script';
+import { createScriptBuyGoodsScreen } from '@/screens/main-game/script/buy-goods-screen';
+import { createScriptSaleGoodsScreen } from '@/screens/main-game/script/sale-goods-screen';
 import type { CommandBuilder } from '../script-command-builder';
 import { COMMAND } from '../script-opcodes';
 import type { ScriptReader } from '../script-reader';

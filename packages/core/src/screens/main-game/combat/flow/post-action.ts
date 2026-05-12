@@ -2,12 +2,9 @@ import { Player, type FightingCharacter, type Monster } from '@/characters';
 import type { CombatAction } from '@/combat/combat-actions';
 import { applyPoisonPostEffect, decayFighterStatuses } from '@/combat/combat-effects';
 import type { Game } from '@/game/game';
-import {
-  RaiseCombatAnimation,
-  RaiseGroupCombatAnimation,
-  setPlayerFrameByState,
-  type CombatActionAnimation,
-} from '../animations';
+import type { CombatActionAnimation } from '../animations/animation-types';
+import { setPlayerFrameByState } from '../animations/animation-sprite';
+import { RaiseCombatAnimation, RaiseGroupCombatAnimation } from '../animations/raise-animations';
 
 interface FighterStateSnapshot {
   readonly hp: number;

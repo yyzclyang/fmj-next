@@ -1,7 +1,7 @@
 import type { CombatAction } from '@/combat/combat-actions';
 import type { CombatSession } from '@/combat/combat-runtime';
 import type { Game } from '@/game/game';
-import type { CombatActionAnimation } from '../animations';
+import type { CombatActionAnimation } from '../animations/animation-types';
 
 export interface PreparedCombatAction {
   readonly action: CombatAction | null;

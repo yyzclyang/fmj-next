@@ -24,7 +24,7 @@ import { ScreenChangeEquipment } from './screen-change-equipment';
 import { ScreenDiscardGoods } from './screen-discard-goods';
 import { ScreenGameSettings } from './screen-game-settings';
 import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from './screen-goods-list';
-import { ScreenMagic } from './screen-magic';
+import { ScreenMagicList } from './screen-magic-list';
 import { ScreenMenuGoods, type GoodsMenuItem } from './screen-menu-goods';
 import { ScreenMenuProperties, type PropertyMenuItem } from './screen-menu-properties';
 import { ScreenMenuSystem, type SystemMenuItem } from './screen-menu-system';
@@ -49,7 +49,7 @@ const MENU_ITEM_TOP = 27;
 const MENU_LINE_GAP = 16;
 
 // 游戏内菜单是主场景的子 screen，后续二级菜单也从这里继续 push。
-export class ScreenGameMainMenu extends BaseScreen {
+export class ScreenGameMenu extends BaseScreen {
   private selectedIndex = 0;
 
   constructor(game: Game) {
@@ -187,7 +187,7 @@ export class ScreenGameMainMenu extends BaseScreen {
     const magics = player.getAllLearnedMagics();
     if (magics.length === 0) return;
     this.screenStack.push(
-      new ScreenMagic(this.game, magics, player.mp, {
+      new ScreenMagicList(this.game, magics, player.mp, {
         onConfirm: magic => this.confirmMagic(player, magic),
       })
     );

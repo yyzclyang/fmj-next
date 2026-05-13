@@ -249,6 +249,7 @@ export class MainSceneRuntime {
     logger.log('脚本', `startChapter GUT ${type}:${index}`);
     this.scriptProcess?.stop();
     this.overlayValue = null;
+    this.deleteAllNpc();
     this.game.clearPendingBoxEvent();
     this.game.state.scriptType = type;
     this.game.state.scriptIndex = index;
@@ -262,6 +263,7 @@ export class MainSceneRuntime {
     logger.log('脚本', `startChapter GUT ${type}:${index} 偏移=${offset}`);
     this.scriptProcess?.stop();
     this.overlayValue = null;
+    this.deleteAllNpc();
     this.game.clearPendingBoxEvent();
     this.game.state.scriptType = type;
     this.game.state.scriptIndex = index;
@@ -370,8 +372,6 @@ export class MainSceneRuntime {
 
     this.currentMapValue = mapRes;
     this.tileSetValue = this.loadTileSet(mapRes);
-    this.sceneObjectsValue.clear();
-    this.actorMoveIntervals.clear();
     this.game.clearPendingBoxEvent();
     this.game.state.mapType = type;
     this.game.state.mapIndex = index;

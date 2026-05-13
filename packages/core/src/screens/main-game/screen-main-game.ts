@@ -343,7 +343,7 @@ export class ScreenMainGame extends BaseScreen {
     const top = screenY * MAP_TILE_SIZE + MAP_TILE_SIZE - image.height;
     if (
       left + image.width > 0 &&
-      left < SCREEN_WIDTH - MAP_TILE_SIZE &&
+      left < SCREEN_WIDTH &&
       top + image.height > 0 &&
       top < SCREEN_HEIGHT
     ) {

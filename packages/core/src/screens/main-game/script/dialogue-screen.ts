@@ -25,7 +25,7 @@ const DIALOG_HEAD_TOP = 46 + Math.floor((SCREEN_HEIGHT - 96) / 2);
 const DIALOG_TEXT_LEFT = 28;
 const DIALOG_HEAD_TEXT_LEFT = 48;
 const DIALOG_TEXT_RIGHT = 290;
-const DIALOG_TEXT_TOPS = [116, 132, 152] as const;
+const DIALOG_TEXT_TOPS = [120, 138, 156] as const;
 const DIALOG_PAGE_LINES = 3;
 
 interface DialogueLineLayout {
@@ -224,7 +224,7 @@ function getDialogueLineLayouts(headImage: ResImage | null): DialogueLineLayout[
 
   return createDialogueLineLayouts([
     { left: DIALOG_HEAD_TEXT_LEFT, width: DIALOG_TEXT_RIGHT - DIALOG_HEAD_TEXT_LEFT },
-    { left: DIALOG_HEAD_TEXT_LEFT, width: DIALOG_TEXT_RIGHT - DIALOG_HEAD_TEXT_LEFT },
+    { left: DIALOG_TEXT_LEFT, width: defaultWidth },
     { left: DIALOG_TEXT_LEFT, width: defaultWidth },
   ]);
 }

@@ -4,9 +4,16 @@ import { CharacterState, Direction, toCharacterState, type Player, type WalkingS
 import type { ResImage } from '@/lib/res-image';
 import type { ResMap } from '@/lib/res-map';
 import { ResourceType } from '@/lib/resource-utils';
+import { COLOR_TRANSPARENT } from '@/rendering/color';
+import { Surface } from '@/rendering/surface';
 import type { ScreenOverlay } from '@/screens/screen-overlay';
 import type { ScriptOperation, ScriptProcess, ScriptProcessSnapshot } from '@/script/script-process';
-import { MAP_VIEW_TILE_HEIGHT, MAP_VIEW_TILE_WIDTH, SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
+import {
+  MAP_VIEW_TILE_HEIGHT,
+  MAP_VIEW_TILE_WIDTH,
+  ORIGIN_SCREEN_HEIGHT,
+  ORIGIN_SCREEN_WIDTH,
+} from '@/utils/constants';
 import { KeyCode } from '@/utils/key-code';
 import { createLogger } from '@/utils/logger';
 import { clamp } from '@/utils/math';
@@ -68,8 +75,7 @@ const SCRIPT_MOVE_INTERVAL = 100;
 const SCRIPT_POSE_WAIT = 300;
 const NPC_WALK_INTERVAL = 500;
 const ACTIVE_POSE_INTERVAL = 100;
-const MOVIE_BASE_WIDTH = 160;
-const MOVIE_BASE_HEIGHT = 96;
+const MOVIE_SCREEN_SCALE = 2;
 const WALL_WALKING_BOUNDARY_OFFSET = 4;
 const logger = createLogger('主场景');
 
@@ -332,7 +338,10 @@ export class MainSceneRuntime {
   startDebugCombat(params: CombatEnterFightParams): void {
     const scene = this.game.mainScene;
     if (!scene) throw new Error('主场景不存在，无法调试进入战斗');
-    logger.log('调试战斗', `进入 怪物=${params.monsterTypes.filter(type => type > 0).join(',')} 背景=${params.background.scrb}`);
+    logger.log(
+      '调试战斗',
+      `进入 怪物=${params.monsterTypes.filter(type => type > 0).join(',')} 背景=${params.background.scrb}`
+    );
     const session = this.game.combat.enterFight(
       params,
       result => {
@@ -623,17 +632,14 @@ export class MainSceneRuntime {
     let skipped = false;
     const skippable = (params.controlFlags & 1) === 1;
     const drawsOverScene = (params.controlFlags & 2) === 2;
-    const left = shouldCenterMovie(params.x, params.y)
-      ? params.x + Math.floor((SCREEN_WIDTH - MOVIE_BASE_WIDTH) / 2)
-      : params.x;
-    const top = shouldCenterMovie(params.x, params.y)
-      ? params.y + Math.floor((SCREEN_HEIGHT - MOVIE_BASE_HEIGHT) / 2)
-      : params.y;
+    const frameSurface = new Surface(ORIGIN_SCREEN_WIDTH, ORIGIN_SCREEN_HEIGHT);
 
     const overlay: ScreenOverlay = {
       coversScreen: !drawsOverScene,
       draw: surface => {
-        movieAnimation.draw(surface, left, top);
+        frameSurface.drawColor(COLOR_TRANSPARENT);
+        movieAnimation.draw(frameSurface, params.x, params.y);
+        surface.drawScaledSurface(frameSurface, 0, 0, MOVIE_SCREEN_SCALE);
       },
       onKey: () => {
         if (skippable) skipped = true;
@@ -1141,10 +1147,6 @@ export class MainSceneRuntime {
   private warnMissingActor(action: string, id: number): void {
     logger.warn('对象', `${action} 目标不存在，编号=${id}`);
   }
-}
-
-function shouldCenterMovie(x: number, y: number): boolean {
-  return x < MOVIE_BASE_WIDTH && y < MOVIE_BASE_HEIGHT;
 }
 
 function getFacingToward(x: number, y: number, targetX: number, targetY: number): Facing {

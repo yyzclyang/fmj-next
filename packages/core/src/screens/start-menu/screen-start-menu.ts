@@ -5,6 +5,7 @@ import { ResourceType } from '@/lib/resource-utils';
 import { COLOR_WHITE } from '@/rendering/color';
 import { Surface } from '@/rendering/surface';
 import { KeyCode } from '@/utils/key-code';
+import { ORIGIN_SCREEN_HEIGHT, ORIGIN_SCREEN_WIDTH } from '@/utils/constants';
 import { BaseScreen } from '../base-screen';
 import { SaveLoadOperation, ScreenSaveLoadGame } from '../main-game/menu/screen-save-load-game';
 
@@ -12,7 +13,7 @@ import { SaveLoadOperation, ScreenSaveLoadGame } from '../main-game/menu/screen-
 export class ScreenStartMenu extends BaseScreen {
   private readonly backgroundImage: ResImage;
   private readonly selectorAnimations: ResSrs[];
-  private readonly frameSurface = new Surface(160 /* 菜单原始宽度 */, 96 /* 菜单原始高度 */);
+  private readonly frameSurface = new Surface(ORIGIN_SCREEN_WIDTH, ORIGIN_SCREEN_HEIGHT);
   private readonly left: number;
   private readonly top: number;
   private selectedIndex = 0;

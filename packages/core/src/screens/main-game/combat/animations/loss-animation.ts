@@ -3,11 +3,12 @@ import type { ResSrs } from '@/lib/res-srs';
 import { COLOR_TRANSPARENT } from '@/rendering/color';
 import { Surface } from '@/rendering/surface';
 import type { CombatActionAnimation } from './animation-types';
+import { ORIGIN_SCREEN_HEIGHT, ORIGIN_SCREEN_WIDTH } from '@/utils/constants';
 
 // 随机战失败飞桃过场，播完后才真正退出战斗。
 export class CombatLossAnimation implements CombatActionAnimation {
   private readonly srs: ResSrs;
-  private readonly frameSurface = new Surface(160 /* 动画原始宽度 */, 96 /* 动画原始高度 */);
+  private readonly frameSurface = new Surface(ORIGIN_SCREEN_WIDTH, ORIGIN_SCREEN_HEIGHT);
 
   constructor(game: Game) {
     const srs = game.datLib.getSrs(1, 249);

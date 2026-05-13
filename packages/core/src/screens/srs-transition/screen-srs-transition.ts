@@ -3,6 +3,7 @@ import type { ResSrs } from '@/lib/res-srs';
 import { COLOR_TRANSPARENT, COLOR_WHITE } from '@/rendering/color';
 import { Surface } from '@/rendering/surface';
 import { KeyCode } from '@/utils/key-code';
+import { ORIGIN_SCREEN_HEIGHT, ORIGIN_SCREEN_WIDTH } from '@/utils/constants';
 import { BaseScreen } from '../base-screen';
 import { ScreenViewType } from '../screen-view-type';
 import { ScreenStartMenu } from '../start-menu/screen-start-menu';
@@ -34,7 +35,7 @@ const SRS_TRANSITION_CONFIGS: Partial<Record<ScreenViewType, SrsTransitionConfig
 export class ScreenSrsTransition extends BaseScreen {
   private readonly animation: ResSrs;
   private readonly config: SrsTransitionConfig;
-  private readonly frameSurface = new Surface(160 /* 动画原始宽度 */, 96 /* 动画原始高度 */);
+  private readonly frameSurface = new Surface(ORIGIN_SCREEN_WIDTH, ORIGIN_SCREEN_HEIGHT);
 
   constructor(game: Game, screenType: ScreenViewType) {
     super(game);

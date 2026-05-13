@@ -745,8 +745,12 @@ export class MainSceneRuntime {
       return;
     }
     const scriptEventId = eventId + 40;
-    const triggered = this.scriptProcess?.triggerEvent(scriptEventId) ?? false;
     const message = `坐标=(${x},${y}) 地图事件=${eventId} 脚本事件=${scriptEventId}`;
+    if (!this.scriptProcess?.hasRegisteredEvent(scriptEventId)) {
+      logger.log('地图事件', `${message} 无脚本处理`);
+      return;
+    }
+    const triggered = this.scriptProcess.triggerEvent(scriptEventId);
     if (triggered) {
       logger.log('地图事件', message);
     } else {

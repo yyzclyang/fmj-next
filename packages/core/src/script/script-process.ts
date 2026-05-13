@@ -180,6 +180,11 @@ export class ScriptProcess {
     return true;
   }
 
+  hasRegisteredEvent(eventId: number): boolean {
+    if (eventId < 1 || eventId > this.eventIndex.length) return false;
+    return (this.eventIndex[eventId - 1] ?? -1) >= 0;
+  }
+
   setTimer(timer: number, eventId: number): void {
     this.timer = timer * 500;
     this.timerCounter = this.timer;

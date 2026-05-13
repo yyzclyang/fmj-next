@@ -70,4 +70,56 @@ export class Surface {
       }
     }
   }
+
+  drawScaledBitmap(bitmap: Bitmap, left: number, top: number, scale: number): void {
+    if (scale <= 1) {
+      this.drawBitmap(bitmap, left, top);
+      return;
+    }
+    this.drawScaledPixels(bitmap.pixels, bitmap.width, bitmap.height, left, top, scale);
+  }
+
+  drawCenteredScaledSurface(source: Surface, scale: number): void {
+    const left = Math.floor((this.width - source.width * scale) / 2);
+    const top = Math.floor((this.height - source.height * scale) / 2);
+    this.drawScaledSurface(source, left, top, scale);
+  }
+
+  drawScaledSurface(source: Surface, left: number, top: number, scale: number): void {
+    this.drawScaledPixels(source.buffer, source.width, source.height, left, top, scale);
+  }
+
+  private drawScaledPixels(
+    source: PixelBuffer,
+    sourceWidth: number,
+    sourceHeight: number,
+    left: number,
+    top: number,
+    scale: number
+  ): void {
+    for (let sy = 0; sy < sourceHeight; sy += 1) {
+      for (let sx = 0; sx < sourceWidth; sx += 1) {
+        const srcOffset = (sy * sourceWidth + sx) * PIXEL_CHANNELS;
+        const alpha = source[srcOffset + 3];
+        if (alpha === 0) continue;
+        this.drawScaledPixel(source, srcOffset, left + sx * scale, top + sy * scale, scale);
+      }
+    }
+  }
+
+  private drawScaledPixel(source: PixelBuffer, srcOffset: number, left: number, top: number, scale: number): void {
+    for (let y = 0; y < scale; y += 1) {
+      const py = top + y;
+      if (py < 0 || py >= this.height) continue;
+      for (let x = 0; x < scale; x += 1) {
+        const px = left + x;
+        if (px < 0 || px >= this.width) continue;
+        const dstOffset = (py * this.width + px) * PIXEL_CHANNELS;
+        this.buffer[dstOffset] = source[srcOffset];
+        this.buffer[dstOffset + 1] = source[srcOffset + 1];
+        this.buffer[dstOffset + 2] = source[srcOffset + 2];
+        this.buffer[dstOffset + 3] = source[srcOffset + 3];
+      }
+    }
+  }
 }

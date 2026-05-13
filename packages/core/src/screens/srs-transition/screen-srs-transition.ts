@@ -1,8 +1,7 @@
 import type { Game } from '@/game/game';
 import type { ResSrs } from '@/lib/res-srs';
-import type { Surface } from '@/rendering/surface';
-import { COLOR_WHITE } from '@/rendering/color';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
+import { COLOR_TRANSPARENT, COLOR_WHITE } from '@/rendering/color';
+import { Surface } from '@/rendering/surface';
 import { KeyCode } from '@/utils/key-code';
 import { BaseScreen } from '../base-screen';
 import { ScreenViewType } from '../screen-view-type';
@@ -35,6 +34,7 @@ const SRS_TRANSITION_CONFIGS: Partial<Record<ScreenViewType, SrsTransitionConfig
 export class ScreenSrsTransition extends BaseScreen {
   private readonly animation: ResSrs;
   private readonly config: SrsTransitionConfig;
+  private readonly frameSurface = new Surface(160 /* 动画原始宽度 */, 96 /* 动画原始高度 */);
 
   constructor(game: Game, screenType: ScreenViewType) {
     super(game);
@@ -61,9 +61,9 @@ export class ScreenSrsTransition extends BaseScreen {
 
   draw(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
-    const centerX = Math.floor((SCREEN_WIDTH - 160) /* 原始动画宽度 */ / 2);
-    const centerY = Math.floor((SCREEN_HEIGHT - 96) /* 原始动画高度 */ / 2);
-    this.animation.draw(surface, centerX, centerY);
+    this.frameSurface.drawColor(COLOR_TRANSPARENT);
+    this.animation.draw(this.frameSurface, 0, 0);
+    surface.drawCenteredScaledSurface(this.frameSurface, 2);
   }
 
   override onKey(key: KeyCode): boolean | undefined {

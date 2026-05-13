@@ -1,11 +1,13 @@
 import type { Game } from '@/game/game';
 import type { ResSrs } from '@/lib/res-srs';
-import type { Surface } from '@/rendering/surface';
+import { COLOR_TRANSPARENT } from '@/rendering/color';
+import { Surface } from '@/rendering/surface';
 import type { CombatActionAnimation } from './animation-types';
 
-// 随机战失败沿用 Kotlin 的飞桃过场，播完后才真正退出战斗。
+// 随机战失败飞桃过场，播完后才真正退出战斗。
 export class CombatLossAnimation implements CombatActionAnimation {
   private readonly srs: ResSrs;
+  private readonly frameSurface = new Surface(160 /* 动画原始宽度 */, 96 /* 动画原始高度 */);
 
   constructor(game: Game) {
     const srs = game.datLib.getSrs(1, 249);
@@ -20,6 +22,8 @@ export class CombatLossAnimation implements CombatActionAnimation {
   }
 
   draw(surface: Surface): void {
-    this.srs.draw(surface, 0, 0);
+    this.frameSurface.drawColor(COLOR_TRANSPARENT);
+    this.srs.draw(this.frameSurface, 0, 0);
+    surface.drawCenteredScaledSurface(this.frameSurface, 2);
   }
 }

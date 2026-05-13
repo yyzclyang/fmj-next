@@ -26,13 +26,7 @@ interface GutLayout {
   textBottom: number;
 }
 
-const GUT_AUTO_SCROLL_STEP = 1;
-const GUT_AUTO_SCROLL_INTERVAL = 50;
-const GUT_KEY_SCROLL_STEP = 8;
-const GUT_TEXT_SIDE_PADDING = 16;
-const GUT_SECTION_GAP = 6;
-
-// 脚本类 screen 把“关闭 UI 后恢复脚本”收在自身生命周期里。
+// 脚本类 screen
 export class ScriptGutScreen extends BaseScreen {
   private readonly gut: GutState;
   private readonly layout: GutLayout;
@@ -61,9 +55,9 @@ export class ScriptGutScreen extends BaseScreen {
 
   override update(delta: number): void {
     this.gut.elapsed += delta;
-    while (this.gut.elapsed >= GUT_AUTO_SCROLL_INTERVAL) {
-      this.gut.elapsed -= GUT_AUTO_SCROLL_INTERVAL;
-      this.gut.scrollY -= GUT_AUTO_SCROLL_STEP;
+    while (this.gut.elapsed >= 50 /* gut 滚动间隔 */) {
+      this.gut.elapsed -= 50 /* gut 滚动间隔 */;
+      this.gut.scrollY -= 1 /* gui 自动滚动步进 */;
     }
 
     const textBottom = this.gut.scrollY + this.gut.lines.length * TEXT_LINE_HEIGHT;
@@ -87,8 +81,8 @@ export class ScriptGutScreen extends BaseScreen {
       surface.fillRect(0, this.layout.textBottom, SCREEN_WIDTH, SCREEN_HEIGHT - this.layout.textBottom, COLOR_WHITE);
     }
 
-    this.gut.topImage?.draw(surface, 1, this.layout.topImageLeft, 0);
-    this.gut.bottomImage?.draw(surface, 1, this.layout.bottomImageLeft, this.layout.bottomImageTop);
+    drawScaledGutImage(surface, this.gut.topImage, this.layout.topImageLeft, 0, 2);
+    drawScaledGutImage(surface, this.gut.bottomImage, this.layout.bottomImageLeft, this.layout.bottomImageTop, 2);
   }
 
   override onKey(key: KeyCode): boolean | undefined {
@@ -96,7 +90,7 @@ export class ScriptGutScreen extends BaseScreen {
       this.closeWithScriptResume();
       return;
     }
-    this.gut.scrollY -= GUT_KEY_SCROLL_STEP;
+    this.gut.scrollY -= 8 /* gut 滚动步进 */;
     this.gut.elapsed = 0;
   }
 
@@ -114,20 +108,38 @@ function loadGutImage(game: Game, index: number): ResImage | null {
 }
 
 function getGutLayout(topImage: ResImage | null, bottomImage: ResImage | null): GutLayout {
-  const topImageLeft = topImage ? Math.max(0, Math.floor((SCREEN_WIDTH - topImage.width) / 2)) : 0;
-  const bottomImageTop = bottomImage ? SCREEN_HEIGHT - bottomImage.height : SCREEN_HEIGHT;
-  const bottomImageLeft = bottomImage ? Math.max(0, Math.floor((SCREEN_WIDTH - bottomImage.width) / 2)) : 0;
-  const textTop = (topImage?.height ?? 0) + GUT_SECTION_GAP;
-  const rawTextBottom = bottomImageTop - (bottomImage ? GUT_SECTION_GAP : 0);
+  const topImageWidth = getScaledImageWidth(topImage, 2);
+  const topImageHeight = getScaledImageHeight(topImage, 2);
+  const bottomImageWidth = getScaledImageWidth(bottomImage, 2);
+  const bottomImageHeight = getScaledImageHeight(bottomImage, 2);
+  const topImageLeft = topImage ? Math.max(0, Math.floor((SCREEN_WIDTH - topImageWidth) / 2)) : 0;
+  const bottomImageTop = bottomImage ? SCREEN_HEIGHT - bottomImageHeight : SCREEN_HEIGHT;
+  const bottomImageLeft = bottomImage ? Math.max(0, Math.floor((SCREEN_WIDTH - bottomImageWidth) / 2)) : 0;
+  const textTop = 6 /* gut 文字模块间隔 */ + topImageHeight;
+  const rawTextBottom = bottomImageTop - (bottomImage ? 6 /* gut 文字模块间隔 */ : 0);
   const textBottom = Math.max(textTop, rawTextBottom);
 
   return {
     topImageLeft,
     bottomImageLeft,
     bottomImageTop,
-    textLeft: GUT_TEXT_SIDE_PADDING,
+    textLeft: 16 /* gut text side padding */,
     textTop,
-    textWidth: Math.max(TEXT_LINE_HEIGHT, SCREEN_WIDTH - GUT_TEXT_SIDE_PADDING * 2),
+    textWidth: Math.max(TEXT_LINE_HEIGHT, SCREEN_WIDTH - 16 /* gut text side padding */ * 2),
     textBottom,
   };
+}
+
+function getScaledImageWidth(image: ResImage | null, scale: number): number {
+  return (image?.width ?? 0) * scale;
+}
+
+function getScaledImageHeight(image: ResImage | null, scale: number): number {
+  return (image?.height ?? 0) * scale;
+}
+
+function drawScaledGutImage(surface: Surface, image: ResImage | null, left: number, top: number, scale: number): void {
+  const bitmap = image?.getBitmap(0) ?? null;
+  if (!bitmap) return;
+  surface.drawScaledBitmap(bitmap, left, top, scale);
 }

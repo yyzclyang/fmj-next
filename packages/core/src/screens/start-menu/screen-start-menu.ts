@@ -2,9 +2,8 @@ import type { Game } from '@/game/game';
 import type { ResImage } from '@/lib/res-image';
 import type { ResSrs } from '@/lib/res-srs';
 import { ResourceType } from '@/lib/resource-utils';
-import type { Surface } from '@/rendering/surface';
 import { COLOR_WHITE } from '@/rendering/color';
-import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
+import { Surface } from '@/rendering/surface';
 import { KeyCode } from '@/utils/key-code';
 import { BaseScreen } from '../base-screen';
 import { SaveLoadOperation, ScreenSaveLoadGame } from '../main-game/menu/screen-save-load-game';
@@ -13,6 +12,7 @@ import { SaveLoadOperation, ScreenSaveLoadGame } from '../main-game/menu/screen-
 export class ScreenStartMenu extends BaseScreen {
   private readonly backgroundImage: ResImage;
   private readonly selectorAnimations: ResSrs[];
+  private readonly frameSurface = new Surface(160 /* 菜单原始宽度 */, 96 /* 菜单原始高度 */);
   private readonly left: number;
   private readonly top: number;
   private selectedIndex = 0;
@@ -27,8 +27,8 @@ export class ScreenStartMenu extends BaseScreen {
 
     this.backgroundImage = image;
     this.selectorAnimations = this.loadSelectorAnimations();
-    this.left = Math.floor((SCREEN_WIDTH - this.backgroundImage.width) / 2);
-    this.top = Math.floor((SCREEN_HEIGHT - this.backgroundImage.height) / 2);
+    this.left = Math.floor((this.frameSurface.width - this.backgroundImage.width) / 2);
+    this.top = Math.floor((this.frameSurface.height - this.backgroundImage.height) / 2);
     this.selectorAnimations[0]?.start();
   }
 
@@ -43,13 +43,15 @@ export class ScreenStartMenu extends BaseScreen {
 
   draw(surface: Surface): void {
     surface.drawColor(COLOR_WHITE);
-    this.backgroundImage.draw(surface, 1, this.left, this.top);
-    const selectorOffset = this.game.engineOptions.mainMenuSelectorOffset ?? { x: 0, y: 24 };
+    this.frameSurface.drawColor(COLOR_WHITE);
+    this.backgroundImage.draw(this.frameSurface, 1, this.left, this.top);
+    const selectorOffset = this.game.engineOptions.mainMenuSelectorOffset ?? { x: 0, y: 0 };
     this.selectorAnimations[this.selectedIndex]?.draw(
-      surface,
+      this.frameSurface,
       this.left + selectorOffset.x,
       Math.floor(this.top / 2) + selectorOffset.y
     );
+    surface.drawCenteredScaledSurface(this.frameSurface, 2);
   }
 
   override onKey(key: KeyCode): boolean | undefined {

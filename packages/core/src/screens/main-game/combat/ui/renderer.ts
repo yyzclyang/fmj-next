@@ -33,6 +33,10 @@ export class CombatRenderer {
     this.ui = new CombatUi(game);
   }
 
+  update(delta: number): void {
+    this.ui.update(delta);
+  }
+
   draw(surface: Surface, state: CombatRendererState): void {
     this.drawBackground(surface, state.session);
     this.drawFighters(surface, state);

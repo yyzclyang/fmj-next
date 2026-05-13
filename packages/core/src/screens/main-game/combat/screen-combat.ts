@@ -225,6 +225,7 @@ export class ScreenCombat extends BaseScreen {
   }
 
   override update(delta: number): void {
+    this.renderer.update(delta);
     if (this.lossAnimation) {
       if (!this.lossAnimation.update(delta)) this.finish('loss');
       return;

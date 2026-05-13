@@ -3,9 +3,9 @@ import { isSleeping } from '@/combat/combat-effects';
 import type { Surface } from '@/rendering/surface';
 import type { CombatActionAnimation } from './animation-types';
 
-export const FRAME_INTERVAL = 50;
-export const PHYSICAL_MOVE_FRAMES = 5;
-export const CAST_PRE_FRAMES = 10;
+export const FRAME_INTERVAL = 40;
+export const PHYSICAL_MOVE_FRAMES = 10;
+export const CAST_PRE_FRAMES = 20;
 
 export interface SpriteSnapshot {
   readonly sprite: FightingSprite;
@@ -33,11 +33,7 @@ export function restoreSprites(snapshots: readonly SpriteSnapshot[]): void {
   for (const snapshot of snapshots) restoreSprite(snapshot);
 }
 
-export function advanceFrameTimer(
-  frame: number,
-  elapsed: number,
-  delta: number
-): { frame: number; elapsed: number } {
+export function advanceFrameTimer(frame: number, elapsed: number, delta: number): { frame: number; elapsed: number } {
   let nextFrame = frame;
   let nextElapsed = elapsed + delta;
   while (nextElapsed >= FRAME_INTERVAL) {

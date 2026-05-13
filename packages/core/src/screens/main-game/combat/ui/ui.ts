@@ -27,6 +27,7 @@ const GOODS_MENU_LEFT = 29;
 const GOODS_MENU_TOP = 14;
 const GOODS_MENU_WIDTH = 38;
 const GOODS_MENU_PADDING = 3;
+const INDICATOR_FRAME_INTERVAL = 240;
 
 export interface CombatUiState {
   readonly phase: CombatPhase;
@@ -48,6 +49,8 @@ export class CombatUi {
   private readonly monsterIndicator: ResImage | null;
   private readonly smallNumImage: ResImage | null;
   private readonly statusUi: CombatStatusUi;
+  private readonly playerTargetIndicatorAnimation: LoopingFrameAnimation;
+  private readonly monsterIndicatorAnimation: LoopingFrameAnimation;
 
   constructor(game: Game) {
     this.menuIcon = game.datLib.getImage(ResourceType.PIC, 2, 1);
@@ -56,6 +59,17 @@ export class CombatUi {
     this.monsterIndicator = game.datLib.getImage(ResourceType.PIC, 2, 3);
     this.smallNumImage = game.datLib.getImage(ResourceType.PIC, 2, 5);
     this.statusUi = new CombatStatusUi(game);
+    this.playerTargetIndicatorAnimation = createLoopingFrameAnimation(3, 4, this.playerIndicator?.number ?? 0);
+    this.monsterIndicatorAnimation = createLoopingFrameAnimation(
+      1,
+      this.monsterIndicator?.number ?? 1,
+      this.monsterIndicator?.number ?? 0
+    );
+  }
+
+  update(delta: number): void {
+    this.playerTargetIndicatorAnimation.update(delta);
+    this.monsterIndicatorAnimation.update(delta);
   }
 
   draw(surface: Surface, state: CombatUiState): void {
@@ -121,14 +135,21 @@ export class CombatUi {
       surface,
       this.monsterIndicator,
       sprite.combatX,
-      sprite.combatY - Math.trunc(sprite.height / 2) - 8
+      sprite.combatY - Math.trunc(sprite.height / 2) - 8,
+      this.monsterIndicatorAnimation.currentFrame
     );
   }
 
   private drawPlayerTargetIndicator(surface: Surface, state: CombatUiState): void {
     const sprite = state.currentTargetPlayer?.fightingSprite;
     if (!sprite) return;
-    this.drawIndicator(surface, this.playerIndicator, sprite.combatX, sprite.combatY - 22, 3);
+    this.drawIndicator(
+      surface,
+      this.playerIndicator,
+      sprite.combatX,
+      sprite.combatY - 22,
+      this.playerTargetIndicatorAnimation.currentFrame
+    );
   }
 
   private drawIndicator(surface: Surface, image: ResImage | null, centerX: number, centerY: number, frame = 1): void {
@@ -167,4 +188,41 @@ export class CombatUi {
       lineGap: TEXT_LINE_HEIGHT,
     });
   }
+}
+
+class LoopingFrameAnimation {
+  private elapsed = 0;
+  private frame: number;
+
+  constructor(
+    private readonly startFrame: number,
+    private readonly endFrame: number
+  ) {
+    this.frame = startFrame;
+  }
+
+  get currentFrame(): number {
+    return this.frame;
+  }
+
+  update(delta: number): void {
+    if (this.endFrame <= this.startFrame) return;
+    this.elapsed += delta;
+    while (this.elapsed >= INDICATOR_FRAME_INTERVAL) {
+      this.elapsed -= INDICATOR_FRAME_INTERVAL;
+      this.frame += 1;
+      if (this.frame > this.endFrame) this.frame = this.startFrame;
+    }
+  }
+}
+
+function createLoopingFrameAnimation(
+  startFrame: number,
+  endFrame: number,
+  availableFrames: number
+): LoopingFrameAnimation {
+  const maxFrame = Math.max(1, availableFrames);
+  const safeStart = startFrame <= maxFrame ? startFrame : 1;
+  const safeEnd = Math.max(safeStart, Math.min(endFrame, maxFrame));
+  return new LoopingFrameAnimation(safeStart, safeEnd);
 }

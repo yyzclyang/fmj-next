@@ -40,7 +40,7 @@ export class BrowserRuntime {
       increase: (actorIds, input) => this.engine?.debug.player.increase(actorIds, input) ?? [],
     },
     script: {
-      start: (type, index, offset) => this.engine?.debug.script.start(type, index, offset) ?? false,
+      start: (type, index) => this.engine?.debug.script.start(type, index) ?? false,
     },
     combat: {
       listMonsters: () => this.engine?.debug.combat.listMonsters() ?? [],

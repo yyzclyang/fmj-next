@@ -87,6 +87,10 @@ export interface MovieParams {
   readonly controlFlags: number;
 }
 
+interface StartChapterOptions {
+  readonly returnToMenuOnCallback?: boolean;
+}
+
 // 主场景运行时只负责地图、对象、交互和脚本入口，不处理具体 UI。
 export class MainSceneRuntime {
   private currentMapValue: ResMap | null = null;
@@ -102,6 +106,7 @@ export class MainSceneRuntime {
   private playerStepValue = 0;
   private overlayValue: ScreenOverlay | null = null;
   private readonly actorMoveIntervals = new Map<number, number>();
+  private returnToMenuOnCallback = false;
 
   constructor(private readonly game: Game) {
     logger.log('初始化', `地图=${this.game.state.mapType}:${this.game.state.mapIndex}`);
@@ -251,10 +256,11 @@ export class MainSceneRuntime {
     this.triggerSceneObjectEvent();
   }
 
-  startChapter(type: number, index: number): void {
+  startChapter(type: number, index: number, options: StartChapterOptions = {}): void {
     logger.log('脚本', `startChapter GUT ${type}:${index}`);
     this.scriptProcess?.stop();
     this.overlayValue = null;
+    this.returnToMenuOnCallback = options.returnToMenuOnCallback ?? false;
     this.deleteAllNpc();
     this.game.clearPendingBoxEvent();
     this.game.state.scriptType = type;
@@ -262,20 +268,6 @@ export class MainSceneRuntime {
     this.game.resetLocalVariables();
     this.scriptProcess = this.game.scriptVm.loadScript(type, index);
     this.scriptProcess.start();
-  }
-
-  startChapterAtOffset(type: number, index: number, offset: number): void {
-    if (!Number.isInteger(offset) || offset < 0) throw new Error(`脚本偏移非法: ${offset}`);
-    logger.log('脚本', `startChapter GUT ${type}:${index} 偏移=${offset}`);
-    this.scriptProcess?.stop();
-    this.overlayValue = null;
-    this.deleteAllNpc();
-    this.game.clearPendingBoxEvent();
-    this.game.state.scriptType = type;
-    this.game.state.scriptIndex = index;
-    this.game.resetLocalVariables();
-    this.scriptProcess = this.game.scriptVm.loadScript(type, index);
-    this.scriptProcess.startAtOffset(offset);
   }
 
   triggerEvent(eventId: number): boolean {
@@ -289,6 +281,21 @@ export class MainSceneRuntime {
     this.scriptProcess = childProcess;
     childProcess.start();
     return childProcess;
+  }
+
+  handleScriptCallback(process: ScriptProcess): boolean {
+    if (this.scriptProcess !== process) {
+      logger.warn('脚本', 'CALLBACK 已忽略: process 不是当前进程');
+      return false;
+    }
+    process.stop();
+    if (this.returnToMenuOnCallback && !process.parent) {
+      logger.log('脚本', 'CALLBACK 返回开始菜单');
+      this.returnToMenuOnCallback = false;
+      this.scriptProcess = null;
+      this.game.returnToMenu();
+    }
+    return true;
   }
 
   initFight(params: CombatInitFightParams): void {
@@ -364,7 +371,9 @@ export class MainSceneRuntime {
     process.parent = null;
     process.stop();
     if (!parent) {
-      logger.log('脚本', 'returnToParent 无父进程');
+      logger.log('脚本', 'returnToParent 无父进程，返回开始菜单');
+      this.scriptProcess = null;
+      this.game.returnToMenu();
       return true;
     }
     this.scriptProcess = parent;

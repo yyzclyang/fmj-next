@@ -12,7 +12,8 @@ export function compileFlowCommand(game: Game, reader: ScriptReader, opcode: num
       return {
         len: 0,
         execute: process => {
-          process.stop();
+          const handled = game.mainSceneRuntime?.handleScriptCallback(process) ?? false;
+          if (!handled) process.stop();
         },
       };
     case COMMAND.GOTO:

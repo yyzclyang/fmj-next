@@ -147,7 +147,7 @@ export class Game {
     logger.log('菜单剧情', `重置状态并进入 GUT 0:${index}`);
     this.resetRunState();
     this.replaceWithMainScene();
-    this.mainSceneRuntime?.startChapter(0 /* 菜单剧情类型。 */, index);
+    this.mainSceneRuntime?.startChapter(0 /* 菜单剧情类型。 */, index, { returnToMenuOnCallback: true });
   }
 
   returnToMenu(): void {

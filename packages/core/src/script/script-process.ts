@@ -152,18 +152,6 @@ export class ScriptProcess {
     this.currentIndex = target;
   }
 
-  startAtOffset(offset: number): void {
-    const target = this.addressIndexMap.get(offset);
-    if (target == null) throw new Error(`${this.scriptName}: 脚本偏移不存在 offset=${offset}`);
-    if (target < 0 || target >= this.commands.length) {
-      throw new Error(`${this.scriptName}: 脚本偏移目标越界 offset=${offset}, target=${target}`);
-    }
-    this.currentIndex = target;
-    this.operation = null;
-    this.resumeOnRestore = false;
-    this.running = true;
-  }
-
   triggerEvent(eventId: number): boolean {
     if (this.operation) return false;
     if (eventId < 1 || eventId > this.eventIndex.length) return false;

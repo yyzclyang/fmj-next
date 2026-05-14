@@ -89,7 +89,7 @@ export interface DebugPlayerIncreaseInput {
 }
 
 export interface DebugScriptApi {
-  start(type: number, index: number, offset?: number): boolean;
+  start(type: number, index: number): boolean;
 }
 
 export type DebugCombatBackgroundInput =
@@ -296,16 +296,11 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
       },
     },
     script: {
-      start(type: number, index: number, offset?: number) {
+      start(type: number, index: number) {
         const runtime = getGame()?.mainSceneRuntime ?? null;
         if (!runtime) throw new Error('主场景运行时不存在，无法调试启动脚本');
-        if (offset == null) {
-          runtime.startChapter(type, index);
-          logger.log('脚本', `已启动 GUT ${type}-${index}`);
-        } else {
-          runtime.startChapterAtOffset(type, index, offset);
-          logger.log('脚本', `已启动 GUT ${type}-${index} 偏移=${offset}`);
-        }
+        runtime.startChapter(type, index);
+        logger.log('脚本', `已启动 GUT ${type}-${index}`);
         return true;
       },
     },

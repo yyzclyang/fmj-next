@@ -9,6 +9,9 @@ import { ORIGIN_SCREEN_HEIGHT, ORIGIN_SCREEN_WIDTH } from '@/utils/constants';
 import { BaseScreen } from '../base-screen';
 import { SaveLoadOperation, ScreenSaveLoadGame } from '../main-game/menu/screen-save-load-game';
 
+const SELECTOR_RESOURCE_START = 250;
+const SELECTOR_RESOURCE_END = 255;
+
 // 主菜单直接复用原版菜单底图和光标动画。
 export class ScreenStartMenu extends BaseScreen {
   private readonly backgroundImage: ResImage;
@@ -79,6 +82,7 @@ export class ScreenStartMenu extends BaseScreen {
         this.screenStack.push(new ScreenSaveLoadGame(this.game, SaveLoadOperation.Load));
         return;
       default:
+        if (this.selectedIndex <= 5) this.game.startMenuChapter(this.selectedIndex - 1);
         return;
     }
   }
@@ -93,9 +97,9 @@ export class ScreenStartMenu extends BaseScreen {
   private loadSelectorAnimations(): ResSrs[] {
     const selectorAnimations: ResSrs[] = [];
 
-    for (let index = 250 /* 光标动画起始资源。 */; index <= 255 /* 光标动画结束资源。 */; index += 1) {
+    for (let index = SELECTOR_RESOURCE_START; index <= SELECTOR_RESOURCE_END; index += 1) {
       const res = this.game.datLib.getSrs(1, index);
-      if (!res) continue;
+      if (!res) break;
       selectorAnimations.push(res);
     }
 

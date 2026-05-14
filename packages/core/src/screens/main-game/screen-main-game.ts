@@ -293,7 +293,7 @@ export class ScreenMainGame extends BaseScreen {
 
   private drawMapInfo(surface: Surface): void {
     if (!this.game.state.showPosition) return;
-    const mapName = this.game.state.sceneName || this.runtime.currentMap?.mapName || 'Map';
+    const mapName = this.game.state.sceneName || this.runtime.currentMap?.mapName || '';
     drawText(surface, mapName, MAP_INFO_LEFT, MAP_INFO_TOP);
 
     if (!this.runtime.hasPlayer) return;

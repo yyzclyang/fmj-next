@@ -93,7 +93,10 @@ export class Game {
     if (!runtimeSnapshot) throw new Error('主场景不存在，无法存档');
     const payload = createSavePayload(this.state, slot, runtimeSnapshot);
     this.host.saveStore.write(slot, encodeSavePayload(payload));
-    logger.log('存档', `槽位=${slot}, 场景=${this.state.sceneName || '未命名'}, 队伍=${this.state.partyActorIds.join(',')}`);
+    logger.log(
+      '存档',
+      `槽位=${slot}, 场景=${this.state.sceneName || '未命名'}, 队伍=${this.state.partyActorIds.join(',')}`
+    );
     return payload.summary;
   }
 
@@ -135,12 +138,16 @@ export class Game {
 
   startNewGame(): void {
     logger.log('新游戏', '重置状态并进入开场章节');
-    this.boxEventMap.clear();
-    this.pendingBoxEventKey = null;
-    this.combat.reset();
-    this.state = this.createInitialState();
+    this.resetRunState();
     this.replaceWithMainScene();
     this.mainSceneRuntime?.startChapter(1 /* 开场章节类型。 */, 1 /* 开场章节索引。 */);
+  }
+
+  startMenuChapter(index: number): void {
+    logger.log('菜单剧情', `重置状态并进入 GUT 0:${index}`);
+    this.resetRunState();
+    this.replaceWithMainScene();
+    this.mainSceneRuntime?.startChapter(0 /* 菜单剧情类型。 */, index);
   }
 
   returnToMenu(): void {
@@ -366,6 +373,13 @@ export class Game {
 
   clearPendingBoxEvent(): void {
     this.pendingBoxEventKey = null;
+  }
+
+  private resetRunState(): void {
+    this.boxEventMap.clear();
+    this.pendingBoxEventKey = null;
+    this.combat.reset();
+    this.state = this.createInitialState();
   }
 
   private replaceWithMainScene(): void {

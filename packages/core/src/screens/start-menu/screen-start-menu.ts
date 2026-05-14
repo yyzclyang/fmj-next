@@ -46,12 +46,7 @@ export class ScreenStartMenu extends BaseScreen {
     surface.drawColor(COLOR_WHITE);
     this.frameSurface.drawColor(COLOR_WHITE);
     this.backgroundImage.draw(this.frameSurface, 1, this.left, this.top);
-    const selectorOffset = this.game.engineOptions.mainMenuSelectorOffset ?? { x: 0, y: 0 };
-    this.selectorAnimations[this.selectedIndex]?.draw(
-      this.frameSurface,
-      this.left + selectorOffset.x,
-      Math.floor(this.top / 2) + selectorOffset.y
-    );
+    this.selectorAnimations[this.selectedIndex]?.draw(this.frameSurface, 0, 0);
     surface.drawCenteredScaledSurface(this.frameSurface, 2);
   }
 

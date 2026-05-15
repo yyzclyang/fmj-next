@@ -11,6 +11,7 @@ import {
   applyOnHitStatuses,
   calcPhysicalDamage,
   isSleeping,
+  rollCombatRandom,
   spendMagicMp,
 } from '@/combat/combat-effects';
 import type { CombatActionAnimation } from '../animations/animation-types';
@@ -24,7 +25,13 @@ import {
   noPreparedAction,
   preparedAction,
 } from './action-preparer-types';
-import { createMissAnimation, getAnimationPoint, isMissed } from '../flow/action-utils';
+import {
+  createMissAnimation,
+  getAnimationPoint,
+  isMagicMissed,
+  isPhysicalMissed,
+  rollGuardedPlayerTarget,
+} from '../flow/action-utils';
 import { captureFighterStates, createRaiseAnimations } from '../flow/post-action';
 import { getFirstAliveMonster, getRandomAlivePlayer, isMonster } from '../actions/targeting';
 
@@ -55,10 +62,13 @@ export function prepareAttackAction(ctx: CombatPrepareContext, action: AttackAct
   }
   const before = captureFighterStates([action.target]);
   const logBefore = captureCombatLogStates([action.target]);
-  const missed = isMissed(ctx.game, action.actor, action.target, action.actor !== action.target);
   const targetIsPlayer = ctx.session.players.includes(action.target as Player);
-  const targetIsDefending = targetIsPlayer && ctx.session.isPlayerDefending(action.target as Player);
-  const damage = missed ? 0 : calcPhysicalDamage(action.actor, action.target, targetIsPlayer, targetIsDefending);
+  const targetIsGuarded = rollGuardedPlayerTarget(ctx.session, action.actor, action.target);
+  const randomRoll = rollCombatRandom();
+  const missed = isPhysicalMissed(ctx.game, action.actor, action.target, action.actor !== action.target, randomRoll);
+  const damage = missed
+    ? 0
+    : calcPhysicalDamage(action.actor, action.target, targetIsPlayer, ctx.game.damageFormula, targetIsGuarded, randomRoll);
   if (!missed) {
     action.target.hp = Math.max(0, action.target.hp - damage);
     applyOnHitStatuses(action.actor, action.target);
@@ -71,6 +81,7 @@ export function prepareAttackAction(ctx: CombatPrepareContext, action: AttackAct
       ? [createMissAnimation(ctx.game, action.target)]
       : createRaiseAnimations(ctx.game, before, [action.target]),
     targetIsPlayer: ctx.session.players.includes(action.target as Player),
+    guardedTargets: !missed && targetIsGuarded ? new Set([action.target]) : undefined,
   });
   logCombatAction(`${action.actor.name}攻击${action.target.name}`);
   if (missed) {
@@ -91,19 +102,18 @@ export function prepareAttackAllAction(
   const logBefore = captureCombatLogStates(targets);
   const misses: CombatActionAnimation[] = [];
   const missedTargets: FightingCharacter[] = [];
+  const guardedTargets = new Set<FightingCharacter>();
   for (const target of targets) {
-    if (isMissed(ctx.game, action.actor, target)) {
+    const targetIsPlayer = ctx.session.players.includes(target as Player);
+    const targetIsGuarded = rollGuardedPlayerTarget(ctx.session, action.actor, target);
+    const randomRoll = rollCombatRandom();
+    if (isPhysicalMissed(ctx.game, action.actor, target, true, randomRoll)) {
       misses.push(createMissAnimation(ctx.game, target));
       missedTargets.push(target);
       continue;
     }
-    const targetIsPlayer = ctx.session.players.includes(target as Player);
-    const damage = calcPhysicalDamage(
-      action.actor,
-      target,
-      targetIsPlayer,
-      targetIsPlayer && ctx.session.isPlayerDefending(target as Player)
-    );
+    if (targetIsGuarded) guardedTargets.add(target);
+    const damage = calcPhysicalDamage(action.actor, target, targetIsPlayer, ctx.game.damageFormula, targetIsGuarded, randomRoll);
     target.hp = Math.max(0, target.hp - damage);
     applyOnHitStatuses(action.actor, target);
   }
@@ -113,6 +123,7 @@ export function prepareAttackAllAction(
     moveTo: { x: 44, y: 14 },
     raiseAnimations: [...createRaiseAnimations(ctx.game, before, targets), ...misses],
     targetIsPlayer: ctx.session.players.includes(targets[0] as Player),
+    guardedTargets,
   });
   logCombatAction(`${action.actor.name}攻击全体`);
   for (const target of missedTargets) logCombatMiss(action.actor, target);
@@ -141,23 +152,25 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
         continue;
       }
       for (const target of targets) {
-        if (isMissed(ctx.game, actor, target)) {
+        const randomRoll = rollCombatRandom();
+        if (isMagicMissed(ctx.game, actor, target, true, randomRoll)) {
           misses.push(createMissAnimation(ctx.game, target));
           missedPairs.push({ actor, target });
           continue;
         }
-        applyMagicAttack(actor, action.magic, target, ctx.game.damageFormula);
+        applyMagicAttack(actor, action.magic, target, ctx.game.damageFormula, false, randomRoll);
       }
     }
   } else {
     for (const actor of actors) {
       for (const target of targets) {
-        if (isMissed(ctx.game, actor, target)) {
+        const randomRoll = rollCombatRandom();
+        if (isPhysicalMissed(ctx.game, actor, target, true, randomRoll)) {
           misses.push(createMissAnimation(ctx.game, target));
           missedPairs.push({ actor, target });
           continue;
         }
-        const damage = Math.trunc(calcPhysicalDamage(actor, target, false) * 1.6);
+        const damage = Math.trunc(calcPhysicalDamage(actor, target, false, ctx.game.damageFormula, false, randomRoll) * 1.6);
         target.hp = Math.max(0, target.hp - damage);
         applyOnHitStatuses(actor, target);
       }

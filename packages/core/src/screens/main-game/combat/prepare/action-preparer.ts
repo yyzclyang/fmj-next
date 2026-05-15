@@ -54,7 +54,12 @@ export class CombatActionPreparer {
       return prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target: action.actor });
     }
     if ((action.kind === 'magicAttack' || action.kind === 'magicHelp') && isSealed(action.actor)) {
-      logger.log('改写', `${action.actor.name} 封咒，回滚法术 ${action.magic.name}`);
+      logger.log(
+        '改写',
+        action.kind === 'magicAttack'
+          ? `${action.actor.name} 封咒，攻击法术 ${action.magic.name} 回退为物理攻击`
+          : `${action.actor.name} 封咒，辅助法术 ${action.magic.name} 改为空动作`
+      );
       return prepareRolledBackMagicAction(ctx, action);
     }
     if (action.kind === 'specialMagic' && isSealed(action.actor)) {

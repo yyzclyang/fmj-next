@@ -31,6 +31,7 @@ export class PhysicalCombatAnimation implements CombatActionAnimation {
       readonly moveTo: FightingCharacter | CombatPoint;
       readonly raiseAnimations: CombatActionAnimation[];
       readonly targetIsPlayer: boolean;
+      readonly guardedTargets?: ReadonlySet<FightingCharacter>;
     }
   ) {
     this.actorSnapshot = snapshotSprite(options.actor);
@@ -85,10 +86,16 @@ export class PhysicalCombatAnimation implements CombatActionAnimation {
   private startTargetHit(): void {
     if (this.hitStarted) return;
     this.hitStarted = true;
-    for (const item of this.targetSnapshots) {
-      if (this.options.targetIsPlayer) item.sprite.currentFrame = 10;
+    for (let i = 0; i < this.targetSnapshots.length; i += 1) {
+      const item = this.targetSnapshots[i]!;
+      const target = this.options.targets[i];
+      if (this.options.targetIsPlayer) item.sprite.currentFrame = target && this.isGuarded(target) ? 8 : 10;
       else item.sprite.move(2, 2);
     }
+  }
+
+  private isGuarded(target: FightingCharacter): boolean {
+    return this.options.guardedTargets?.has(target) ?? false;
   }
 
   private updateRaises(delta: number): boolean {

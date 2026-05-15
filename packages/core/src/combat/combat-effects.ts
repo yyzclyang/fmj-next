@@ -4,7 +4,6 @@ import {
   STATUS_FLAG_POISON,
   STATUS_FLAG_SEAL,
   STATUS_FLAG_SLEEP,
-  STATUS_FLAG_ATTACK_ALL,
   STATUS_SLOT_AGILITY,
   STATUS_SLOT_ATTACK,
   STATUS_SLOT_DEFENSE,
@@ -14,18 +13,19 @@ import {
 import { GoodsHiddenWeapon } from '@/goods';
 import type { DamageFormula } from '@/game/game-engine-options';
 import { type BaseMagic, MagicAttack, MagicAuxiliary, MagicEnhance, MagicRestore } from '@/magic';
+import { randomInt } from '@/utils/integer';
 import type { CombatHelpMagic, CombatThrowableGoods } from './combat-actions';
 
 export function hasActiveStatus(actor: FightingCharacter, flags: number): boolean {
   return actor.activeStatuses.hasAnyFlag(flags);
 }
 
-export function isPoisoned(actor: FightingCharacter): boolean {
-  return hasActiveStatus(actor, STATUS_FLAG_POISON);
-}
-
 export function isConfusing(actor: FightingCharacter): boolean {
   return hasActiveStatus(actor, STATUS_FLAG_CONFUSE);
+}
+
+export function isPoisoned(actor: FightingCharacter): boolean {
+  return hasActiveStatus(actor, STATUS_FLAG_POISON);
 }
 
 export function isSealed(actor: FightingCharacter): boolean {
@@ -57,35 +57,80 @@ export function calcPhysicalDamage(
   attacker: FightingCharacter,
   target: FightingCharacter,
   targetIsPlayer: boolean,
-  targetIsDefending = false
+  formula: DamageFormula = 'original',
+  targetIsDefending = false,
+  randomRoll = rollCombatRandom()
 ): number {
   const attack = Math.max(0, getComputedAttack(attacker));
   const defense = Math.max(0, getComputedDefense(target));
-  const defenseShift = targetIsPlayer ? 2 : 3;
-  const randomShift = targetIsPlayer ? 4 : 2;
-  const base = Math.trunc(attack / ((defense >> defenseShift) + 1));
-  const random = Math.trunc(Math.random() * ((attack >> randomShift) + 1));
-  let damage = base + random;
-  if (targetIsPlayer && hasSpecialDamageReduction(target, targetIsDefending)) damage >>= 1;
-  return Math.max(1, damage);
+  return formula === 'simplified'
+    ? calcPhysicalDamageSimplified(attack, defense, target, targetIsDefending)
+    : calcPhysicalDamageOriginal(attack, defense, target, targetIsPlayer, targetIsDefending, randomRoll);
 }
 
-export function randomMiss(
+function calcPhysicalDamageOriginal(
+  attack: number,
+  defense: number,
+  target: FightingCharacter,
+  targetIsPlayer: boolean,
+  targetIsDefending: boolean,
+  randomRoll: number
+): number {
+  if (targetIsPlayer) {
+    let damage = Math.trunc(attack / ((defense >> 3) + 1));
+    damage += randomRoll % ((attack >> 4) + 1);
+    if (hasSpecialDamageReduction(target, targetIsDefending)) damage >>= 1;
+    return Math.max(0, damage);
+  }
+  let defenseDivisor = defense >> 3;
+  if (defenseDivisor === 0) defenseDivisor = 1;
+  let randomDivisor = attack >> 2;
+  if (randomDivisor === 0) randomDivisor = 10;
+  return Math.max(0, Math.trunc(attack / defenseDivisor) + (randomRoll % randomDivisor));
+}
+
+function calcPhysicalDamageSimplified(
+  attack: number,
+  defense: number,
+  target: FightingCharacter,
+  targetIsDefending: boolean
+): number {
+  let damage = Math.max(attack - defense, 1) + randomInt(10);
+  if (hasSpecialDamageReduction(target, targetIsDefending)) damage >>= 1;
+  return damage;
+}
+
+export function randomPhysicalMiss(
   attacker: FightingCharacter,
   target: FightingCharacter,
   enabled: boolean,
-  allowMiss = true
+  allowMiss = true,
+  randomRoll = rollCombatRandom()
 ): boolean {
   if (!enabled || !allowMiss) return false;
-  let attackerAgility = getComputedAgility(attacker);
-  let targetAgility = getComputedAgility(target);
-  if (attacker instanceof Monster && target instanceof Player) {
-    targetAgility += 50;
-  } else if (attacker instanceof Player && target instanceof Monster) {
-    attackerAgility += 50;
-  }
-  const diff = attackerAgility > targetAgility ? attackerAgility - targetAgility : 10;
-  return Math.trunc(Math.random() * 200) >= diff;
+  const attackAgility = getComputedAgility(attacker);
+  const defenderAgility = getComputedAgility(target) + 50;
+  const diff = defenderAgility > attackAgility ? defenderAgility - attackAgility : 10;
+  return randomRoll % 200 < diff;
+}
+
+export function randomMagicMiss(
+  attacker: FightingCharacter,
+  target: FightingCharacter,
+  enabled: boolean,
+  allowMiss = true,
+  randomRoll = rollCombatRandom()
+): boolean {
+  if (!enabled || !allowMiss) return false;
+  const attackerAgility = getComputedAgility(attacker);
+  const targetAgility = getComputedAgility(target) + 20;
+  const diff = targetAgility > attackerAgility ? targetAgility - attackerAgility : 0;
+  return randomRoll % 100 < diff;
+}
+
+export function rollRandomPlayerGuard(player: Player, alreadyDefending: boolean): boolean {
+  if (alreadyDefending || !player.isAlive || isSleeping(player) || isConfusing(player)) return false;
+  return randomInt(100) > 0x5a;
 }
 
 export function applyOnHitStatuses(attacker: FightingCharacter, target: FightingCharacter): void {
@@ -108,15 +153,24 @@ export function spendMagicMp(actor: FightingCharacter, magic: BaseMagic): boolea
   return true;
 }
 
+export function rollCombatRandom(): number {
+  return randomInt(0x10000);
+}
+
 export function applyMagicAttack(
   actor: FightingCharacter,
   magic: MagicAttack,
   target: FightingCharacter,
   formula: DamageFormula = 'original',
-  targetIsDefending = false
+  targetIsDefending = false,
+  randomRoll = rollCombatRandom()
 ): void {
-  applyHpMagicEffect(actor, target, calcHpMagicEffect(actor, target, magic.hpEffect, formula, targetIsDefending));
-  applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.mpEffect, formula));
+  applyHpMagicEffect(
+    actor,
+    target,
+    calcHpMagicEffect(actor, target, magic.hpEffect, formula, targetIsDefending, randomRoll)
+  );
+  applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.mpEffect, formula, randomRoll));
   applyCombatStatuses(target, createStatusSlots(magic.statusEffectFlags, magic.statusEffectRounds), target.luck);
   applyAttributeMagicEffect(target, -magic.attackPercent, -magic.defensePercent, -magic.agilityPercent, 0);
 }
@@ -151,7 +205,8 @@ export function applyRestoreMagic(magic: MagicRestore, target: FightingCharacter
 
 export function applyPoisonPostEffect(actor: FightingCharacter): void {
   if (!actor.isAlive || !isPoisoned(actor)) return;
-  actor.hp = actor.hp === 1 ? 0 : Math.trunc(actor.hp * 0.75);
+  const damage = Math.max(1, actor.hp >> 2);
+  actor.hp = Math.max(0, actor.hp - damage);
 }
 
 function getStatusValue(actor: FightingCharacter, index: number): number {
@@ -163,7 +218,8 @@ function calcHpMagicEffect(
   dst: FightingCharacter,
   base: number,
   formula: DamageFormula,
-  targetIsDefending: boolean
+  targetIsDefending: boolean,
+  randomRoll: number
 ): number {
   if (base === 0 || dst.hp <= 0) return 0;
   if (base < 0) {
@@ -172,27 +228,28 @@ function calcHpMagicEffect(
   }
   return formula === 'simplified'
     ? calcHpMagicEffectSimplified(src, dst, base, targetIsDefending)
-    : calcHpMagicEffectOriginal(src, dst, base, targetIsDefending);
+    : calcHpMagicEffectOriginal(src, dst, base, targetIsDefending, randomRoll);
 }
 
 function calcHpMagicEffectOriginal(
   src: FightingCharacter,
   dst: FightingCharacter,
   base: number,
-  targetIsDefending: boolean
+  targetIsDefending: boolean,
+  randomRoll: number
 ): number {
   let damage = base;
   damage += src.spirit * (damage >> 6);
   damage -= dst.spirit * (damage >> 6);
-  if (damage > 0) damage += (Math.trunc(Math.random() * 1000) % damage) >> 4;
+  if (damage <= 0) return 0;
+  damage += (randomRoll % damage) >> 4;
   if (damage > 0 && hasSpecialDamageReduction(dst, targetIsDefending)) damage -= damage >> 2;
   if (damage > dst.hp) damage = dst.hp;
-  // Kotlin 原版会保留被目标灵力修正成负数的结果，后续按吸收效果处理。
-  return Math.max(damage, damage > 0 ? 1 : damage);
+  return Math.max(0, damage);
 }
 
 function hasSpecialDamageReduction(target: FightingCharacter, targetIsDefending: boolean): boolean {
-  return target instanceof Player && (targetIsDefending || target.immuneStatuses.hasAnyFlag(STATUS_FLAG_ATTACK_ALL));
+  return target instanceof Player && targetIsDefending;
 }
 
 function calcHpMagicEffectSimplified(
@@ -210,7 +267,8 @@ function calcMpMagicEffect(
   src: FightingCharacter,
   dst: FightingCharacter,
   base: number,
-  formula: DamageFormula
+  formula: DamageFormula,
+  randomRoll: number
 ): number {
   if (base === 0 || dst.mp <= 0) return 0;
   if (base < 0) {
@@ -219,14 +277,24 @@ function calcMpMagicEffect(
   }
   return formula === 'simplified'
     ? calcMpMagicEffectSimplified(src, dst, base)
-    : calcMpMagicEffectOriginal(src, dst, base);
+    : calcMpMagicEffectOriginal(src, dst, base, randomRoll);
 }
 
-function calcMpMagicEffectOriginal(src: FightingCharacter, dst: FightingCharacter, base: number): number {
+function calcMpMagicEffectOriginal(
+  src: FightingCharacter,
+  dst: FightingCharacter,
+  base: number,
+  randomRoll: number
+): number {
   let damage = base;
-  damage -= src.spirit * (damage >> 6);
-  damage += dst.spirit * (damage >> 6);
-  if (damage > 0) damage += (Math.trunc(Math.random() * 1000) % damage) >> 4;
+  if (src instanceof Player && dst instanceof Monster) {
+    damage += src.spirit * (damage >> 6);
+    damage -= dst.spirit * (damage >> 6);
+  } else {
+    damage -= src.spirit * (damage >> 6);
+    damage += dst.spirit * (damage >> 6);
+  }
+  if (damage > 0) damage += (randomRoll % damage) >> 4;
   return Math.min(dst.mp, Math.max(0, damage));
 }
 

@@ -16,3 +16,7 @@ export function toInt16(value: number): number {
   const uint16 = toUint16(value);
   return uint16 >= 0x8000 ? uint16 - 0x10000 : uint16;
 }
+
+export function randomInt(maxExclusive: number): number {
+  return Math.trunc(Math.random() * Math.max(1, maxExclusive));
+}

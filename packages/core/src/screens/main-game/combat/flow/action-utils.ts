@@ -1,6 +1,12 @@
-import type { FightingCharacter } from '@/characters';
+import type { FightingCharacter, Monster, Player } from '@/characters';
 import type { CombatAction, CombatMedicineGoods } from '@/combat/combat-actions';
-import { getComputedAgility, randomMiss } from '@/combat/combat-effects';
+import {
+  getComputedAgility,
+  randomMagicMiss,
+  randomPhysicalMiss,
+  rollRandomPlayerGuard,
+} from '@/combat/combat-effects';
+import type { CombatSession } from '@/combat/combat-runtime';
 import type { Game } from '@/game/game';
 import type { BaseGoods } from '@/goods';
 import { GoodsMedicine } from '@/goods';
@@ -16,13 +22,35 @@ export function getActionPriority(action: CombatAction): number {
   return getComputedAgility(action.actor);
 }
 
-export function isMissed(
+export function isPhysicalMissed(
   game: Game,
   attacker: FightingCharacter,
   target: FightingCharacter,
-  allowMiss = true
+  allowMiss = true,
+  randomRoll?: number
 ): boolean {
-  return randomMiss(attacker, target, game.state.allowFightMiss, allowMiss);
+  return randomPhysicalMiss(attacker, target, game.state.allowFightMiss, allowMiss, randomRoll);
+}
+
+export function isMagicMissed(
+  game: Game,
+  attacker: FightingCharacter,
+  target: FightingCharacter,
+  allowMiss = true,
+  randomRoll?: number
+): boolean {
+  return randomMagicMiss(attacker, target, game.state.allowFightMiss, allowMiss, randomRoll);
+}
+
+export function rollGuardedPlayerTarget(
+  session: CombatSession,
+  actor: FightingCharacter,
+  target: FightingCharacter
+): boolean {
+  const player = target as Player;
+  if (!session.players.includes(player)) return false;
+  const defending = session.isPlayerDefending(player);
+  return defending || (session.monsters.includes(actor as Monster) && rollRandomPlayerGuard(player, defending));
 }
 
 export function createMissAnimation(game: Game, fighter: FightingCharacter): CombatActionAnimation {

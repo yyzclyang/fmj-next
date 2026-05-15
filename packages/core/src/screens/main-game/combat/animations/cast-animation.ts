@@ -32,6 +32,7 @@ export class CastCombatAnimation implements CombatActionAnimation {
       readonly srsPoint: CombatPoint;
       readonly raiseAnimations: CombatActionAnimation[];
       readonly hitTargets: boolean;
+      readonly guardedTargets?: ReadonlySet<FightingCharacter>;
     }
   ) {
     this.actorSnapshot = snapshotSprite(options.actor);
@@ -98,9 +99,13 @@ export class CastCombatAnimation implements CombatActionAnimation {
     for (let i = 0; i < this.targetSnapshots.length; i += 1) {
       const item = this.targetSnapshots[i]!;
       const target = this.options.targets[i];
-      if (target instanceof Player) item.sprite.currentFrame = 10;
+      if (target instanceof Player) item.sprite.currentFrame = this.isGuarded(target) ? 8 : 10;
       else item.sprite.move(2, 2);
     }
+  }
+
+  private isGuarded(target: FightingCharacter): boolean {
+    return this.options.guardedTargets?.has(target) ?? false;
   }
 
   private updateRaises(delta: number): boolean {

@@ -1,4 +1,11 @@
-import { Player, type FightingCharacter, type FightingSprite } from '@/characters';
+import {
+  MonsterFightingFrame,
+  Player,
+  PlayerFightingFrame,
+  PlayerFightingFrameRange,
+  type FightingCharacter,
+  type FightingSprite,
+} from '@/characters';
 import { isSleeping } from '@/combat/combat-effects';
 import type { Surface } from '@/rendering/surface';
 import { FIXED_STEP_MS } from '@/utils/constants';
@@ -74,18 +81,29 @@ export function setPhysicalAttackFrame(actor: FightingCharacter, frame: number, 
   const sprite = actor.fightingSprite;
   if (!sprite) return;
   if (actor instanceof Player) {
-    sprite.currentFrame = Math.trunc((5 * frame) / total) + 1;
+    const range = PlayerFightingFrameRange.PhysicalAttack;
+    sprite.currentFrame = Math.trunc((getFrameSpan(range) * frame) / total) + range.start;
   } else {
-    sprite.currentFrame = Math.trunc((sprite.frameCount * frame) / total) + 1;
+    sprite.currentFrame = Math.trunc((sprite.frameCount * frame) / total) + MonsterFightingFrame.Idle;
   }
 }
 
 export function setPlayerCastFrame(snapshot: SpriteSnapshot, frame: number, totalFrames: number): void {
-  snapshot.sprite.currentFrame = Math.trunc((frame * 3) / totalFrames) + 6;
+  const range = PlayerFightingFrameRange.MagicCast;
+  snapshot.sprite.currentFrame = Math.trunc((frame * getFrameSpan(range)) / totalFrames) + range.start;
+}
+
+function getFrameSpan(range: PlayerFightingFrameRange): number {
+  return range.end - range.start + 1;
 }
 
 export function setPlayerFrameByState(player: Player): void {
   const sprite = player.fightingSprite;
   if (!sprite) return;
-  sprite.currentFrame = player.hp <= 0 ? 12 : isSleeping(player) || player.hp < player.hpMax / 4 ? 11 : 1;
+  sprite.currentFrame =
+    player.hp <= 0
+      ? PlayerFightingFrame.Dead
+      : isSleeping(player) || player.hp < player.hpMax / 4
+        ? PlayerFightingFrame.Weak
+        : PlayerFightingFrame.Idle;
 }

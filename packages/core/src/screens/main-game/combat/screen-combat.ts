@@ -8,7 +8,7 @@ import {
   type PlayerTargetMode,
 } from '@/combat/combat-actions';
 import type { CombatFinishResult, CombatSession } from '@/combat/combat-runtime';
-import type { Monster, Player } from '@/characters';
+import { PlayerFightingFrame, type Monster, type Player } from '@/characters';
 import type { Game } from '@/game/game';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
@@ -380,7 +380,7 @@ export class ScreenCombat extends BaseScreen {
   private confirmDefend(): void {
     const player = this.currentPlayer;
     if (!player) throw new Error('防御时缺少当前角色');
-    player.fightingSprite!.currentFrame = 9;
+    player.fightingSprite!.currentFrame = PlayerFightingFrame.Defend;
     this.confirmPlayerAction({ kind: 'defend', actor: player });
   }
 

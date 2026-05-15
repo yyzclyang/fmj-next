@@ -1,6 +1,11 @@
 import type { FightingCharacter } from '@/characters';
 import { createLogger } from '@/utils/logger';
-import type { CombatEnterFightParams, CombatFinishResult, CombatLevelUpAward, CombatWinSettlement } from './combat-runtime';
+import type {
+  CombatEnterFightParams,
+  CombatFinishResult,
+  CombatLevelUpAward,
+  CombatWinSettlement,
+} from './combat-runtime';
 
 export interface CombatFighterLogState {
   readonly hp: number;

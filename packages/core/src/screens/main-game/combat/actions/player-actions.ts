@@ -84,10 +84,7 @@ export function createPlayerTargetAction(player: Player, target: Player, mode: P
   };
 }
 
-export function createFleeActions(
-  players: readonly Player[],
-  startIndex: number
-): CombatAction[] {
+export function createFleeActions(players: readonly Player[], startIndex: number): CombatAction[] {
   const res: CombatAction[] = [];
   for (let i = startIndex; i < players.length; i += 1) {
     const player = players[i];

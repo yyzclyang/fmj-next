@@ -95,7 +95,10 @@ function cmdEnterFight(game: Game, reader: ScriptReader): CommandBuilder {
     execute: process => {
       const runtime = game.mainSceneRuntime;
       if (!runtime) throw new Error('主场景运行时不存在，无法进入战斗');
-      runtime.enterFight({ roundMax, monsterTypes, background, eventRounds, eventIds, lossAddress, winAddress }, process);
+      runtime.enterFight(
+        { roundMax, monsterTypes, background, eventRounds, eventIds, lossAddress, winAddress },
+        process
+      );
     },
   };
 }

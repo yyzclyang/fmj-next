@@ -1,5 +1,5 @@
 import type { Game } from '@/game/game';
-import type { Monster, Player } from '@/characters';
+import { MonsterFightingFrame, PlayerFightingFrame, type Monster, type Player } from '@/characters';
 import { STATUS_FLAGS_ALL } from '@/characters/status';
 import type { BaseGoods } from '@/goods';
 import { Bitmap } from '@/rendering/bitmap';
@@ -342,7 +342,12 @@ export class CombatRuntime {
       if (!sprite) throw new Error(`角色缺少战斗图: ${player.name}`);
       player.activeStatuses.clearFlags(STATUS_FLAGS_ALL);
       sprite.setCombatPos(pos.x, pos.y);
-      sprite.currentFrame = player.hp <= 0 ? 12 : player.hp < player.hpMax / 4 ? 11 : 1;
+      sprite.currentFrame =
+        player.hp <= 0
+          ? PlayerFightingFrame.Dead
+          : player.hp < player.hpMax / 4
+            ? PlayerFightingFrame.Weak
+            : PlayerFightingFrame.Idle;
     });
 
     session.monsters.forEach((monster, i) => {
@@ -357,7 +362,7 @@ export class CombatRuntime {
         pos.x - Math.floor(sprite.width / 6) + Math.floor(sprite.width / 2),
         pos.y - Math.floor(sprite.height / 10) + Math.floor(sprite.height / 2)
       );
-      sprite.currentFrame = 1;
+      sprite.currentFrame = MonsterFightingFrame.Idle;
     });
   }
 

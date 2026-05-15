@@ -22,7 +22,7 @@ export type { StatusSlot } from './status';
 export { Character, CharacterState, Direction, toCharacterState, toDirection } from './character';
 export type { CharacterData } from './character';
 export { WalkingSprite } from './walking-sprite';
-export { FightingSprite } from './fighting-sprite';
+export { FightingSprite, MonsterFightingFrame, PlayerFightingFrame, PlayerFightingFrameRange } from './fighting-sprite';
 export { FightingCharacter } from './fighting-character';
 export type { FightingCharacterData } from './fighting-character';
 export { Monster } from './monster';

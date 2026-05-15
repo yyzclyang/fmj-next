@@ -1,4 +1,4 @@
-import { Player, type FightingCharacter } from '@/characters';
+import { Player, PlayerFightingFrame, type FightingCharacter } from '@/characters';
 import type { ResSrs } from '@/lib/res-srs';
 import type { Surface } from '@/rendering/surface';
 import {
@@ -100,8 +100,9 @@ export class CastCombatAnimation implements CombatActionAnimation {
     for (let i = 0; i < this.targetSnapshots.length; i += 1) {
       const item = this.targetSnapshots[i]!;
       const target = this.options.targets[i];
-      if (target instanceof Player) item.sprite.currentFrame = this.isGuarded(target) ? 8 : 10;
-      else item.sprite.move(2, 2);
+      if (target instanceof Player) {
+        item.sprite.currentFrame = this.isGuarded(target) ? PlayerFightingFrame.GuardedHit : PlayerFightingFrame.Hit;
+      } else item.sprite.move(2, 2);
     }
   }
 

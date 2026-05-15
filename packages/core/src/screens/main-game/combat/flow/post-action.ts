@@ -1,4 +1,4 @@
-import { Player, type FightingCharacter, type Monster } from '@/characters';
+import { MonsterFightingFrame, Player, PlayerFightingFrame, type FightingCharacter, type Monster } from '@/characters';
 import type { CombatAction } from '@/combat/combat-actions';
 import { captureCombatLogStates, logCombatFighterEffects } from '@/combat/combat-log';
 import { applyPoisonPostEffect, decayFighterStatuses } from '@/combat/combat-effects';
@@ -80,12 +80,20 @@ export function finishActionState(game: Game, action: CombatAction): CombatActio
   return raises.length > 0 ? new RaiseGroupCombatAnimation(raises, aliveActors, poisonActors) : null;
 }
 
-export function resetFighterFrames(players: readonly Player[], monsters: readonly Monster[]): void {
+export function resetFighterFrames(
+  players: readonly Player[],
+  monsters: readonly Monster[],
+  isPlayerDefending: (player: Player) => boolean = () => false
+): void {
   for (const player of players) {
-    setPlayerFrameByState(player);
+    if (player.isAlive && isPlayerDefending(player) && player.fightingSprite) {
+      player.fightingSprite.currentFrame = PlayerFightingFrame.Defend;
+    } else {
+      setPlayerFrameByState(player);
+    }
   }
   for (const monster of monsters) {
-    if (monster.isAlive && monster.fightingSprite) monster.fightingSprite.currentFrame = 1;
+    if (monster.isAlive && monster.fightingSprite) monster.fightingSprite.currentFrame = MonsterFightingFrame.Idle;
   }
 }
 

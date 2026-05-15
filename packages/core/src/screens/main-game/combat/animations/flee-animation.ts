@@ -1,4 +1,4 @@
-import { Player } from '@/characters';
+import { Player, PlayerFightingFrame } from '@/characters';
 import {
   FLEE_FAIL_FRAMES,
   FLEE_MOVE_FRAMES,
@@ -20,7 +20,7 @@ export class FleeCombatAnimation implements CombatActionAnimation {
     private readonly succeed: boolean
   ) {
     this.snapshot = snapshotSprite(player);
-    if (this.snapshot) this.snapshot.sprite.currentFrame = 1;
+    if (this.snapshot) this.snapshot.sprite.currentFrame = PlayerFightingFrame.Idle;
   }
 
   update(delta: number): boolean {
@@ -35,7 +35,7 @@ export class FleeCombatAnimation implements CombatActionAnimation {
     if (this.succeed) return false;
     if (this.frame < FLEE_MOVE_FRAMES + FLEE_FAIL_FRAMES) {
       snapshot.sprite.setCombatPos(snapshot.x, snapshot.y);
-      snapshot.sprite.currentFrame = 11;
+      snapshot.sprite.currentFrame = PlayerFightingFrame.Weak;
       return true;
     }
     setPlayerFrameByState(this.player);

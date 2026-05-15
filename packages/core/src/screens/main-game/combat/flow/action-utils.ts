@@ -23,8 +23,10 @@ export function getActionPriority(action: CombatAction): number {
 }
 
 function hasFastActionPriority(action: CombatAction): boolean {
-  if (action.kind === 'magicHelp') return action.magic instanceof MagicRestore || action.magic instanceof MagicAuxiliary;
-  if (action.kind === 'useItem') return action.goods instanceof GoodsMedicine || action.goods instanceof GoodsMedicineLife;
+  if (action.kind === 'magicHelp')
+    return action.magic instanceof MagicRestore || action.magic instanceof MagicAuxiliary;
+  if (action.kind === 'useItem')
+    return action.goods instanceof GoodsMedicine || action.goods instanceof GoodsMedicineLife;
   return false;
 }
 

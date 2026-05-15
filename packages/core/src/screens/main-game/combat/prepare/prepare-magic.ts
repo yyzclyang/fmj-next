@@ -34,7 +34,9 @@ export function prepareRolledBackMagicAction(
       : prepareNopAction(ctx, action.actor);
   }
   const target = getRollbackAttackTarget(ctx, action.actor);
-  return target ? prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target }) : prepareNopAction(ctx, action.actor);
+  return target
+    ? prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target })
+    : prepareNopAction(ctx, action.actor);
 }
 
 function getRollbackAttackAllTargets(

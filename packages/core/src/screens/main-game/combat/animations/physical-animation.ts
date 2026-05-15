@@ -1,4 +1,4 @@
-import type { FightingCharacter } from '@/characters';
+import { PlayerFightingFrame, type FightingCharacter } from '@/characters';
 import type { Surface } from '@/rendering/surface';
 import {
   PHYSICAL_ATTACK_MOVE_FRAMES,
@@ -89,8 +89,10 @@ export class PhysicalCombatAnimation implements CombatActionAnimation {
     for (let i = 0; i < this.targetSnapshots.length; i += 1) {
       const item = this.targetSnapshots[i]!;
       const target = this.options.targets[i];
-      if (this.options.targetIsPlayer) item.sprite.currentFrame = target && this.isGuarded(target) ? 8 : 10;
-      else item.sprite.move(2, 2);
+      if (this.options.targetIsPlayer) {
+        item.sprite.currentFrame =
+          target && this.isGuarded(target) ? PlayerFightingFrame.GuardedHit : PlayerFightingFrame.Hit;
+      } else item.sprite.move(2, 2);
     }
   }
 

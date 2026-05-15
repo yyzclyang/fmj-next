@@ -1,12 +1,14 @@
 import type { CombatAction } from '@/combat/combat-actions';
 import type { CombatFinishResult, CombatSession } from '@/combat/combat-runtime';
 import { isConfusing, isSleeping } from '@/combat/combat-effects';
+import { Player } from '@/characters';
 import type { Game } from '@/game/game';
 import { createLogger } from '@/utils/logger';
 import type { CombatActionAnimation } from '../animations/animation-types';
+import { setPlayerFrameByState } from '../animations/animation-sprite';
 import { clearActionQueueAndRestoreItems, getActionPriority, restoreActionGoods } from './action-utils';
 import { type CombatActionPreparer, type PreparedCombatAction } from '../prepare/action-preparer';
-import { applyPreActionState, finishActionState, resetFighterFrames } from './post-action';
+import { applyPreActionState, finishActionState, resetFighterFrames as resetCombatFighterFrames } from './post-action';
 import { hasAlivePlayers, isAllMonsterDead } from '../actions/targeting';
 
 const logger = createLogger('战斗');
@@ -51,6 +53,7 @@ export class CombatActionQueue {
     const action = this.queue.pop();
     if (!action) throw new Error('取消角色行动时没有可撤销的动作');
     restoreActionGoods(this.game, action);
+    if (action.kind === 'defend' && action.actor instanceof Player) setPlayerFrameByState(action.actor);
     logger.log('队列', `撤销 ${describeAction(action)}`);
     return action;
   }
@@ -59,17 +62,20 @@ export class CombatActionQueue {
     this.queue.length = 0;
     this.pendingPreAction = null;
     this.session.clearDefendingPlayers();
+    resetCombatFighterFrames(this.session.players, this.session.monsters);
   }
 
   clearAndRestoreItems(): void {
     if (this.queue.length > 0) logger.log('队列', `清空并归还道具 数量=${this.queue.length}`);
     clearActionQueueAndRestoreItems(this.game, this.queue);
     this.session.clearDefendingPlayers();
+    resetCombatFighterFrames(this.session.players, this.session.monsters);
   }
 
   startPerforming(): void {
     this.session.clearDefendingPlayers();
     this.registerDefendingPlayers();
+    this.resetFighterFrames();
     const playerActionCount = this.queue.length;
     const monsterActionCount = this.appendMonsterActions();
     this.queue.sort((a, b) => getActionPriority(b) - getActionPriority(a));
@@ -91,7 +97,7 @@ export class CombatActionQueue {
       this.pendingActionResult = undefined;
       this.animation = null;
       this.actionElapsed = 0;
-      resetFighterFrames(this.session.players, this.session.monsters);
+      this.resetFighterFrames();
       return this.completePendingAction(result);
     }
 
@@ -101,7 +107,7 @@ export class CombatActionQueue {
       this.pendingPreAction = null;
       this.animation = null;
       this.actionElapsed = 0;
-      resetFighterFrames(this.session.players, this.session.monsters);
+      this.resetFighterFrames();
       this.applyPreparedAction(this.options.actionPreparer.prepare(action));
     }
 
@@ -109,6 +115,7 @@ export class CombatActionQueue {
       const next = this.queue.shift();
       if (!next) {
         this.session.clearDefendingPlayers();
+        resetCombatFighterFrames(this.session.players, this.session.monsters);
         logger.log('队列', '回合动作执行完毕');
         return { kind: 'finishRound' };
       }
@@ -136,13 +143,13 @@ export class CombatActionQueue {
       this.currentAction = null;
       this.animation = null;
       this.actionElapsed = 0;
-      resetFighterFrames(this.session.players, this.session.monsters);
+      this.resetFighterFrames();
       return this.completePendingAction(result);
     }
     const postAnimation = finishActionState(this.game, action);
     this.currentAction = null;
     this.actionElapsed = 0;
-    resetFighterFrames(this.session.players, this.session.monsters);
+    this.resetFighterFrames();
     if (postAnimation) {
       this.animation = postAnimation;
       this.pendingActionResult = result;
@@ -173,6 +180,12 @@ export class CombatActionQueue {
       if (!action.actor.isAlive || isSleeping(action.actor) || isConfusing(action.actor)) continue;
       this.session.setPlayerDefending(action.actor);
     }
+  }
+
+  private resetFighterFrames(): void {
+    resetCombatFighterFrames(this.session.players, this.session.monsters, player =>
+      this.session.isPlayerDefending(player)
+    );
   }
 
   private completePendingAction(result: CombatFinishResult | null): CombatActionQueueResult {

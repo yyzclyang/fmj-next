@@ -1,4 +1,4 @@
-import { Player, type FightingCharacter } from '@/characters';
+import { Player, PlayerFightingFrame, type FightingCharacter } from '@/characters';
 import {
   STATUS_FLAG_POISON,
   STATUS_FLAG_DEFENSE,
@@ -188,7 +188,7 @@ function createHitSnapshot(fighter: FightingCharacter): HitSnapshot | null {
 
 function startHitFrame(item: HitSnapshot): void {
   if (item.fighter instanceof Player) {
-    item.snapshot.sprite.currentFrame = 10;
+    item.snapshot.sprite.currentFrame = PlayerFightingFrame.Hit;
     return;
   }
   item.snapshot.sprite.move(2, 2);

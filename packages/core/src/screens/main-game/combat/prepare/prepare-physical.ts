@@ -1,11 +1,6 @@
-import type { FightingCharacter, Monster, Player } from '@/characters';
+import { PlayerFightingFrame, type FightingCharacter, type Monster, type Player } from '@/characters';
 import type { AttackAction, CombatAction, CoopAction } from '@/combat/combat-actions';
-import {
-  captureCombatLogStates,
-  logCombatAction,
-  logCombatFighterEffects,
-  logCombatMiss,
-} from '@/combat/combat-log';
+import { captureCombatLogStates, logCombatAction, logCombatFighterEffects, logCombatMiss } from '@/combat/combat-log';
 import {
   applyMagicAttack,
   applyOnHitStatuses,
@@ -40,7 +35,7 @@ export function prepareDefendAction(
   ctx: CombatPrepareContext,
   action: CombatAction & { kind: 'defend' }
 ): PreparedCombatAction {
-  action.actor.fightingSprite!.currentFrame = 9;
+  action.actor.fightingSprite!.currentFrame = PlayerFightingFrame.Defend;
   logCombatAction(`${action.actor.name}防御`);
   return preparedAction(action, new StaticCombatAnimation(ctx.actionInterval));
 }
@@ -74,7 +69,14 @@ export function prepareAttackAction(ctx: CombatPrepareContext, action: AttackAct
     ? 0
     : selfAttack
       ? calcConfusionSelfDamage(action.actor, randomRoll)
-      : calcPhysicalDamage(action.actor, action.target, targetIsPlayer, ctx.game.damageFormula, targetIsGuarded, randomRoll);
+      : calcPhysicalDamage(
+          action.actor,
+          action.target,
+          targetIsPlayer,
+          ctx.game.damageFormula,
+          targetIsGuarded,
+          randomRoll
+        );
   if (!missed) {
     action.target.hp = Math.max(0, action.target.hp - damage);
     if (!selfAttack) applyOnHitStatuses(action.actor, action.target);
@@ -121,7 +123,14 @@ export function prepareAttackAllAction(
       continue;
     }
     if (targetIsGuarded) guardedTargets.add(target);
-    const damage = calcPhysicalDamage(action.actor, target, targetIsPlayer, ctx.game.damageFormula, targetIsGuarded, randomRoll);
+    const damage = calcPhysicalDamage(
+      action.actor,
+      target,
+      targetIsPlayer,
+      ctx.game.damageFormula,
+      targetIsGuarded,
+      randomRoll
+    );
     target.hp = Math.max(0, target.hp - damage);
     applyOnHitStatuses(action.actor, target);
   }
@@ -178,14 +187,17 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
           missedPairs.push({ actor, target });
           continue;
         }
-        const damage = Math.trunc(calcPhysicalDamage(actor, target, false, ctx.game.damageFormula, false, randomRoll) * 1.6);
+        const damage = Math.trunc(
+          calcPhysicalDamage(actor, target, false, ctx.game.damageFormula, false, randomRoll) * 1.6
+        );
         target.hp = Math.max(0, target.hp - damage);
         applyOnHitStatuses(actor, target);
       }
     }
   }
   logCombatAction(actionLabel);
-  for (const item of missedPairs) logCombatMiss(item.actor, item.target, action.magic ? `施展${action.magic.name}攻击` : '合击');
+  for (const item of missedPairs)
+    logCombatMiss(item.actor, item.target, action.magic ? `施展${action.magic.name}攻击` : '合击');
   logCombatFighterEffects(actionLabel, logBefore, effectFighters);
   return preparedAction(
     action,

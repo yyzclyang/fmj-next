@@ -229,16 +229,10 @@ function cmdTestGoodsNum(game: Game, reader: ScriptReader): CommandBuilder {
     execute: process => {
       const goodsCount = game.getGoodsCount(type, index);
       if (goodsCount === count) {
-        logger.log(
-          '分支',
-          `TESTGOODSNUM GRS ${type}-${index} 数量=${goodsCount} == ${count}, 地址=${equalAddress}`
-        );
+        logger.log('分支', `TESTGOODSNUM GRS ${type}-${index} 数量=${goodsCount} == ${count}, 地址=${equalAddress}`);
         process.gotoAddress(equalAddress);
       } else if (goodsCount > count) {
-        logger.log(
-          '分支',
-          `TESTGOODSNUM GRS ${type}-${index} 数量=${goodsCount} > ${count}, 地址=${greaterAddress}`
-        );
+        logger.log('分支', `TESTGOODSNUM GRS ${type}-${index} 数量=${goodsCount} > ${count}, 地址=${greaterAddress}`);
         process.gotoAddress(greaterAddress);
       }
     },

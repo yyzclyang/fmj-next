@@ -2,7 +2,8 @@ import { Player, type FightingCharacter } from '@/characters';
 import type { ResSrs } from '@/lib/res-srs';
 import type { Surface } from '@/rendering/surface';
 import {
-  CAST_PRE_FRAMES,
+  MAGIC_CAST_PRE_FRAMES,
+  MAGIC_SRS_ITERATIONS,
   advanceFrameTimer,
   drawActiveAnimations,
   restoreSprite,
@@ -40,7 +41,7 @@ export class CastCombatAnimation implements CombatActionAnimation {
     this.visibleTargetSet = new Set(options.targets);
     this.raiseAnimations = [...options.raiseAnimations];
     options.srs?.start();
-    options.srs?.setIteratorNum(2);
+    options.srs?.setIteratorNum(MAGIC_SRS_ITERATIONS);
   }
 
   keepsVisible(fighter: FightingCharacter): boolean {
@@ -50,7 +51,7 @@ export class CastCombatAnimation implements CombatActionAnimation {
   update(delta: number): boolean {
     if (this.stage === 'pre') {
       this.advance(delta);
-      if (this.frame < CAST_PRE_FRAMES) {
+      if (this.frame < MAGIC_CAST_PRE_FRAMES) {
         this.updateCastFrame();
         return true;
       }
@@ -88,7 +89,7 @@ export class CastCombatAnimation implements CombatActionAnimation {
     const snapshot = this.actorSnapshot;
     if (!snapshot) return;
     if (this.options.actor instanceof Player) {
-      setPlayerCastFrame(snapshot, this.frame);
+      setPlayerCastFrame(snapshot, this.frame, MAGIC_CAST_PRE_FRAMES);
     } else {
       snapshot.sprite.setCombatPos(snapshot.x + 2, snapshot.y + 2);
     }

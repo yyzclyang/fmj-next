@@ -415,7 +415,7 @@ export class CombatRuntime {
       let remainingExp = player.exp + exp;
       while (player.level < chain.maxLevel) {
         const nextExp = chain.getNextLevelExp(player.level);
-        if (nextExp <= 0 || remainingExp <= nextExp) break;
+        if (nextExp <= 0 || remainingExp < nextExp) break;
 
         const previousLevel = player.level;
         const oldMagicCount = chain.getLearnMagicCount(previousLevel);

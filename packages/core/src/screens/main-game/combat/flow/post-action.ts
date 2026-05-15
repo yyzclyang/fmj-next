@@ -32,14 +32,14 @@ export function createRaiseAnimations(
   game: Game,
   before: Map<FightingCharacter, FighterStateSnapshot>,
   fighters: readonly FightingCharacter[],
-  hpDiffOverrides: ReadonlyMap<FightingCharacter, number> = new Map()
+  hpDiffOverrides?: ReadonlyMap<FightingCharacter, number>
 ): CombatActionAnimation[] {
   const res: CombatActionAnimation[] = [];
   for (const fighter of fighters) {
     const snapshot = before.get(fighter);
     const sprite = fighter.fightingSprite;
     if (!snapshot || !sprite) continue;
-    const hpDiff = hpDiffOverrides.get(fighter) ?? fighter.hp - snapshot.hp;
+    const hpDiff = hpDiffOverrides?.get(fighter) ?? fighter.hp - snapshot.hp;
     const statusFlags = getActiveStatusDiffFlags(snapshot, fighter);
     if (hpDiff === 0 && statusFlags === 0) continue;
     res.push(new RaiseCombatAnimation(game, sprite.combatX, sprite.combatY, hpDiff, statusFlags));
@@ -66,14 +66,18 @@ export function finishActionState(game: Game, action: CombatAction): CombatActio
   const before = captureFighterStates(aliveActors);
   const logBefore = captureCombatLogStates(aliveActors);
   const hpDiffOverrides = new Map<FightingCharacter, number>();
+  const poisonActors: FightingCharacter[] = [];
   for (const actor of aliveActors) {
     const poisonDamage = applyPoisonPostEffect(actor);
-    if (poisonDamage > 0) hpDiffOverrides.set(actor, -poisonDamage);
+    if (poisonDamage > 0) {
+      hpDiffOverrides.set(actor, -poisonDamage);
+      poisonActors.push(actor);
+    }
   }
   const raises = createRaiseAnimations(game, before, aliveActors, hpDiffOverrides);
   for (const actor of actors) decayFighterStatuses(actor);
   logCombatFighterEffects('动作后状态', logBefore, aliveActors);
-  return raises.length > 0 ? new RaiseGroupCombatAnimation(raises, aliveActors) : null;
+  return raises.length > 0 ? new RaiseGroupCombatAnimation(raises, aliveActors, poisonActors) : null;
 }
 
 export function resetFighterFrames(players: readonly Player[], monsters: readonly Monster[]): void {

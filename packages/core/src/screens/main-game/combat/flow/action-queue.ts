@@ -132,7 +132,7 @@ export class CombatActionQueue {
     const action = this.currentAction;
     if (!action) throw new Error('战斗动作队列执行状态异常');
     const result = this.getActionResult(action);
-    if (result === 'flee') {
+    if (result === 'flee' || this.isCombatResolved()) {
       this.currentAction = null;
       this.animation = null;
       this.actionElapsed = 0;
@@ -192,6 +192,10 @@ export class CombatActionQueue {
       return { kind: 'finish', result: 'loss' };
     }
     return { kind: 'running' };
+  }
+
+  private isCombatResolved(): boolean {
+    return isAllMonsterDead(this.session.monsters) || !hasAlivePlayers(this.session.players);
   }
 
   private getActionResult(action: CombatAction): CombatFinishResult | null {

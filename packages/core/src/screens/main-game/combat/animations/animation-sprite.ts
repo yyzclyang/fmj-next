@@ -1,11 +1,22 @@
 import { Player, type FightingCharacter, type FightingSprite } from '@/characters';
 import { isSleeping } from '@/combat/combat-effects';
 import type { Surface } from '@/rendering/surface';
+import { FIXED_STEP_MS } from '@/utils/constants';
 import type { CombatActionAnimation } from './animation-types';
 
-export const FRAME_INTERVAL = 40;
-export const PHYSICAL_MOVE_FRAMES = 12;
-export const CAST_PRE_FRAMES = 20;
+export const COMBAT_FRAME_INTERVAL = 2 * FIXED_STEP_MS; // 战斗动画的基础逻辑帧间隔，单位毫秒。
+
+export const PHYSICAL_ATTACK_MOVE_FRAMES = 6; // 普攻从原位移动到目标附近的逻辑帧数。
+export const FLEE_MOVE_FRAMES = 6; // 逃跑向下离场的移动逻辑帧数。
+export const FLEE_FAIL_FRAMES = 3; // 逃跑失败后停留在受挫姿态的逻辑帧数。
+export const MAGIC_CAST_PRE_FRAMES = 8; // 普通施法前摇的逻辑帧数。
+export const MAGIC_SRS_ITERATIONS = 2; // 普通魔法 SRS 每次 update 推进的内部帧数，越大越快。
+export const COOP_MOVE_FRAMES = 6; // 合击角色移动到集合点的逻辑帧数。
+export const COOP_CAST_PRE_FRAMES = 6; // 合击施法前摇的逻辑帧数。
+export const COOP_SRS_ITERATIONS = 1; // 合击魔法 SRS 每次 update 推进的内部帧数，越大越快。
+export const MISS_FLOAT_STEPS = 4; // Miss 图片上浮的逻辑步数。
+export const RAISE_NUMBER_FLOAT_STEPS = 4; // 战斗数字上浮的逻辑步数。
+export const STATUS_EFFECT_SRS_ITERATIONS = 1; // 异常状态特效 SRS 每次 update 推进的内部帧数。
 
 export interface SpriteSnapshot {
   readonly sprite: FightingSprite;
@@ -33,11 +44,16 @@ export function restoreSprites(snapshots: readonly SpriteSnapshot[]): void {
   for (const snapshot of snapshots) restoreSprite(snapshot);
 }
 
-export function advanceFrameTimer(frame: number, elapsed: number, delta: number): { frame: number; elapsed: number } {
+export function advanceFrameTimer(
+  frame: number,
+  elapsed: number,
+  delta: number,
+  frameInterval = COMBAT_FRAME_INTERVAL
+): { frame: number; elapsed: number } {
   let nextFrame = frame;
   let nextElapsed = elapsed + delta;
-  while (nextElapsed >= FRAME_INTERVAL) {
-    nextElapsed -= FRAME_INTERVAL;
+  while (nextElapsed >= frameInterval) {
+    nextElapsed -= frameInterval;
     nextFrame += 1;
   }
   return { frame: nextFrame, elapsed: nextElapsed };
@@ -64,8 +80,8 @@ export function setPhysicalAttackFrame(actor: FightingCharacter, frame: number, 
   }
 }
 
-export function setPlayerCastFrame(snapshot: SpriteSnapshot, frame: number): void {
-  snapshot.sprite.currentFrame = Math.trunc((frame * 3) / CAST_PRE_FRAMES) + 6;
+export function setPlayerCastFrame(snapshot: SpriteSnapshot, frame: number, totalFrames: number): void {
+  snapshot.sprite.currentFrame = Math.trunc((frame * 3) / totalFrames) + 6;
 }
 
 export function setPlayerFrameByState(player: Player): void {

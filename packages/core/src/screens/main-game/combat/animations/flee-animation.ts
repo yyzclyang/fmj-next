@@ -1,6 +1,7 @@
 import { Player } from '@/characters';
 import {
-  PHYSICAL_MOVE_FRAMES,
+  FLEE_FAIL_FRAMES,
+  FLEE_MOVE_FRAMES,
   advanceFrameTimer,
   restoreSprite,
   setPlayerFrameByState,
@@ -26,13 +27,13 @@ export class FleeCombatAnimation implements CombatActionAnimation {
     this.advance(delta);
     const snapshot = this.snapshot;
     if (!snapshot) return false;
-    if (this.frame < PHYSICAL_MOVE_FRAMES) {
-      const dy = Math.trunc((96 - snapshot.y) / PHYSICAL_MOVE_FRAMES);
+    if (this.frame < FLEE_MOVE_FRAMES) {
+      const dy = Math.trunc((96 - snapshot.y) / FLEE_MOVE_FRAMES);
       snapshot.sprite.setCombatPos(snapshot.x, snapshot.y + dy * this.frame);
       return true;
     }
     if (this.succeed) return false;
-    if (this.frame < PHYSICAL_MOVE_FRAMES + 2) {
+    if (this.frame < FLEE_MOVE_FRAMES + FLEE_FAIL_FRAMES) {
       snapshot.sprite.setCombatPos(snapshot.x, snapshot.y);
       snapshot.sprite.currentFrame = 11;
       return true;

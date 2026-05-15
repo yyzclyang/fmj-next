@@ -1,3 +1,4 @@
+import { Player, type FightingCharacter } from '@/characters';
 import {
   STATUS_FLAG_POISON,
   STATUS_FLAG_DEFENSE,
@@ -7,15 +8,29 @@ import {
   STATUS_FLAG_SLEEP,
   STATUS_FLAG_AGILITY,
 } from '@/characters/status';
-import type { FightingCharacter } from '@/characters';
 import type { Game } from '@/game/game';
 import type { ResImage } from '@/lib/res-image';
 import type { ResSrs } from '@/lib/res-srs';
 import { ResourceType } from '@/lib/resource-utils';
 import type { Surface } from '@/rendering/surface';
 import { drawText } from '@/rendering/text-render';
-import { drawActiveAnimations, FRAME_INTERVAL, updateActiveAnimations } from './animation-sprite';
+import {
+  COMBAT_FRAME_INTERVAL,
+  MISS_FLOAT_STEPS,
+  RAISE_NUMBER_FLOAT_STEPS,
+  STATUS_EFFECT_SRS_ITERATIONS,
+  drawActiveAnimations,
+  restoreSprite,
+  snapshotSprite,
+  updateActiveAnimations,
+  type SpriteSnapshot,
+} from './animation-sprite';
 import type { CombatActionAnimation } from './animation-types';
+
+interface HitSnapshot {
+  readonly fighter: FightingCharacter;
+  readonly snapshot: SpriteSnapshot;
+}
 
 export class StaticCombatAnimation implements CombatActionAnimation {
   private elapsed = 0;
@@ -33,10 +48,18 @@ export class StaticCombatAnimation implements CombatActionAnimation {
 export class RaiseGroupCombatAnimation implements CombatActionAnimation {
   private raiseAnimations: CombatActionAnimation[];
   private readonly visibleTargetSet: Set<FightingCharacter>;
+  private readonly hitSnapshots: HitSnapshot[];
+  private hitRestored = false;
 
-  constructor(raiseAnimations: readonly CombatActionAnimation[], fighters: readonly FightingCharacter[]) {
+  constructor(
+    raiseAnimations: readonly CombatActionAnimation[],
+    fighters: readonly FightingCharacter[],
+    hitFighters: readonly FightingCharacter[] = []
+  ) {
     this.raiseAnimations = [...raiseAnimations];
     this.visibleTargetSet = new Set(fighters);
+    this.hitSnapshots = hitFighters.map(createHitSnapshot).filter((item): item is HitSnapshot => item != null);
+    for (const item of this.hitSnapshots) startHitFrame(item);
   }
 
   keepsVisible(fighter: FightingCharacter): boolean {
@@ -44,11 +67,19 @@ export class RaiseGroupCombatAnimation implements CombatActionAnimation {
   }
 
   update(delta: number): boolean {
-    return updateActiveAnimations(this.raiseAnimations, delta);
+    if (updateActiveAnimations(this.raiseAnimations, delta)) return true;
+    this.restoreHitFrames();
+    return false;
   }
 
   draw(surface: Surface): void {
     drawActiveAnimations(surface, this.raiseAnimations);
+  }
+
+  private restoreHitFrames(): void {
+    if (this.hitRestored) return;
+    this.hitRestored = true;
+    for (const item of this.hitSnapshots) restoreSprite(item.snapshot);
   }
 }
 
@@ -68,12 +99,12 @@ export class MissCombatAnimation implements CombatActionAnimation {
 
   update(delta: number): boolean {
     this.elapsed += delta;
-    while (this.elapsed >= FRAME_INTERVAL) {
-      this.elapsed -= FRAME_INTERVAL;
+    while (this.elapsed >= COMBAT_FRAME_INTERVAL) {
+      this.elapsed -= COMBAT_FRAME_INTERVAL;
       this.dt += 1;
       this.dy -= this.dt;
     }
-    return this.dt <= 4;
+    return this.dt <= MISS_FLOAT_STEPS;
   }
 
   draw(surface: Surface): void {
@@ -117,6 +148,7 @@ export class RaiseCombatAnimation implements CombatActionAnimation {
       const srs = game.datLib.getSrs(1, item.srs);
       if (!srs) continue;
       srs.start();
+      srs.setIteratorNum(STATUS_EFFECT_SRS_ITERATIONS);
       this.srsList.push(srs);
     }
   }
@@ -124,12 +156,12 @@ export class RaiseCombatAnimation implements CombatActionAnimation {
   update(delta: number): boolean {
     if (this.showingNumber) {
       this.elapsed += delta;
-      while (this.elapsed >= FRAME_INTERVAL) {
-        this.elapsed -= FRAME_INTERVAL;
+      while (this.elapsed >= COMBAT_FRAME_INTERVAL) {
+        this.elapsed -= COMBAT_FRAME_INTERVAL;
         this.dt += 1;
         this.dy -= this.dt;
       }
-      if (this.dt <= 4) return true;
+      if (this.dt <= RAISE_NUMBER_FLOAT_STEPS) return true;
       this.showingNumber = false;
       return this.srsList.length > 0;
     }
@@ -147,6 +179,19 @@ export class RaiseCombatAnimation implements CombatActionAnimation {
     }
     this.srsList[0]?.drawAbsolutely(surface, this.x, this.y);
   }
+}
+
+function createHitSnapshot(fighter: FightingCharacter): HitSnapshot | null {
+  const snapshot = snapshotSprite(fighter);
+  return snapshot ? { fighter, snapshot } : null;
+}
+
+function startHitFrame(item: HitSnapshot): void {
+  if (item.fighter instanceof Player) {
+    item.snapshot.sprite.currentFrame = 10;
+    return;
+  }
+  item.snapshot.sprite.move(2, 2);
 }
 
 function drawSignedSmallNum(

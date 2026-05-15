@@ -2,8 +2,9 @@ import type { FightingCharacter, Player } from '@/characters';
 import type { ResSrs } from '@/lib/res-srs';
 import type { Surface } from '@/rendering/surface';
 import {
-  CAST_PRE_FRAMES,
-  PHYSICAL_MOVE_FRAMES,
+  COOP_CAST_PRE_FRAMES,
+  COOP_MOVE_FRAMES,
+  COOP_SRS_ITERATIONS,
   advanceFrameTimer,
   drawActiveAnimations,
   restoreSprites,
@@ -41,7 +42,7 @@ export class CoopCombatAnimation implements CombatActionAnimation {
     this.visibleTargetSet = new Set(options.targets);
     this.raiseAnimations = [...options.raiseAnimations];
     options.srs?.start();
-    options.srs?.setIteratorNum(2);
+    options.srs?.setIteratorNum(COOP_SRS_ITERATIONS);
   }
 
   keepsVisible(fighter: FightingCharacter): boolean {
@@ -51,18 +52,19 @@ export class CoopCombatAnimation implements CombatActionAnimation {
   update(delta: number): boolean {
     if (this.stage === 'move') {
       this.advance(delta);
-      if (this.frame < PHYSICAL_MOVE_FRAMES) {
+      if (this.frame < COOP_MOVE_FRAMES) {
         this.moveActorsToCoopPoint();
         return true;
       }
       this.stage = 'pre';
       this.frame = 0;
+      this.elapsed = 0;
       return true;
     }
     if (this.stage === 'pre') {
       this.advance(delta);
-      if (this.frame < CAST_PRE_FRAMES) {
-        for (const item of this.actorSnapshots) setPlayerCastFrame(item, this.frame);
+      if (this.frame < COOP_CAST_PRE_FRAMES) {
+        for (const item of this.actorSnapshots) setPlayerCastFrame(item, this.frame, COOP_CAST_PRE_FRAMES);
         return true;
       }
       if (this.options.srs) this.stage = 'ani';
@@ -98,8 +100,8 @@ export class CoopCombatAnimation implements CombatActionAnimation {
       const item = this.actorSnapshots[i]!;
       const dst = COOP_ACTOR_POINTS[Math.min(i, COOP_ACTOR_POINTS.length - 1)]!;
       item.sprite.setCombatPos(
-        Math.trunc(item.x + ((dst.x - item.x) * this.frame) / PHYSICAL_MOVE_FRAMES),
-        Math.trunc(item.y + ((dst.y - item.y) * this.frame) / PHYSICAL_MOVE_FRAMES)
+        Math.trunc(item.x + ((dst.x - item.x) * this.frame) / COOP_MOVE_FRAMES),
+        Math.trunc(item.y + ((dst.y - item.y) * this.frame) / COOP_MOVE_FRAMES)
       );
     }
   }

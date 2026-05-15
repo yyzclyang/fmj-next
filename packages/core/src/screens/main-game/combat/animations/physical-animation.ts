@@ -1,7 +1,7 @@
 import type { FightingCharacter } from '@/characters';
 import type { Surface } from '@/rendering/surface';
 import {
-  PHYSICAL_MOVE_FRAMES,
+  PHYSICAL_ATTACK_MOVE_FRAMES,
   advanceFrameTimer,
   drawActiveAnimations,
   restoreSprite,
@@ -47,7 +47,7 @@ export class PhysicalCombatAnimation implements CombatActionAnimation {
   update(delta: number): boolean {
     if (this.stage === 'move') {
       this.advance(delta);
-      if (this.frame < PHYSICAL_MOVE_FRAMES) {
+      if (this.frame < PHYSICAL_ATTACK_MOVE_FRAMES) {
         this.updateActorMoveFrame();
         return true;
       }
@@ -77,10 +77,10 @@ export class PhysicalCombatAnimation implements CombatActionAnimation {
           }
         : this.options.moveTo;
     snapshot.sprite.setCombatPos(
-      Math.trunc(snapshot.x + ((dst.x - snapshot.x) * this.frame) / PHYSICAL_MOVE_FRAMES),
-      Math.trunc(snapshot.y + ((dst.y - snapshot.y) * this.frame) / PHYSICAL_MOVE_FRAMES)
+      Math.trunc(snapshot.x + ((dst.x - snapshot.x) * this.frame) / PHYSICAL_ATTACK_MOVE_FRAMES),
+      Math.trunc(snapshot.y + ((dst.y - snapshot.y) * this.frame) / PHYSICAL_ATTACK_MOVE_FRAMES)
     );
-    setPhysicalAttackFrame(this.options.actor, this.frame, PHYSICAL_MOVE_FRAMES);
+    setPhysicalAttackFrame(this.options.actor, this.frame, PHYSICAL_ATTACK_MOVE_FRAMES);
   }
 
   private startTargetHit(): void {

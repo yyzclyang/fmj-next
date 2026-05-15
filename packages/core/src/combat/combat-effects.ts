@@ -68,6 +68,15 @@ export function calcPhysicalDamage(
     : calcPhysicalDamageOriginal(attack, defense, target, targetIsPlayer, targetIsDefending, randomRoll);
 }
 
+export function calcConfusionSelfDamage(actor: FightingCharacter, randomRoll = rollCombatRandom()): number {
+  const attack = Math.max(0, getComputedAttack(actor));
+  const defense = Math.max(0, getComputedDefense(actor));
+  const defenseShift = actor instanceof Player ? 2 : 3;
+  const randomShift = actor instanceof Player ? 4 : 2;
+  const damage = Math.trunc(attack / ((defense >> defenseShift) + 1)) + (randomRoll % ((attack >> randomShift) + 1));
+  return Math.min(actor.hp, Math.max(0, damage));
+}
+
 function calcPhysicalDamageOriginal(
   attack: number,
   defense: number,
@@ -163,16 +172,26 @@ export function applyMagicAttack(
   target: FightingCharacter,
   formula: DamageFormula = 'original',
   targetIsDefending = false,
-  randomRoll = rollCombatRandom()
+  randomRoll = rollCombatRandom(),
+  damageMissed = false
 ): void {
-  applyHpMagicEffect(
-    actor,
+  if (!damageMissed) {
+    applyHpMagicEffect(
+      actor,
+      target,
+      calcHpMagicEffect(actor, target, magic.hpEffect, formula, targetIsDefending, randomRoll)
+    );
+    applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.mpEffect, formula, randomRoll));
+  }
+  applyAttributeMagicEffect(
     target,
-    calcHpMagicEffect(actor, target, magic.hpEffect, formula, targetIsDefending, randomRoll)
+    -magic.attackPercent,
+    -magic.defensePercent,
+    -magic.agilityPercent,
+    magic.statusEffectRounds,
+    target.luck
   );
-  applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.mpEffect, formula, randomRoll));
   applyCombatStatuses(target, createStatusSlots(magic.statusEffectFlags, magic.statusEffectRounds), target.luck);
-  applyAttributeMagicEffect(target, -magic.attackPercent, -magic.defensePercent, -magic.agilityPercent, 0);
 }
 
 export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter): void {
@@ -203,10 +222,11 @@ export function applyRestoreMagic(magic: MagicRestore, target: FightingCharacter
   target.activeStatuses.clearFlags(magic.cureFlags);
 }
 
-export function applyPoisonPostEffect(actor: FightingCharacter): void {
-  if (!actor.isAlive || !isPoisoned(actor)) return;
+export function applyPoisonPostEffect(actor: FightingCharacter): number {
+  if (!actor.isAlive || !isPoisoned(actor)) return 0;
   const damage = Math.max(1, actor.hp >> 2);
   actor.hp = Math.max(0, actor.hp - damage);
+  return damage;
 }
 
 function getStatusValue(actor: FightingCharacter, index: number): number {
@@ -288,8 +308,8 @@ function calcMpMagicEffectOriginal(
 ): number {
   let damage = base;
   if (src instanceof Player && dst instanceof Monster) {
-    damage += src.spirit * (damage >> 6);
-    damage -= dst.spirit * (damage >> 6);
+    damage += (src.spirit * damage) >> 6;
+    damage -= (dst.spirit * damage) >> 6;
   } else {
     damage -= src.spirit * (damage >> 6);
     damage += dst.spirit * (damage >> 6);
@@ -332,8 +352,10 @@ function applyAttributeMagicEffect(
   attack: number,
   defense: number,
   agility: number,
-  round: number
+  round: number,
+  luck?: number
 ): void {
+  if (luck !== undefined && (attack !== 0 || defense !== 0 || agility !== 0) && !randomStatusSucceeds(luck)) return;
   setAttributeStatusPercent(target, STATUS_SLOT_ATTACK, attack, round);
   setAttributeStatusPercent(target, STATUS_SLOT_DEFENSE, defense, round);
   setAttributeStatusPercent(target, STATUS_SLOT_AGILITY, agility, round);
@@ -361,19 +383,22 @@ function applyCombatStatuses(
   src: { slots: readonly { value: number; round: number }[] },
   luck: number
 ): void {
-  const resist = Math.sqrt(Math.max(0, luck) / 100);
-  for (let i = STATUS_SLOT_SLEEP; i <= STATUS_SLOT_POISON; i += 1) {
-    if (Math.random() + 0.01 < resist) continue;
-    const sourceStatus = src.slots[i];
-    const immuneStatus = target.immuneStatuses.slots[i];
-    if (!sourceStatus || !immuneStatus || immuneStatus.value !== 0 || sourceStatus.value <= 0) continue;
-    const activeStatus = target.activeStatuses.slots[i];
-    if (!activeStatus) continue;
-    if (sourceStatus.round === 0) {
-      activeStatus.value += 1;
-    } else {
-      if (activeStatus.round === 0) activeStatus.value += 1;
-      activeStatus.round = Math.max(activeStatus.round, sourceStatus.round);
+  const hasAilment = src.slots
+    .slice(STATUS_SLOT_SLEEP, STATUS_SLOT_POISON + 1)
+    .some(sourceStatus => (sourceStatus?.value ?? 0) > 0);
+  if (!hasAilment || randomStatusSucceeds(luck)) {
+    for (let i = STATUS_SLOT_SLEEP; i <= STATUS_SLOT_POISON; i += 1) {
+      const sourceStatus = src.slots[i];
+      const immuneStatus = target.immuneStatuses.slots[i];
+      if (!sourceStatus || !immuneStatus || immuneStatus.value !== 0 || sourceStatus.value <= 0) continue;
+      const activeStatus = target.activeStatuses.slots[i];
+      if (!activeStatus) continue;
+      if (sourceStatus.round === 0) {
+        activeStatus.value += 1;
+      } else {
+        if (activeStatus.round === 0) activeStatus.value += 1;
+        activeStatus.round = Math.max(activeStatus.round, sourceStatus.round);
+      }
     }
   }
   for (let i = STATUS_SLOT_ATTACK; i <= STATUS_SLOT_AGILITY; i += 1) {
@@ -383,4 +408,9 @@ function applyCombatStatuses(
     activeStatus.value = -sourceStatus.value;
     activeStatus.round = sourceStatus.round;
   }
+}
+
+function randomStatusSucceeds(luck: number): boolean {
+  const roll = rollCombatRandom() % 0x5a;
+  return Math.max(0, luck) < roll || roll > 0x3c;
 }

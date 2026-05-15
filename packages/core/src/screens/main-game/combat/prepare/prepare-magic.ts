@@ -7,11 +7,10 @@ import {
   logCombatMiss,
 } from '@/combat/combat-log';
 import { applyMagicAttack, applyMagicHelp, rollCombatRandom, spendMagicMp } from '@/combat/combat-effects';
-import type { FightingCharacter } from '@/characters';
-import { MagicAuxiliary } from '@/magic';
+import type { FightingCharacter, Player } from '@/characters';
+import { MagicAuxiliary, MagicRestore } from '@/magic';
 import type { CombatActionAnimation } from '../animations/animation-types';
 import { CastCombatAnimation } from '../animations/cast-animation';
-import { StaticCombatAnimation } from '../animations/raise-animations';
 import {
   type CombatPrepareContext,
   type PreparedCombatAction,
@@ -28,14 +27,31 @@ export function prepareRolledBackMagicAction(
   ctx: CombatPrepareContext,
   action: MagicAttackAction | MagicHelpAction
 ): PreparedCombatAction {
-  if (action.kind === 'magicAttack') {
-    if (action.targetAll && canAttackAllTargets(action.actor, ctx.session.players)) {
-      return prepareAttackAllAction(ctx, { kind: 'attackAll', actor: action.actor, targets: action.targets });
-    }
-    const target = action.targets[0];
-    return target ? prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target }) : prepareNopAction(ctx, action.actor);
+  if (canAttackAllTargets(action.actor, ctx.session.players)) {
+    const targets = getRollbackAttackAllTargets(ctx, action.actor);
+    return targets.length > 0
+      ? prepareAttackAllAction(ctx, { kind: 'attackAll', actor: action.actor, targets })
+      : prepareNopAction(ctx, action.actor);
   }
-  return prepareNopAction(ctx, action.actor);
+  const target = getRollbackAttackTarget(ctx, action.actor);
+  return target ? prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target }) : prepareNopAction(ctx, action.actor);
+}
+
+function getRollbackAttackAllTargets(
+  ctx: CombatPrepareContext,
+  actor: MagicAttackAction['actor']
+): readonly FightingCharacter[] {
+  return ctx.session.players.includes(actor as Player)
+    ? ctx.session.monsters.filter(monster => monster.isAlive)
+    : ctx.session.players.filter(player => player.isAlive);
+}
+
+function getRollbackAttackTarget(
+  ctx: CombatPrepareContext,
+  actor: MagicAttackAction['actor']
+): FightingCharacter | null {
+  if (ctx.session.players.includes(actor as Player)) return getFirstAliveMonster(ctx.session.monsters);
+  return ctx.session.players.find(player => player.isAlive) ?? null;
 }
 
 export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: MagicAttackAction): PreparedCombatAction {
@@ -56,19 +72,19 @@ export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: Magi
   if (!spendMagicMp(action.actor, action.magic)) {
     ctx.setMessage('真气不足');
     logCombatAction(`${action.actor.name}施展${action.magic.name}失败: 真气不足`);
-    return preparedAction(action, new StaticCombatAnimation(ctx.actionInterval));
+    return prepareRolledBackMagicAction(ctx, action);
   }
 
   for (const target of finalTargets) {
     const targetIsGuarded = rollGuardedPlayerTarget(ctx.session, action.actor, target);
     const randomRoll = rollCombatRandom();
-    if (isMagicMissed(ctx.game, action.actor, target, true, randomRoll)) {
+    const missed = isMagicMissed(ctx.game, action.actor, target, true, randomRoll);
+    if (missed && hasMagicDamageEffect(action.magic)) {
       misses.push(createMissAnimation(ctx.game, target));
       missedTargets.push(target);
-      continue;
     }
     if (targetIsGuarded) guardedTargets.add(target);
-    applyMagicAttack(action.actor, action.magic, target, ctx.game.damageFormula, targetIsGuarded, randomRoll);
+    applyMagicAttack(action.actor, action.magic, target, ctx.game.damageFormula, targetIsGuarded, randomRoll, missed);
   }
   const animation = new CastCombatAnimation({
     actor: action.actor,
@@ -99,19 +115,20 @@ export function prepareMagicHelpAction(ctx: CombatPrepareContext, action: MagicH
   if (!spendMagicMp(action.actor, action.magic)) {
     ctx.setMessage('真气不足');
     logCombatAction(`${action.actor.name}施展${action.magic.name}失败: 真气不足`);
-    return preparedAction(action, new StaticCombatAnimation(ctx.actionInterval));
+    return prepareRolledBackMagicAction(ctx, action);
   }
 
   const before = captureFighterStates(finalTargets);
   for (const target of finalTargets) {
     applyMagicHelp(action.magic, target);
   }
+  const hpDiffOverrides = createMagicHelpHpDiffOverrides(action, finalTargets);
   const animation = new CastCombatAnimation({
     actor: action.actor,
     targets: finalTargets,
     srs: action.magic.animation,
     srsPoint: getAnimationPoint(finalTargets, action.targetAll),
-    raiseAnimations: createRaiseAnimations(ctx.game, before, finalTargets),
+    raiseAnimations: createRaiseAnimations(ctx.game, before, finalTargets, hpDiffOverrides),
     hitTargets: false,
   });
   const actionLabel = `${action.actor.name}施展${action.magic.name}`;
@@ -147,4 +164,18 @@ export function prepareSpecialMagicAction(ctx: CombatPrepareContext, action: Spe
       hitTargets: false,
     })
   );
+}
+
+function hasMagicDamageEffect(magic: MagicAttackAction['magic']): boolean {
+  return magic.hpEffect !== 0 || magic.mpEffect !== 0;
+}
+
+function createMagicHelpHpDiffOverrides(
+  action: MagicHelpAction,
+  targets: readonly FightingCharacter[]
+): ReadonlyMap<FightingCharacter, number> | undefined {
+  if (!(action.magic instanceof MagicRestore) || action.magic.hp <= 0) return undefined;
+  const res = new Map<FightingCharacter, number>();
+  for (const target of targets) res.set(target, action.magic.hp);
+  return res;
 }

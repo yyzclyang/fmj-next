@@ -33,6 +33,7 @@ export type CombatAction =
   | MagicAttackAction
   | MagicHelpAction
   | SpecialMagicAction
+  | MonsterAutoAction
   | CoopAction
   | NopAction;
 
@@ -66,7 +67,7 @@ export interface DefendAction {
 export interface FleeAction {
   readonly kind: 'flee';
   readonly actor: Player;
-  readonly succeed: boolean;
+  readonly succeed?: boolean;
 }
 
 export interface ThrowItemAction {
@@ -106,6 +107,11 @@ export interface SpecialMagicAction {
   readonly actor: Player;
   target: Monster;
   readonly magic: MagicSpecial;
+}
+
+export interface MonsterAutoAction {
+  readonly kind: 'monsterAuto';
+  readonly actor: Monster;
 }
 
 export interface CoopAction {

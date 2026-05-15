@@ -3,12 +3,11 @@ import type { CombatFinishResult, CombatSession } from '@/combat/combat-runtime'
 import { isConfusing, isSleeping } from '@/combat/combat-effects';
 import type { Game } from '@/game/game';
 import { createLogger } from '@/utils/logger';
-import { createMonsterAction } from '../actions/monster-ai';
 import type { CombatActionAnimation } from '../animations/animation-types';
 import { clearActionQueueAndRestoreItems, getActionPriority, restoreActionGoods } from './action-utils';
 import { type CombatActionPreparer, type PreparedCombatAction } from '../prepare/action-preparer';
-import { finishActionState, resetFighterFrames } from './post-action';
-import { getRandomAlivePlayer, hasAlivePlayers, isAllMonsterDead } from '../actions/targeting';
+import { applyPreActionState, finishActionState, resetFighterFrames } from './post-action';
+import { hasAlivePlayers, isAllMonsterDead } from '../actions/targeting';
 
 const logger = createLogger('战斗');
 
@@ -30,6 +29,7 @@ export class CombatActionQueue {
   private readonly queue: CombatAction[] = [];
   private currentAction: CombatAction | null = null;
   private animation: CombatActionAnimation | null = null;
+  private pendingPreAction: CombatAction | null = null;
   private pendingActionResult: CombatFinishResult | null | undefined;
   private actionElapsed = 0;
 
@@ -57,6 +57,7 @@ export class CombatActionQueue {
 
   clear(): void {
     this.queue.length = 0;
+    this.pendingPreAction = null;
     this.session.clearDefendingPlayers();
   }
 
@@ -74,6 +75,7 @@ export class CombatActionQueue {
     this.queue.sort((a, b) => getActionPriority(b) - getActionPriority(a));
     this.currentAction = null;
     this.animation = null;
+    this.pendingPreAction = null;
     this.actionElapsed = 0;
     logger.log(
       '队列',
@@ -93,12 +95,28 @@ export class CombatActionQueue {
       return this.completePendingAction(result);
     }
 
+    if (this.pendingPreAction) {
+      if (this.animation?.update(delta)) return { kind: 'running' };
+      const action = this.pendingPreAction;
+      this.pendingPreAction = null;
+      this.animation = null;
+      this.actionElapsed = 0;
+      resetFighterFrames(this.session.players, this.session.monsters);
+      this.applyPreparedAction(this.options.actionPreparer.prepare(action));
+    }
+
     while (!this.currentAction) {
       const next = this.queue.shift();
       if (!next) {
         this.session.clearDefendingPlayers();
         logger.log('队列', '回合动作执行完毕');
         return { kind: 'finishRound' };
+      }
+      const preAnimation = applyPreActionState(this.game, next);
+      if (preAnimation) {
+        this.pendingPreAction = next;
+        this.animation = preAnimation;
+        return { kind: 'running' };
       }
       const prepared = this.options.actionPreparer.prepare(next);
       this.applyPreparedAction(prepared);
@@ -114,6 +132,13 @@ export class CombatActionQueue {
     const action = this.currentAction;
     if (!action) throw new Error('战斗动作队列执行状态异常');
     const result = this.getActionResult(action);
+    if (result === 'flee') {
+      this.currentAction = null;
+      this.animation = null;
+      this.actionElapsed = 0;
+      resetFighterFrames(this.session.players, this.session.monsters);
+      return this.completePendingAction(result);
+    }
     const postAnimation = finishActionState(this.game, action);
     this.currentAction = null;
     this.actionElapsed = 0;
@@ -136,9 +161,7 @@ export class CombatActionQueue {
     let count = 0;
     for (const monster of this.session.monsters) {
       if (!monster.isAlive) continue;
-      const target = getRandomAlivePlayer(this.session.players);
-      if (!target) return count;
-      this.queue.push(createMonsterAction(monster, target, this.session.players, this.session.monsters));
+      this.queue.push({ kind: 'monsterAuto', actor: monster });
       count += 1;
     }
     return count;
@@ -195,7 +218,7 @@ function describeAction(action: CombatAction): string {
     case 'defend':
       return `${actorName} 防御`;
     case 'flee':
-      return `${actorName} 逃跑 ${action.succeed ? '成功' : '失败'}`;
+      return `${actorName} 逃跑 ${formatFleeResult(action.succeed)}`;
     case 'throwItem':
       return `${actorName} 投掷 ${action.goods.name} -> ${formatNames(action.targets)}`;
     case 'useItem':
@@ -206,6 +229,8 @@ function describeAction(action: CombatAction): string {
       return `${actorName} 辅助法术 ${action.magic.name} -> ${formatNames(action.targets)}`;
     case 'specialMagic':
       return `${actorName} 特殊法术 ${action.magic.name} -> ${action.target.name}`;
+    case 'monsterAuto':
+      return `${actorName} 自动行动`;
     case 'coop':
       return `${actorName} 合体 ${action.magic?.name ?? '无'} -> ${formatNames(action.targets)}`;
     case 'nop':
@@ -215,4 +240,10 @@ function describeAction(action: CombatAction): string {
 
 function formatNames(items: readonly { name: string }[]): string {
   return items.map(item => item.name).join(',');
+}
+
+function formatFleeResult(succeed: boolean | undefined): string {
+  if (succeed === true) return '成功';
+  if (succeed === false) return '失败';
+  return '待定';
 }

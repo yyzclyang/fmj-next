@@ -281,20 +281,35 @@ export class CombatRuntime {
     if (this.activeSession !== session) throw new Error('结束了不属于当前运行时的战斗');
     if (result === 'win') session.settleWin();
     logCombatFinish(result);
-    const recoverBefore = captureCombatLogStates(session.players);
+    const recoverBefore = result === 'win' || result === 'flee' ? captureCombatLogStates(session.players) : null;
     this.activeSession = null;
-    this.recoverPlayersAfterFight(session.players);
-    logCombatFighterEffects('战斗结束恢复', recoverBefore, session.players);
+    if (result === 'win' && recoverBefore) {
+      this.recoverPlayersAfterWin(session.players);
+      logCombatFighterEffects('战斗结束恢复', recoverBefore, session.players);
+    } else if (result === 'flee' && recoverBefore) {
+      this.revivePlayersAfterFlee(session.players);
+      logCombatFighterEffects('逃跑恢复', recoverBefore, session.players);
+    }
     session.notifyFinish(result);
   }
 
-  private recoverPlayersAfterFight(players: readonly Player[]): void {
+  private recoverPlayersAfterWin(players: readonly Player[]): void {
+    const percent = Math.trunc(this.random() * 10) + 15;
+    for (const player of players) {
+      if (player.hp <= 0) {
+        player.hp = 1;
+        continue;
+      }
+      player.hp += Math.trunc(((player.hpMax - player.hp) * percent) / 100);
+      player.mp += Math.trunc(((player.mpMax - player.mp) * percent) / 100);
+      if (player.hp > player.hpMax) player.hp = player.hpMax;
+      if (player.mp > player.mpMax) player.mp = player.mpMax;
+    }
+  }
+
+  private revivePlayersAfterFlee(players: readonly Player[]): void {
     for (const player of players) {
       if (player.hp <= 0) player.hp = 1;
-      if (player.mp <= 0) player.mp = 1;
-      player.hp += Math.trunc((player.hpMax - player.hp) / 10);
-      player.mp += Math.trunc(player.mpMax / 5);
-      if (player.mp > player.mpMax) player.mp = player.mpMax;
     }
   }
 
@@ -400,7 +415,7 @@ export class CombatRuntime {
       let remainingExp = player.exp + exp;
       while (player.level < chain.maxLevel) {
         const nextExp = chain.getNextLevelExp(player.level);
-        if (nextExp <= 0 || remainingExp < nextExp) break;
+        if (nextExp <= 0 || remainingExp <= nextExp) break;
 
         const previousLevel = player.level;
         const oldMagicCount = chain.getLearnMagicCount(previousLevel);
@@ -425,14 +440,15 @@ export class CombatRuntime {
 
   private applyDrops(session: CombatSession): CombatGoodsAward[] {
     const res: CombatGoodsAward[] = [];
-    const luck = session.players.reduce((max, player) => Math.max(max, player.luck), 10);
-    let chance = luck - 10;
-    if (chance > 100) chance = 100;
-    else if (chance < 0) chance = 10;
-
+    const controlPlayer = this.game.getPlayer(this.game.state.controlActorId) ?? session.players[0] ?? null;
+    const playerLuck = Math.max(0, controlPlayer?.luck ?? 0);
     for (const monster of session.monsters) {
       const drop = monster.dropGoods;
-      if (!drop || Math.trunc(this.random() * 101) >= chance) continue;
+      if (!drop) continue;
+      const roll = Math.trunc(this.random() * 0x10000);
+      const playerRoll = (roll % Math.max(1, playerLuck)) + 1;
+      const monsterRoll = monster.luck > 0 ? roll % monster.luck : 0;
+      if (playerRoll <= monsterRoll || roll % 4 === 0) continue;
       const goods = this.game.bag.addGoods(drop.goods.type, drop.goods.index, drop.count);
       if (!goods) throw new Error(`战斗掉落物品不存在: GRS ${drop.goods.type}-${drop.goods.index}`);
       res.push({ goods, count: drop.count });

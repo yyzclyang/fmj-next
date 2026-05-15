@@ -385,7 +385,7 @@ export class ScreenCombat extends BaseScreen {
   }
 
   private confirmFlee(): void {
-    for (const action of createFleeActions(this.session.players, this.currentPlayerIndex, this.session.isRandomFight)) {
+    for (const action of createFleeActions(this.session.players, this.currentPlayerIndex)) {
       this.actionQueue.push(action);
     }
     this.startPerforming();

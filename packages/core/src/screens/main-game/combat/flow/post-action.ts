@@ -31,14 +31,15 @@ export function captureFighterStates(
 export function createRaiseAnimations(
   game: Game,
   before: Map<FightingCharacter, FighterStateSnapshot>,
-  fighters: readonly FightingCharacter[]
+  fighters: readonly FightingCharacter[],
+  hpDiffOverrides: ReadonlyMap<FightingCharacter, number> = new Map()
 ): CombatActionAnimation[] {
   const res: CombatActionAnimation[] = [];
   for (const fighter of fighters) {
     const snapshot = before.get(fighter);
     const sprite = fighter.fightingSprite;
     if (!snapshot || !sprite) continue;
-    const hpDiff = fighter.hp - snapshot.hp;
+    const hpDiff = hpDiffOverrides.get(fighter) ?? fighter.hp - snapshot.hp;
     const statusFlags = getActiveStatusDiffFlags(snapshot, fighter);
     if (hpDiff === 0 && statusFlags === 0) continue;
     res.push(new RaiseCombatAnimation(game, sprite.combatX, sprite.combatY, hpDiff, statusFlags));
@@ -46,17 +47,30 @@ export function createRaiseAnimations(
   return res;
 }
 
-// C 引擎在动作后结算玩家每回合 HP/MP、毒和状态回合，这里保持同一顺序。
+export function applyPreActionState(game: Game, action: CombatAction): CombatActionAnimation | null {
+  const actors = action.kind === 'coop' ? action.actors : [action.actor];
+  const players = actors.filter((actor): actor is Player => actor instanceof Player && actor.isAlive);
+  if (players.length === 0) return null;
+  const before = captureFighterStates(players);
+  const logBefore = captureCombatLogStates(players);
+  for (const player of players) applyTurnPlayerEffects(player);
+  const raises = createRaiseAnimations(game, before, players);
+  logCombatFighterEffects('动作前状态', logBefore, players);
+  return raises.length > 0 ? new RaiseGroupCombatAnimation(raises, players) : null;
+}
+
+// C 引擎在动作后结算毒和状态回合；玩家每回合 HP/MP 已在动作前处理。
 export function finishActionState(game: Game, action: CombatAction): CombatActionAnimation | null {
   const actors = action.kind === 'coop' ? action.actors : [action.actor];
   const aliveActors = actors.filter(actor => actor.isAlive);
   const before = captureFighterStates(aliveActors);
   const logBefore = captureCombatLogStates(aliveActors);
+  const hpDiffOverrides = new Map<FightingCharacter, number>();
   for (const actor of aliveActors) {
-    if (actor instanceof Player) applyTurnPlayerEffects(actor);
-    applyPoisonPostEffect(actor);
+    const poisonDamage = applyPoisonPostEffect(actor);
+    if (poisonDamage > 0) hpDiffOverrides.set(actor, -poisonDamage);
   }
-  const raises = createRaiseAnimations(game, before, aliveActors);
+  const raises = createRaiseAnimations(game, before, aliveActors, hpDiffOverrides);
   for (const actor of actors) decayFighterStatuses(actor);
   logCombatFighterEffects('动作后状态', logBefore, aliveActors);
   return raises.length > 0 ? new RaiseGroupCombatAnimation(raises, aliveActors) : null;

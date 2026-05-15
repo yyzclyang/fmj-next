@@ -1,59 +1,73 @@
 import { STATUS_FLAG_ATTACK_ALL } from '@/characters/status';
-import type { CombatAction } from '@/combat/combat-actions';
+import { isCombatHelpMagic, type CombatAction } from '@/combat/combat-actions';
 import { isSealed } from '@/combat/combat-effects';
 import type { Monster, Player } from '@/characters';
-import { type BaseMagic, MagicAttack, MagicRestore } from '@/magic';
+import { type BaseMagic, MagicAttack } from '@/magic';
+import { randomInt, toUint8 } from '@/utils/integer';
 
 export function createMonsterAction(
   monster: Monster,
-  target: Player,
   players: readonly Player[],
   monsters: readonly Monster[]
-): CombatAction {
-  if (!isSealed(monster) && shouldMonsterCastMagic(monster)) {
-    const magic = selectMonsterMagic(monster);
+): CombatAction | null {
+  const roll = randomInt(100);
+  const playerTarget = selectPlayerTarget(players, roll);
+  if (!isSealed(monster) && shouldMonsterCastMagic(monster, roll)) {
+    const magic = selectMonsterMagic(monster, roll);
     if (magic instanceof MagicAttack) {
+      if (!magic.targetAll && !playerTarget) return null;
       return {
         kind: 'magicAttack',
         actor: monster,
         magic,
-        targets: magic.targetAll ? players : [target],
+        targets: magic.targetAll ? players : [playerTarget!],
         targetAll: magic.targetAll,
       };
     }
-    if (magic instanceof MagicRestore) {
-      const targets = magic.targetAll ? monsters : [selectMonsterRestoreTarget(monsters) ?? monster];
+    if (magic && isCombatHelpMagic(magic)) {
+      const targets = magic.targetAll ? monsters : [selectMonsterTarget(monsters, roll) ?? monster];
       return { kind: 'magicHelp', actor: monster, magic, targets, targetAll: magic.targetAll };
     }
   }
-  return createMonsterPhysicalAction(monster, target, players);
+  return createMonsterPhysicalAction(monster, playerTarget, players);
 }
 
-function createMonsterPhysicalAction(monster: Monster, target: Player, players: readonly Player[]): CombatAction {
-  return monster.onHitStatuses.hasAnyFlag(STATUS_FLAG_ATTACK_ALL)
-    ? { kind: 'attackAll', actor: monster, targets: players.filter(player => player.isAlive) }
-    : { kind: 'attack', actor: monster, target };
-}
-
-function shouldMonsterCastMagic(monster: Monster): boolean {
-  return Math.trunc(Math.random() * 100) < getMonsterMagicChance(monster.iq);
-}
-
-function getMonsterMagicChance(iq: number): number {
-  return iq < 80 ? iq : 80 + Math.trunc((iq - 80) / 10);
-}
-
-function selectMonsterMagic(monster: Monster): BaseMagic | null {
-  const magics = monster.magicChain?.getAllLearnedMagics(true).filter(magic => magic.costMp <= monster.mp) ?? [];
-  if (magics.length === 0) return null;
-  return magics[Math.trunc(Math.random() * magics.length)] ?? null;
-}
-
-function selectMonsterRestoreTarget(monsters: readonly Monster[]): Monster | null {
-  let res: Monster | null = null;
-  for (const monster of monsters) {
-    if (!monster.isAlive) continue;
-    if (!res || monster.hp < res.hp) res = monster;
+function createMonsterPhysicalAction(
+  monster: Monster,
+  target: Player | null,
+  players: readonly Player[]
+): CombatAction | null {
+  if (monster.onHitStatuses.hasAnyFlag(STATUS_FLAG_ATTACK_ALL)) {
+    return { kind: 'attackAll', actor: monster, targets: players.filter(player => player.isAlive) };
   }
-  return res;
+  return target ? { kind: 'attack', actor: monster, target } : null;
+}
+
+function shouldMonsterCastMagic(monster: Monster, roll: number): boolean {
+  return roll >= toUint8(100 - monster.iq);
+}
+
+function selectMonsterMagic(monster: Monster, roll: number): BaseMagic | null {
+  const magics = monster.magicChain?.getAllLearnedMagics(true) ?? [];
+  if (magics.length === 0) return null;
+  const magic = magics[roll % magics.length] ?? null;
+  return magic && monster.mp >= magic.costMp ? magic : null;
+}
+
+function selectMonsterTarget(monsters: readonly Monster[], roll: number): Monster | null {
+  const start = roll % 3;
+  for (let i = 0; i < 3; i += 1) {
+    const monster = monsters[(start + i) % 3];
+    if (monster?.isAlive) return monster;
+  }
+  return null;
+}
+
+function selectPlayerTarget(players: readonly Player[], roll: number): Player | null {
+  const start = roll % 3;
+  for (let i = 0; i < 3; i += 1) {
+    const player = players[(start + i) % 3];
+    if (player?.isAlive) return player;
+  }
+  return null;
 }

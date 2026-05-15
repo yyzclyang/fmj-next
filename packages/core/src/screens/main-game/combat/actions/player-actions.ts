@@ -86,20 +86,13 @@ export function createPlayerTargetAction(player: Player, target: Player, mode: P
 
 export function createFleeActions(
   players: readonly Player[],
-  startIndex: number,
-  isRandomFight: boolean
+  startIndex: number
 ): CombatAction[] {
   const res: CombatAction[] = [];
-  let hasSuccess = false;
   for (let i = startIndex; i < players.length; i += 1) {
     const player = players[i];
     if (!player?.isAlive) continue;
-    const succeed = !hasSuccess && isRandomFight && Math.random() < 0.5;
-    res.push({ kind: 'flee', actor: player, succeed });
-    if (succeed) {
-      hasSuccess = true;
-      break;
-    }
+    res.push({ kind: 'flee', actor: player });
   }
   return res;
 }

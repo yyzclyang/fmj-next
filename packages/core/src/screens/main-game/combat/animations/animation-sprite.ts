@@ -4,7 +4,7 @@ import type { Surface } from '@/rendering/surface';
 import type { CombatActionAnimation } from './animation-types';
 
 export const FRAME_INTERVAL = 40;
-export const PHYSICAL_MOVE_FRAMES = 10;
+export const PHYSICAL_MOVE_FRAMES = 12;
 export const CAST_PRE_FRAMES = 20;
 
 export interface SpriteSnapshot {

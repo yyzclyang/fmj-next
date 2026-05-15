@@ -9,17 +9,23 @@ import {
 import type { CombatSession } from '@/combat/combat-runtime';
 import type { Game } from '@/game/game';
 import type { BaseGoods } from '@/goods';
-import { GoodsMedicine } from '@/goods';
+import { GoodsMedicine, GoodsMedicineLife } from '@/goods';
+import { MagicAuxiliary, MagicRestore } from '@/magic';
 import type { ResSrs } from '@/lib/res-srs';
 import type { CombatActionAnimation, CombatPoint } from '../animations/animation-types';
 import { MissCombatAnimation } from '../animations/raise-animations';
 
 // 动作工具只处理战斗执行阶段的通用细节，避免 ScreenCombat 同时承担背包和动画杂务。
 export function getActionPriority(action: CombatAction): number {
-  if (action.kind === 'defend') return Number.MAX_SAFE_INTEGER;
-  if (action.kind === 'flee') return getComputedAgility(action.actor) * 100;
-  if (action.kind === 'coop') return action.actor.defense;
-  return getComputedAgility(action.actor);
+  const agility = getComputedAgility(action.actor);
+  if (hasFastActionPriority(action)) return agility + Math.trunc(agility / 2);
+  return agility;
+}
+
+function hasFastActionPriority(action: CombatAction): boolean {
+  if (action.kind === 'magicHelp') return action.magic instanceof MagicRestore || action.magic instanceof MagicAuxiliary;
+  if (action.kind === 'useItem') return action.goods instanceof GoodsMedicine || action.goods instanceof GoodsMedicineLife;
+  return false;
 }
 
 export function isPhysicalMissed(

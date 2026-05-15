@@ -5,6 +5,7 @@ import type { Game } from '@/game/game';
 import { createLogger } from '@/utils/logger';
 import { type CombatPrepareContext, type PreparedCombatAction, noPreparedAction } from './action-preparer-types';
 import { restoreActionGoods } from '../flow/action-utils';
+import { createMonsterAction } from '../actions/monster-ai';
 import { prepareUseItemAction, prepareThrowItemAction } from './prepare-goods';
 import {
   prepareMagicAttackAction,
@@ -53,12 +54,16 @@ export class CombatActionPreparer {
       restoreActionGoods(this.game, action);
       return prepareAttackAction(ctx, { kind: 'attack', actor: action.actor, target: action.actor });
     }
+    if (action.kind === 'monsterAuto') {
+      const resolved = createMonsterAction(action.actor, this.session.players, this.session.monsters);
+      return resolved ? this.prepare(resolved) : noPreparedAction();
+    }
     if ((action.kind === 'magicAttack' || action.kind === 'magicHelp') && isSealed(action.actor)) {
       logger.log(
         '改写',
         action.kind === 'magicAttack'
           ? `${action.actor.name} 封咒，攻击法术 ${action.magic.name} 回退为物理攻击`
-          : `${action.actor.name} 封咒，辅助法术 ${action.magic.name} 改为空动作`
+          : `${action.actor.name} 封咒，辅助法术 ${action.magic.name} 回退为物理攻击`
       );
       return prepareRolledBackMagicAction(ctx, action);
     }
@@ -123,6 +128,8 @@ function formatActionKind(action: CombatAction): string {
     case 'magicHelp':
     case 'specialMagic':
       return `法术 ${action.magic.name}`;
+    case 'monsterAuto':
+      return '自动行动';
     case 'coop':
       return `合体 ${action.magic?.name ?? '无'}`;
     case 'nop':

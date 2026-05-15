@@ -9,6 +9,7 @@ import {
 import {
   applyMagicAttack,
   applyOnHitStatuses,
+  calcConfusionSelfDamage,
   calcPhysicalDamage,
   isSleeping,
   rollCombatRandom,
@@ -48,8 +49,10 @@ export function prepareFleeAction(
   ctx: CombatPrepareContext,
   action: CombatAction & { kind: 'flee' }
 ): PreparedCombatAction {
-  logCombatAction(`${action.actor.name}${action.succeed ? '逃跑成功' : '逃跑失败'}`);
-  return preparedAction(action, new FleeCombatAnimation(action.actor, action.succeed));
+  const succeed = ctx.session.isRandomFight && canPlayerFlee(action.actor, ctx.session.monsters[0] ?? null);
+  const prepared = { ...action, succeed };
+  logCombatAction(`${action.actor.name}${succeed ? '逃跑成功' : '逃跑失败'}`);
+  return preparedAction(prepared, new FleeCombatAnimation(action.actor, succeed));
 }
 
 export function prepareAttackAction(ctx: CombatPrepareContext, action: AttackAction): PreparedCombatAction {
@@ -63,23 +66,28 @@ export function prepareAttackAction(ctx: CombatPrepareContext, action: AttackAct
   const before = captureFighterStates([action.target]);
   const logBefore = captureCombatLogStates([action.target]);
   const targetIsPlayer = ctx.session.players.includes(action.target as Player);
-  const targetIsGuarded = rollGuardedPlayerTarget(ctx.session, action.actor, action.target);
+  const selfAttack = action.actor === action.target;
+  const targetIsGuarded = selfAttack ? false : rollGuardedPlayerTarget(ctx.session, action.actor, action.target);
   const randomRoll = rollCombatRandom();
-  const missed = isPhysicalMissed(ctx.game, action.actor, action.target, action.actor !== action.target, randomRoll);
+  const missed = selfAttack ? false : isPhysicalMissed(ctx.game, action.actor, action.target, true, randomRoll);
   const damage = missed
     ? 0
-    : calcPhysicalDamage(action.actor, action.target, targetIsPlayer, ctx.game.damageFormula, targetIsGuarded, randomRoll);
+    : selfAttack
+      ? calcConfusionSelfDamage(action.actor, randomRoll)
+      : calcPhysicalDamage(action.actor, action.target, targetIsPlayer, ctx.game.damageFormula, targetIsGuarded, randomRoll);
   if (!missed) {
     action.target.hp = Math.max(0, action.target.hp - damage);
-    applyOnHitStatuses(action.actor, action.target);
+    if (!selfAttack) applyOnHitStatuses(action.actor, action.target);
   }
+  const hpDiffOverrides = new Map<FightingCharacter, number>();
+  if (selfAttack && damage > 0) hpDiffOverrides.set(action.target, -damage);
   const animation = new PhysicalCombatAnimation({
     actor: action.actor,
     targets: [action.target],
     moveTo: action.target,
     raiseAnimations: missed
       ? [createMissAnimation(ctx.game, action.target)]
-      : createRaiseAnimations(ctx.game, before, [action.target]),
+      : createRaiseAnimations(ctx.game, before, [action.target], hpDiffOverrides),
     targetIsPlayer: ctx.session.players.includes(action.target as Player),
     guardedTargets: !missed && targetIsGuarded ? new Set([action.target]) : undefined,
   });
@@ -153,12 +161,12 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
       }
       for (const target of targets) {
         const randomRoll = rollCombatRandom();
-        if (isMagicMissed(ctx.game, actor, target, true, randomRoll)) {
+        const missed = isMagicMissed(ctx.game, actor, target, true, randomRoll);
+        if (missed && (action.magic.hpEffect !== 0 || action.magic.mpEffect !== 0)) {
           misses.push(createMissAnimation(ctx.game, target));
           missedPairs.push({ actor, target });
-          continue;
         }
-        applyMagicAttack(actor, action.magic, target, ctx.game.damageFormula, false, randomRoll);
+        applyMagicAttack(actor, action.magic, target, ctx.game.damageFormula, false, randomRoll, missed);
       }
     }
   } else {
@@ -197,4 +205,13 @@ export function prepareNopAction(ctx: CombatPrepareContext, actor: FightingChara
     { kind: 'nop', actor: actor as Player | Monster },
     new StaticCombatAnimation(ctx.actionInterval)
   );
+}
+
+function canPlayerFlee(player: Player, firstMonster: Monster | null): boolean {
+  const roll = rollCombatRandom();
+  const playerLuck = roll % (Math.max(0, player.luck) + 1);
+  const playerAgility = roll % (Math.max(0, player.agility) + 1);
+  const monsterLuck = firstMonster?.isAlive ? roll % (Math.max(0, firstMonster.luck) + 1) : 0;
+  const monsterAgility = firstMonster?.isAlive ? roll % (Math.max(0, firstMonster.agility) + 1) : 0;
+  return playerLuck + playerAgility > monsterLuck + monsterAgility;
 }

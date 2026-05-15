@@ -29,7 +29,7 @@ import {
   rollGuardedPlayerTarget,
 } from '../flow/action-utils';
 import { captureFighterStates, createRaiseAnimations } from '../flow/post-action';
-import { getFirstAliveMonster, getRandomAlivePlayer, isMonster } from '../actions/targeting';
+import { getAliveReplacementMonster, getAliveReplacementPlayer, isMonster } from '../actions/targeting';
 
 export function prepareDefendAction(
   ctx: CombatPrepareContext,
@@ -53,8 +53,8 @@ export function prepareFleeAction(
 export function prepareAttackAction(ctx: CombatPrepareContext, action: AttackAction): PreparedCombatAction {
   if (!action.target.isAlive && action.target !== action.actor) {
     const nextTarget = isMonster(action.target, ctx.session.monsters)
-      ? getFirstAliveMonster(ctx.session.monsters)
-      : getRandomAlivePlayer(ctx.session.players);
+      ? getAliveReplacementMonster(action.target, ctx.session.monsters)
+      : getAliveReplacementPlayer(action.target as Player, ctx.session.players);
     if (!nextTarget) return noPreparedAction();
     action.target = nextTarget;
   }

@@ -11,12 +11,19 @@ import {
 } from './action-preparer-types';
 import { getGoodsAnimationPoint, getGoodsUseAnimation, restoreActionGoods } from '../flow/action-utils';
 import { captureFighterStates, createRaiseAnimations } from '../flow/post-action';
-import { getFirstAliveMonster, getRandomAlivePlayer } from '../actions/targeting';
+import {
+  getAliveReplacementMonster,
+  getAliveReplacementPlayer,
+  getFirstAliveMonster,
+  getFirstAlivePlayer,
+} from '../actions/targeting';
 
 export function prepareThrowItemAction(ctx: CombatPrepareContext, action: ThrowItemAction): PreparedCombatAction {
   const targets = action.targetAll ? ctx.session.monsters.filter(monster => monster.isAlive) : [...action.targets];
   const aliveTargets = targets.filter(monster => monster.isAlive);
-  const replacement = getFirstAliveMonster(ctx.session.monsters);
+  const replacement = action.targetAll
+    ? getFirstAliveMonster(ctx.session.monsters)
+    : getAliveReplacementMonster(action.targets[0] ?? null, ctx.session.monsters);
   const finalTargets = aliveTargets.length > 0 ? aliveTargets : replacement ? [replacement] : [];
   if (finalTargets.length === 0) {
     restoreActionGoods(ctx.game, action);
@@ -46,7 +53,9 @@ export function prepareUseItemAction(ctx: CombatPrepareContext, action: UseItemA
   const targets = action.targetAll ? ctx.session.players : [...action.targets];
   let finalTargets = action.goods instanceof GoodsMedicineLife ? targets : targets.filter(player => player.isAlive);
   if (finalTargets.length === 0 && !(action.goods instanceof GoodsMedicineLife)) {
-    const target = getRandomAlivePlayer(ctx.session.players);
+    const target = action.targetAll
+      ? getFirstAlivePlayer(ctx.session.players)
+      : getAliveReplacementPlayer(action.targets[0] ?? null, ctx.session.players);
     finalTargets = target ? [target] : [];
   }
   if (finalTargets.length === 0) {

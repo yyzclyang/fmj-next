@@ -1,4 +1,5 @@
 import type { BaseGoods } from '@/goods';
+import { randomInt } from '@/utils/integer';
 import { FightingCharacter, type FightingCharacterData } from './fighting-character';
 
 export interface CarryGoods {
@@ -31,10 +32,14 @@ export class Monster extends FightingCharacter {
   }
 
   // 偷取库存属于怪物战斗状态，成功一次只扣一件
-  tryStealGoods(): BaseGoods | null {
+  tryStealGoods(attacker: FightingCharacter, randomRoll = randomInt(0x10000)): BaseGoods | null {
     const carry = this.stealGoods;
     if (!carry || carry.count <= 0) return null;
-    if (Math.random() < 0.2) return null;
+    // C 引擎这里用动作角色下标读取敌人幸运，且幸运为 0 会取模 0；TS 保留公式但修正这两个缺陷。
+    const attackerLuck = Math.max(1, attacker.luck);
+    const targetLuck = Math.max(1, this.luck);
+    const gate = attackerLuck > targetLuck ? 3 : 2;
+    if ((randomRoll % attackerLuck) + 1 <= randomRoll % targetLuck || randomRoll % gate === 0) return null;
     carry.count -= 1;
     return carry.goods;
   }

@@ -56,10 +56,26 @@ export function getFirstAliveMonster(monsters: readonly Monster[]): Monster | nu
   return monsters.find(monster => monster.isAlive) ?? null;
 }
 
-export function getRandomAlivePlayer(players: readonly Player[]): Player | null {
-  const alivePlayers = players.filter(player => player.isAlive);
-  if (alivePlayers.length === 0) return null;
-  return alivePlayers[Math.trunc(Math.random() * alivePlayers.length)] ?? null;
+export function getAliveReplacementMonster(target: Monster | null, monsters: readonly Monster[]): Monster | null {
+  const start = target ? monsters.indexOf(target) : -1;
+  for (let i = 1; i <= monsters.length; i += 1) {
+    const monster = monsters[(start + i + monsters.length) % monsters.length];
+    if (monster?.isAlive) return monster;
+  }
+  return null;
+}
+
+export function getFirstAlivePlayer(players: readonly Player[]): Player | null {
+  return players.find(player => player.isAlive) ?? null;
+}
+
+export function getAliveReplacementPlayer(target: Player | null, players: readonly Player[]): Player | null {
+  const start = target ? players.indexOf(target) : -1;
+  for (let i = 1; i <= players.length; i += 1) {
+    const player = players[(start + i + players.length) % players.length];
+    if (player?.isAlive) return player;
+  }
+  return null;
 }
 
 export function getAliveReplacementTarget(
@@ -67,7 +83,9 @@ export function getAliveReplacementTarget(
   monsters: readonly Monster[],
   players: readonly Player[]
 ): FightingCharacter | null {
-  return isMonster(target, monsters) ? getFirstAliveMonster(monsters) : getRandomAlivePlayer(players);
+  return isMonster(target, monsters)
+    ? getAliveReplacementMonster(target, monsters)
+    : getAliveReplacementPlayer(target as Player, players);
 }
 
 export function getAvailableCoopPlayers(players: readonly Player[], first: Player | null): Player[] {

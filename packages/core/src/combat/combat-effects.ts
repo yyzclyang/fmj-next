@@ -175,14 +175,15 @@ export function applyMagicAttack(
   randomRoll = rollCombatRandom(),
   damageMissed = false
 ): void {
-  if (!damageMissed) {
-    applyHpMagicEffect(
-      actor,
-      target,
-      calcHpMagicEffect(actor, target, magic.hpEffect, formula, targetIsDefending, randomRoll)
-    );
-    applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.mpEffect, formula, randomRoll));
-  }
+  // C 引擎 miss 后仍会结算属性和异常；这里按战斗语义主动改成 miss 后不附加效果。
+  if (damageMissed) return;
+
+  applyHpMagicEffect(
+    actor,
+    target,
+    calcHpMagicEffect(actor, target, magic.hpEffect, formula, targetIsDefending, randomRoll)
+  );
+  applyMpMagicEffect(actor, target, calcMpMagicEffect(actor, target, magic.mpEffect, formula, randomRoll));
   applyAttributeMagicEffect(
     target,
     -magic.attackPercent,
@@ -224,7 +225,7 @@ export function applyRestoreMagic(magic: MagicRestore, target: FightingCharacter
 
 export function applyPoisonPostEffect(actor: FightingCharacter): number {
   if (!actor.isAlive || !isPoisoned(actor)) return 0;
-  const damage = Math.max(1, actor.hp >> 2);
+  const damage = actor.hp >> 2;
   actor.hp = Math.max(0, actor.hp - damage);
   return damage;
 }

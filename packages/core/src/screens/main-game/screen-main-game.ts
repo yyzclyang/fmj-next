@@ -341,6 +341,7 @@ export class ScreenMainGame extends BaseScreen {
     const image = sprite.image;
     const left = screenX * MAP_TILE_SIZE;
     const top = screenY * MAP_TILE_SIZE + MAP_TILE_SIZE - image.height;
+    // prettier-ignore
     if (
       left + image.width > 0 &&
       left < SCREEN_WIDTH &&

@@ -100,7 +100,7 @@ function drawTextWithColors(
     if (char === '\0') break;
 
     const code = char.codePointAt(0);
-    if (code == null) continue;
+    if (code === undefined) continue;
 
     if (code < 0x80) {
       drawGlyph(surface, asc16Buffer, code * ASCII_BYTES_PER_GLYPH, ASCII_WIDTH, x, top, fgColor, bgColor);
@@ -109,7 +109,7 @@ function drawTextWithColors(
     }
 
     const offset = getHzkOffset(char);
-    if (offset == null) {
+    if (offset === null) {
       x += ASCII_WIDTH;
       continue;
     }
@@ -121,9 +121,10 @@ function drawTextWithColors(
 
 function getCharWidth(char: string): number {
   const code = char.codePointAt(0);
-  if (code == null) return ASCII_WIDTH;
+  if (code === undefined) return ASCII_WIDTH;
   if (code < 0x80) return ASCII_WIDTH;
-  return getHzkOffset(char) == null ? ASCII_WIDTH : HZK_WIDTH;
+  const offset = getHzkOffset(char);
+  return offset === null ? ASCII_WIDTH : HZK_WIDTH;
 }
 
 function drawGlyph(

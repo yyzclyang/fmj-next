@@ -851,7 +851,7 @@ export class MainSceneRuntime {
   }
 
   private hasSceneObjectAt(x: number, y: number): boolean {
-    return this.getSceneObjectAt(x, y) != null;
+    return this.getSceneObjectAt(x, y) !== null;
   }
 
   private getSceneObjectAt(x: number, y: number): SceneObject | null {

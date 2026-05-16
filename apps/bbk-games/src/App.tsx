@@ -150,7 +150,7 @@ function App() {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const key = mapKeyboard(event.code);
-      if (key == null) return;
+      if (key === null) return;
       runtimeRef.current?.keyDown(key);
       event.preventDefault();
     };

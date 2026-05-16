@@ -22,7 +22,7 @@ function createRequestUrl(path: string, query?: Record<string, QueryValue>): str
   const baseUrl = /^https?:\/\//.test(path) ? path : `${BASE_URL}${path}`;
   const searchParams = new URLSearchParams();
   for (const [key, value] of Object.entries(query ?? {})) {
-    if (value == null) continue;
+    if (value === null || value === undefined) continue;
     searchParams.set(key, String(value));
   }
   const queryString = searchParams.toString();

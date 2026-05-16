@@ -83,7 +83,7 @@ export const webSaveStore: Save = {
   },
   read(slot) {
     const raw = window.localStorage.getItem(getSlotStorageKey(slot));
-    if (raw == null) return null;
+    if (raw === null) return null;
     try {
       return parseEnvelope(raw);
     } catch {

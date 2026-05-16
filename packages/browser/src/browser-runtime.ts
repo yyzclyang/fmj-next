@@ -91,7 +91,7 @@ export class BrowserRuntime {
   private readonly loop = (timestamp: number): void => {
     if (!this.engine) return;
 
-    const delta = this.lastTimestamp == null ? 40 : timestamp - this.lastTimestamp;
+    const delta = this.lastTimestamp === null ? 40 : timestamp - this.lastTimestamp;
     this.lastTimestamp = timestamp;
     this.engine.tick(delta * this.speed);
     this.presenter.present(this.engine.frameBuffer);
@@ -99,7 +99,7 @@ export class BrowserRuntime {
   };
 
   private stopLoop(): void {
-    if (this.rafId != null) {
+    if (this.rafId !== null) {
       cancelAnimationFrame(this.rafId);
       this.rafId = null;
     }

@@ -35,7 +35,7 @@ export class ResMagicChain extends ResBase {
     const learnedMagicCount = this.learnedMagicCount === 0 ? this.magics.length : this.learnedMagicCount;
     const learnedMagics = this.magics
       .slice(0, Math.min(learnedMagicCount, this.magics.length))
-      .filter((magic): magic is BaseMagic => magic != null);
+      .filter((magic): magic is BaseMagic => magic !== null);
     return reverse ? learnedMagics.reverse() : learnedMagics;
   }
 }

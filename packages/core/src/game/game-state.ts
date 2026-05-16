@@ -57,7 +57,7 @@ export function createInitialGameState(): GameState {
     goods: [],
     sceneName: '',
     disableSave: false,
-    allowFightMiss: false,
+    allowFightMiss: true,
     allowTossArm: true,
     allowWallWalking: false,
     useOriginalDamageFormula: true,

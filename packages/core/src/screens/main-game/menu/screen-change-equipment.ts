@@ -33,8 +33,9 @@ export class ScreenChangeEquipment extends BaseScreen {
     private readonly itemIndex?: number
   ) {
     super(game);
-    const current = itemIndex == null ? player.getCurrentEquipment(goods.type) : player.getEquipmentByIndex(itemIndex);
-    if (!current || (itemIndex == null && player.hasEquipmentSpace(goods.type))) {
+    const current =
+      itemIndex === undefined ? player.getCurrentEquipment(goods.type) : player.getEquipmentByIndex(itemIndex);
+    if (!current || (itemIndex === undefined && player.hasEquipmentSpace(goods.type))) {
       this.goodsList = [goods];
     } else {
       this.goodsList = [current, goods];
@@ -122,13 +123,13 @@ export class ScreenChangeEquipment extends BaseScreen {
     const goods = this.goodsList[this.selectedIndex];
     if (!goods) throw new Error('换装页当前装备不存在');
     const slotIndex = this.player.putOnEquipment(goods, this.itemIndex);
-    if (slotIndex == null) throw new Error('换装页无法穿上当前装备');
+    if (slotIndex === null) throw new Error('换装页无法穿上当前装备');
     this.equippedSlotIndex = slotIndex;
     this.setEquipmentEvent(goods, true);
   }
 
   private takeOffCurrentEquipment(): GoodsEquipment {
-    if (this.equippedSlotIndex == null) throw new Error('换装页没有可脱下的当前装备');
+    if (this.equippedSlotIndex === null) throw new Error('换装页没有可脱下的当前装备');
     const goods = this.takeOffEquipment(this.goodsList[this.selectedIndex]?.type ?? 0, this.equippedSlotIndex);
     this.equippedSlotIndex = null;
     return goods;

@@ -164,7 +164,7 @@ export class Game {
   private createInitialState(): GameState {
     const state = createInitialGameState();
     state.useOriginalDamageFormula = this.engineOptions.damageFormula !== 'simplified';
-    if (this.engineOptions.allowFightMiss != null) state.allowFightMiss = this.engineOptions.allowFightMiss;
+    state.allowFightMiss = this.engineOptions.allowFightMiss !== false;
     return state;
   }
 
@@ -353,7 +353,7 @@ export class Game {
   isBoxCollected(boxKey: string): boolean {
     if (this.state.collectedBoxKeys.includes(boxKey)) return true;
     const eventId = this.boxEventMap.get(boxKey);
-    return eventId != null && this.hasEvent(eventId);
+    return eventId !== undefined && this.hasEvent(eventId);
   }
 
   markBoxCollected(boxKey: string): void {

@@ -89,12 +89,12 @@ export class ResLevelUpChain extends ResBase {
 
   private readLevelUint16(level: number, fieldOffset: number): number {
     const offset = this.getLevelOffset(level, fieldOffset);
-    if (offset == null || offset + 1 >= this.levelData.length) return 0;
+    if (offset === null || offset + 1 >= this.levelData.length) return 0;
     return readUint16(this.levelData, offset);
   }
 
   private readLevelByte(level: number, fieldOffset: number): number {
     const offset = this.getLevelOffset(level, fieldOffset);
-    return offset == null ? 0 : (this.levelData[offset] ?? 0);
+    return offset === null ? 0 : (this.levelData[offset] ?? 0);
   }
 }

@@ -71,11 +71,11 @@ export class ScriptProcess {
   }
 
   get busy(): boolean {
-    return this.running || this.operation != null;
+    return this.running || this.operation !== null;
   }
 
   get hasOperation(): boolean {
-    return this.operation != null;
+    return this.operation !== null;
   }
 
   createSnapshot(): ScriptProcessSnapshot {
@@ -141,7 +141,7 @@ export class ScriptProcess {
   gotoAddress(address: number): void {
     const offset = address - this.headerSize;
     const target = this.addressIndexMap.get(offset);
-    if (target == null) {
+    if (target === undefined) {
       this.warn(`无效跳转地址 address=${address}, offset=${offset}`);
       return;
     }

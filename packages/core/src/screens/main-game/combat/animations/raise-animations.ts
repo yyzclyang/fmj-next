@@ -58,7 +58,7 @@ export class RaiseGroupCombatAnimation implements CombatActionAnimation {
   ) {
     this.raiseAnimations = [...raiseAnimations];
     this.visibleTargetSet = new Set(fighters);
-    this.hitSnapshots = hitFighters.map(createHitSnapshot).filter((item): item is HitSnapshot => item != null);
+    this.hitSnapshots = hitFighters.map(createHitSnapshot).filter((item): item is HitSnapshot => item !== null);
     for (const item of this.hitSnapshots) startHitFrame(item);
   }
 

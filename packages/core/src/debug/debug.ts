@@ -342,7 +342,7 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
       setEncounterRate(rate?: number | null) {
         const game = getGame();
         if (!game) return 0;
-        const nextRate = rate == null ? null : assertDebugRate(rate, 'encounterRate');
+        const nextRate = isDebugUnset(rate) ? null : assertDebugRate(rate, 'encounterRate');
         const currentRate = game.combat.setRandomEncounterRate(nextRate);
         logger.log('战斗', `当前遇敌几率:${currentRate}`);
         return currentRate;
@@ -358,8 +358,8 @@ function normalizeCombatStartOptions(input?: readonly number[] | DebugCombatStar
 
 // 调试战斗允许一次性搭好队伍、背包和战斗开关，方便复现 Kotlin 对照场景。
 function applyDebugCombatSetup(game: Game, options: DebugCombatStartOptions): void {
-  if (options.allowFightMiss != null) game.state.allowFightMiss = options.allowFightMiss;
-  if (options.allowTossArm != null) game.state.allowTossArm = options.allowTossArm;
+  if (typeof options.allowFightMiss === 'boolean') game.state.allowFightMiss = options.allowFightMiss;
+  if (typeof options.allowTossArm === 'boolean') game.state.allowTossArm = options.allowTossArm;
   for (const id of options.playerIds ?? []) addDebugPlayer(game, id);
   for (const state of options.playerStates ?? []) applyDebugPlayerState(game, state);
   for (const item of options.goods ?? []) addDebugGoods(game, item);
@@ -371,15 +371,15 @@ function resolveDebugMonsterIds(game: Game, input?: readonly number[]): number[]
 }
 
 function resolveCombatBackground(game: Game, input?: DebugCombatBackgroundInput): CombatBackgroundIds {
-  if (input == null) return { scrb: getFirstCombatBackgroundIndex(game), scrl: 0, scrr: 0 };
+  if (isDebugUnset(input)) return { scrb: getFirstCombatBackgroundIndex(game), scrl: 0, scrr: 0 };
   if (typeof input === 'number') return { scrb: assertDebugNonNegativeInt(input, 'background'), scrl: 0, scrr: 0 };
   return {
     scrb:
-      input.scrb == null
+      isDebugUnset(input.scrb)
         ? getFirstCombatBackgroundIndex(game)
         : assertDebugNonNegativeInt(input.scrb, 'background.scrb'),
-    scrl: input.scrl == null ? 0 : assertDebugNonNegativeInt(input.scrl, 'background.scrl'),
-    scrr: input.scrr == null ? 0 : assertDebugNonNegativeInt(input.scrr, 'background.scrr'),
+    scrl: isDebugUnset(input.scrl) ? 0 : assertDebugNonNegativeInt(input.scrl, 'background.scrl'),
+    scrr: isDebugUnset(input.scrr) ? 0 : assertDebugNonNegativeInt(input.scrr, 'background.scrr'),
   };
 }
 
@@ -387,16 +387,16 @@ function toCombatTriple(values: readonly number[] | undefined, name: string): [n
   if (!values) return [0, 0, 0];
   if (values.length > 3) throw new Error(`${name} 最多只能配置 3 项`);
   return [
-    values[0] == null ? 0 : assertDebugNonNegativeInt(values[0], `${name}[0]`),
-    values[1] == null ? 0 : assertDebugNonNegativeInt(values[1], `${name}[1]`),
-    values[2] == null ? 0 : assertDebugNonNegativeInt(values[2], `${name}[2]`),
+    isDebugUnset(values[0]) ? 0 : assertDebugNonNegativeInt(values[0], `${name}[0]`),
+    isDebugUnset(values[1]) ? 0 : assertDebugNonNegativeInt(values[1], `${name}[1]`),
+    isDebugUnset(values[2]) ? 0 : assertDebugNonNegativeInt(values[2], `${name}[2]`),
   ];
 }
 
 function applyDebugPlayerState(game: Game, input: DebugCombatPlayerStateInput): void {
   const player = addDebugPlayer(game, input.id);
-  if (input.hp != null) player.hp = clampDebugInt(input.hp, 'hp', 0, player.hpMax);
-  if (input.mp != null) player.mp = clampDebugInt(input.mp, 'mp', 0, player.mpMax);
+  if (!isDebugUnset(input.hp)) player.hp = clampDebugInt(input.hp, 'hp', 0, player.hpMax);
+  if (!isDebugUnset(input.mp)) player.mp = clampDebugInt(input.mp, 'mp', 0, player.mpMax);
   applyDebugStatuses(player.immuneStatuses, input.immuneStatusFlags, input.immuneStatusRounds, 'immuneStatus');
   applyDebugStatuses(player.activeStatuses, input.activeStatusFlags, input.activeStatusRounds, 'activeStatus');
   applyDebugStatuses(player.onHitStatuses, input.onHitEffectFlags, input.onHitEffectRounds, 'onHitEffect');
@@ -433,7 +433,7 @@ function applyDebugPlayerIncrease(player: Player, input: DebugPlayerIncreaseInpu
 }
 
 function addDebugPlayerAttribute(player: Player, type: number, value: number | undefined, name: string): boolean {
-  if (value == null) return false;
+  if (isDebugUnset(value)) return false;
   player.addScriptAttribute(type, assertDebugInt(value, name));
   return true;
 }
@@ -444,10 +444,18 @@ function applyDebugStatuses(
   round: number | undefined,
   name: string
 ): void {
-  if (flags == null) return;
+  if (isDebugUnset(flags)) return;
   const value = assertDebugNonNegativeInt(flags, `${name}Flags`);
   statuses.clearFlags(STATUS_FLAGS_ALL);
-  if (value !== 0) statuses.addFlags(value, round == null ? 99 : assertDebugNonNegativeInt(round, `${name}Rounds`));
+  if (value !== 0)
+    statuses.addFlags(
+      value,
+      isDebugUnset(round) ? 99 : assertDebugNonNegativeInt(round, `${name}Rounds`)
+    );
+}
+
+function isDebugUnset(value: unknown): value is null | undefined {
+  return value === null || value === undefined;
 }
 
 function addDebugGoods(game: Game, input: DebugCombatGoodsInput): void {

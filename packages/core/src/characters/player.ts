@@ -364,7 +364,7 @@ export class Player extends FightingCharacter {
 
   getCurrentEquipment(type: number): GoodsEquipment | null {
     const slot = this.findEquipmentSlot(type);
-    return slot == null ? null : (this.equipment[slot] ?? null);
+    return slot === null ? null : (this.equipment[slot] ?? null);
   }
 
   hasEquipment(type: number, index: number): boolean {
@@ -380,19 +380,20 @@ export class Player extends FightingCharacter {
   }
 
   hasEquipmentSpace(type: number): boolean {
-    return this.findEquipmentSlot(type, slot => this.equipment[slot] == null) != null;
+    const slot = this.findEquipmentSlot(type, slot => this.equipment[slot] === null);
+    return slot !== null;
   }
 
   putOnEquipment(goods: GoodsEquipment, at?: number): number | null {
-    if (at != null) return this.putOnEquipmentAt(goods, at);
-    const slot = this.findEquipmentSlot(goods.type, i => this.equipment[i] == null);
-    return slot == null ? null : this.putOnEquipmentAt(goods, slot);
+    if (at !== undefined) return this.putOnEquipmentAt(goods, at);
+    const slot = this.findEquipmentSlot(goods.type, i => this.equipment[i] === null);
+    return slot === null ? null : this.putOnEquipmentAt(goods, slot);
   }
 
   takeOffEquipment(type: number, index?: number): GoodsEquipment | null {
-    if (index != null) return this.takeOffEquipmentAt(index);
-    const slot = this.findEquipmentSlot(type, i => this.equipment[i] != null);
-    return slot == null ? null : this.takeOffEquipmentAt(slot);
+    if (index !== undefined) return this.takeOffEquipmentAt(index);
+    const slot = this.findEquipmentSlot(type, i => this.equipment[i] !== null);
+    return slot === null ? null : this.takeOffEquipmentAt(slot);
   }
 
   private findEquipmentSlot(type: number, predicate?: (slot: number) => boolean): number | null {
@@ -406,7 +407,7 @@ export class Player extends FightingCharacter {
     if (PLAYER_EQUIPMENT_SLOT_GOODS_TYPES[index] !== goods.type) {
       throw new Error(`装备类型 ${goods.type} 不能放入槽位 ${index}`);
     }
-    if (this.equipment[index] != null) return null;
+    if (this.equipment[index] !== null) return null;
     this.applyEquipmentEffect(goods, 1);
     this.equipment[index] = goods;
     return index;

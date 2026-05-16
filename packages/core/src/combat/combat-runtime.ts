@@ -179,7 +179,7 @@ export class CombatRuntime {
   createSnapshot(): CombatRuntimeSnapshot {
     if (this.activeSession) throw new Error('战斗中不能存档');
     return {
-      randomFightEnabled: this.randomFightEnabled && this.randomFightConfig != null,
+      randomFightEnabled: this.randomFightEnabled && this.randomFightConfig !== null,
       randomFightConfig: this.randomFightConfig ? cloneInitFightParams(this.randomFightConfig) : null,
     };
   }
@@ -316,7 +316,7 @@ export class CombatRuntime {
   private loadPlayers(): Player[] {
     const players = this.game.state.partyActorIds
       .map(id => this.game.getPlayer(id))
-      .filter((player): player is Player => player != null)
+      .filter((player): player is Player => player !== null)
       .slice(0, MAX_COMBAT_PLAYERS);
     if (players.length === 0) throw new Error('战斗需要至少一个队伍角色');
     const alivePlayers = players.filter(player => player.hp > 0);

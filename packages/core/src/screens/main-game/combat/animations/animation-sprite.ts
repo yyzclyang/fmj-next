@@ -38,7 +38,7 @@ export function snapshotSprite(fighter: FightingCharacter): SpriteSnapshot | nul
 }
 
 export function snapshotSprites(fighters: readonly FightingCharacter[]): SpriteSnapshot[] {
-  return fighters.map(snapshotSprite).filter((item): item is SpriteSnapshot => item != null);
+  return fighters.map(snapshotSprite).filter((item): item is SpriteSnapshot => item !== null);
 }
 
 export function restoreSprite(snapshot: SpriteSnapshot | null): void {

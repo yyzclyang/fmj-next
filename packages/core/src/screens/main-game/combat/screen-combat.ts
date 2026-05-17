@@ -42,7 +42,7 @@ import {
   getPreviousAlivePlayerIndex,
 } from './actions/targeting';
 import { CombatRenderer } from './ui/renderer';
-import { completeRound, triggerRoundEvent } from './flow/round';
+import { completeRound, triggerRoundEvent, type CombatRoundCompletion } from './flow/round';
 import { CombatSuccessSequence } from './ui/combat-success-sequence';
 
 export interface ScreenCombatOptions {
@@ -468,14 +468,25 @@ export class ScreenCombat extends BaseScreen {
       return;
     }
     if (result.kind === 'startSuccess') {
-      this.startSuccess();
+      this.finishResolvedRound();
       return;
     }
-    this.finishOrStartLoss(result.result);
+    if (result.result === 'flee') {
+      this.finishOrStartLoss(result.result);
+      return;
+    }
+    this.finishResolvedRound();
+  }
+
+  private finishResolvedRound(): void {
+    this.applyRoundCompletion(completeRound(this.session, this.roundCount));
   }
 
   private finishRound(): void {
-    const result = completeRound(this.session, this.roundCount);
+    this.applyRoundCompletion(completeRound(this.session, this.roundCount));
+  }
+
+  private applyRoundCompletion(result: CombatRoundCompletion): void {
     if (result.kind === 'startSuccess') {
       this.startSuccess();
       return;

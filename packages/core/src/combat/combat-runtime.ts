@@ -143,8 +143,7 @@ export class CombatSession {
   }
 }
 
-const MAX_COMBAT_PLAYERS = 3;
-const DEFAULT_RANDOM_ENCOUNTER_RATE = 1 / 20;
+const DEFAULT_RANDOM_ENCOUNTER_RATE = 4 / 100;
 const PLAYER_POS = [
   { x: 186, y: 148 },
   { x: 218, y: 144 },
@@ -281,14 +280,18 @@ export class CombatRuntime {
     if (this.activeSession !== session) throw new Error('结束了不属于当前运行时的战斗');
     if (result === 'win') session.settleWin();
     logCombatFinish(result);
-    const recoverBefore = result === 'win' || result === 'flee' ? captureCombatLogStates(session.players) : null;
+    const recoverBefore =
+      result === 'win' || result === 'flee' || result === 'maxRound'
+        ? captureCombatLogStates(session.players)
+        : null;
     this.activeSession = null;
     if (result === 'win' && recoverBefore) {
       this.recoverPlayersAfterWin(session.players);
       logCombatFighterEffects('战斗结束恢复', recoverBefore, session.players);
-    } else if (result === 'flee' && recoverBefore) {
-      this.revivePlayersAfterFlee(session.players);
-      logCombatFighterEffects('逃跑恢复', recoverBefore, session.players);
+    } else if ((result === 'flee' || result === 'maxRound') && recoverBefore) {
+      // C 只在逃跑成功时拉起死亡队员；TS 在最大回合继续脚本时也恢复到 1 HP，这是有意不完全一致。
+      this.reviveDeadPlayersToOneHp(session.players);
+      logCombatFighterEffects(result === 'flee' ? '逃跑恢复' : '最大回合恢复', recoverBefore, session.players);
     }
     session.notifyFinish(result);
   }
@@ -307,7 +310,7 @@ export class CombatRuntime {
     }
   }
 
-  private revivePlayersAfterFlee(players: readonly Player[]): void {
+  private reviveDeadPlayersToOneHp(players: readonly Player[]): void {
     for (const player of players) {
       if (player.hp <= 0) player.hp = 1;
     }
@@ -317,12 +320,12 @@ export class CombatRuntime {
     const players = this.game.state.partyActorIds
       .map(id => this.game.getPlayer(id))
       .filter((player): player is Player => player !== null)
-      .slice(0, MAX_COMBAT_PLAYERS);
+      .slice(0, 3 /* 最大3个战斗决算 */);
     if (players.length === 0) throw new Error('战斗需要至少一个队伍角色');
-    const alivePlayers = players.filter(player => player.hp > 0);
-    if (alivePlayers.length > 0) return alivePlayers;
-    players[0]!.hp = 1;
-    return [players[0]!];
+    // C 引擎固定保留队伍前三个战斗槽位；死亡角色进场保持倒地帧，胜利后由结算恢复到 1 HP。
+    if (players.some(player => player.hp > 0)) return players;
+    players[0].hp = 1;
+    return players;
   }
 
   private loadMonsters(monsterTypes: readonly number[]): Monster[] {

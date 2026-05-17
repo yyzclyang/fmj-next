@@ -223,7 +223,8 @@ function canPlayerFlee(player: Player, firstMonster: Monster | null): boolean {
   const roll = rollCombatRandom();
   const playerLuck = roll % (Math.max(0, player.luck) + 1);
   const playerAgility = roll % (Math.max(0, player.agility) + 1);
-  const monsterLuck = firstMonster?.isAlive ? roll % (Math.max(0, firstMonster.luck) + 1) : 0;
-  const monsterAgility = firstMonster?.isAlive ? roll % (Math.max(0, firstMonster.agility) + 1) : 0;
+  // C 引擎直接取第一个敌人槽位的幸运和身法，不因该敌人本轮已倒下而改按 0 计算。
+  const monsterLuck = firstMonster ? roll % (Math.max(0, firstMonster.luck) + 1) : 0;
+  const monsterAgility = firstMonster ? roll % (Math.max(0, firstMonster.agility) + 1) : 0;
   return playerLuck + playerAgility > monsterLuck + monsterAgility;
 }

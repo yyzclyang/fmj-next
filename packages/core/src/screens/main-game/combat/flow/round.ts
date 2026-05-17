@@ -28,6 +28,11 @@ export function triggerRoundEvent(session: CombatSession, roundCount: number): v
 }
 
 export function completeRound(session: CombatSession, roundCount: number): CombatRoundCompletion {
+  // C 引擎在当前回合动作结算后，用当前回合序号命中上限就退出，且优先于本回合胜负结果。
+  if (!session.isRandomFight && session.params.roundMax > 0 && roundCount === session.params.roundMax) {
+    return { kind: 'finish', result: 'maxRound' };
+  }
+
   if (isAllMonsterDead(session.monsters)) {
     return { kind: 'startSuccess' };
   }
@@ -36,10 +41,6 @@ export function completeRound(session: CombatSession, roundCount: number): Comba
   }
 
   const nextRoundCount = roundCount + 1;
-  if (!session.isRandomFight && session.params.roundMax > 0 && nextRoundCount >= session.params.roundMax) {
-    return { kind: 'finish', result: 'maxRound' };
-  }
-
   return {
     kind: 'nextRound',
     roundCount: nextRoundCount,

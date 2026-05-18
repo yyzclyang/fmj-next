@@ -137,8 +137,13 @@ function cmdResumeActorHp(game: Game, reader: ScriptReader): CommandBuilder {
         return;
       }
       const before = player.hp;
-      player.hp = Math.trunc((player.hpMax * value) / 100);
-      logger.log('角色', `RESUMEACTORHP ${player.name} ${before}->${player.hp} 百分比=${value}`);
+      if (value < 1 || value > 100) {
+        logger.warn('角色', `RESUMEACTORHP 已跳过，角色=${actorId} 百分比=${value}`);
+        return;
+      }
+      const heal = Math.max(1, Math.trunc((player.hpMax * value) / 100));
+      player.hp = Math.min(player.hpMax, player.hp + heal);
+      logger.log('角色', `RESUMEACTORHP ${player.name} ${before}->${player.hp} 百分比=${value} 恢复=${heal}`);
     },
   };
 }

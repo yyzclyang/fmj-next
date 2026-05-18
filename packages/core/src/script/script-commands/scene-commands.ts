@@ -17,7 +17,7 @@ export function compileSceneCommand(game: Game, reader: ScriptReader, opcode: nu
     case COMMAND.MOVE:
       return cmdMove(game, reader);
     case COMMAND.ACTORMOVE:
-      return cmdMove(game, reader);
+      return cmdActorMove();
     case COMMAND.ACTORSPEED:
       return cmdActorSpeed(game, reader);
     case COMMAND.STARTCHAPTER:
@@ -111,6 +111,13 @@ function cmdMove(game: Game, reader: ScriptReader): CommandBuilder {
       }
       process.wait(operation);
     },
+  };
+}
+
+function cmdActorMove(): CommandBuilder {
+  return {
+    len: 12,
+    execute: () => void 0,
   };
 }
 

@@ -204,7 +204,7 @@ function cmdRandRate(reader: ScriptReader): CommandBuilder {
     len: 4,
     execute: process => {
       const roll = Math.trunc(Math.random() * 1000);
-      const matched = roll <= rate;
+      const matched = roll < rate;
       if (matched) {
         logger.log('分支', `RANDRADE 随机=${roll}, 比率=${rate}, 地址=${address}`);
         process.gotoAddress(address);

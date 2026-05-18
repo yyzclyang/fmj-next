@@ -1,6 +1,6 @@
 import type { Game } from '@/game/game';
 import type { CombatEnterFightParams, CombatInitFightParams, CombatRuntimeSnapshot } from '@/combat';
-import { CharacterState, Direction, toCharacterState, type Player, type WalkingSprite } from '@/characters';
+import { CharacterState, Direction, type Player, type WalkingSprite } from '@/characters';
 import type { ResImage } from '@/lib/res-image';
 import type { ResMap } from '@/lib/res-map';
 import { ResourceType } from '@/lib/resource-utils';
@@ -575,21 +575,32 @@ export class MainSceneRuntime {
       this.warnMissingActor('FACETOFACE 目标', targetActorId);
       return;
     }
-    if (actor.x === target.x && actor.y === target.y) return;
-
-    const facing = getFacingToward(actor.x, actor.y, target.x, target.y);
-    this.setActorFacing(actorId, facing);
+    if (actor.x < target.x) {
+      this.setActorFacing(actorId, Direction.East);
+      this.setActorFacing(targetActorId, Direction.West);
+    } else if (actor.x > target.x) {
+      this.setActorFacing(actorId, Direction.West);
+      this.setActorFacing(targetActorId, Direction.East);
+    }
+    // C 引擎在横向判断后继续判断纵向；斜向时纵向会覆盖横向。
+    if (actor.y < target.y) {
+      this.setActorFacing(actorId, Direction.South);
+      this.setActorFacing(targetActorId, Direction.North);
+    } else if (actor.y > target.y) {
+      this.setActorFacing(actorId, Direction.North);
+      this.setActorFacing(targetActorId, Direction.South);
+    }
   }
 
   setNpcMoveMode(id: number, state: number): void {
-    const obj = this.sceneObjectsValue.get(id);
-    if (!obj) {
+    const npc = this.sceneObjectsValue.get(id);
+    if (!npc) {
       this.warnMissingActor('NPCMOVEMOD', id);
       return;
     }
-    obj.state = toCharacterState(state);
-    obj.stateElapsed = 0;
-    obj.pauseRemaining = obj.delay * 100;
+    npc.state = toNpcMoveModeState(state);
+    npc.stateElapsed = 0;
+    npc.pauseRemaining = npc.delay * 100;
   }
 
   setActorPose(id: number, facing: Facing, step: number): void {
@@ -1163,6 +1174,12 @@ function getFacingToward(x: number, y: number, targetX: number, targetY: number)
   if (targetX > x) return Direction.East;
   if (targetY < y) return Direction.North;
   return Direction.South;
+}
+
+function toNpcMoveModeState(mode: number): CharacterState {
+  if (mode === 0) return CharacterState.Stop;
+  if (mode === 1) return CharacterState.Pause;
+  return CharacterState.Active;
 }
 
 function getNextX(x: number, facing: Facing): number {

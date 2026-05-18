@@ -69,7 +69,7 @@ export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: Magi
   const before = captureFighterStates([action.actor, ...finalTargets]);
   const logBefore = captureCombatLogStates([action.actor, ...finalTargets]);
   const misses: CombatActionAnimation[] = [];
-  const damageMissedTargets: Array<(typeof finalTargets)[number]> = [];
+  const magicMissedTargets: Array<(typeof finalTargets)[number]> = [];
   const guardedTargets = new Set<FightingCharacter>();
   if (!spendMagicMp(action.actor, action.magic)) {
     ctx.setMessage('真气不足');
@@ -79,14 +79,14 @@ export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: Magi
 
   for (const target of finalTargets) {
     const randomRoll = rollCombatRandom();
-    const damageMissed = isMagicMissed(ctx.game, action.actor, target, true, randomRoll);
-    const targetIsGuarded = damageMissed ? false : rollGuardedPlayerTarget(ctx.session, action.actor, target);
-    if (damageMissed) {
+    const magicMissed = isMagicMissed(ctx.game, action.actor, target, true, randomRoll);
+    const targetIsGuarded = magicMissed ? false : rollGuardedPlayerTarget(ctx.session, action.actor, target);
+    if (magicMissed) {
       misses.push(createMissAnimation(ctx.game, target));
-      damageMissedTargets.push(target);
+      magicMissedTargets.push(target);
     }
-    if (!damageMissed && targetIsGuarded) guardedTargets.add(target);
-    applyMagicAttack(action.actor, action.magic, target, ctx.game.damageFormula, targetIsGuarded, randomRoll, damageMissed);
+    if (!magicMissed && targetIsGuarded) guardedTargets.add(target);
+    applyMagicAttack(action.actor, action.magic, target, ctx.game.damageFormula, targetIsGuarded, randomRoll, magicMissed);
   }
   const animation = new CastCombatAnimation({
     actor: action.actor,
@@ -96,11 +96,11 @@ export function prepareMagicAttackAction(ctx: CombatPrepareContext, action: Magi
     raiseAnimations: [...createRaiseAnimations(ctx.game, before, [...finalTargets, action.actor]), ...misses],
     hitTargets: true,
     guardedTargets,
-    missedTargets: new Set(damageMissedTargets),
+    missedTargets: new Set(magicMissedTargets),
   });
   const actionLabel = `${action.actor.name}施展${action.magic.name}`;
   logCombatAction(actionLabel);
-  for (const target of damageMissedTargets) logCombatMiss(action.actor, target, `施展${action.magic.name}攻击`);
+  for (const target of magicMissedTargets) logCombatMiss(action.actor, target, `施展${action.magic.name}攻击`);
   logCombatFighterEffects(actionLabel, logBefore, [action.actor, ...finalTargets]);
   return preparedAction(action, animation);
 }

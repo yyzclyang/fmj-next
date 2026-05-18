@@ -173,10 +173,10 @@ export function applyMagicAttack(
   formula: DamageFormula = 'original',
   targetIsDefending = false,
   randomRoll = rollCombatRandom(),
-  damageMissed = false
+  magicMissed = false
 ): void {
   // C 引擎 miss 后仍会结算属性和异常；这里按战斗语义主动改成 miss 后不附加效果。
-  if (damageMissed) return;
+  if (magicMissed) return;
 
   applyHpMagicEffect(
     actor,

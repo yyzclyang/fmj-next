@@ -170,12 +170,12 @@ export function prepareCoopAction(ctx: CombatPrepareContext, action: CoopAction)
       }
       for (const target of targets) {
         const randomRoll = rollCombatRandom();
-        const missed = isMagicMissed(ctx.game, actor, target, true, randomRoll);
-        if (missed && (action.magic.hpEffect !== 0 || action.magic.mpEffect !== 0)) {
+        const magicMissed = isMagicMissed(ctx.game, actor, target, true, randomRoll);
+        if (magicMissed) {
           misses.push(createMissAnimation(ctx.game, target));
           missedPairs.push({ actor, target });
         }
-        applyMagicAttack(actor, action.magic, target, ctx.game.damageFormula, false, randomRoll, missed);
+        applyMagicAttack(actor, action.magic, target, ctx.game.damageFormula, false, randomRoll, magicMissed);
       }
     }
   } else {

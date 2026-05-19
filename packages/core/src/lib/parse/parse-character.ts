@@ -16,7 +16,7 @@ import {
 } from '@/characters';
 import { GoodsDecoration, type GoodsEquipment } from '@/goods';
 import type { DatLib } from '../dat-lib';
-import { ResourceType, readGbkString, readUint16 } from '../resource-utils';
+import { ResourceType, readGbkString, readInt8, readUint16 } from '../resource-utils';
 
 export function parsePlayerResource(datLib: DatLib, buffer: Uint8Array, offset: number): Player {
   return createPlayer(datLib, buffer, offset);
@@ -83,8 +83,8 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
     onHitEffectRounds: buffer[offset + 0x39] ?? 0,
     onHitEffectFlags: buffer[offset + 0x22] ?? 0,
     coopMagicIndex: buffer[offset + 0x23] ?? 0,
-    hpPerRound: buffer[offset + 0x24] ?? 0,
-    mpPerRound: buffer[offset + 0x25] ?? 0,
+    hpPerRound: readInt8(buffer, offset + 0x24),
+    mpPerRound: readInt8(buffer, offset + 0x25),
   };
 
   return new Player(data);

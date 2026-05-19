@@ -30,8 +30,8 @@ export class GoodsMedicine extends BaseGoods {
 
   eat(player: Player): boolean {
     if (!player.isAlive) return false;
-    player.hp = Math.min(player.hpMax, player.hp + this.hp);
-    player.mp = Math.min(player.mpMax, player.mp + this.mp);
+    player.hp = Math.min(player.totalHpMax, player.hp + this.hp);
+    player.mp = Math.min(player.totalMpMax, player.mp + this.mp);
     player.activeStatuses.clearFlags(this.effectFlags);
     return true;
   }

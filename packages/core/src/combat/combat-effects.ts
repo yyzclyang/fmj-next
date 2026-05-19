@@ -37,15 +37,15 @@ export function isSleeping(actor: FightingCharacter): boolean {
 }
 
 export function getComputedAgility(actor: FightingCharacter): number {
-  return actor.agility + Math.trunc((actor.agility * getStatusValue(actor, STATUS_SLOT_AGILITY)) / 100);
+  return actor.totalAgility + Math.trunc((actor.totalAgility * getStatusValue(actor, STATUS_SLOT_AGILITY)) / 100);
 }
 
 export function getComputedAttack(actor: FightingCharacter): number {
-  return actor.attack + Math.trunc((actor.attack * getStatusValue(actor, STATUS_SLOT_ATTACK)) / 100);
+  return actor.totalAttack + Math.trunc((actor.totalAttack * getStatusValue(actor, STATUS_SLOT_ATTACK)) / 100);
 }
 
 export function getComputedDefense(actor: FightingCharacter): number {
-  return actor.defense + Math.trunc((actor.defense * getStatusValue(actor, STATUS_SLOT_DEFENSE)) / 100);
+  return actor.totalDefense + Math.trunc((actor.totalDefense * getStatusValue(actor, STATUS_SLOT_DEFENSE)) / 100);
 }
 
 export function decayFighterStatuses(actor: FightingCharacter): void {
@@ -143,7 +143,7 @@ export function rollRandomPlayerGuard(player: Player, alreadyDefending: boolean)
 }
 
 export function applyOnHitStatuses(attacker: FightingCharacter, target: FightingCharacter): void {
-  applyCombatStatuses(target, attacker.onHitStatuses, target.luck);
+  applyCombatStatuses(target, attacker.onHitStatuses, target.totalLuck);
 }
 
 export function applyThrownGoods(goods: CombatThrowableGoods, target: Monster): void {
@@ -190,9 +190,9 @@ export function applyMagicAttack(
     -magic.defensePercent,
     -magic.agilityPercent,
     magic.statusEffectRounds,
-    target.luck
+    target.totalLuck
   );
-  applyCombatStatuses(target, createStatusSlots(magic.statusEffectFlags, magic.statusEffectRounds), target.luck);
+  applyCombatStatuses(target, createStatusSlots(magic.statusEffectFlags, magic.statusEffectRounds), target.totalLuck);
 }
 
 export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter): void {
@@ -201,8 +201,8 @@ export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter
     return;
   }
   if (magic instanceof MagicAuxiliary) {
-    const hp = Math.trunc((target.hpMax * magic.hpPercent) / 100);
-    target.hp = target.isAlive ? Math.min(target.hpMax, target.hp + hp) : Math.min(target.hpMax, hp);
+    const hp = Math.trunc((target.totalHpMax * magic.hpPercent) / 100);
+    target.hp = target.isAlive ? Math.min(target.totalHpMax, target.hp + hp) : Math.min(target.totalHpMax, hp);
     if (target.hp <= 0) target.hp = 1;
     return;
   }
@@ -219,7 +219,7 @@ export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter
 
 export function applyRestoreMagic(magic: MagicRestore, target: FightingCharacter): void {
   if (!target.isAlive) return;
-  if (magic.hp > 0) target.hp = Math.min(target.hpMax, target.hp + magic.hp);
+  if (magic.hp > 0) target.hp = Math.min(target.totalHpMax, target.hp + magic.hp);
   target.activeStatuses.clearFlags(magic.cureFlags);
 }
 
@@ -260,8 +260,8 @@ function calcHpMagicEffectOriginal(
   randomRoll: number
 ): number {
   let damage = base;
-  damage += src.spirit * (damage >> 6);
-  damage -= dst.spirit * (damage >> 6);
+  damage += src.totalSpirit * (damage >> 6);
+  damage -= dst.totalSpirit * (damage >> 6);
   if (damage <= 0) return 0;
   damage += (randomRoll % damage) >> 4;
   if (damage > 0 && hasSpecialDamageReduction(dst, targetIsDefending)) damage -= damage >> 2;
@@ -279,7 +279,7 @@ function calcHpMagicEffectSimplified(
   base: number,
   targetIsDefending: boolean
 ): number {
-  let damage = Math.max(0, base + Math.trunc((base * (src.spirit - dst.spirit)) / 100));
+  let damage = Math.max(0, base + Math.trunc((base * (src.totalSpirit - dst.totalSpirit)) / 100));
   if (damage > 0 && hasSpecialDamageReduction(dst, targetIsDefending)) damage -= damage >> 2;
   return Math.min(dst.hp, damage);
 }
@@ -309,18 +309,18 @@ function calcMpMagicEffectOriginal(
 ): number {
   let damage = base;
   if (src instanceof Player && dst instanceof Monster) {
-    damage += (src.spirit * damage) >> 6;
-    damage -= (dst.spirit * damage) >> 6;
+    damage += (src.totalSpirit * damage) >> 6;
+    damage -= (dst.totalSpirit * damage) >> 6;
   } else {
-    damage -= src.spirit * (damage >> 6);
-    damage += dst.spirit * (damage >> 6);
+    damage -= src.totalSpirit * (damage >> 6);
+    damage += dst.totalSpirit * (damage >> 6);
   }
   if (damage > 0) damage += (randomRoll % damage) >> 4;
   return Math.min(dst.mp, Math.max(0, damage));
 }
 
 function calcMpMagicEffectSimplified(src: FightingCharacter, dst: FightingCharacter, base: number): number {
-  const damage = Math.max(0, base + Math.trunc((base * (src.spirit - dst.spirit)) / 100));
+  const damage = Math.max(0, base + Math.trunc((base * (src.totalSpirit - dst.totalSpirit)) / 100));
   return Math.min(dst.mp, damage);
 }
 
@@ -329,7 +329,7 @@ function applyHpMagicEffect(actor: FightingCharacter, target: FightingCharacter,
   const damage = calcBoundedEffect(target.hp, effect);
   if (damage === 0) return;
   target.hp = Math.max(0, target.hp - damage);
-  if (effect < 0) actor.hp = clampFighterValue(actor.hp + damage, 0, actor.hpMax);
+  if (effect < 0) actor.hp = clampFighterValue(actor.hp + damage, 0, actor.totalHpMax);
 }
 
 function applyMpMagicEffect(actor: FightingCharacter, target: FightingCharacter, effect: number): void {
@@ -337,7 +337,7 @@ function applyMpMagicEffect(actor: FightingCharacter, target: FightingCharacter,
   const damage = calcBoundedEffect(target.mp, effect);
   if (damage === 0) return;
   target.mp = Math.max(0, target.mp - damage);
-  if (effect < 0) actor.mp = clampFighterValue(actor.mp + damage, 0, actor.mpMax);
+  if (effect < 0) actor.mp = clampFighterValue(actor.mp + damage, 0, actor.totalMpMax);
 }
 
 function calcBoundedEffect(current: number, effect: number): number {

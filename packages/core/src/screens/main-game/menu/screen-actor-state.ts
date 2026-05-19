@@ -74,19 +74,19 @@ export function drawPlayerState(surface: Surface, player: Player, smallNumImage:
   surface.fillRect(37, y - 4, 1, STATE_LINE_HEIGHT * 10, COLOR_BLACK);
   drawText(surface, `等级   ${player.level}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
-  drawText(surface, `生命   ${player.hp}/${player.hpMax}`, STATE_TEXT_LEFT, y);
+  drawText(surface, `生命   ${player.hp}/${player.totalHpMax}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
-  drawText(surface, `真气   ${player.mp}/${player.mpMax}`, STATE_TEXT_LEFT, y);
+  drawText(surface, `真气   ${player.mp}/${player.totalMpMax}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
-  drawText(surface, `攻击力 ${player.attack}`, STATE_TEXT_LEFT, y);
+  drawText(surface, `攻击力 ${player.totalAttack}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
-  drawText(surface, `防御力 ${player.defense}`, STATE_TEXT_LEFT, y);
+  drawText(surface, `防御力 ${player.totalDefense}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
-  drawText(surface, `身法   ${player.agility}`, STATE_TEXT_LEFT, y);
+  drawText(surface, `身法   ${player.totalAgility}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
-  drawText(surface, `灵力   ${player.spirit}`, STATE_TEXT_LEFT, y);
+  drawText(surface, `灵力   ${player.totalSpirit}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
-  drawText(surface, `幸运   ${player.luck}`, STATE_TEXT_LEFT, y);
+  drawText(surface, `幸运   ${player.totalLuck}`, STATE_TEXT_LEFT, y);
   y += STATE_LINE_HEIGHT;
 
   drawText(surface, '经验值', STATE_TEXT_LEFT, y);

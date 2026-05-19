@@ -32,6 +32,7 @@ export class GoodsMedicinePermanent extends BaseGoods {
   }
 
   eat(player: Player): boolean {
+    // 仙药是永久成长，只改角色基础属性；装备修正由 total* getter 统一叠加。
     player.mpMax += this.mpMax;
     player.hpMax += this.hpMax;
     player.defense += this.defense;

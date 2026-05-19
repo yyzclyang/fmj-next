@@ -103,7 +103,7 @@ export function setPlayerFrameByState(player: Player): void {
   sprite.currentFrame =
     player.hp <= 0
       ? PlayerFightingFrame.Dead
-      : isSleeping(player) || player.hp < player.hpMax / 4
+      : isSleeping(player) || player.hp < player.totalHpMax / 4
         ? PlayerFightingFrame.Weak
         : PlayerFightingFrame.Idle;
 }

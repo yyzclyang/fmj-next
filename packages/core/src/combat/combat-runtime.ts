@@ -303,10 +303,10 @@ export class CombatRuntime {
         player.hp = 1;
         continue;
       }
-      player.hp += Math.trunc(((player.hpMax - player.hp) * percent) / 100);
-      player.mp += Math.trunc(((player.mpMax - player.mp) * percent) / 100);
-      if (player.hp > player.hpMax) player.hp = player.hpMax;
-      if (player.mp > player.mpMax) player.mp = player.mpMax;
+      player.hp += Math.trunc(((player.totalHpMax - player.hp) * percent) / 100);
+      player.mp += Math.trunc(((player.totalMpMax - player.mp) * percent) / 100);
+      if (player.hp > player.totalHpMax) player.hp = player.totalHpMax;
+      if (player.mp > player.totalMpMax) player.mp = player.totalMpMax;
     }
   }
 
@@ -348,14 +348,14 @@ export class CombatRuntime {
       sprite.currentFrame =
         player.hp <= 0
           ? PlayerFightingFrame.Dead
-          : player.hp < player.hpMax / 4
+          : player.hp < player.totalHpMax / 4
             ? PlayerFightingFrame.Weak
             : PlayerFightingFrame.Idle;
     });
 
     session.monsters.forEach((monster, i) => {
-      monster.hp = monster.hpMax;
-      monster.mp = monster.mpMax;
+      monster.hp = monster.totalHpMax;
+      monster.mp = monster.totalMpMax;
       monster.activeStatuses.clearFlags(STATUS_FLAGS_ALL);
       const sprite = monster.fightingSprite;
       if (!sprite) throw new Error(`怪物缺少战斗图: ${monster.name}`);
@@ -449,13 +449,13 @@ export class CombatRuntime {
   private applyDrops(session: CombatSession): CombatGoodsAward[] {
     const res: CombatGoodsAward[] = [];
     const controlPlayer = this.game.getPlayer(this.game.state.controlActorId) ?? session.players[0] ?? null;
-    const playerLuck = Math.max(0, controlPlayer?.luck ?? 0);
+    const playerLuck = Math.max(0, controlPlayer?.totalLuck ?? 0);
     for (const monster of session.monsters) {
       const drop = monster.dropGoods;
       if (!drop) continue;
       const roll = Math.trunc(this.random() * 0x10000);
       const playerRoll = (roll % Math.max(1, playerLuck)) + 1;
-      const monsterRoll = monster.luck > 0 ? roll % monster.luck : 0;
+      const monsterRoll = monster.totalLuck > 0 ? roll % monster.totalLuck : 0;
       if (playerRoll <= monsterRoll || roll % 4 === 0) continue;
       const goods = this.game.bag.addGoods(drop.goods.type, drop.goods.index, drop.count);
       if (!goods) throw new Error(`战斗掉落物品不存在: GRS ${drop.goods.type}-${drop.goods.index}`);
@@ -469,13 +469,13 @@ function captureLevelUpStats(player: Player): CombatLevelUpStats {
   return {
     hp: player.hp,
     mp: player.mp,
-    hpMax: player.hpMax,
-    mpMax: player.mpMax,
-    attack: player.attack,
-    defense: player.defense,
-    agility: player.agility,
-    spirit: player.spirit,
-    luck: player.luck,
+    hpMax: player.totalHpMax,
+    mpMax: player.totalMpMax,
+    attack: player.totalAttack,
+    defense: player.totalDefense,
+    agility: player.totalAgility,
+    spirit: player.totalSpirit,
+    luck: player.totalLuck,
   };
 }
 

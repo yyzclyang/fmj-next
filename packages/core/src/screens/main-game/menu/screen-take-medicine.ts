@@ -108,6 +108,8 @@ export class ScreenTakeMedicine extends BaseScreen {
   }
 
   private describeTargets(players: readonly Player[]): string {
-    return players.map(player => `${player.name}:${player.hp}/${player.hpMax},${player.mp}/${player.mpMax}`).join('|');
+    return players
+      .map(player => `${player.name}:${player.hp}/${player.totalHpMax},${player.mp}/${player.totalMpMax}`)
+      .join('|');
   }
 }

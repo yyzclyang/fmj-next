@@ -36,8 +36,8 @@ export class Monster extends FightingCharacter {
     const carry = this.stealGoods;
     if (!carry || carry.count <= 0) return null;
     // C 引擎这里用动作角色下标读取敌人幸运，且幸运为 0 会取模 0；TS 保留公式但修正这两个缺陷。
-    const attackerLuck = Math.max(1, attacker.luck);
-    const targetLuck = Math.max(1, this.luck);
+    const attackerLuck = Math.max(1, attacker.totalLuck);
+    const targetLuck = Math.max(1, this.totalLuck);
     const gate = attackerLuck > targetLuck ? 3 : 2;
     if ((randomRoll % attackerLuck) + 1 <= randomRoll % targetLuck || randomRoll % gate === 0) return null;
     carry.count -= 1;

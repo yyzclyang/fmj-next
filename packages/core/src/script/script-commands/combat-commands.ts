@@ -141,8 +141,8 @@ function cmdResumeActorHp(game: Game, reader: ScriptReader): CommandBuilder {
         logger.warn('角色', `RESUMEACTORHP 已跳过，角色=${actorId} 百分比=${value}`);
         return;
       }
-      const heal = Math.max(1, Math.trunc((player.hpMax * value) / 100));
-      player.hp = Math.min(player.hpMax, player.hp + heal);
+      const heal = Math.max(1, Math.trunc((player.totalHpMax * value) / 100));
+      player.hp = Math.min(player.totalHpMax, player.hp + heal);
       logger.log('角色', `RESUMEACTORHP ${player.name} ${before}->${player.hp} 百分比=${value} 恢复=${heal}`);
     },
   };
@@ -166,7 +166,7 @@ function cmdActorLevelUp(game: Game, reader: ScriptReader): CommandBuilder {
       }
       logger.log(
         '角色',
-        `ACTORLEVELUP ${player.name} ${before}->${player.level} 生命=${player.hp}/${player.hpMax} 真气=${player.mp}/${player.mpMax}`
+        `ACTORLEVELUP ${player.name} ${before}->${player.level} 生命=${player.hp}/${player.totalHpMax} 真气=${player.mp}/${player.totalMpMax}`
       );
       game.mainScene?.showTip(`${player.name}修行提升`);
     },

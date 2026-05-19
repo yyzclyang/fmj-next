@@ -395,8 +395,8 @@ function toCombatTriple(values: readonly number[] | undefined, name: string): [n
 
 function applyDebugPlayerState(game: Game, input: DebugCombatPlayerStateInput): void {
   const player = addDebugPlayer(game, input.id);
-  if (!isDebugUnset(input.hp)) player.hp = clampDebugInt(input.hp, 'hp', 0, player.hpMax);
-  if (!isDebugUnset(input.mp)) player.mp = clampDebugInt(input.mp, 'mp', 0, player.mpMax);
+  if (!isDebugUnset(input.hp)) player.hp = clampDebugInt(input.hp, 'hp', 0, player.totalHpMax);
+  if (!isDebugUnset(input.mp)) player.mp = clampDebugInt(input.mp, 'mp', 0, player.totalMpMax);
   applyDebugStatuses(player.immuneStatuses, input.immuneStatusFlags, input.immuneStatusRounds, 'immuneStatus');
   applyDebugStatuses(player.activeStatuses, input.activeStatusFlags, input.activeStatusRounds, 'activeStatus');
   applyDebugStatuses(player.onHitStatuses, input.onHitEffectFlags, input.onHitEffectRounds, 'onHitEffect');
@@ -600,14 +600,14 @@ function toDebugPlayerItem(game: Game, player: Player): DebugPlayerItem {
     name: player.name,
     level: player.level,
     hp: player.hp,
-    hpMax: player.hpMax,
+    hpMax: player.totalHpMax,
     mp: player.mp,
-    mpMax: player.mpMax,
-    attack: player.attack,
-    defense: player.defense,
-    agility: player.agility,
-    spirit: player.spirit,
-    luck: player.luck,
+    mpMax: player.totalMpMax,
+    attack: player.totalAttack,
+    defense: player.totalDefense,
+    agility: player.totalAgility,
+    spirit: player.totalSpirit,
+    luck: player.totalLuck,
     exp: player.exp,
     inParty: game.state.partyActorIds.includes(player.index),
     isControl: game.state.controlActorId === player.index,
@@ -631,13 +631,13 @@ function toDebugCombatMonsterItem(monster: Monster): DebugCombatMonsterItem {
     index: monster.index,
     name: monster.name,
     level: monster.level,
-    hp: monster.hpMax,
-    mp: monster.mpMax,
-    attack: monster.attack,
-    defense: monster.defense,
-    agility: monster.agility,
-    spirit: monster.spirit,
-    luck: monster.luck,
+    hp: monster.totalHpMax,
+    mp: monster.totalMpMax,
+    attack: monster.totalAttack,
+    defense: monster.totalDefense,
+    agility: monster.totalAgility,
+    spirit: monster.totalSpirit,
+    luck: monster.totalLuck,
     iq: monster.iq,
     exp: monster.exp,
     money: monster.money,

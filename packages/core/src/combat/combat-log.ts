@@ -32,13 +32,13 @@ export function captureCombatLogStates(
     res.set(fighter, {
       hp: fighter.hp,
       mp: fighter.mp,
-      hpMax: fighter.hpMax,
-      mpMax: fighter.mpMax,
-      attack: fighter.attack,
-      defense: fighter.defense,
-      agility: fighter.agility,
-      spirit: fighter.spirit,
-      luck: fighter.luck,
+      hpMax: fighter.totalHpMax,
+      mpMax: fighter.totalMpMax,
+      attack: fighter.totalAttack,
+      defense: fighter.totalDefense,
+      agility: fighter.totalAgility,
+      spirit: fighter.totalSpirit,
+      luck: fighter.totalLuck,
       statuses: fighter.activeStatuses.slots.map(status => ({ value: status.value, round: status.round })),
     });
   }
@@ -113,20 +113,20 @@ function logCombatLevelUp(award: CombatLevelUpAward): void {
 }
 
 function formatFighterSummary(fighter: FightingCharacter): string {
-  return `${fighter.name}(HP ${fighter.hp}/${fighter.hpMax}, MP ${fighter.mp}/${fighter.mpMax})`;
+  return `${fighter.name}(HP ${fighter.hp}/${fighter.totalHpMax}, MP ${fighter.mp}/${fighter.totalMpMax})`;
 }
 
 function formatFighterChanges(before: CombatFighterLogState, fighter: FightingCharacter): string[] {
   return [
     ...formatValueChange('HP', before.hp, fighter.hp, '伤害', '回复'),
     ...formatValueChange('MP', before.mp, fighter.mp, '损失', '回复'),
-    ...formatStatChange('生命上限', before.hpMax, fighter.hpMax),
-    ...formatStatChange('真气上限', before.mpMax, fighter.mpMax),
-    ...formatStatChange('攻击', before.attack, fighter.attack),
-    ...formatStatChange('防御', before.defense, fighter.defense),
-    ...formatStatChange('身法', before.agility, fighter.agility),
-    ...formatStatChange('灵力', before.spirit, fighter.spirit),
-    ...formatStatChange('福缘', before.luck, fighter.luck),
+    ...formatStatChange('生命上限', before.hpMax, fighter.totalHpMax),
+    ...formatStatChange('真气上限', before.mpMax, fighter.totalMpMax),
+    ...formatStatChange('攻击', before.attack, fighter.totalAttack),
+    ...formatStatChange('防御', before.defense, fighter.totalDefense),
+    ...formatStatChange('身法', before.agility, fighter.totalAgility),
+    ...formatStatChange('灵力', before.spirit, fighter.totalSpirit),
+    ...formatStatChange('幸运', before.luck, fighter.totalLuck),
     ...formatStatusChanges(before, fighter),
   ];
 }
@@ -171,7 +171,7 @@ function formatLevelUpChanges(award: CombatLevelUpAward): string[] {
     ...formatStatChange('防御', oldStats.defense, newStats.defense),
     ...formatStatChange('身法', oldStats.agility, newStats.agility),
     ...formatStatChange('灵力', oldStats.spirit, newStats.spirit),
-    ...formatStatChange('福缘', oldStats.luck, newStats.luck),
+    ...formatStatChange('幸运', oldStats.luck, newStats.luck),
   ];
 }
 

@@ -125,7 +125,7 @@ export function prepareMagicHelpAction(ctx: CombatPrepareContext, action: MagicH
   for (const target of finalTargets) {
     applyMagicHelp(action.magic, target);
   }
-  const hpDiffOverrides = createMagicHelpHpDiffOverrides(action, finalTargets);
+  const hpDiffOverrides = createMagicHelpDiffOverrides(action, finalTargets);
   const animation = new CastCombatAnimation({
     actor: action.actor,
     targets: finalTargets,
@@ -169,12 +169,14 @@ export function prepareSpecialMagicAction(ctx: CombatPrepareContext, action: Spe
   );
 }
 
-function createMagicHelpHpDiffOverrides(
+function createMagicHelpDiffOverrides(
   action: MagicHelpAction,
   targets: readonly FightingCharacter[]
 ): ReadonlyMap<FightingCharacter, number> | undefined {
-  if (!(action.magic instanceof MagicRestore) || action.magic.hp <= 0) return undefined;
+  if (!(action.magic instanceof MagicRestore)) return undefined;
+  if (action.magic.hp <= 0 && action.magic.mp <= 0 && action.magic.cureFlags === 0) return undefined;
   const res = new Map<FightingCharacter, number>();
-  for (const target of targets) res.set(target, action.magic.hp);
-  return res;
+  // 恢复型预估统一按法术面值处理：回血、回蓝、解状态都算收益，抬字仍只显示 hp 面值。
+  for (const target of targets) res.set(target, Math.max(0, action.magic.hp));
+  return res.size > 0 ? res : undefined;
 }

@@ -220,6 +220,7 @@ export function applyMagicHelp(magic: CombatHelpMagic, target: FightingCharacter
 export function applyRestoreMagic(magic: MagicRestore, target: FightingCharacter): void {
   if (!target.isAlive) return;
   if (magic.hp > 0) target.hp = Math.min(target.totalHpMax, target.hp + magic.hp);
+  if (magic.mp > 0) target.mp = Math.min(target.totalMpMax, target.mp + magic.mp);
   target.activeStatuses.clearFlags(magic.cureFlags);
 }
 

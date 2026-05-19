@@ -299,11 +299,11 @@ export class Player extends FightingCharacter {
         this.mp = clampCurrentPoolValue(value, this.totalMpMax);
         return;
       case PlayerWritableScriptAttribute.HpMax:
-        this.hpMax = Math.trunc(value);
+        this.hpMax = this.getBaseScriptAttributeValue('hpMax', value);
         this.hp = clampCurrentPoolValue(this.hp, this.totalHpMax);
         return;
       case PlayerWritableScriptAttribute.MpMax:
-        this.mpMax = Math.trunc(value);
+        this.mpMax = this.getBaseScriptAttributeValue('mpMax', value);
         this.mp = clampCurrentPoolValue(this.mp, this.totalMpMax);
         return;
       case PlayerWritableScriptAttribute.HpPerRound:
@@ -313,19 +313,19 @@ export class Player extends FightingCharacter {
         this.mpPerRound = Math.trunc(value);
         return;
       case PlayerWritableScriptAttribute.Attack:
-        this.attack = Math.trunc(value);
+        this.attack = this.getBaseScriptAttributeValue('attack', value);
         return;
       case PlayerWritableScriptAttribute.Defense:
-        this.defense = Math.trunc(value);
+        this.defense = this.getBaseScriptAttributeValue('defense', value);
         return;
       case PlayerWritableScriptAttribute.Agility:
-        this.agility = Math.trunc(value);
+        this.agility = this.getBaseScriptAttributeValue('agility', value);
         return;
       case PlayerWritableScriptAttribute.Spirit:
-        this.spirit = Math.trunc(value);
+        this.spirit = this.getBaseScriptAttributeValue('spirit', value);
         return;
       case PlayerWritableScriptAttribute.Luck:
-        this.luck = Math.trunc(value);
+        this.luck = this.getBaseScriptAttributeValue('luck', value);
         return;
       case PlayerWritableScriptAttribute.OnHitEffectRounds:
         this.setOnHitEffectRounds(value);
@@ -501,6 +501,10 @@ export class Player extends FightingCharacter {
 
   private syncOnHitStatuses(): void {
     this.onHitStatuses.replaceWithFlags(this.onHitEffectFlagsValue, this.onHitEffectRoundsValue);
+  }
+
+  private getBaseScriptAttributeValue(attribute: PlayerEquipmentAttribute, totalValue: number): number {
+    return Math.trunc(totalValue) - this.getEquipmentAttributeBonus(attribute);
   }
 
   private getEquipmentAttributeBonus(attribute: PlayerEquipmentAttribute): number {

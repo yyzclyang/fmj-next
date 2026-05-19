@@ -6,9 +6,9 @@ export interface GameGoodsState {
   count: number;
 }
 
-export const SCRIPT_VARIABLE_COUNT = 800;
+export const SCRIPT_VARIABLE_COUNT = 256;
 export const SCRIPT_LOCAL_VARIABLE_START = 200;
-export const SCRIPT_LOCAL_VARIABLE_END = 240;
+export const SCRIPT_LOCAL_VARIABLE_END = 256;
 
 export interface GameState {
   mapType: number;

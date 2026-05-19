@@ -1,4 +1,4 @@
-// Fixed-width integer helpers intentionally wrap/truncate values instead of clamping them.
+// 截断成 8 位无符号整数
 export function toUint8(value: number): number {
   return value & 0xff;
 }

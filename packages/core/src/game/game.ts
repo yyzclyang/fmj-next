@@ -17,6 +17,7 @@ import { ScreenStartMenu } from '@/screens/start-menu/screen-start-menu';
 import { ScreenStack } from '@/screens/screen-stack';
 import { ScreenViewType } from '@/screens/screen-view-type';
 import { createLogger } from '@/utils/logger';
+import { toUint8 } from '@/utils/integer';
 import {
   cloneGameState,
   createInitialGameState,
@@ -220,16 +221,16 @@ export class Game {
   }
 
   gainMoney(value: number): void {
-    this.state.money += value;
+    this.state.money = Math.max(0, this.state.money + value);
     this.mainScene?.showTip(`获得金钱:${value}`);
   }
 
   setMoney(value: number): void {
-    this.state.money = value;
+    this.state.money = Math.max(0, value);
   }
 
   useMoney(value: number): void {
-    this.state.money -= value;
+    this.state.money = Math.max(0, this.state.money - value);
   }
 
   getPlayer(actorId: number): Player | null {
@@ -312,31 +313,21 @@ export class Game {
   }
 
   getVariable(index: number): number {
-    return this.state.scriptVariables[index] ?? 0;
+    return this.state.scriptVariables[toUint8(index)] ?? 0;
   }
 
   setVariable(index: number, value: number): void {
-    if (!this.isValidVariableIndex(index)) {
-      logger.warn('脚本变量', `SET 越界 index=${index}, value=${value}`);
-      return;
-    }
-    this.state.scriptVariables[index] = value;
+    this.state.scriptVariables[toUint8(index)] = toUint8(value);
   }
 
   addVariable(index: number, value: number): void {
-    if (!this.isValidVariableIndex(index)) {
-      logger.warn('脚本变量', `ADD 越界 index=${index}, value=${value}`);
-      return;
-    }
-    this.state.scriptVariables[index] = (this.state.scriptVariables[index] ?? 0) + value;
+    const key = toUint8(index);
+    this.state.scriptVariables[key] = toUint8((this.state.scriptVariables[key] ?? 0) + value);
   }
 
   subVariable(index: number, value: number): void {
-    if (!this.isValidVariableIndex(index)) {
-      logger.warn('脚本变量', `SUB 越界 index=${index}, value=${value}`);
-      return;
-    }
-    this.state.scriptVariables[index] = (this.state.scriptVariables[index] ?? 0) - value;
+    const key = toUint8(index);
+    this.state.scriptVariables[key] = toUint8((this.state.scriptVariables[key] ?? 0) - value);
   }
 
   resetLocalVariables(): void {
@@ -394,10 +385,6 @@ export class Game {
       this.state.scriptVariables.push(0);
     }
     this.state.scriptVariables = this.state.scriptVariables.slice(0, SCRIPT_VARIABLE_COUNT);
-  }
-
-  private isValidVariableIndex(index: number): boolean {
-    return index >= 0 && index < SCRIPT_VARIABLE_COUNT;
   }
 
   private readSavePayload(slot: number): SaveGamePayload | null {

@@ -91,10 +91,11 @@ export class ScreenChangeEquipment extends BaseScreen {
       if (!goods || !this.game.bag.consumeGoods(goods.type, goods.index, 1)) {
         throw new Error('确认换装时背包中缺少新装备');
       }
-      const old = this.goodsList[0];
-      if (this.goodsList.length > 1 && old && !this.game.bag.addGoods(old.type, old.index)) {
+      const old = this.goodsList.length > 1 ? (this.goodsList[0] ?? null) : null;
+      if (old && !this.game.bag.addGoods(old.type, old.index)) {
         throw new Error('确认换装时旧装备无法放回背包');
       }
+      this.applyConfirmedEquipmentEvents(goods, old);
     }
     logger.log(
       '装备',
@@ -125,7 +126,6 @@ export class ScreenChangeEquipment extends BaseScreen {
     const slotIndex = this.player.putOnEquipment(goods, this.itemIndex);
     if (slotIndex === null) throw new Error('换装页无法穿上当前装备');
     this.equippedSlotIndex = slotIndex;
-    this.setEquipmentEvent(goods, true);
   }
 
   private takeOffCurrentEquipment(): GoodsEquipment {
@@ -138,13 +138,11 @@ export class ScreenChangeEquipment extends BaseScreen {
   private takeOffEquipment(type: number, index?: number): GoodsEquipment {
     const goods = this.player.takeOffEquipment(type, index);
     if (!goods) throw new Error('换装页无法脱下装备');
-    this.setEquipmentEvent(goods, false);
     return goods;
   }
 
-  private setEquipmentEvent(goods: GoodsEquipment, enabled: boolean): void {
-    if (goods.eventId === 0) return;
-    if (enabled) this.game.setEvent(goods.eventId);
-    else this.game.clearEvent(goods.eventId);
+  private applyConfirmedEquipmentEvents(newGoods: GoodsEquipment, oldGoods: GoodsEquipment | null): void {
+    if (newGoods.eventId !== 0) this.game.setEvent(newGoods.eventId);
+    if (oldGoods?.eventId) this.game.clearEvent(oldGoods.eventId);
   }
 }

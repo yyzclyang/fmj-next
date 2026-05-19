@@ -12,16 +12,6 @@ import {
 import type { DatLib } from '../dat-lib';
 import { readGbkString, readInt16, readUint16 } from '../resource-utils';
 
-/**
- * 魔法资源属性结构
- * 0x12-0x13 = hp
- * 0x14-0x15 = mp
- * 0x16 = 防御
- * 0x17 = 攻击
- * 0x18 = 异常 buff
- * 0x19 = 速
- */
-
 export function parseMagicResource(datLib: DatLib, buffer: Uint8Array, type: number, offset: number): BaseMagic | null {
   const baseData = parseBaseMagicData(datLib, buffer, offset);
   switch (type) {
@@ -50,7 +40,8 @@ export function parseMagicResource(datLib: DatLib, buffer: Uint8Array, type: num
       return new MagicRestore({
         ...baseData,
         hp: readUint16(buffer, offset + 0x12),
-        // 原版 C 的恢复型不消费这个通用 mp 槽位，这里扩展解释为恢复 mp。
+        // 原版 C 未证实 0x14-0x15 的通用语义。
+        // TS 重写在这里保留一个有意扩展：把它解释为恢复 mp。
         mp: readUint16(buffer, offset + 0x14),
         cureFlags: buffer[offset + 0x18] ?? 0,
       });
@@ -107,11 +98,7 @@ function parseBaseMagicData(datLib: DatLib, buffer: Uint8Array, offset: number):
 }
 
 function readMagicDescription(buffer: Uint8Array, offset: number): string {
-  const declaredLength = buffer[offset + 2] ?? 0;
-  if (declaredLength <= 0x70) return readGbkString(buffer, offset + 0x1a);
-
-  // 原版会把 offset + 0x70 写成 0 来截断，这里复制切片避免修改共享资源缓冲区。
-  const end = offset + 0x70;
-  const slice = buffer.slice(offset + 0x1a, end);
+  // MRS 说明区的真实边界是当前记录尾(0x80)，长说明不能在 0x70 提前截断。
+  const slice = buffer.slice(offset + 0x1a, offset + 0x80);
   return readGbkString(slice, 0);
 }

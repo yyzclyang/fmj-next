@@ -60,6 +60,7 @@ export function parseGoodsResource(datLib: DatLib, buffer: Uint8Array, type: num
         ...baseData,
         hp: readUint16(buffer, offset + 0x16),
         mp: readUint16(buffer, offset + 0x18),
+        // 现有 DAT 样本里的 0x1B 固定为 0x02，药物动画按 SRS type=2 读取。
         animation: animationIndex > 0 ? datLib.getSrs(2, animationIndex) : null,
         effectFlags: buffer[offset + 0x1c] ?? 0,
       });
@@ -113,7 +114,7 @@ function parseBaseGoodsData(datLib: DatLib, buffer: Uint8Array, offset: number):
   };
 }
 
-// C 引擎对装备/饰品/武器/仙药的 1 字节属性统一按高位负向解释。
+// C 引擎对装备/饰品/武器/仙药等 1 字节属性统一按高位负向解释。
 function parseGoodsEquipmentData(buffer: Uint8Array, baseData: BaseGoodsData, offset: number): GoodsEquipmentData {
   return {
     ...baseData,

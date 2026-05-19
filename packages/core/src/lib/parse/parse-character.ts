@@ -92,12 +92,11 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
 
 function createNpc(datLib: DatLib, buffer: Uint8Array, offset: number): Npc {
   const delay = buffer[offset + 0x15] ?? 0;
-  const state = delay === 0 ? CharacterState.Stop : toCharacterState(buffer[offset + 4] ?? 0);
   return new Npc({
     type: buffer[offset] ?? 0,
     index: buffer[offset + 1] ?? 0,
     name: readGbkString(buffer, offset + 9),
-    state,
+    state: toCharacterState(buffer[offset + 4] ?? 0),
     direction: toDirection(buffer[offset + 2] ?? 0),
     step: buffer[offset + 3] ?? 0,
     mapX: 0,

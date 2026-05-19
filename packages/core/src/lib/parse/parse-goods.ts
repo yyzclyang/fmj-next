@@ -21,8 +21,7 @@ import { ResourceType, readGbkString, readInt8, readInt16, readUint16 } from '..
 
 export function parseGoodsResource(datLib: DatLib, buffer: Uint8Array, type: number, offset: number): BaseGoods | null {
   const baseData = parseBaseGoodsData(datLib, buffer, offset);
-  if (type >= 1 && type <= 5)
-    return new GoodsEquipment(parseGoodsEquipmentData(buffer, baseData, offset, { unsignedDefense: true }));
+  if (type >= 1 && type <= 5) return new GoodsEquipment(parseGoodsEquipmentData(buffer, baseData, offset));
 
   switch (type) {
     case 6: {
@@ -40,7 +39,7 @@ export function parseGoodsResource(datLib: DatLib, buffer: Uint8Array, type: num
     }
     case 7:
       return new GoodsWeapon({
-        ...parseGoodsEquipmentData(buffer, baseData, offset, { unsignedAttack: true }),
+        ...parseGoodsEquipmentData(buffer, baseData, offset),
         animation: new ResSrs(),
         mpDamage: 0,
       });
@@ -114,28 +113,17 @@ function parseBaseGoodsData(datLib: DatLib, buffer: Uint8Array, offset: number):
   };
 }
 
-interface GoodsEquipmentParseOptions {
-  readonly unsignedAttack?: boolean;
-  readonly unsignedDefense?: boolean;
-}
-
-// C 引擎多数属性字节解释高位负向；1..5 装备的防御和武器攻击直接按无符号字节处理。
-function parseGoodsEquipmentData(
-  buffer: Uint8Array,
-  baseData: BaseGoodsData,
-  offset: number,
-  options: GoodsEquipmentParseOptions = {}
-): GoodsEquipmentData {
-  const { unsignedAttack = false, unsignedDefense = false } = options;
+// C 引擎对装备/饰品/武器/仙药的 1 字节属性统一按高位负向解释。
+function parseGoodsEquipmentData(buffer: Uint8Array, baseData: BaseGoodsData, offset: number): GoodsEquipmentData {
   return {
     ...baseData,
     mpMax: readInt8(buffer, offset + 0x16),
     hpMax: readInt8(buffer, offset + 0x17),
-    defense: unsignedDefense ? (buffer[offset + 0x18] ?? 0) : readInt8(buffer, offset + 0x18),
-    attack: unsignedAttack ? (buffer[offset + 0x19] ?? 0) : readInt8(buffer, offset + 0x19),
+    defense: readInt8(buffer, offset + 0x18),
+    attack: readInt8(buffer, offset + 0x19),
     spirit: readInt8(buffer, offset + 0x1a),
     agility: readInt8(buffer, offset + 0x1b),
-    effectFlags: buffer[offset + 0x1c] ?? 0,
     luck: readInt8(buffer, offset + 0x1d),
+    effectFlags: buffer[offset + 0x1c] ?? 0,
   };
 }

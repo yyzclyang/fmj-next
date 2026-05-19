@@ -3,7 +3,8 @@ import { isCombatHelpMagic, type CombatAction } from '@/combat/combat-actions';
 import { isSealed } from '@/combat/combat-effects';
 import type { Monster, Player } from '@/characters';
 import { type BaseMagic, MagicAttack } from '@/magic';
-import { randomInt, toUint8 } from '@/utils/integer';
+import { randomInt } from '@/utils/integer';
+import { clamp } from '@/utils/math';
 
 export function createMonsterAction(
   monster: Monster,
@@ -44,7 +45,7 @@ function createMonsterPhysicalAction(
 }
 
 function shouldMonsterCastMagic(monster: Monster, roll: number): boolean {
-  return roll >= toUint8(100 - monster.iq);
+  return roll < clamp(100 - monster.iq, 0, 100);
 }
 
 function selectMonsterMagic(monster: Monster, roll: number): BaseMagic | null {

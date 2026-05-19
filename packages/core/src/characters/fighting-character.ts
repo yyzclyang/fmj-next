@@ -3,6 +3,16 @@ import { Character, type CharacterData } from './character';
 import { StatusSlots } from './status';
 import type { FightingSprite } from './fighting-sprite';
 
+export interface FightingAttributeValues {
+  readonly hpMax: number;
+  readonly mpMax: number;
+  readonly attack: number;
+  readonly defense: number;
+  readonly agility: number;
+  readonly spirit: number;
+  readonly luck: number;
+}
+
 export interface FightingCharacterData extends CharacterData {
   readonly magicChain: ResMagicChain | null;
   readonly learnedMagicCount: number;
@@ -62,5 +72,33 @@ export abstract class FightingCharacter extends Character {
 
   get isAlive(): boolean {
     return this.hp > 0;
+  }
+
+  get totalHpMax(): number {
+    return this.hpMax;
+  }
+
+  get totalMpMax(): number {
+    return this.mpMax;
+  }
+
+  get totalAttack(): number {
+    return this.attack;
+  }
+
+  get totalDefense(): number {
+    return this.defense;
+  }
+
+  get totalAgility(): number {
+    return this.agility;
+  }
+
+  get totalSpirit(): number {
+    return this.spirit;
+  }
+
+  get totalLuck(): number {
+    return this.luck;
   }
 }

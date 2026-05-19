@@ -24,7 +24,7 @@ export type { CharacterData } from './character';
 export { WalkingSprite } from './walking-sprite';
 export { FightingSprite, MonsterFightingFrame, PlayerFightingFrame, PlayerFightingFrameRange } from './fighting-sprite';
 export { FightingCharacter } from './fighting-character';
-export type { FightingCharacterData } from './fighting-character';
+export type { FightingAttributeValues, FightingCharacterData } from './fighting-character';
 export { Monster } from './monster';
 export type { CarryGoods, MonsterData } from './monster';
 export { Npc } from './npc';

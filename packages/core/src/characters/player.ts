@@ -1,4 +1,4 @@
-import { FightingCharacter, type FightingCharacterData } from './fighting-character';
+import { FightingCharacter, type FightingAttributeValues, type FightingCharacterData } from './fighting-character';
 import { EquipmentGoodsType, GoodsDecoration, type GoodsEquipment, GoodsWeapon } from '@/goods';
 import type { ResImage } from '@/lib/res-image';
 import type { BaseMagic } from '@/magic';
@@ -67,6 +67,8 @@ const PlayerAdditiveScriptAttribute = {
   HpMax: 10,
   MpMax: 11,
 } as const;
+
+type PlayerEquipmentAttribute = keyof FightingAttributeValues;
 
 export const PlayerEquipmentSlot = {
   Decoration1: 0,
@@ -156,6 +158,34 @@ export class Player extends FightingCharacter {
     this.privateLearnedMagics.push(...magics);
   }
 
+  override get totalHpMax(): number {
+    return clampPlayerFightingAttribute(this.hpMax + this.getEquipmentAttributeBonus('hpMax'));
+  }
+
+  override get totalMpMax(): number {
+    return clampPlayerFightingAttribute(this.mpMax + this.getEquipmentAttributeBonus('mpMax'));
+  }
+
+  override get totalAttack(): number {
+    return clampPlayerFightingAttribute(this.attack + this.getEquipmentAttributeBonus('attack'));
+  }
+
+  override get totalDefense(): number {
+    return clampPlayerFightingAttribute(this.defense + this.getEquipmentAttributeBonus('defense'));
+  }
+
+  override get totalAgility(): number {
+    return clampPlayerFightingAttribute(this.agility + this.getEquipmentAttributeBonus('agility'));
+  }
+
+  override get totalSpirit(): number {
+    return clampPlayerFightingAttribute(this.spirit + this.getEquipmentAttributeBonus('spirit'));
+  }
+
+  override get totalLuck(): number {
+    return clampPlayerFightingAttribute(this.luck + this.getEquipmentAttributeBonus('luck'));
+  }
+
   getOnHitEffectConfig(): PlayerOnHitEffectConfig {
     return { flags: this.onHitEffectFlagsValue, rounds: this.onHitEffectRoundsValue };
   }
@@ -186,16 +216,14 @@ export class Player extends FightingCharacter {
 
     this.hpMax += hpIncrease;
     this.mpMax += mpIncrease;
+    this.hp = this.totalHpMax;
+    this.mp = this.totalMpMax;
     this.attack += attackIncrease;
     this.defense += defenseIncrease;
     this.agility += agilityIncrease;
     this.spirit += spiritIncrease;
     this.luck += luckIncrease;
-    this.hp = this.hpMax;
-    this.mp = this.mpMax;
-    if (this.magicChain) {
-      this.magicChain.learnedMagicCount = this.levelUpChain.getLearnMagicCount(targetLevel);
-    }
+    if (this.magicChain) this.magicChain.learnedMagicCount = this.levelUpChain.getLearnMagicCount(targetLevel);
     return true;
   }
 
@@ -203,22 +231,30 @@ export class Player extends FightingCharacter {
     switch (attribute) {
       case PlayerReadableScriptAttribute.Level:
         return this.level;
-      case PlayerReadableScriptAttribute.Attack:
-        return this.attack;
-      case PlayerReadableScriptAttribute.Defense:
-        return this.defense;
-      case PlayerReadableScriptAttribute.Agility:
-        return this.agility;
+      case PlayerReadableScriptAttribute.Exp:
+        return this.exp;
       case PlayerReadableScriptAttribute.Hp:
         return this.hp;
       case PlayerReadableScriptAttribute.Mp:
         return this.mp;
-      case PlayerReadableScriptAttribute.Exp:
-        return this.exp;
+      case PlayerReadableScriptAttribute.HpMax:
+        return this.totalHpMax;
+      case PlayerReadableScriptAttribute.MpMax:
+        return this.totalMpMax;
+      case PlayerReadableScriptAttribute.HpPerRound:
+        return this.hpPerRound;
+      case PlayerReadableScriptAttribute.MpPerRound:
+        return this.mpPerRound;
+      case PlayerReadableScriptAttribute.Attack:
+        return this.totalAttack;
+      case PlayerReadableScriptAttribute.Defense:
+        return this.totalDefense;
+      case PlayerReadableScriptAttribute.Agility:
+        return this.totalAgility;
       case PlayerReadableScriptAttribute.Spirit:
-        return this.spirit;
+        return this.totalSpirit;
       case PlayerReadableScriptAttribute.Luck:
-        return this.luck;
+        return this.totalLuck;
       case PlayerReadableScriptAttribute.OnHitEffectRounds:
         return this.onHitEffectRoundsValue;
       case PlayerReadableScriptAttribute.ImmuneStatusFlags:
@@ -227,10 +263,6 @@ export class Player extends FightingCharacter {
         return this.onHitEffectFlagsValue;
       case PlayerReadableScriptAttribute.CoopMagicIndex:
         return this.coopMagicIndex;
-      case PlayerReadableScriptAttribute.HpPerRound:
-        return this.hpPerRound;
-      case PlayerReadableScriptAttribute.MpPerRound:
-        return this.mpPerRound;
       case PlayerReadableScriptAttribute.HeadEquipmentIndex:
         return this.equipment[PlayerEquipmentSlot.Head]?.index ?? 0;
       case PlayerReadableScriptAttribute.BodyEquipmentIndex:
@@ -247,10 +279,6 @@ export class Player extends FightingCharacter {
         return this.equipment[PlayerEquipmentSlot.Decoration1]?.index ?? 0;
       case PlayerReadableScriptAttribute.Decoration2EquipmentIndex:
         return this.equipment[PlayerEquipmentSlot.Decoration2]?.index ?? 0;
-      case PlayerReadableScriptAttribute.HpMax:
-        return this.hpMax;
-      case PlayerReadableScriptAttribute.MpMax:
-        return this.mpMax;
       default:
         return 0;
     }
@@ -261,29 +289,43 @@ export class Player extends FightingCharacter {
       case PlayerWritableScriptAttribute.Level:
         this.setLevel(value);
         return;
-      case PlayerWritableScriptAttribute.Attack:
-        this.attack = value;
-        return;
-      case PlayerWritableScriptAttribute.Defense:
-        this.defense = value;
-        return;
-      case PlayerWritableScriptAttribute.Agility:
-        this.agility = value;
-        return;
-      case PlayerWritableScriptAttribute.Hp:
-        this.hp = value;
-        return;
-      case PlayerWritableScriptAttribute.Mp:
-        this.mp = value;
-        return;
       case PlayerWritableScriptAttribute.Exp:
         this.exp = value;
         return;
+      case PlayerWritableScriptAttribute.Hp:
+        this.hp = clampCurrentPoolValue(value, this.totalHpMax);
+        return;
+      case PlayerWritableScriptAttribute.Mp:
+        this.mp = clampCurrentPoolValue(value, this.totalMpMax);
+        return;
+      case PlayerWritableScriptAttribute.HpMax:
+        this.hpMax = Math.trunc(value);
+        this.hp = clampCurrentPoolValue(this.hp, this.totalHpMax);
+        return;
+      case PlayerWritableScriptAttribute.MpMax:
+        this.mpMax = Math.trunc(value);
+        this.mp = clampCurrentPoolValue(this.mp, this.totalMpMax);
+        return;
+      case PlayerWritableScriptAttribute.HpPerRound:
+        this.hpPerRound = Math.trunc(value);
+        return;
+      case PlayerWritableScriptAttribute.MpPerRound:
+        this.mpPerRound = Math.trunc(value);
+        return;
+      case PlayerWritableScriptAttribute.Attack:
+        this.attack = Math.trunc(value);
+        return;
+      case PlayerWritableScriptAttribute.Defense:
+        this.defense = Math.trunc(value);
+        return;
+      case PlayerWritableScriptAttribute.Agility:
+        this.agility = Math.trunc(value);
+        return;
       case PlayerWritableScriptAttribute.Spirit:
-        this.spirit = value;
+        this.spirit = Math.trunc(value);
         return;
       case PlayerWritableScriptAttribute.Luck:
-        this.luck = value;
+        this.luck = Math.trunc(value);
         return;
       case PlayerWritableScriptAttribute.OnHitEffectRounds:
         this.setOnHitEffectRounds(value);
@@ -296,18 +338,6 @@ export class Player extends FightingCharacter {
         return;
       case PlayerWritableScriptAttribute.CoopMagicIndex:
         this.coopMagicIndex = toUint8(value);
-        return;
-      case PlayerWritableScriptAttribute.HpPerRound:
-        this.hpPerRound = toUint8(value);
-        return;
-      case PlayerWritableScriptAttribute.MpPerRound:
-        this.mpPerRound = toUint8(value);
-        return;
-      case PlayerWritableScriptAttribute.HpMax:
-        this.hpMax = value;
-        return;
-      case PlayerWritableScriptAttribute.MpMax:
-        this.mpMax = value;
         return;
     }
   }
@@ -322,38 +352,40 @@ export class Player extends FightingCharacter {
       case PlayerAdditiveScriptAttribute.Level:
         this.setLevel(this.level + value);
         return;
-      case PlayerAdditiveScriptAttribute.Attack:
-        this.attack += value;
-        return;
-      case PlayerAdditiveScriptAttribute.Defense:
-        this.defense += value;
-        return;
-      case PlayerAdditiveScriptAttribute.Agility:
-        this.agility += value;
-        return;
       case PlayerAdditiveScriptAttribute.Hp:
-        this.hp += value;
+        this.hp = clampCurrentPoolValue(this.hp + value, this.totalHpMax);
         return;
       case PlayerAdditiveScriptAttribute.Mp:
-        this.mp += value;
+        this.mp = clampCurrentPoolValue(this.mp + value, this.totalMpMax);
+        return;
+      case PlayerAdditiveScriptAttribute.HpMax:
+        this.hpMax += Math.trunc(value);
+        this.hp = clampCurrentPoolValue(this.hp, this.totalHpMax);
+        return;
+      case PlayerAdditiveScriptAttribute.MpMax:
+        this.mpMax += Math.trunc(value);
+        this.mp = clampCurrentPoolValue(this.mp, this.totalMpMax);
+        return;
+      case PlayerAdditiveScriptAttribute.Attack:
+        this.attack += Math.trunc(value);
+        return;
+      case PlayerAdditiveScriptAttribute.Defense:
+        this.defense += Math.trunc(value);
+        return;
+      case PlayerAdditiveScriptAttribute.Agility:
+        this.agility += Math.trunc(value);
         return;
       case PlayerAdditiveScriptAttribute.Exp:
         this.exp += value;
         return;
       case PlayerAdditiveScriptAttribute.Spirit:
-        this.spirit += value;
+        this.spirit += Math.trunc(value);
         return;
       case PlayerAdditiveScriptAttribute.Luck:
-        this.luck += value;
+        this.luck += Math.trunc(value);
         return;
       case PlayerAdditiveScriptAttribute.OnHitEffectRounds:
         this.setOnHitEffectRounds(this.onHitEffectRoundsValue + value);
-        return;
-      case PlayerAdditiveScriptAttribute.HpMax:
-        this.hpMax += value;
-        return;
-      case PlayerAdditiveScriptAttribute.MpMax:
-        this.mpMax += value;
         return;
     }
   }
@@ -408,42 +440,31 @@ export class Player extends FightingCharacter {
       throw new Error(`装备类型 ${goods.type} 不能放入槽位 ${index}`);
     }
     if (this.equipment[index] !== null) return null;
-    this.applyEquipmentEffect(goods, 1);
     this.equipment[index] = goods;
+    this.applyEquipmentEffect(goods, 1);
     return index;
   }
 
   private takeOffEquipmentAt(index: number): GoodsEquipment | null {
     const equipment = this.equipment[index] ?? null;
     if (!equipment) return null;
-    this.applyEquipmentEffect(equipment, -1);
     this.equipment[index] = null;
+    this.applyEquipmentEffect(equipment, -1);
     return equipment;
   }
 
   private applyEquipmentEffect(equipment: GoodsEquipment, sign: 1 | -1): void {
-    this.applyEquipmentStats(equipment, sign);
     if (equipment instanceof GoodsWeapon) {
       this.applyWeaponEffect(equipment, sign);
-      return;
-    }
-    if (equipment instanceof GoodsDecoration) {
+    } else if (equipment instanceof GoodsDecoration) {
       this.applyDecorationEffect(equipment, sign);
-      return;
+    } else {
+      this.applyEquipmentImmunity(equipment, sign);
     }
-    this.applyEquipmentImmunity(equipment, sign);
-  }
-
-  private applyEquipmentStats(equipment: GoodsEquipment, sign: 1 | -1): void {
-    if (!(equipment instanceof GoodsDecoration)) {
-      this.mpMax += equipment.mpMax * sign;
-      this.hpMax += equipment.hpMax * sign;
+    if (equipmentChangesPoolMax(equipment)) {
+      this.hp = clampCurrentPoolValue(this.hp, this.totalHpMax);
+      this.mp = clampCurrentPoolValue(this.mp, this.totalMpMax);
     }
-    this.defense += equipment.defense * sign;
-    this.attack += equipment.attack * sign;
-    this.spirit += equipment.spirit * sign;
-    this.agility += equipment.agility * sign;
-    this.luck += equipment.luck * sign;
   }
 
   private applyWeaponEffect(equipment: GoodsWeapon, sign: 1 | -1): void {
@@ -458,8 +479,8 @@ export class Player extends FightingCharacter {
   }
 
   private applyDecorationEffect(equipment: GoodsDecoration, sign: 1 | -1): void {
-    this.hpPerRound += equipment.hpPerRound * sign;
-    this.mpPerRound += equipment.mpPerRound * sign;
+    this.hpPerRound = Math.trunc(this.hpPerRound + equipment.hpPerRound * sign);
+    this.mpPerRound = Math.trunc(this.mpPerRound + equipment.mpPerRound * sign);
     this.coopMagicIndex = sign > 0 ? (equipment.coopMagic?.index ?? 0) : 0;
   }
 
@@ -481,4 +502,26 @@ export class Player extends FightingCharacter {
   private syncOnHitStatuses(): void {
     this.onHitStatuses.replaceWithFlags(this.onHitEffectFlagsValue, this.onHitEffectRoundsValue);
   }
+
+  private getEquipmentAttributeBonus(attribute: PlayerEquipmentAttribute): number {
+    let bonus = 0;
+    for (const equipment of this.equipment ?? []) {
+      if (!equipment) continue;
+      bonus += equipment[attribute];
+    }
+    return bonus;
+  }
+}
+
+function clampPlayerFightingAttribute(value: number): number {
+  return Math.max(0, Math.trunc(value));
+}
+
+function equipmentChangesPoolMax(equipment: GoodsEquipment): boolean {
+  return equipment.hpMax !== 0 || equipment.mpMax !== 0;
+}
+
+function clampCurrentPoolValue(value: number, max: number): number {
+  const normalized = Math.trunc(value);
+  return Math.min(Math.max(0, max), Math.max(0, normalized));
 }

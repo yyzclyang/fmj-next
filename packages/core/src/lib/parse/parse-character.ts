@@ -14,7 +14,7 @@ import {
   type MonsterData,
   type PlayerData,
 } from '@/characters';
-import type { GoodsEquipment } from '@/goods';
+import { GoodsDecoration, type GoodsEquipment } from '@/goods';
 import type { DatLib } from '../dat-lib';
 import { ResourceType, readGbkString, readUint16 } from '../resource-utils';
 
@@ -65,15 +65,15 @@ function createPlayer(datLib: DatLib, buffer: Uint8Array, offset: number): Playe
     magicChain,
     learnedMagicCount,
     level: buffer[offset + 0x20] ?? 0,
-    hpMax,
+    hpMax: hpMax - getInitialEquipmentAttributeBonus(equipment, 'hpMax'),
     hp: readUint16(buffer, offset + 0x28),
-    mpMax,
+    mpMax: mpMax - getInitialEquipmentAttributeBonus(equipment, 'mpMax'),
     mp: readUint16(buffer, offset + 0x2c),
-    attack,
-    defense,
-    agility,
-    spirit,
-    luck,
+    attack: attack - getInitialEquipmentAttributeBonus(equipment, 'attack'),
+    defense: defense - getInitialEquipmentAttributeBonus(equipment, 'defense'),
+    agility: agility - getInitialEquipmentAttributeBonus(equipment, 'agility'),
+    spirit: spirit - getInitialEquipmentAttributeBonus(equipment, 'spirit'),
+    luck: luck - getInitialEquipmentAttributeBonus(equipment, 'luck'),
     immuneStatuses: StatusSlots.fromFlags(buffer[offset + 0x21] ?? 0, 0),
     fightingSprite: datLib.createFightingSprite(ResourceType.PIC, index),
     headImage: index > 0 ? datLib.getImage(ResourceType.PIC, 1, index) : null,
@@ -217,6 +217,21 @@ function createPlayerEquipment(datLib: DatLib, buffer: Uint8Array, offset: numbe
 
 function readEquipment(datLib: DatLib, type: number, index: number): GoodsEquipment | null {
   return index > 0 ? datLib.getEquipment(type, index) : null;
+}
+
+type PlayerEquipmentAttribute = 'hpMax' | 'mpMax' | 'attack' | 'defense' | 'agility' | 'spirit' | 'luck';
+
+function getInitialEquipmentAttributeBonus(
+  equipment: readonly (GoodsEquipment | null)[],
+  attribute: PlayerEquipmentAttribute
+): number {
+  let bonus = 0;
+  for (const item of equipment) {
+    if (!item) continue;
+    if ((attribute === 'hpMax' || attribute === 'mpMax') && item instanceof GoodsDecoration) continue;
+    bonus += item[attribute];
+  }
+  return bonus;
 }
 
 function readCarryGoods(datLib: DatLib, type: number, index: number, count: number): CarryGoods | null {

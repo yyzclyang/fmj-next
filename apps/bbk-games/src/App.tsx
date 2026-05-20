@@ -18,7 +18,6 @@ declare global {
   }
 }
 
-const speedOptions = createSpeedOptions();
 const localGameId = -1;
 
 type RuntimeStatus = 'loading' | 'ready' | 'exited' | 'error';
@@ -35,16 +34,15 @@ function App() {
   const [encounterRate, setEncounterRate] = useState(50);
   const [status, setStatus] = useState<RuntimeStatus>('loading');
   const [errorText, setErrorText] = useState<string | null>(null);
-  const [activeTitle, setActiveTitle] = useState('载入游戏列表');
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [switchConfirmOpen, setSwitchConfirmOpen] = useState(false);
   const [switchOpen, setSwitchOpen] = useState(false);
 
-  const selectedRemoteGameLibId = selectedGame && !isLocalGameSelection(selectedGame) ? selectedGame.id : '';
   const switchGames = localGame ? [createLocalGame(localGame.manifest), ...games] : games;
   const overlayText = getOverlayText(status, errorText);
+  const gameTitle = selectedGame?.gameName ?? '载入游戏列表';
 
-  const startLoadedGameLib = useCallback((loaded: LoadedGameLib, title = loaded.manifest.name) => {
+  const startLoadedGameLib = useCallback((loaded: LoadedGameLib) => {
     const runtime = runtimeRef.current;
     if (!runtime) return;
     webSaveStore.setSaveContext({
@@ -55,7 +53,6 @@ function App() {
       lib: loaded.lib,
       engineOptions: parseEngineOptions(loaded.manifest.engineOptions) ?? {},
     });
-    setActiveTitle(title);
     setErrorText(null);
     setStatus('ready');
   }, []);
@@ -65,12 +62,11 @@ function App() {
       const requestId = ++requestIdRef.current;
       setStatus('loading');
       setErrorText(null);
-      setActiveTitle(selected.gameName);
       setSelectedGame(selected);
       try {
         const loaded = await loadRemoteGameLib(selected.lib);
         if (requestId !== requestIdRef.current) return;
-        startLoadedGameLib(loaded, selected.gameName);
+        startLoadedGameLib(loaded);
       } catch (error) {
         if (requestId !== requestIdRef.current) return;
         setStatus('error');
@@ -84,7 +80,6 @@ function App() {
     const requestId = ++requestIdRef.current;
     setStatus('loading');
     setErrorText(null);
-    setActiveTitle('载入游戏列表');
     try {
       const page = await getBbkGames();
       if (requestId !== requestIdRef.current) return;
@@ -105,7 +100,6 @@ function App() {
       const requestId = ++requestIdRef.current;
       setStatus('loading');
       setErrorText(null);
-      setActiveTitle(file.name);
       try {
         const loaded = await loadLocalGameLib(file);
         if (requestId !== requestIdRef.current) return;
@@ -176,19 +170,6 @@ function App() {
     };
   }, []);
 
-  const handleGameChange = useCallback(
-    (event: ChangeEvent<HTMLSelectElement>) => {
-      const id = event.currentTarget.value;
-      const selected = getGameLib(games, id);
-      void startRemoteGame(selected);
-    },
-    [games, startRemoteGame]
-  );
-
-  const handleDesktopSpeedChange = useCallback((event: ChangeEvent<HTMLSelectElement>) => {
-    setSpeed(normalizeSpeed(Number(event.currentTarget.value)));
-  }, []);
-
   const handleSpeedChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     setSpeed(normalizeSpeed(Number(event.currentTarget.value)));
   }, []);
@@ -257,30 +238,16 @@ function App() {
     [selectedGame?.id, startLoadedGameLib, startRemoteGame]
   );
 
-  const selectedGameLibLabel = selectedGame ? selectedGame.lib.name : '载入中';
-
   return (
-    <main className="mx-auto grid min-h-svh w-[min(1120px,calc(100vw_-_32px))] grid-rows-[auto_1fr_auto] max-[720px]:min-h-svh max-[720px]:w-full max-[720px]:grid-rows-[1fr] max-[720px]:bg-[#050504] max-[720px]:p-0">
-      <DesktopGameHeader
-        games={games}
-        selectedGameLibId={selectedRemoteGameLibId}
-        selectedGameLibLabel={selectedGameLibLabel}
-        speed={speed}
-        onGameChange={handleGameChange}
-        onSpeedChange={handleDesktopSpeedChange}
-        onLocalLibChange={handleLocalLibChange}
-      />
+    <main className="mx-auto grid min-h-svh w-[min(1440px,calc(100vw_-_32px))] grid-rows-[auto_1fr] gap-5 py-5 max-[720px]:min-h-svh max-[720px]:w-full max-[720px]:grid-rows-[1fr] max-[720px]:gap-0 max-[720px]:bg-[#050504] max-[720px]:p-0">
+      <DesktopGameHeader title={gameTitle} onOpenSettings={handleOpenSettings} onOpenSwitch={handleOpenSwitch} />
 
       <section
-        className="grid min-h-0 place-items-center py-7 max-[720px]:relative max-[720px]:flex max-[720px]:min-h-svh max-[720px]:w-full max-[720px]:flex-col max-[720px]:overflow-hidden max-[720px]:rounded-[23px] max-[720px]:border-2 max-[720px]:border-[#9b7a35] max-[720px]:bg-[linear-gradient(135deg,rgba(255,238,174,0.08),transparent_22%),radial-gradient(circle_at_28%_18%,rgba(255,255,255,0.08),transparent_18%),linear-gradient(180deg,#1a1b18_0%,#10110f_48%,#1b1b17_100%)] max-[720px]:p-[13px_13px_17px] max-[720px]:text-[#d4b56a] max-[720px]:shadow-[inset_0_0_0_1px_rgba(255,226,139,0.22),inset_0_0_36px_rgba(0,0,0,0.7),0_20px_56px_rgba(0,0,0,0.52)] max-[720px]:[--confirm-size:clamp(68px,19vw,76px)] max-[720px]:[--dpad-center-size:clamp(38px,11vw,44px)] max-[720px]:[--dpad-key-size:clamp(40px,11.5vw,46px)] max-[720px]:[--dpad-row-size:clamp(34px,9.5vw,38px)] max-[720px]:[--dpad-size:calc(var(--dpad-row-size)_+_var(--dpad-key-size)_+_var(--dpad-row-size))] max-[720px]:[--function-height:clamp(40px,11vw,44px)] max-[720px]:[--function-width:clamp(88px,25vw,98px)] max-[720px]:[--page-key-width:clamp(52px,15vw,60px)] max-[720px]:[--small-round-size:clamp(50px,14vw,57px)] max-[720px]:before:pointer-events-none max-[720px]:before:absolute max-[720px]:before:inset-[5px] max-[720px]:before:rounded-[19px] max-[720px]:before:border max-[720px]:before:border-[rgba(224,184,91,0.42)] max-[720px]:before:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.72)] max-[720px]:before:content-[''] max-[720px]:after:pointer-events-none max-[720px]:after:absolute max-[720px]:after:inset-0 max-[720px]:after:bg-[linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.035)_1px,transparent_1px)] max-[720px]:after:bg-[length:3px_3px] max-[720px]:after:opacity-25 max-[720px]:after:mix-blend-screen max-[720px]:after:content-['']"
+        className="relative grid min-h-0 place-items-center overflow-hidden rounded-[18px] border border-[rgba(142,109,50,0.5)] bg-[linear-gradient(135deg,rgba(255,238,174,0.06),transparent_26%),linear-gradient(180deg,#1a1b18_0%,#0d0e0c_100%)] px-8 py-10 shadow-[0_22px_64px_rgba(23,36,29,0.22),inset_0_0_0_1px_rgba(255,226,139,0.12)] before:pointer-events-none before:absolute before:inset-3 before:rounded-[14px] before:border before:border-[rgba(224,184,91,0.22)] before:content-[''] max-[720px]:flex max-[720px]:min-h-svh max-[720px]:w-full max-[720px]:flex-col max-[720px]:rounded-[23px] max-[720px]:border-2 max-[720px]:border-[#9b7a35] max-[720px]:bg-[linear-gradient(135deg,rgba(255,238,174,0.08),transparent_22%),radial-gradient(circle_at_28%_18%,rgba(255,255,255,0.08),transparent_18%),linear-gradient(180deg,#1a1b18_0%,#10110f_48%,#1b1b17_100%)] max-[720px]:p-[13px_13px_17px] max-[720px]:text-[#d4b56a] max-[720px]:shadow-[inset_0_0_0_1px_rgba(255,226,139,0.22),inset_0_0_36px_rgba(0,0,0,0.7),0_20px_56px_rgba(0,0,0,0.52)] max-[720px]:[--confirm-size:clamp(68px,19vw,76px)] max-[720px]:[--dpad-center-size:clamp(38px,11vw,44px)] max-[720px]:[--dpad-key-size:clamp(40px,11.5vw,46px)] max-[720px]:[--dpad-row-size:clamp(34px,9.5vw,38px)] max-[720px]:[--dpad-size:calc(var(--dpad-row-size)_+_var(--dpad-key-size)_+_var(--dpad-row-size))] max-[720px]:[--function-height:clamp(40px,11vw,44px)] max-[720px]:[--function-width:clamp(88px,25vw,98px)] max-[720px]:[--page-key-width:clamp(52px,15vw,60px)] max-[720px]:[--small-round-size:clamp(50px,14vw,57px)] max-[720px]:before:inset-[5px] max-[720px]:before:rounded-[19px] max-[720px]:before:border-[rgba(224,184,91,0.42)] max-[720px]:before:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.72)] max-[720px]:after:pointer-events-none max-[720px]:after:absolute max-[720px]:after:inset-0 max-[720px]:after:bg-[linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.035)_1px,transparent_1px)] max-[720px]:after:bg-[length:3px_3px] max-[720px]:after:opacity-25 max-[720px]:after:mix-blend-screen max-[720px]:after:content-['']"
         aria-label="游戏画面"
       >
-        <MobileGameHeader
-          activeTitle={activeTitle}
-          onOpenSettings={handleOpenSettings}
-          onOpenSwitch={handleOpenSwitch}
-        />
-        <GameScreen canvasRef={canvasRef} activeTitle={activeTitle} overlayText={overlayText} status={status} />
+        <MobileGameHeader title={gameTitle} onOpenSettings={handleOpenSettings} onOpenSwitch={handleOpenSwitch} />
+        <GameScreen canvasRef={canvasRef} title={gameTitle} overlayText={overlayText} status={status} />
         <GameConsole onPressKey={pressKey} />
       </section>
 
@@ -312,93 +279,48 @@ function App() {
 }
 
 interface DesktopGameHeaderProps {
-  readonly games: readonly BbkGame[];
-  readonly selectedGameLibId: string;
-  readonly selectedGameLibLabel: string;
-  readonly speed: number;
-  readonly onGameChange: (event: ChangeEvent<HTMLSelectElement>) => void;
-  readonly onSpeedChange: (event: ChangeEvent<HTMLSelectElement>) => void;
-  readonly onLocalLibChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  readonly title: string;
+  readonly onOpenSettings: () => void;
+  readonly onOpenSwitch: () => void;
 }
 
-function DesktopGameHeader({
-  games,
-  selectedGameLibId,
-  selectedGameLibLabel,
-  speed,
-  onGameChange,
-  onSpeedChange,
-  onLocalLibChange,
-}: DesktopGameHeaderProps) {
+function DesktopGameHeader({ title, onOpenSettings, onOpenSwitch }: DesktopGameHeaderProps) {
   return (
-    <header className="flex min-h-[92px] items-center justify-between gap-6 border-b border-[var(--line)] max-[720px]:hidden">
-      <div className="grid gap-1">
-        <span className="font-mono text-xs leading-none text-[var(--muted)] uppercase">bbk-games</span>
-        <h1 className="m-0 text-[28px] leading-none font-bold text-[var(--ink)]">伏魔记</h1>
+    <header className="flex min-h-[78px] items-center justify-between gap-6 rounded-[18px] border border-[rgba(142,109,50,0.5)] bg-[linear-gradient(135deg,rgba(255,238,174,0.08),transparent_24%),linear-gradient(180deg,#20211d,#0d0e0c)] px-5 text-[#ead6a4] shadow-[0_12px_34px_rgba(23,36,29,0.18),inset_0_0_0_1px_rgba(255,226,139,0.12)] max-[720px]:hidden">
+      <div className="min-w-0">
+        <h1 className="m-0 overflow-hidden text-[28px] leading-tight font-extrabold text-ellipsis whitespace-nowrap text-[#f1dfb5]">
+          {title}
+        </h1>
       </div>
-      <div className="flex flex-wrap items-end justify-end gap-2.5" aria-label="游戏控制">
-        <label className="grid gap-1.5 text-xs text-[var(--muted)]">
-          <span>游戏</span>
-          <select
-            className="h-9 min-w-28 rounded border border-[var(--line-strong)] bg-[var(--panel)] px-3 pr-8 text-sm leading-none text-[var(--ink)] transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
-            value={selectedGameLibId}
-            onChange={onGameChange}
-            disabled={games.length === 0}
-          >
-            {selectedGameLibId ? null : (
-              <option value="" disabled>
-                {selectedGameLibLabel}
-              </option>
-            )}
-            {games.map(game => (
-              <optgroup key={game.id} label={game.name}>
-                {game.libs.map(lib => (
-                  <option key={lib.id} value={createGameLibSelectId(game.id, lib.id)}>
-                    {lib.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-1.5 text-xs text-[var(--muted)]">
-          <span>倍速</span>
-          <select
-            className="h-9 min-w-28 rounded border border-[var(--line-strong)] bg-[var(--panel)] px-3 pr-8 text-sm leading-none text-[var(--ink)] transition-colors hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]"
-            value={formatSpeed(speed)}
-            onChange={onSpeedChange}
-          >
-            {speedOptions.map(value => (
-              <option key={value} value={formatSpeed(value)}>
-                {formatSpeed(value)}x
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="group relative inline-flex cursor-pointer items-end">
-          <input
-            className="pointer-events-none absolute size-px opacity-0"
-            name="desktop-local-game"
-            type="file"
-            accept=".lib,.LIB,.gam,.GAM"
-            onChange={onLocalLibChange}
-          />
-          <span className="flex h-9 items-center justify-center rounded border border-[var(--line-strong)] bg-[var(--panel)] px-3.5 text-sm leading-none text-[var(--ink)] transition-colors group-hover:border-[var(--accent)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--accent)]">
-            本地 LIB
-          </span>
-        </label>
+      <div className="flex items-center justify-end gap-2.5" aria-label="桌面游戏控制">
+        <button
+          type="button"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] border-2 border-[#8e6d32] bg-[linear-gradient(180deg,#252721,#080908)] px-4 text-sm font-extrabold text-[#ead6a4] shadow-[inset_0_0_0_2px_#050504,inset_0_1px_12px_rgba(255,229,158,0.08),0_4px_0_#050504] transition-colors hover:border-[#b88c3c] hover:text-[#f4dba1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d39d3c]"
+          onClick={onOpenSwitch}
+        >
+          <ExchangeIcon className="size-5 text-[#d7bc75]" aria-hidden="true" focusable="false" />
+          切换游戏
+        </button>
+        <button
+          type="button"
+          className="inline-flex h-11 items-center justify-center gap-2 rounded-[10px] border-2 border-[#8e6d32] bg-[linear-gradient(180deg,#252721,#080908)] px-4 text-sm font-extrabold text-[#ead6a4] shadow-[inset_0_0_0_2px_#050504,inset_0_1px_12px_rgba(255,229,158,0.08),0_4px_0_#050504] transition-colors hover:border-[#b88c3c] hover:text-[#f4dba1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d39d3c]"
+          onClick={onOpenSettings}
+        >
+          <SettingIcon className="size-5 text-[#d7bc75]" aria-hidden="true" focusable="false" />
+          设置
+        </button>
       </div>
     </header>
   );
 }
 
 interface MobileGameHeaderProps {
-  readonly activeTitle: string;
+  readonly title: string;
   readonly onOpenSettings: () => void;
   readonly onOpenSwitch: () => void;
 }
 
-function MobileGameHeader({ activeTitle, onOpenSettings, onOpenSwitch }: MobileGameHeaderProps) {
+function MobileGameHeader({ title, onOpenSettings, onOpenSwitch }: MobileGameHeaderProps) {
   return (
     <div className="relative z-[1] hidden min-h-[58px] w-full items-center justify-between gap-2 px-0.5 pb-2.5 max-[720px]:flex">
       <button
@@ -410,7 +332,7 @@ function MobileGameHeader({ activeTitle, onOpenSettings, onOpenSwitch }: MobileG
         <ExchangeIcon className="size-[32px]" aria-hidden="true" focusable="false" />
       </button>
       <h1 className="m-0 min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-center text-[clamp(22px,7vw,28px)] leading-none font-extrabold text-[#cfa95b] [text-shadow:0_1px_0_#050504,0_0_10px_rgba(206,169,91,0.26)]">
-        {activeTitle}
+        {title}
       </h1>
       <button
         type="button"
@@ -426,21 +348,21 @@ function MobileGameHeader({ activeTitle, onOpenSettings, onOpenSwitch }: MobileG
 
 interface GameScreenProps {
   readonly canvasRef: Ref<HTMLCanvasElement>;
-  readonly activeTitle: string;
+  readonly title: string;
   readonly overlayText: string | null;
   readonly status: RuntimeStatus;
 }
 
-function GameScreen({ canvasRef, activeTitle, overlayText, status }: GameScreenProps) {
+function GameScreen({ canvasRef, title, overlayText, status }: GameScreenProps) {
   return (
     <div
-      className="relative grid box-content h-48 w-80 border border-[var(--ink)] bg-[#020604] shadow-[0_18px_50px_rgba(18,24,20,0.18),0_0_0_8px_var(--rail)] max-[720px]:z-[1] max-[720px]:box-border max-[720px]:aspect-[5/3] max-[720px]:h-auto max-[720px]:w-full max-[720px]:rounded-xl max-[720px]:border-[9px] max-[720px]:border-[#080908] max-[720px]:shadow-[0_0_0_2px_rgba(133,105,49,0.78),0_0_0_6px_#1d1f1b,inset_0_0_18px_rgba(0,0,0,0.82)]"
+      className="relative grid box-content h-48 w-80 border border-[var(--ink)] bg-[#020604] shadow-[0_18px_50px_rgba(18,24,20,0.18),0_0_0_8px_var(--rail)] min-[900px]:h-[384px] min-[900px]:w-[640px] min-[1220px]:h-[576px] min-[1220px]:w-[960px] min-[1540px]:h-[768px] min-[1540px]:w-[1280px] max-[720px]:z-[1] max-[720px]:box-border max-[720px]:aspect-[5/3] max-[720px]:h-auto max-[720px]:w-full max-[720px]:rounded-xl max-[720px]:border-[9px] max-[720px]:border-[#080908] max-[720px]:shadow-[0_0_0_2px_rgba(133,105,49,0.78),0_0_0_6px_#1d1f1b,inset_0_0_18px_rgba(0,0,0,0.82)]"
       data-status={status}
     >
       <canvas
         ref={canvasRef}
-        className={`block h-48 w-80 [image-rendering:pixelated] max-[720px]:h-full max-[720px]:w-full max-[720px]:rounded ${status === 'exited' || status === 'error' ? 'opacity-[0.44]' : ''}`}
-        aria-label={activeTitle}
+        className={`block h-48 w-80 [image-rendering:pixelated] min-[900px]:h-[384px] min-[900px]:w-[640px] min-[1220px]:h-[576px] min-[1220px]:w-[960px] min-[1540px]:h-[768px] min-[1540px]:w-[1280px] max-[720px]:h-full max-[720px]:w-full max-[720px]:rounded ${status === 'exited' || status === 'error' ? 'opacity-[0.44]' : ''}`}
+        aria-label={title}
       />
       {overlayText ? (
         <div className="absolute inset-0 grid place-items-center [overflow-wrap:anywhere] bg-[rgba(1,7,4,0.76)] p-6 text-center text-base leading-[1.4] font-semibold text-[#f8f2e4] max-[720px]:bg-black/70 max-[720px]:p-[18px] max-[720px]:text-[15px] max-[720px]:text-[#f1dfb5]">
@@ -501,18 +423,10 @@ function getFirstGameLib(games: readonly BbkGame[]): SelectedGameLib {
   throw new Error('游戏列表为空');
 }
 
-function getGameLib(games: readonly BbkGame[], id: string): SelectedGameLib {
-  for (const game of games) {
-    const lib = game.libs.find(item => createGameLibSelectId(game.id, item.id) === id);
-    if (lib) return { id, gameId: game.id, gameName: game.name, lib };
-  }
-  throw new Error(`游戏选择非法: ${id}`);
-}
-
 function createLocalGame(lib: BbkGameLib): BbkGame {
   return {
     id: localGameId,
-    name: '本地游戏',
+    name: lib.name || '本地游戏',
     description: '',
     coverUrl: '',
     libs: [lib],
@@ -523,7 +437,7 @@ function createLocalGameLib(lib: BbkGameLib): SelectedGameLib {
   return {
     id: createGameLibSelectId(localGameId, lib.id),
     gameId: localGameId,
-    gameName: '本地游戏',
+    gameName: lib.name || '本地游戏',
     lib,
   };
 }
@@ -534,10 +448,6 @@ function isLocalGameSelection(selected: SelectedGameLib): boolean {
 
 function createGameLibSelectId(gameId: number, libId: number): string {
   return `${gameId}:${libId}`;
-}
-
-function createSpeedOptions(): readonly number[] {
-  return Array.from({ length: 26 }, (_, i) => normalizeSpeed(0.5 + i / 10));
 }
 
 function normalizeSpeed(value: number): number {

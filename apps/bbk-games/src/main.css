@@ -1,4 +1,4 @@
-@import 'normalize.css';
+@import 'normalize.css' layer(base);
 @import './styles/tailwind.css';
 
 :root {
@@ -14,7 +14,7 @@
   --sans: var(--font-sans);
   --mono: var(--font-mono);
   color: var(--ink);
-  background: var(--paper);
+  background: #090a08;
   font-family: var(--sans);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -26,13 +26,18 @@
   body {
     @apply m-0 min-w-80;
     background:
-      linear-gradient(90deg, rgba(23, 36, 29, 0.05) 1px, transparent 1px),
-      linear-gradient(180deg, rgba(23, 36, 29, 0.05) 1px, transparent 1px),
-      linear-gradient(180deg, var(--paper) 0%, var(--paper-deep) 100%);
+      radial-gradient(circle at 50% 0%, rgba(183, 148, 83, 0.12), transparent 34rem),
+      radial-gradient(circle at 18% 16%, rgba(255, 238, 174, 0.05), transparent 22rem),
+      linear-gradient(90deg, rgba(224, 184, 91, 0.032) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(224, 184, 91, 0.026) 1px, transparent 1px),
+      linear-gradient(180deg, #151711 0%, #080908 100%);
     background-size:
-      24px 24px,
-      24px 24px,
+      auto,
+      auto,
+      28px 28px,
+      28px 28px,
       auto;
+    background-attachment: fixed;
   }
 
   button,

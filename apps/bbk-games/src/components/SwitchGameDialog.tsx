@@ -40,12 +40,12 @@ export function SwitchGameDialog({
 
   return (
     <div
-      className="fixed inset-0 z-20 hidden items-center justify-center bg-[#020604]/72 p-3.5 max-[720px]:flex"
+      className="fixed inset-0 z-20 flex items-center justify-center bg-[#020604]/72 p-6 max-[720px]:p-3.5"
       role="presentation"
       onClick={onClose}
     >
       <section
-        className="flex max-h-[min(738px,calc(100svh_-_28px))] w-[min(100%,356px)] flex-col overflow-hidden rounded-xl border-2 border-[#b4893f] bg-[linear-gradient(135deg,rgba(255,238,174,0.08),transparent_22%),radial-gradient(circle_at_28%_18%,rgba(255,255,255,0.08),transparent_18%),linear-gradient(180deg,#1a1b18_0%,#10110f_48%,#1b1b17_100%)] text-[#ead6a4] shadow-[0_18px_50px_rgba(0,0,0,0.62),inset_0_0_0_1px_rgba(255,232,163,0.13)]"
+        className="flex max-h-[min(760px,calc(100svh_-_48px))] w-[min(100%,520px)] flex-col overflow-hidden rounded-xl border-2 border-[#b4893f] bg-[linear-gradient(135deg,rgba(255,238,174,0.08),transparent_22%),radial-gradient(circle_at_28%_18%,rgba(255,255,255,0.08),transparent_18%),linear-gradient(180deg,#1a1b18_0%,#10110f_48%,#1b1b17_100%)] text-[#ead6a4] shadow-[0_18px_50px_rgba(0,0,0,0.62),inset_0_0_0_1px_rgba(255,232,163,0.13)] max-[720px]:max-h-[min(738px,calc(100svh_-_28px))] max-[720px]:w-[min(100%,356px)]"
         role="dialog"
         aria-modal="true"
         aria-labelledby="switch-title"

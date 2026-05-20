@@ -4,13 +4,7 @@ import type { BbkGameLib } from '@/apis/game.ts';
 const HARDCODED_LIB_URL =
   'https://pub-e5fdb2db51c64340bb86d3d8b4a5ff51.r2.dev/bbk/game/lib/9ec5aac3692d6257029ca6a38d94dd330072c7e7fcccc2ee6be95129230ff86c.lib';
 
-export interface GameLibManifest {
-  readonly name: string;
-  readonly url: string;
-  readonly sha256: string;
-  readonly scopeId: string;
-  readonly engineOptions: string;
-}
+export type GameLibManifest = BbkGameLib;
 
 export interface LoadedGameLib {
   readonly manifest: GameLibManifest;
@@ -35,11 +29,17 @@ export async function loadLocalGameLib(file: File): Promise<LoadedGameLib> {
   const lib = new Uint8Array(libBuffer);
   const sha256 = await createLibSha256(lib);
   const manifest = {
+    id: 0,
     name: file.name,
+    description: '',
+    author: '本地文件',
     url: '',
+    version: '',
     sha256,
+    size: lib.byteLength,
     scopeId: sha256.slice(0, 16),
     engineOptions: '',
+    publishedAt: null,
   };
 
   return { lib, manifest };

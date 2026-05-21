@@ -2,20 +2,29 @@ import type { ChangeEvent } from 'react';
 import CloseIcon from '@/assets/icons/close.svg?react';
 
 interface SettingsDialogProps {
-  readonly speedText: string;
+  readonly speed: number;
   readonly encounterRate: number;
   readonly onClose: () => void;
-  readonly onSpeedChange: (event: ChangeEvent<HTMLInputElement>) => void;
-  readonly onEncounterRateChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  readonly onSpeedChange: (speed: number) => void;
+  readonly onEncounterRateChange: (encounterRate: number) => void;
 }
 
 export function SettingsDialog({
-  speedText,
+  speed,
   encounterRate,
   onClose,
   onSpeedChange,
   onEncounterRateChange,
 }: SettingsDialogProps) {
+  const speedText = speed.toFixed(1);
+
+  const handleSpeedChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onSpeedChange(Number(event.currentTarget.value));
+  };
+  const handleEncounterRateChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onEncounterRateChange(Number(event.currentTarget.value));
+  };
+
   return (
     <div
       className="fixed inset-0 z-20 flex items-center justify-center bg-[#020604]/72 p-6 max-[720px]:p-3.5"
@@ -57,7 +66,7 @@ export function SettingsDialog({
             max="3"
             step="0.1"
             value={speedText}
-            onChange={onSpeedChange}
+            onChange={handleSpeedChange}
           />
           <div className="flex justify-between text-sm text-[#f0e2bd]">
             <span>0.5x</span>
@@ -79,7 +88,7 @@ export function SettingsDialog({
             max="99"
             step="1"
             value={encounterRate}
-            onChange={onEncounterRateChange}
+            onChange={handleEncounterRateChange}
           />
           <div className="flex justify-between text-sm text-[#f0e2bd]">
             <span>1%</span>

@@ -1,42 +1,34 @@
 import { useEffect, useState, type ChangeEvent } from 'react';
 import type { BbkGame, BbkGameLib } from '@/apis/game';
+import ArrowIcon from '@/assets/icons/arrow.svg?react';
 import CloseIcon from '@/assets/icons/close.svg?react';
-
-export interface SelectedGameLib {
-  readonly id: string;
-  readonly gameId: number;
-  readonly gameName: string;
-  readonly lib: BbkGameLib;
-}
 
 interface SwitchGameDialogProps {
   readonly games: readonly BbkGame[];
-  readonly selectedGame: SelectedGameLib | null;
+  readonly selectedLibId: number | null;
   readonly onClose: () => void;
-  readonly onSelectGame: (selected: SelectedGameLib) => void;
+  readonly onSelectGame: (lib: BbkGameLib) => void;
   readonly onLocalLibChange: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
 export function SwitchGameDialog({
   games,
-  selectedGame,
+  selectedLibId,
   onClose,
   onSelectGame,
   onLocalLibChange,
 }: SwitchGameDialogProps) {
-  const selectedGameId = selectedGame?.gameId ?? null;
-  const [expandedGameIds, setExpandedGameIds] = useState<readonly number[]>(() =>
-    selectedGameId === null ? [] : [selectedGameId]
-  );
+  const selectedGameId = findGameIdByLibId(games, selectedLibId);
+  const [expandedGameId, setExpandedGameId] = useState<number | null>(selectedGameId);
+
+  const toggleGameGroup = (gameId: number) => {
+    setExpandedGameId(id => (id === gameId ? null : gameId));
+  };
 
   useEffect(() => {
     if (selectedGameId === null) return;
-    setExpandedGameIds([selectedGameId]);
+    setExpandedGameId(selectedGameId);
   }, [selectedGameId]);
-
-  const toggleGameGroup = (gameId: number) => {
-    setExpandedGameIds(ids => (ids.includes(gameId) ? ids.filter(id => id !== gameId) : [...ids, gameId]));
-  };
 
   return (
     <div
@@ -71,7 +63,7 @@ export function SwitchGameDialog({
           ) : null}
 
           {games.map(game => {
-            const expanded = expandedGameIds.includes(game.id);
+            const expanded = expandedGameId === game.id;
             return (
               <section className="mt-2 first:mt-0" key={game.id} aria-label={game.name}>
                 <button
@@ -80,23 +72,24 @@ export function SwitchGameDialog({
                   aria-expanded={expanded}
                   onClick={() => toggleGameGroup(game.id)}
                 >
-                  <span className="w-4 text-2xl leading-none text-[#ead6a4]" aria-hidden="true">
-                    {expanded ? '⌄' : '›'}
-                  </span>
+                  <ArrowIcon
+                    className={`size-5 shrink-0 text-[#d7bc75] transition-transform ${expanded ? 'rotate-90' : ''}`}
+                    aria-hidden="true"
+                    focusable="false"
+                  />
                   {game.name}
                 </button>
                 {expanded ? (
                   <div className="p-[7px_0_2px_17px]">
                     {game.libs.map(lib => {
-                      const id = createGameLibSelectId(game.id, lib.id);
                       const meta = formatGameLibMeta(lib);
-                      const selected = selectedGame?.id === id;
+                      const selected = selectedLibId === lib.id;
                       return (
                         <button
                           type="button"
                           key={lib.id}
                           className={`relative mt-[7px] flex min-h-[62px] w-full items-center gap-2.5 rounded-lg border border-[rgba(177,142,78,0.34)] bg-[linear-gradient(180deg,rgba(42,43,39,0.82),rgba(17,18,16,0.88))] p-[10px_42px_10px_12px] text-left text-[#ead6a4] first:mt-0 ${selected ? 'border-[#d39d3c] bg-[linear-gradient(180deg,rgba(67,54,28,0.75),rgba(23,20,15,0.94))] shadow-[inset_0_0_0_1px_rgba(255,217,139,0.2),0_0_0_1px_rgba(211,157,60,0.25)]' : ''}`}
-                          onClick={() => onSelectGame({ id, gameId: game.id, gameName: game.name, lib })}
+                          onClick={() => onSelectGame(lib)}
                         >
                           <span className="grid min-w-0 gap-1">
                             <strong className="overflow-hidden text-ellipsis whitespace-nowrap text-[17px] leading-[1.12] text-[#f2dfad]">
@@ -149,13 +142,16 @@ export function SwitchGameDialog({
   );
 }
 
-function createGameLibSelectId(gameId: number, libId: number): string {
-  return `${gameId}:${libId}`;
+function findGameIdByLibId(games: readonly BbkGame[], libId: number | null): number | null {
+  if (libId === null) return null;
+  for (const game of games) {
+    if (game.libs.some(lib => lib.id === libId)) return game.id;
+  }
+  return null;
 }
 
 function formatGameLibMeta(lib: BbkGameLib): string {
-  const version = lib.version ? (lib.version.startsWith('v') ? lib.version : `v${lib.version}`) : '';
-  return [lib.author, version, formatDate(lib.publishedAt)].filter(Boolean).join(' · ');
+  return [lib.author, lib.version, formatDate(lib.publishedAt)].filter(Boolean).join(' · ');
 }
 
 function formatDate(value: string | null): string {

@@ -1,18 +1,18 @@
 const gbkDecoder = new TextDecoder('GBK');
 
 export const ResourceType = {
-  GUT: 1,
-  MAP: 2,
-  ARS: 3,
-  MRS: 4,
-  SRS: 5,
-  GRS: 6,
-  TIL: 7,
-  ACP: 8,
-  GDP: 9,
-  GGJ: 10,
-  PIC: 11,
-  MLR: 12,
+  GUT: 1, // 剧情脚本资源
+  MAP: 2, // 地图资源
+  ARS: 3, // 角色和场景对象资源
+  MRS: 4, // 魔法资源
+  SRS: 5, // 特效动画资源
+  GRS: 6, // 道具资源
+  TIL: 7, // 地图块图像资源
+  ACP: 8, // 角色图片资源
+  GDP: 9, // 道具图片资源
+  GGJ: 10, // 特效图片资源
+  PIC: 11, // 杂类图片资源
+  MLR: 12, // 魔法链和升级链资源
 } as const;
 
 export type ResourceType = (typeof ResourceType)[keyof typeof ResourceType];

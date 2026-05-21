@@ -1,14 +1,10 @@
 import type { SaveStore } from '@fmj-next/core';
 
 const SAVE_ENVELOPE_VERSION = 'v1';
-const STORAGE_PREFIX = `bbk-games:save:v1:`;
+const STORAGE_PREFIX = `bbk-games:save:${SAVE_ENVELOPE_VERSION}:`;
 const CORRUPT_SAVE_MESSAGE = '存档损坏';
 const LIB_SHA256_PATTERN = /^[0-9a-f]{64}$/;
 const SAVE_SCOPE_ID_PATTERN = /^[A-Za-z0-9-]+$/;
-
-interface Save extends SaveStore {
-  setSaveContext(context: SaveContext): void;
-}
 
 interface SaveContext {
   readonly scopeId: string;
@@ -23,39 +19,61 @@ interface SaveEnvelope {
   readonly payload: number[];
 }
 
-let saveContext: SaveContext | null = null;
+export class WebSaveStore implements SaveStore {
+  private readonly scopeId: string;
+  private readonly sha256: string;
 
-function getCurrentSaveContext(): SaveContext {
-  if (!saveContext) throw new Error('未设置存档上下文，无法读写存档');
-  return saveContext;
+  constructor(context: SaveContext) {
+    const sha256 = context.sha256.toLowerCase();
+    if (!LIB_SHA256_PATTERN.test(sha256)) throw new Error(`LIB SHA-256 非法: ${context.sha256}`);
+    if (!SAVE_SCOPE_ID_PATTERN.test(context.scopeId)) throw new Error(`存档 scopeId 非法: ${context.scopeId}`);
+    this.scopeId = context.scopeId;
+    this.sha256 = sha256;
+  }
+
+  read(slot: number): Uint8Array | null {
+    const raw = window.localStorage.getItem(this.getSlotKey(slot));
+    if (raw === null) return null;
+    try {
+      return parseEnvelope(raw, this.scopeId);
+    } catch {
+      throw new Error(CORRUPT_SAVE_MESSAGE);
+    }
+  }
+
+  write(slot: number, value: Uint8Array): void {
+    window.localStorage.setItem(
+      this.getSlotKey(slot),
+      JSON.stringify(createEnvelope(value, this.scopeId, this.sha256))
+    );
+  }
+
+  private getSlotKey(slot: number): string {
+    return `${STORAGE_PREFIX}${this.scopeId}:slot:${slot}`;
+  }
 }
 
-function getSlotStorageKey(slot: number): string {
-  return `${STORAGE_PREFIX}${getCurrentSaveContext().scopeId}:slot:${slot}`;
-}
-
-function createEnvelope(value: Uint8Array): SaveEnvelope {
-  const context = getCurrentSaveContext();
+function createEnvelope(value: Uint8Array, scopeId: string, sha256: string): SaveEnvelope {
   return {
     version: SAVE_ENVELOPE_VERSION,
-    scopeId: context.scopeId,
-    sha256: context.sha256,
+    scopeId,
+    sha256,
     savedAt: new Date().toISOString(),
     payload: [...value],
   };
 }
 
-function parseEnvelope(raw: string): Uint8Array {
+function parseEnvelope(raw: string, scopeId: string): Uint8Array {
   const value = JSON.parse(raw) as unknown;
-  if (!isSaveEnvelope(value)) throw new Error(CORRUPT_SAVE_MESSAGE);
+  if (!isSaveEnvelope(value, scopeId)) throw new Error(CORRUPT_SAVE_MESSAGE);
   return Uint8Array.from(value.payload);
 }
 
-function isSaveEnvelope(value: unknown): value is SaveEnvelope {
+function isSaveEnvelope(value: unknown, scopeId: string): value is SaveEnvelope {
   if (!isRecord(value)) return false;
   return (
     value.version === SAVE_ENVELOPE_VERSION &&
-    value.scopeId === getCurrentSaveContext().scopeId &&
+    value.scopeId === scopeId &&
     typeof value.sha256 === 'string' &&
     LIB_SHA256_PATTERN.test(value.sha256) &&
     typeof value.savedAt === 'string' &&
@@ -70,27 +88,3 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function isByteArray(value: unknown): value is number[] {
   return Array.isArray(value) && value.every(item => Number.isInteger(item) && item >= 0 && item <= 255);
 }
-
-export const webSaveStore: Save = {
-  setSaveContext(context) {
-    const sha256 = context.sha256.toLowerCase();
-    if (!LIB_SHA256_PATTERN.test(sha256)) throw new Error(`LIB SHA-256 非法: ${context.sha256}`);
-    if (!SAVE_SCOPE_ID_PATTERN.test(context.scopeId)) throw new Error(`存档 scopeId 非法: ${context.scopeId}`);
-    saveContext = {
-      scopeId: context.scopeId,
-      sha256,
-    };
-  },
-  read(slot) {
-    const raw = window.localStorage.getItem(getSlotStorageKey(slot));
-    if (raw === null) return null;
-    try {
-      return parseEnvelope(raw);
-    } catch {
-      throw new Error(CORRUPT_SAVE_MESSAGE);
-    }
-  },
-  write(slot, value) {
-    window.localStorage.setItem(getSlotStorageKey(slot), JSON.stringify(createEnvelope(value)));
-  },
-};

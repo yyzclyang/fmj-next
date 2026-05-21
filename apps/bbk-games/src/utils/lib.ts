@@ -1,14 +1,18 @@
-import { createLibSha256, gam2lib, isGamBuffer, isLibBuffer } from '@/utils/utils';
-import type { BbkGameLib } from '@/apis/game.ts';
+import type { BbkGame, BbkGameLib } from '@/apis/game';
 
+const gbkDecoder = new TextDecoder('GBK');
+export const localGameId = -1;
 const HARDCODED_LIB_URL =
   'https://pub-e5fdb2db51c64340bb86d3d8b4a5ff51.r2.dev/bbk/game/lib/9ec5aac3692d6257029ca6a38d94dd330072c7e7fcccc2ee6be95129230ff86c.lib';
 
-export type GameLibManifest = BbkGameLib;
-
 export interface LoadedGameLib {
-  readonly manifest: GameLibManifest;
+  readonly manifest: BbkGameLib;
   readonly lib: Uint8Array;
+}
+
+export interface LoadedLocalGame {
+  readonly game: BbkGame;
+  readonly loadedGameLib: LoadedGameLib;
 }
 
 export async function loadRemoteGameLib(gameLib: BbkGameLib): Promise<LoadedGameLib> {
@@ -21,20 +25,21 @@ export async function loadRemoteGameLib(gameLib: BbkGameLib): Promise<LoadedGame
   return { lib, manifest: gameLib };
 }
 
-export async function loadLocalGameLib(file: File): Promise<LoadedGameLib> {
+export async function loadLocalGame(file: File): Promise<LoadedLocalGame> {
   const buffer = await file.arrayBuffer();
   const libBuffer = isGamBuffer(buffer) ? gam2lib(buffer) : buffer;
   if (!libBuffer || !isLibBuffer(libBuffer)) throw new Error('文件格式错误');
 
+  const { name, author, version } = parseGame(buffer);
   const lib = new Uint8Array(libBuffer);
   const sha256 = await createLibSha256(lib);
-  const manifest = {
-    id: 0,
-    name: file.name,
+  const manifest: BbkGameLib = {
+    id: localGameId,
+    name,
     description: '',
-    author: '本地文件',
-    url: '',
-    version: '',
+    author,
+    url: file.name,
+    version,
     sha256,
     size: lib.byteLength,
     scopeId: sha256.slice(0, 16),
@@ -42,5 +47,64 @@ export async function loadLocalGameLib(file: File): Promise<LoadedGameLib> {
     publishedAt: null,
   };
 
-  return { lib, manifest };
+  return {
+    game: {
+      id: localGameId,
+      name: '本地游戏',
+      description: '',
+      coverUrl: '',
+      libs: [manifest],
+    },
+    loadedGameLib: { manifest, lib },
+  };
+}
+
+function isLibBuffer(buffer: ArrayBuffer): boolean {
+  const bytes = new Uint8Array(buffer);
+  return bytes.length > 3 && bytes[0] === 0x4c && bytes[1] === 0x49 && bytes[2] === 0x42;
+}
+
+function isGamBuffer(buffer: ArrayBuffer): boolean {
+  const bytes = new Uint8Array(buffer);
+  return bytes.length >= 0x46 && bytes[0] === 0x47 && bytes[1] === 0x41 && bytes[2] === 0x4d;
+}
+
+function gam2lib(buffer: ArrayBuffer): ArrayBuffer | null {
+  const bytes = new Uint8Array(buffer);
+  const offset = (bytes[0x42] | (bytes[0x43] << 8) | (bytes[0x44] << 16) | (bytes[0x45] << 24)) >>> 0;
+  if (offset <= 0 || offset >= bytes.length) return null;
+
+  const libBuffer = buffer.slice(offset);
+  return isLibBuffer(libBuffer) ? libBuffer : null;
+}
+
+function parseGame(buffer: ArrayBuffer) {
+  const bytes = new Uint8Array(buffer);
+  if (isGamBuffer(buffer)) {
+    return {
+      name: readGbkText(bytes, 0x04, 0x20),
+      author: readGbkText(bytes, 0x24, 0x10),
+      version: readGbkText(bytes, 0x34, 0x0e),
+    };
+  }
+  return {
+    name: readGbkText(bytes, 0x03, 0x0d),
+    author: '',
+    version: '',
+  };
+}
+
+async function createLibSha256(data: Uint8Array): Promise<string> {
+  const input = new ArrayBuffer(data.byteLength);
+  new Uint8Array(input).set(data);
+  const digest = await crypto.subtle.digest('SHA-256', input);
+  return [...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('');
+}
+
+function readGbkText(bytes: Uint8Array, start: number, length: number): string {
+  let end = start + length;
+  while (end > start && (bytes[end - 1] === 0 || bytes[end - 1] === 0x20 || bytes[end - 1] === 0xff)) end--;
+  let zero = start;
+  while (zero < end && bytes[zero] !== 0) zero++;
+  return gbkDecoder.decode(bytes.subarray(start, zero)).trim();
 }

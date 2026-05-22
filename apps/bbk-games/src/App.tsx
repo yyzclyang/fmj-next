@@ -13,8 +13,10 @@ import { loadLocalGame, loadRemoteGameLib, type LoadedGameLib, type LoadedLocalG
 import { audio } from '@/utils/audio';
 import { WebSaveStore } from '@/utils/save';
 import { parseEngineOptions } from '@/utils/utils';
+import { loadKeyBindings, lookupKeyCode, saveKeyBindings, type KeyBindings } from '@/utils/key-bindings';
+import { KeyBindingsDialog } from '@/components/KeyBindingsDialog';
 
-type OpenDialog = 'settings' | 'switchConfirm' | 'switch' | null;
+type OpenDialog = 'settings' | 'switchConfirm' | 'switch' | 'keybindings' | null;
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -28,6 +30,9 @@ function App() {
   const [speed, setSpeed] = useState(1);
   const [encounterRate, setEncounterRate] = useState(5);
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
+  const [keyBindings, setKeyBindings] = useState<KeyBindings>(loadKeyBindings);
+  const keyBindingsRef = useRef(keyBindings);
+  keyBindingsRef.current = keyBindings;
 
   const startLoadedGameLib = (loaded: LoadedGameLib) => {
     const runtime = runtimeRef.current;
@@ -125,7 +130,7 @@ function App() {
 
   useEffect(() => {
     const keyDownHandler = (event: KeyboardEvent) => {
-      const key = mapKeyboard(event.code);
+      const key = lookupKeyCode(keyBindingsRef.current, event.code);
       if (key === null) return;
       runtimeRef.current?.keyDown(key);
       event.preventDefault();
@@ -162,6 +167,7 @@ function App() {
           onClose={() => setOpenDialog(null)}
           onSpeedChange={handleSpeedChange}
           onEncounterRateChange={handleEncounterRateChange}
+          onOpenKeyBindings={() => setOpenDialog('keybindings')}
         />
       ) : null}
 
@@ -178,45 +184,19 @@ function App() {
           onLocalLibChange={handleLocalLibChange}
         />
       ) : null}
+
+      {openDialog === 'keybindings' ? (
+        <KeyBindingsDialog
+          bindings={keyBindings}
+          onClose={() => setOpenDialog(null)}
+          onChange={bindings => {
+            setKeyBindings(bindings);
+            saveKeyBindings(bindings);
+          }}
+        />
+      ) : null}
     </main>
   );
-}
-
-function mapKeyboard(code: string): KeyCode | null {
-  switch (code) {
-    case 'ArrowUp':
-      return KeyCode.Up;
-    case 'ArrowDown':
-      return KeyCode.Down;
-    case 'ArrowLeft':
-      return KeyCode.Left;
-    case 'ArrowRight':
-      return KeyCode.Right;
-    case 'PageUp':
-      return KeyCode.PageUp;
-    case 'PageDown':
-      return KeyCode.PageDown;
-    case 'Enter':
-      return KeyCode.Enter;
-    case 'Escape':
-      return KeyCode.Cancel;
-    case 'KeyR':
-      return KeyCode.Repeat;
-    case 'Digit1':
-    case 'Numpad1':
-      return KeyCode.Search;
-    case 'Digit2':
-    case 'Numpad2':
-      return KeyCode.Insert;
-    case 'Digit3':
-    case 'Numpad3':
-      return KeyCode.Modify;
-    case 'Digit4':
-    case 'Numpad4':
-      return KeyCode.Delete;
-    default:
-      return null;
-  }
 }
 
 export default App;

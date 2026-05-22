@@ -7,6 +7,7 @@ interface SettingsDialogProps {
   readonly onClose: () => void;
   readonly onSpeedChange: (speed: number) => void;
   readonly onEncounterRateChange: (encounterRate: number) => void;
+  readonly onOpenKeyBindings?: () => void;
 }
 
 export function SettingsDialog({
@@ -15,6 +16,7 @@ export function SettingsDialog({
   onClose,
   onSpeedChange,
   onEncounterRateChange,
+  onOpenKeyBindings,
 }: SettingsDialogProps) {
   const speedText = speed.toFixed(1);
 
@@ -95,6 +97,17 @@ export function SettingsDialog({
             <span>99%</span>
           </div>
         </div>
+        {onOpenKeyBindings ? (
+          <div className="flex justify-center px-3 pt-2 max-[720px]:hidden">
+            <button
+              className="rounded-lg border border-[#81632e] bg-transparent px-4 py-1.5 text-sm text-[#d7bc75] hover:border-[#b88c3c] hover:text-[#f0d188]"
+              type="button"
+              onClick={onOpenKeyBindings}
+            >
+              按键配置
+            </button>
+          </div>
+        ) : null}
       </section>
     </div>
   );

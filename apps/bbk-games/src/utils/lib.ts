@@ -1,9 +1,7 @@
 import type { BbkGame, BbkGameLib } from '@/apis/game';
+import { R2_STATIC_BASE_URL } from '@/utils/env';
 
 const gbkDecoder = new TextDecoder('GBK');
-export const localGameId = -1;
-const HARDCODED_LIB_URL =
-  'https://pub-e5fdb2db51c64340bb86d3d8b4a5ff51.r2.dev/bbk/game/lib/9ec5aac3692d6257029ca6a38d94dd330072c7e7fcccc2ee6be95129230ff86c.lib';
 
 export interface LoadedGameLib {
   readonly manifest: BbkGameLib;
@@ -16,7 +14,7 @@ export interface LoadedLocalGame {
 }
 
 export async function loadRemoteGameLib(gameLib: BbkGameLib): Promise<LoadedGameLib> {
-  const buffer = await fetch(HARDCODED_LIB_URL).then(res => {
+  const buffer = await fetch(`${R2_STATIC_BASE_URL}/${gameLib.url}`).then(res => {
     if (!res.ok) throw new Error(`Failed to load LIB`);
     return res.arrayBuffer();
   });
@@ -31,10 +29,11 @@ export async function loadLocalGame(file: File): Promise<LoadedLocalGame> {
   if (!libBuffer || !isLibBuffer(libBuffer)) throw new Error('文件格式错误');
 
   const { name, author, version } = parseGame(buffer);
+  console.log('name, author, version', name, author, version);
   const lib = new Uint8Array(libBuffer);
   const sha256 = await createLibSha256(lib);
   const manifest: BbkGameLib = {
-    id: localGameId,
+    id: -1,
     name,
     description: '',
     author,
@@ -49,7 +48,7 @@ export async function loadLocalGame(file: File): Promise<LoadedLocalGame> {
 
   return {
     game: {
-      id: localGameId,
+      id: -1,
       name: '本地游戏',
       description: '',
       coverUrl: '',
@@ -82,9 +81,9 @@ function parseGame(buffer: ArrayBuffer) {
   const bytes = new Uint8Array(buffer);
   if (isGamBuffer(buffer)) {
     return {
-      name: readGbkText(bytes, 0x04, 0x20),
-      author: readGbkText(bytes, 0x24, 0x10),
-      version: readGbkText(bytes, 0x34, 0x0e),
+      name: readGbkText(bytes, 0x06, 0x20),
+      author: readGbkText(bytes, 0x26, 0x10),
+      version: readGbkText(bytes, 0x37, 0x0b),
     };
   }
   return {

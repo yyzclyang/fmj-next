@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react';
 import { createBrowserRuntime, type BrowserRuntime } from '@fmj-next/browser';
-import { KeyCode, type DebugApi } from '@fmj-next/core';
+import { KeyCode } from '@fmj-next/core';
 import { getBbkGames, type BbkGame, type BbkGameLib } from '@/apis/game';
 import { DesktopGameHeader } from '@/components/DesktopGameHeader';
 import { GameConsole } from '@/components/GameConsole';
@@ -9,16 +9,10 @@ import { MobileGameHeader } from '@/components/MobileGameHeader';
 import { SettingsDialog } from '@/components/SettingsDialog';
 import { SwitchConfirmDialog } from '@/components/SwitchConfirmDialog';
 import { SwitchGameDialog } from '@/components/SwitchGameDialog';
-import { loadLocalGame, loadRemoteGameLib, localGameId, type LoadedGameLib, type LoadedLocalGame } from '@/utils/lib';
+import { loadLocalGame, loadRemoteGameLib, type LoadedGameLib, type LoadedLocalGame } from '@/utils/lib';
 import { audio } from '@/utils/audio';
 import { WebSaveStore } from '@/utils/save';
 import { parseEngineOptions } from '@/utils/utils';
-
-declare global {
-  interface Window {
-    fmjDebug?: DebugApi;
-  }
-}
 
 type OpenDialog = 'settings' | 'switchConfirm' | 'switch' | null;
 
@@ -86,7 +80,7 @@ function App() {
     setOpenDialog(null);
     if (selectedLibId === lib.id) return;
 
-    if (lib.id === localGameId) {
+    if (lib.id === -1) {
       if (!localGame) return;
       setSelectedLibId(lib.id);
       startLoadedGameLib(localGame.loadedGameLib);
@@ -121,23 +115,23 @@ function App() {
       speed: 1,
     });
     runtimeRef.current = runtime;
-    window.fmjDebug = runtime.debug;
     getBbkGames().then(r => setGames(r.list));
 
     return () => {
       runtime.dispose();
-      if (window.fmjDebug === runtime.debug) delete window.fmjDebug;
       runtimeRef.current = null;
     };
   }, []);
 
   useEffect(() => {
-    window.addEventListener('keydown', (event: KeyboardEvent) => {
+    const keyDownHandler = (event: KeyboardEvent) => {
       const key = mapKeyboard(event.code);
       if (key === null) return;
       runtimeRef.current?.keyDown(key);
       event.preventDefault();
-    });
+    };
+    window.addEventListener('keydown', keyDownHandler);
+    return () => window.removeEventListener('keydown', keyDownHandler);
   }, []);
 
   return (
@@ -149,7 +143,7 @@ function App() {
       />
 
       <section
-        className="relative grid min-h-0 place-items-center overflow-hidden rounded-[18px] border border-[rgba(142,109,50,0.5)] bg-[linear-gradient(135deg,rgba(255,238,174,0.06),transparent_26%),linear-gradient(180deg,#1a1b18_0%,#0d0e0c_100%)] px-8 py-10 shadow-[0_22px_64px_rgba(23,36,29,0.22),inset_0_0_0_1px_rgba(255,226,139,0.12)] before:pointer-events-none before:absolute before:inset-3 before:rounded-[14px] before:border before:border-[rgba(224,184,91,0.22)] before:content-[''] max-[720px]:flex max-[720px]:min-h-svh max-[720px]:w-full max-[720px]:flex-col max-[720px]:rounded-[23px] max-[720px]:border-2 max-[720px]:border-[#9b7a35] max-[720px]:bg-[linear-gradient(135deg,rgba(255,238,174,0.08),transparent_22%),radial-gradient(circle_at_28%_18%,rgba(255,255,255,0.08),transparent_18%),linear-gradient(180deg,#1a1b18_0%,#10110f_48%,#1b1b17_100%)] max-[720px]:p-[13px_13px_17px] max-[720px]:text-[#d4b56a] max-[720px]:shadow-[inset_0_0_0_1px_rgba(255,226,139,0.22),inset_0_0_36px_rgba(0,0,0,0.7),0_20px_56px_rgba(0,0,0,0.52)] max-[720px]:[--confirm-size:clamp(68px,19vw,76px)] max-[720px]:[--dpad-center-size:clamp(38px,11vw,44px)] max-[720px]:[--dpad-key-size:clamp(40px,11.5vw,46px)] max-[720px]:[--dpad-row-size:clamp(34px,9.5vw,38px)] max-[720px]:[--dpad-size:calc(var(--dpad-row-size)_+_var(--dpad-key-size)_+_var(--dpad-row-size))] max-[720px]:[--function-height:clamp(40px,11vw,44px)] max-[720px]:[--function-width:clamp(88px,25vw,98px)] max-[720px]:[--page-key-width:clamp(52px,15vw,60px)] max-[720px]:[--small-round-size:clamp(50px,14vw,57px)] max-[720px]:before:inset-[5px] max-[720px]:before:rounded-[19px] max-[720px]:before:border-[rgba(224,184,91,0.42)] max-[720px]:before:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.72)] max-[720px]:after:pointer-events-none max-[720px]:after:absolute max-[720px]:after:inset-0 max-[720px]:after:bg-[linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.035)_1px,transparent_1px)] max-[720px]:after:bg-[length:3px_3px] max-[720px]:after:opacity-25 max-[720px]:after:mix-blend-screen max-[720px]:after:content-['']"
+        className="relative grid min-h-0 place-items-center overflow-hidden rounded-[18px] border border-[rgba(142,109,50,0.5)] bg-[linear-gradient(135deg,rgba(255,238,174,0.06),transparent_26%),linear-gradient(180deg,#1a1b18_0%,#0d0e0c_100%)] px-8 py-10 shadow-[0_22px_64px_rgba(23,36,29,0.22),inset_0_0_0_1px_rgba(255,226,139,0.12)] before:pointer-events-none before:absolute before:inset-3 before:rounded-[14px] before:border before:border-[rgba(224,184,91,0.22)] before:content-[''] max-[720px]:flex max-[720px]:min-h-svh max-[720px]:w-full max-[720px]:flex-col max-[720px]:rounded-[23px] max-[720px]:border-2 max-[720px]:border-[#9b7a35] max-[720px]:bg-[linear-gradient(135deg,rgba(255,238,174,0.08),transparent_22%),radial-gradient(circle_at_28%_18%,rgba(255,255,255,0.08),transparent_18%),linear-gradient(180deg,#1a1b18_0%,#10110f_48%,#1b1b17_100%)] max-[720px]:p-[13px_13px_17px] max-[720px]:text-[#d4b56a] max-[720px]:shadow-[inset_0_0_0_1px_rgba(255,226,139,0.22),inset_0_0_36px_rgba(0,0,0,0.7),0_20px_56px_rgba(0,0,0,0.52)] max-[720px]:before:inset-[5px] max-[720px]:before:rounded-[19px] max-[720px]:before:border-[rgba(224,184,91,0.42)] max-[720px]:before:shadow-[inset_0_0_0_1px_rgba(0,0,0,0.72)] max-[720px]:after:pointer-events-none max-[720px]:after:absolute max-[720px]:after:inset-0 max-[720px]:after:bg-[linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px),linear-gradient(180deg,rgba(255,255,255,0.035)_1px,transparent_1px)] max-[720px]:after:bg-[length:3px_3px] max-[720px]:after:opacity-25 max-[720px]:after:mix-blend-screen max-[720px]:after:content-['']"
         aria-label="游戏画面"
       >
         <MobileGameHeader

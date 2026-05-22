@@ -9,7 +9,7 @@ interface DesktopGameHeaderProps {
 
 export function DesktopGameHeader({ title, onOpenSettings, onOpenSwitch }: DesktopGameHeaderProps) {
   return (
-    <header className="flex min-h-[78px] items-center justify-between gap-6 rounded-[18px] border border-[rgba(142,109,50,0.5)] bg-[linear-gradient(135deg,rgba(255,238,174,0.08),transparent_24%),linear-gradient(180deg,#20211d,#0d0e0c)] px-5 text-[#ead6a4] shadow-[0_12px_34px_rgba(23,36,29,0.18),inset_0_0_0_1px_rgba(255,226,139,0.12)] max-[720px]:hidden">
+    <header className="flex min-h-24 items-center justify-between gap-6 rounded-[18px] border border-[rgba(142,109,50,0.5)] bg-[linear-gradient(135deg,rgba(255,238,174,0.08),transparent_24%),linear-gradient(180deg,#20211d,#0d0e0c)] px-5 text-[#ead6a4] shadow-[0_12px_34px_rgba(23,36,29,0.18),inset_0_0_0_1px_rgba(255,226,139,0.12)] max-[720px]:hidden">
       <div className="min-w-0">
         <h1 className="m-0 overflow-hidden text-[28px] leading-tight font-extrabold text-ellipsis whitespace-nowrap text-[#f1dfb5]">
           {title}

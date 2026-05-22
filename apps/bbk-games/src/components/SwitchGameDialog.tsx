@@ -1,36 +1,22 @@
-import { useState } from 'react';
+import { type ChangeEvent, useState } from 'react';
+import dayjs from 'dayjs';
 import type { BbkGame, BbkGameLib } from '@/apis/game';
-import { loadLocalGame, loadRemoteGameLib, type LoadedGameLib } from '@/utils/lib';
+import { saveLocalBbkGameLibApi } from '@/apis/game';
+import { loadGameLib, parseLocalGameFile, type LoadedGameLib } from '@/utils/lib';
 import ArrowIcon from '@/assets/icons/arrow.svg?react';
 import CloseIcon from '@/assets/icons/close.svg?react';
-
-export type GameSelectResult = { type: 'remote' | 'local'; loadedGameLib: LoadedGameLib };
+import DeleteIcon from '@/assets/icons/delete.svg?react';
 
 interface SwitchGameDialogProps {
   readonly games: readonly BbkGame[];
-  readonly localGameLib: LoadedGameLib | null;
+  readonly selectedLibId: number | null;
   readonly onClose: () => void;
-  readonly onGameSelect: (result: GameSelectResult) => void;
+  readonly onGameSelect: (loaded: LoadedGameLib) => void;
+  readonly onDeleteLib: (libId: number) => void;
 }
 
-export function SwitchGameDialog({ games, localGameLib, onClose, onGameSelect }: SwitchGameDialogProps) {
-  const totalGames = [
-    ...(localGameLib
-      ? [
-          {
-            id: -1,
-            name: '本地游戏',
-            description: '',
-            coverUrl: '',
-            libs: [localGameLib.manifest],
-          },
-        ]
-      : []),
-    ...games,
-  ];
-
-  const selectedLibId = localGameLib?.manifest.id ?? null;
-  const selectedGameId = findGameIdByLibId(totalGames, selectedLibId);
+export function SwitchGameDialog({ games, selectedLibId, onClose, onGameSelect, onDeleteLib }: SwitchGameDialogProps) {
+  const selectedGameId = findGameIdByLibId(games, selectedLibId);
   const [expandedGameId, setExpandedGameId] = useState<number | null>(selectedGameId);
   const [loading, setLoading] = useState(false);
 
@@ -38,33 +24,33 @@ export function SwitchGameDialog({ games, localGameLib, onClose, onGameSelect }:
     setExpandedGameId(id => (id === gameId ? null : gameId));
   };
 
-  const selectLib = (lib: BbkGameLib) => {
+  const handleLibSelect = (lib: BbkGameLib) => {
     if (selectedLibId === lib.id || loading) return;
-    if (lib.id === -1) {
-      if (localGameLib) {
-        onClose();
-        onGameSelect({ type: 'local', loadedGameLib: localGameLib });
-      }
-      return;
-    }
     setLoading(true);
-    loadRemoteGameLib(lib).then(loaded => {
-      onClose();
-      onGameSelect({ type: 'remote', loadedGameLib: loaded });
-      setLoading(false);
-    });
+    loadGameLib(lib)
+      .then(loaded => {
+        onClose();
+        onGameSelect(loaded);
+      })
+      .finally(() => setLoading(false));
   };
 
-  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
     const file = input.files?.[0];
     input.value = '';
     if (!file || loading) return;
     setLoading(true);
-    const loaded = await loadLocalGame(file);
-    onClose();
-    onGameSelect({ type: 'local', loadedGameLib: loaded.loadedGameLib });
-    setLoading(false);
+    parseLocalGameFile(file)
+      .then(([lib, buffer]) => {
+        return saveLocalBbkGameLibApi(lib, buffer).then(savedLib => {
+          onClose();
+          onGameSelect({ manifest: savedLib, buffer });
+        });
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   };
 
   return (
@@ -95,11 +81,11 @@ export function SwitchGameDialog({ games, localGameLib, onClose, onGameSelect }:
         </header>
 
         <div className="min-h-0 overflow-auto p-[12px_14px_10px]">
-          {totalGames.length === 0 ? (
+          {games.length === 0 ? (
             <p className="text-[13px] leading-[1.28] text-[rgba(239,226,189,0.76)] not-italic">游戏列表为空</p>
           ) : null}
 
-          {totalGames.map(game => {
+          {games.map(game => {
             const expanded = expandedGameId === game.id;
             return (
               <section className="mt-2 first:mt-0" key={game.id} aria-label={game.name}>
@@ -121,12 +107,13 @@ export function SwitchGameDialog({ games, localGameLib, onClose, onGameSelect }:
                     {game.libs.map(lib => {
                       const meta = formatGameLibMeta(lib);
                       const selected = selectedLibId === lib.id;
+                      const deletable = lib.id < 0 && !selected;
                       return (
                         <button
                           type="button"
                           key={lib.id}
-                          className={`relative mt-2 flex min-h-16 w-full items-center gap-2.5 rounded-lg border border-[rgba(177,142,78,0.34)] bg-[linear-gradient(180deg,rgba(42,43,39,0.82),rgba(17,18,16,0.88))] p-[10px_42px_10px_12px] text-left text-[#ead6a4] first:mt-0 ${selected ? 'border-[#d39d3c] bg-[linear-gradient(180deg,rgba(67,54,28,0.75),rgba(23,20,15,0.94))] shadow-[inset_0_0_0_1px_rgba(255,217,139,0.2),0_0_0_1px_rgba(211,157,60,0.25)]' : ''}`}
-                          onClick={() => selectLib(lib)}
+                          className={`relative mt-2 flex min-h-16 w-full items-center gap-2.5 rounded-lg border border-[rgba(177,142,78,0.34)] bg-[linear-gradient(180deg,rgba(42,43,39,0.82),rgba(17,18,16,0.88))] p-[10px_42px_10px_12px] text-left text-[#ead6a4] first:mt-0 ${selected ? 'border-[#d39d3c] bg-[linear-gradient(180deg,rgba(67,54,28,0.75),rgba(23,20,15,0.94))] shadow-[inset_0_0_0_1px_rgba(255,217,139,0.2),0_0_0_1px_rgba(211,157,60,0.25)]' : ''} ${deletable ? 'p-[10px_64px_10px_12px]' : ''}`}
+                          onClick={() => handleLibSelect(lib)}
                         >
                           <span className="grid min-w-0 gap-1">
                             <strong className="overflow-hidden text-[17px] leading-[1.12] text-ellipsis whitespace-nowrap text-[#f2dfad]">
@@ -149,6 +136,19 @@ export function SwitchGameDialog({ games, localGameLib, onClose, onGameSelect }:
                               aria-hidden="true"
                             >
                               ✓
+                            </span>
+                          ) : null}
+                          {deletable ? (
+                            <span
+                              className="absolute top-1/2 right-3 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-[rgba(239,226,189,0.5)] hover:bg-[rgba(239,226,189,0.08)] hover:text-[#e07050] active:text-[#c05040]"
+                              role="button"
+                              aria-label={`删除 ${lib.name}`}
+                              onClick={e => {
+                                e.stopPropagation();
+                                onDeleteLib(lib.id);
+                              }}
+                            >
+                              <DeleteIcon className="size-4.5" aria-hidden="true" />
                             </span>
                           ) : null}
                         </button>
@@ -192,5 +192,5 @@ function formatGameLibMeta(lib: BbkGameLib): string {
 }
 
 function formatDate(value: string | null): string {
-  return value ? value.slice(0, 10) : '';
+  return value ? dayjs(value).format('YYYY-MM-DD') : '';
 }

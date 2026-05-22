@@ -1,21 +1,22 @@
 import { useEffect, useRef, useState } from 'react';
 import { createBrowserRuntime, type BrowserRuntime } from '@fmj-next/browser';
 import { KeyCode } from '@fmj-next/core';
-import { getBbkGames, type BbkGame } from '@/apis/game';
+import { useLiveQuery } from 'dexie-react-hooks';
+import { getBbkGamesApi, deleteLocalBbkGameLibApi, type BbkGame } from '@/apis/game';
+import { db } from '@/utils/database';
 import { DesktopGameHeader } from '@/components/DesktopGameHeader';
 import { GameConsole } from '@/components/GameConsole';
 import { GameScreen } from '@/components/GameScreen';
 import { MobileGameHeader } from '@/components/MobileGameHeader';
 import { SettingsDialog } from '@/components/SettingsDialog';
 import { SwitchConfirmDialog } from '@/components/SwitchConfirmDialog';
-import { SwitchGameDialog, type GameSelectResult } from '@/components/SwitchGameDialog';
-import { type LoadedGameLib, loadRemoteGameLib } from '@/utils/lib';
+import { SwitchGameDialog } from '@/components/SwitchGameDialog';
+import { type LoadedGameLib, loadGameLib } from '@/utils/lib';
 import { audio } from '@/utils/audio';
-import { WebSaveStore } from '@/utils/save';
+import { loadLastLibId, saveLastLibId, WebSaveStore } from '@/utils/save';
 import { parseEngineOptions } from '@/utils/utils';
 import { loadKeyBindings, lookupKeyCode, saveKeyBindings } from '@/utils/key-bindings';
 import { KeyBindingsDialog } from '@/components/KeyBindingsDialog';
-import { loadLastGame, loadLocalLib, saveLastGame, saveLocalLib } from '@/utils/game-memory';
 
 type OpenDialog = 'settings' | 'switchConfirm' | 'switch' | 'keybindings' | null;
 
@@ -24,12 +25,33 @@ function App() {
   const runtimeRef = useRef<BrowserRuntime | null>(null);
   const keyBindingsRef = useRef(loadKeyBindings());
   const saveStore = useRef<WebSaveStore | null>(null);
-  const [games, setGames] = useState<readonly BbkGame[]>([]);
-  const [gameSelectResult, setGameSelectResult] = useState<GameSelectResult | null>(null);
-  const gameTitle = gameSelectResult?.loadedGameLib.manifest.name ?? '';
+  const [remoteGames, setRemoteGames] = useState<readonly BbkGame[]>([]);
+  const localGames =
+    useLiveQuery(async () => {
+      const libs = await db.lib.toArray();
+      return [
+        {
+          id: -1,
+          name: '本地游戏',
+          description: '',
+          coverUrl: '',
+          libs: libs.map(lib => ({ ...lib, id: -Math.abs(lib.id) })),
+        },
+      ];
+    }) ?? [];
+  const totalGames = [...localGames, ...remoteGames];
+  const [loadedGameLib, setLoadedGameLib] = useState<LoadedGameLib | null>(null);
+  const gameTitle = loadedGameLib?.manifest.name ?? '';
   const [speed, setSpeed] = useState(1);
   const [encounterRate, setEncounterRate] = useState(5);
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
+
+  const loadGames = async () => {
+    return getBbkGamesApi().then(({ list }) => {
+      setRemoteGames(list);
+      return list;
+    });
+  };
 
   const startLoadedGameLib = (loaded: LoadedGameLib) => {
     const runtime = runtimeRef.current;
@@ -39,19 +61,17 @@ function App() {
       sha256: loaded.manifest.sha256,
     });
     runtime.start({
-      lib: loaded.lib,
+      lib: new Uint8Array(loaded.buffer),
       engineOptions: parseEngineOptions(loaded.manifest.engineOptions) ?? {},
     });
     runtime.setSpeed(speed);
     runtime.debug.combat.setEncounterRate(encounterRate / 100);
   };
 
-  const handleGameSelect = (result: GameSelectResult) => {
-    setGameSelectResult(result);
-    const {type, loadedGameLib } = result;
-    saveLastGame({ type, manifest: loadedGameLib.manifest })
-    if (result.type === 'local') saveLocalLib(loadedGameLib.lib);
-    startLoadedGameLib(loadedGameLib);
+  const handleGameSelect = (loaded: LoadedGameLib) => {
+    setLoadedGameLib(loaded);
+    saveLastLibId(loaded.manifest.id);
+    startLoadedGameLib(loaded);
   };
 
   const handleKeyPress = (key: KeyCode) => {
@@ -59,7 +79,7 @@ function App() {
   };
 
   const handleOpenSwitch = () => {
-    setOpenDialog(gameSelectResult !== null ? 'switchConfirm' : 'switch');
+    setOpenDialog(loadedGameLib !== null ? 'switchConfirm' : 'switch');
   };
 
   const handleSpeedChange = (value: number) => {
@@ -69,7 +89,11 @@ function App() {
 
   const handleEncounterRateChange = (value: number) => {
     setEncounterRate(value);
-    if (gameSelectResult !== null) runtimeRef.current?.debug.combat.setEncounterRate(value / 100);
+    if (loadedGameLib !== null) runtimeRef.current?.debug.combat.setEncounterRate(value / 100);
+  };
+
+  const handleDeleteLib = (libId: number) => {
+    if (confirm('确定删除此游戏？')) deleteLocalBbkGameLibApi(libId);
   };
 
   useEffect(() => {
@@ -87,27 +111,21 @@ function App() {
     });
     runtimeRef.current = runtime;
 
-    const lastGameMeta = loadLastGame();
-    if (lastGameMeta?.type === 'local') {
-      loadLocalLib().then(lib => {
-        if (!lib) return;
-        const loadedGameLib = { manifest: lastGameMeta.manifest, lib };
-        setGameSelectResult({ type: 'local', loadedGameLib });
-        startLoadedGameLib(loadedGameLib);
-      });
-    }
+    const lastLibId = loadLastLibId();
 
-      getBbkGames().then(({ list }) => {
-        setGames(list);
-        if (lastGameMeta?.type === 'remote') {
-          const lib = list.flatMap(g => g.libs).find(l => l.id === lastGameMeta.manifest.id);
-          if (!lib) return;
-          loadRemoteGameLib(lib).then(loaded => {
-            setGameSelectResult({ type: 'remote', loadedGameLib: loaded });
-            startLoadedGameLib(loaded);
-          });
-        }
-      });
+    loadGames().then(async remoteGameList => {
+      if (lastLibId === null) return;
+      const localLibs = await db.lib.toArray();
+      const totalLibs = [
+        ...remoteGameList.flatMap(g => g.libs),
+        ...localLibs.map(lib => ({ ...lib, id: -Math.abs(lib.id) })),
+      ];
+      const lib = totalLibs.find(l => l.id === lastLibId);
+      if (!lib) return;
+      const loaded = await loadGameLib(lib);
+      setLoadedGameLib(loaded);
+      startLoadedGameLib(loaded);
+    });
 
     return () => {
       runtime.dispose();
@@ -164,10 +182,11 @@ function App() {
 
       {openDialog === 'switch' ? (
         <SwitchGameDialog
-          games={games}
-          localGameLib={gameSelectResult?.type === 'local' ? gameSelectResult.loadedGameLib : null}
+          games={totalGames}
+          selectedLibId={loadedGameLib?.manifest.id ?? null}
           onClose={() => setOpenDialog(null)}
           onGameSelect={handleGameSelect}
+          onDeleteLib={handleDeleteLib}
         />
       ) : null}
 

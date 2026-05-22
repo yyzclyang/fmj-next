@@ -32,7 +32,7 @@ export async function loadLocalGame(file: File): Promise<LoadedLocalGame> {
   console.log('name, author, version', name, author, version);
   const lib = new Uint8Array(libBuffer);
   const sha256 = await createLibSha256(lib);
-  const manifest: BbkGameLib = {
+  const bbkGameLib: BbkGameLib = {
     id: -1,
     name,
     description: '',
@@ -52,9 +52,9 @@ export async function loadLocalGame(file: File): Promise<LoadedLocalGame> {
       name: '本地游戏',
       description: '',
       coverUrl: '',
-      libs: [manifest],
+      libs: [bbkGameLib],
     },
-    loadedGameLib: { manifest, lib },
+    loadedGameLib: { manifest: bbkGameLib, lib },
   };
 }
 

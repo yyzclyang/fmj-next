@@ -1,38 +1,35 @@
-import { useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createBrowserRuntime, type BrowserRuntime } from '@fmj-next/browser';
 import { KeyCode } from '@fmj-next/core';
-import { getBbkGames, type BbkGame, type BbkGameLib } from '@/apis/game';
+import { getBbkGames, type BbkGame } from '@/apis/game';
 import { DesktopGameHeader } from '@/components/DesktopGameHeader';
 import { GameConsole } from '@/components/GameConsole';
 import { GameScreen } from '@/components/GameScreen';
 import { MobileGameHeader } from '@/components/MobileGameHeader';
 import { SettingsDialog } from '@/components/SettingsDialog';
 import { SwitchConfirmDialog } from '@/components/SwitchConfirmDialog';
-import { SwitchGameDialog } from '@/components/SwitchGameDialog';
-import { loadLocalGame, loadRemoteGameLib, type LoadedGameLib, type LoadedLocalGame } from '@/utils/lib';
+import { SwitchGameDialog, type GameSelectResult } from '@/components/SwitchGameDialog';
+import { type LoadedGameLib, loadRemoteGameLib } from '@/utils/lib';
 import { audio } from '@/utils/audio';
 import { WebSaveStore } from '@/utils/save';
 import { parseEngineOptions } from '@/utils/utils';
-import { loadKeyBindings, lookupKeyCode, saveKeyBindings, type KeyBindings } from '@/utils/key-bindings';
+import { loadKeyBindings, lookupKeyCode, saveKeyBindings } from '@/utils/key-bindings';
 import { KeyBindingsDialog } from '@/components/KeyBindingsDialog';
+import { loadLastGame, loadLocalLib, saveLastGame, saveLocalLib } from '@/utils/game-memory';
 
 type OpenDialog = 'settings' | 'switchConfirm' | 'switch' | 'keybindings' | null;
 
 function App() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const runtimeRef = useRef<BrowserRuntime | null>(null);
+  const keyBindingsRef = useRef(loadKeyBindings());
   const saveStore = useRef<WebSaveStore | null>(null);
   const [games, setGames] = useState<readonly BbkGame[]>([]);
-  const [localGame, setLocalGame] = useState<LoadedLocalGame | null>(null);
-  const totalGames: readonly BbkGame[] = localGame ? [localGame.game, ...games] : games;
-  const [selectedLibId, setSelectedLibId] = useState<number | null>(null);
-  const gameTitle = totalGames.find(game => game.libs.some(lib => lib.id === selectedLibId))?.name ?? '载入游戏列表';
+  const [gameSelectResult, setGameSelectResult] = useState<GameSelectResult | null>(null);
+  const gameTitle = gameSelectResult?.loadedGameLib.manifest.name ?? '';
   const [speed, setSpeed] = useState(1);
   const [encounterRate, setEncounterRate] = useState(5);
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
-  const [keyBindings, setKeyBindings] = useState<KeyBindings>(loadKeyBindings);
-  const keyBindingsRef = useRef(keyBindings);
-  keyBindingsRef.current = keyBindings;
 
   const startLoadedGameLib = (loaded: LoadedGameLib) => {
     const runtime = runtimeRef.current;
@@ -49,28 +46,12 @@ function App() {
     runtime.debug.combat.setEncounterRate(encounterRate / 100);
   };
 
-  const startRemoteGame = (lib: BbkGameLib) => {
-    setSelectedLibId(lib.id);
-    loadRemoteGameLib(lib).then(loaded => {
-      startLoadedGameLib(loaded);
-    });
-  };
-
-  const startLocalGame = (file: File) => {
-    loadLocalGame(file).then(loaded => {
-      setLocalGame(loaded);
-      setSelectedLibId(loaded.loadedGameLib.manifest.id);
-      startLoadedGameLib(loaded.loadedGameLib);
-    });
-  };
-
-  const handleLocalLibChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const input = event.currentTarget;
-    const file = input.files?.[0];
-    input.value = '';
-    if (!file) return;
-    setOpenDialog(null);
-    startLocalGame(file);
+  const handleGameSelect = (result: GameSelectResult) => {
+    setGameSelectResult(result);
+    const {type, loadedGameLib } = result;
+    saveLastGame({ type, manifest: loadedGameLib.manifest })
+    if (result.type === 'local') saveLocalLib(loadedGameLib.lib);
+    startLoadedGameLib(loadedGameLib);
   };
 
   const handleKeyPress = (key: KeyCode) => {
@@ -78,20 +59,7 @@ function App() {
   };
 
   const handleOpenSwitch = () => {
-    setOpenDialog(selectedLibId !== null ? 'switchConfirm' : 'switch');
-  };
-
-  const handleSelectGame = (lib: BbkGameLib) => {
-    setOpenDialog(null);
-    if (selectedLibId === lib.id) return;
-
-    if (lib.id === -1) {
-      if (!localGame) return;
-      setSelectedLibId(lib.id);
-      startLoadedGameLib(localGame.loadedGameLib);
-      return;
-    }
-    startRemoteGame(lib);
+    setOpenDialog(gameSelectResult !== null ? 'switchConfirm' : 'switch');
   };
 
   const handleSpeedChange = (value: number) => {
@@ -101,9 +69,7 @@ function App() {
 
   const handleEncounterRateChange = (value: number) => {
     setEncounterRate(value);
-    if (selectedLibId !== null) {
-      runtimeRef.current?.debug.combat.setEncounterRate(value / 100);
-    }
+    if (gameSelectResult !== null) runtimeRef.current?.debug.combat.setEncounterRate(value / 100);
   };
 
   useEffect(() => {
@@ -120,7 +86,28 @@ function App() {
       speed: 1,
     });
     runtimeRef.current = runtime;
-    getBbkGames().then(r => setGames(r.list));
+
+    const lastGameMeta = loadLastGame();
+    if (lastGameMeta?.type === 'local') {
+      loadLocalLib().then(lib => {
+        if (!lib) return;
+        const loadedGameLib = { manifest: lastGameMeta.manifest, lib };
+        setGameSelectResult({ type: 'local', loadedGameLib });
+        startLoadedGameLib(loadedGameLib);
+      });
+    }
+
+      getBbkGames().then(({ list }) => {
+        setGames(list);
+        if (lastGameMeta?.type === 'remote') {
+          const lib = list.flatMap(g => g.libs).find(l => l.id === lastGameMeta.manifest.id);
+          if (!lib) return;
+          loadRemoteGameLib(lib).then(loaded => {
+            setGameSelectResult({ type: 'remote', loadedGameLib: loaded });
+            startLoadedGameLib(loaded);
+          });
+        }
+      });
 
     return () => {
       runtime.dispose();
@@ -177,20 +164,19 @@ function App() {
 
       {openDialog === 'switch' ? (
         <SwitchGameDialog
-          games={totalGames}
-          selectedLibId={selectedLibId}
+          games={games}
+          localGameLib={gameSelectResult?.type === 'local' ? gameSelectResult.loadedGameLib : null}
           onClose={() => setOpenDialog(null)}
-          onSelectGame={handleSelectGame}
-          onLocalLibChange={handleLocalLibChange}
+          onGameSelect={handleGameSelect}
         />
       ) : null}
 
       {openDialog === 'keybindings' ? (
         <KeyBindingsDialog
-          bindings={keyBindings}
+          bindings={keyBindingsRef.current}
           onClose={() => setOpenDialog(null)}
           onChange={bindings => {
-            setKeyBindings(bindings);
+            keyBindingsRef.current = bindings;
             saveKeyBindings(bindings);
           }}
         />

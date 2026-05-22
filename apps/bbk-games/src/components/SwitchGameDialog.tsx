@@ -1,34 +1,71 @@
-import { useEffect, useState, type ChangeEvent } from 'react';
+import { useState } from 'react';
 import type { BbkGame, BbkGameLib } from '@/apis/game';
+import { loadLocalGame, loadRemoteGameLib, type LoadedGameLib } from '@/utils/lib';
 import ArrowIcon from '@/assets/icons/arrow.svg?react';
 import CloseIcon from '@/assets/icons/close.svg?react';
 
+export type GameSelectResult = { type: 'remote' | 'local'; loadedGameLib: LoadedGameLib };
+
 interface SwitchGameDialogProps {
   readonly games: readonly BbkGame[];
-  readonly selectedLibId: number | null;
+  readonly localGameLib: LoadedGameLib | null;
   readonly onClose: () => void;
-  readonly onSelectGame: (lib: BbkGameLib) => void;
-  readonly onLocalLibChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  readonly onGameSelect: (result: GameSelectResult) => void;
 }
 
-export function SwitchGameDialog({
-  games,
-  selectedLibId,
-  onClose,
-  onSelectGame,
-  onLocalLibChange,
-}: SwitchGameDialogProps) {
-  const selectedGameId = findGameIdByLibId(games, selectedLibId);
+export function SwitchGameDialog({ games, localGameLib, onClose, onGameSelect }: SwitchGameDialogProps) {
+  const totalGames = [
+    ...(localGameLib
+      ? [
+          {
+            id: -1,
+            name: '本地游戏',
+            description: '',
+            coverUrl: '',
+            libs: [localGameLib.manifest],
+          },
+        ]
+      : []),
+    ...games,
+  ];
+
+  const selectedLibId = localGameLib?.manifest.id ?? null;
+  const selectedGameId = findGameIdByLibId(totalGames, selectedLibId);
   const [expandedGameId, setExpandedGameId] = useState<number | null>(selectedGameId);
+  const [loading, setLoading] = useState(false);
 
   const toggleGameGroup = (gameId: number) => {
     setExpandedGameId(id => (id === gameId ? null : gameId));
   };
 
-  useEffect(() => {
-    if (selectedGameId === null) return;
-    setExpandedGameId(selectedGameId);
-  }, [selectedGameId]);
+  const selectLib = (lib: BbkGameLib) => {
+    if (selectedLibId === lib.id || loading) return;
+    if (lib.id === -1) {
+      if (localGameLib) {
+        onClose();
+        onGameSelect({ type: 'local', loadedGameLib: localGameLib });
+      }
+      return;
+    }
+    setLoading(true);
+    loadRemoteGameLib(lib).then(loaded => {
+      onClose();
+      onGameSelect({ type: 'remote', loadedGameLib: loaded });
+      setLoading(false);
+    });
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const input = event.currentTarget;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file || loading) return;
+    setLoading(true);
+    const loaded = await loadLocalGame(file);
+    onClose();
+    onGameSelect({ type: 'local', loadedGameLib: loaded.loadedGameLib });
+    setLoading(false);
+  };
 
   return (
     <div
@@ -58,11 +95,11 @@ export function SwitchGameDialog({
         </header>
 
         <div className="min-h-0 overflow-auto p-[12px_14px_10px]">
-          {games.length === 0 ? (
+          {totalGames.length === 0 ? (
             <p className="text-[13px] leading-[1.28] text-[rgba(239,226,189,0.76)] not-italic">游戏列表为空</p>
           ) : null}
 
-          {games.map(game => {
+          {totalGames.map(game => {
             const expanded = expandedGameId === game.id;
             return (
               <section className="mt-2 first:mt-0" key={game.id} aria-label={game.name}>
@@ -89,7 +126,7 @@ export function SwitchGameDialog({
                           type="button"
                           key={lib.id}
                           className={`relative mt-2 flex min-h-16 w-full items-center gap-2.5 rounded-lg border border-[rgba(177,142,78,0.34)] bg-[linear-gradient(180deg,rgba(42,43,39,0.82),rgba(17,18,16,0.88))] p-[10px_42px_10px_12px] text-left text-[#ead6a4] first:mt-0 ${selected ? 'border-[#d39d3c] bg-[linear-gradient(180deg,rgba(67,54,28,0.75),rgba(23,20,15,0.94))] shadow-[inset_0_0_0_1px_rgba(255,217,139,0.2),0_0_0_1px_rgba(211,157,60,0.25)]' : ''}`}
-                          onClick={() => onSelectGame(lib)}
+                          onClick={() => selectLib(lib)}
                         >
                           <span className="grid min-w-0 gap-1">
                             <strong className="overflow-hidden text-[17px] leading-[1.12] text-ellipsis whitespace-nowrap text-[#f2dfad]">
@@ -130,7 +167,7 @@ export function SwitchGameDialog({
             name="mobile-local-game"
             type="file"
             accept=".lib,.LIB,.gam,.GAM"
-            onChange={onLocalLibChange}
+            onChange={handleFileChange}
           />
           <span className="text-2xl leading-none" aria-hidden="true">
             ⇧

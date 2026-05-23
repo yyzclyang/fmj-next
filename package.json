@@ -5,7 +5,7 @@
   "description": "伏魔记重写项目",
   "type": "module",
   "scripts": {
-    "dev": "pnpm --parallel --stream --filter @fmj-next/core --filter @fmj-next/browser --filter @fmj-next/bbk-games run dev",
+    "dev": "pnpm run build:packages && pnpm --parallel --stream --filter @fmj-next/core --filter @fmj-next/browser --filter @fmj-next/bbk-games run dev",
     "build": "pnpm --filter @fmj-next/core --filter @fmj-next/browser --filter @fmj-next/bbk-games run build",
     "build:packages": "pnpm --filter @fmj-next/core run build && pnpm --filter @fmj-next/browser run build",
     "dev:core": "pnpm --filter @fmj-next/core run dev",

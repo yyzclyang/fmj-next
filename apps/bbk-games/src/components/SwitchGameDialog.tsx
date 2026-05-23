@@ -7,6 +7,7 @@ import { loadGameLib, parseLocalGameFile, type LoadedGameLib } from '@/utils/lib
 import ArrowIcon from '@/assets/icons/arrow.svg?react';
 import CloseIcon from '@/assets/icons/close.svg?react';
 import DeleteIcon from '@/assets/icons/delete.svg?react';
+import LoadingIcon from '@/assets/icons/loading.svg?react';
 
 interface SwitchGameDialogProps {
   readonly games: readonly BbkGame[];
@@ -19,7 +20,7 @@ interface SwitchGameDialogProps {
 export function SwitchGameDialog({ games, selectedLib, onClose, onGameSelect, onDeleteLib }: SwitchGameDialogProps) {
   const selectedGameId = findGameIdByLibId(games, selectedLib);
   const [expandedGameId, setExpandedGameId] = useState<number | null>(selectedGameId);
-  const [loading, setLoading] = useState(false);
+  const [loadingLibId, setLoadingLibId] = useState<number | null>(null);
 
   const toggleGameGroup = (gameId: number) => {
     setExpandedGameId(id => (id === gameId ? null : gameId));
@@ -27,22 +28,22 @@ export function SwitchGameDialog({ games, selectedLib, onClose, onGameSelect, on
 
   const handleLibSelect = (lib: BbkGameLib, source: GameSource) => {
     if (selectedLib?.source === source && selectedLib.manifest.id === lib.id) return;
-    if (loading) return;
-    setLoading(true);
+    if (loadingLibId !== null) return;
+    setLoadingLibId(lib.id);
     loadGameLib(lib, source)
       .then(loaded => {
         onClose();
         onGameSelect(loaded);
       })
-      .finally(() => setLoading(false));
+      .finally(() => setLoadingLibId(null));
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
     const input = event.currentTarget;
     const file = input.files?.[0];
     input.value = '';
-    if (!file || loading) return;
-    setLoading(true);
+    if (!file || loadingLibId !== null) return;
+    setLoadingLibId(Infinity);
     parseLocalGameFile(file)
       .then(([lib, buffer]) => {
         return saveLocalBbkGameLibApi(lib, buffer).then(savedLib => {
@@ -50,9 +51,7 @@ export function SwitchGameDialog({ games, selectedLib, onClose, onGameSelect, on
           onGameSelect({ source: 'local', manifest: savedLib, buffer });
         });
       })
-      .finally(() => {
-        setLoading(false);
-      });
+      .finally(() => setLoadingLibId(null));
   };
 
   return (
@@ -110,12 +109,13 @@ export function SwitchGameDialog({ games, selectedLib, onClose, onGameSelect, on
                     {game.libs.map(lib => {
                       const meta = formatGameLibMeta(lib);
                       const selected = selectedLib?.source === libSource && selectedLib.manifest.id === lib.id;
-                      const deletable = libSource === 'local' && !selected;
+                      const isLoading = loadingLibId === lib.id;
+                      const deletable = libSource === 'local' && !selected && !isLoading;
                       return (
                         <button
                           type="button"
                           key={lib.id}
-                          className={`relative mt-2 flex min-h-16 w-full items-center gap-2.5 rounded-lg border border-[rgba(177,142,78,0.34)] bg-[linear-gradient(180deg,rgba(42,43,39,0.82),rgba(17,18,16,0.88))] p-[10px_42px_10px_12px] text-left text-[#ead6a4] first:mt-0 ${selected ? 'border-[#d39d3c] bg-[linear-gradient(180deg,rgba(67,54,28,0.75),rgba(23,20,15,0.94))] shadow-[inset_0_0_0_1px_rgba(255,217,139,0.2),0_0_0_1px_rgba(211,157,60,0.25)]' : ''} ${deletable ? 'p-[10px_64px_10px_12px]' : ''}`}
+                          className={`relative mt-2 flex min-h-16 w-full items-center gap-2.5 rounded-lg border border-[rgba(177,142,78,0.34)] bg-[linear-gradient(180deg,rgba(42,43,39,0.82),rgba(17,18,16,0.88))] p-[10px_42px_10px_12px] text-left text-[#ead6a4] first:mt-0 ${selected ? 'border-[#d39d3c] bg-[linear-gradient(180deg,rgba(67,54,28,0.75),rgba(23,20,15,0.94))] shadow-[inset_0_0_0_1px_rgba(255,217,139,0.2),0_0_0_1px_rgba(211,157,60,0.25)]' : ''} ${deletable || isLoading ? 'p-[10px_64px_10px_12px]' : ''}`}
                           onClick={() => handleLibSelect(lib, libSource)}
                         >
                           <span className="grid min-w-0 gap-1">
@@ -133,13 +133,16 @@ export function SwitchGameDialog({ games, selectedLib, onClose, onGameSelect, on
                               </em>
                             ) : null}
                           </span>
-                          {selected ? (
+                          {selected && !isLoading ? (
                             <span
                               className="absolute top-1/2 right-3.5 -translate-y-1/2 text-[25px] leading-none font-black text-[#d9a645]"
                               aria-hidden="true"
                             >
                               ✓
                             </span>
+                          ) : null}
+                          {isLoading ? (
+                            <LoadingIcon className="absolute top-1/2 right-3 size-5 -translate-y-1/2 text-[#d7bc75]" aria-hidden="true" />
                           ) : null}
                           {deletable ? (
                             <span

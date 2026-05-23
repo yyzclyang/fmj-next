@@ -3,6 +3,8 @@ export function isDev(): boolean {
 }
 
 export function getRootDomain(): string {
+  const resourceRootDomain = import.meta.env.VITE_RESOURCE_ROOT_DOMAIN;
+  if (resourceRootDomain) return resourceRootDomain;
   const hostname = window.location.hostname;
   if (hostname === 'localhost' || /^\d+\.\d+\.\d+\.\d+$/.test(hostname)) return hostname;
   const parts = hostname.split('.');

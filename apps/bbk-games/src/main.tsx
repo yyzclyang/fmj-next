@@ -11,3 +11,7 @@ createRoot(root).render(
     <App />
   </StrictMode>
 );
+
+if ('serviceWorker' in navigator) {
+  import('virtual:pwa-register').then(({ registerSW }) => registerSW());
+}

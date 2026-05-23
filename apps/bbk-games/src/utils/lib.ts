@@ -1,25 +1,25 @@
 import type { BbkGameLib } from '@/apis/game';
 import { getLocalBbkGameLibDataApi } from '@/apis/game';
+import { type GameSource } from '@/utils/database';
 import { R2_STATIC_BASE_URL } from '@/utils/env';
 
 const gbkDecoder = new TextDecoder('GBK');
 
 export interface LoadedGameLib {
+  readonly source: GameSource;
   readonly manifest: BbkGameLib;
   readonly buffer: ArrayBufferLike;
 }
 
-export async function loadGameLib(gameLib: BbkGameLib): Promise<LoadedGameLib> {
-  if (gameLib.id < 0) {
-    const buffer = await getLocalBbkGameLibDataApi(gameLib.id);
-    if (!buffer) throw new Error('Failed to load LIB');
-    return { manifest: gameLib, buffer };
-  }
-  const buffer = await fetch(`${R2_STATIC_BASE_URL}/${gameLib.url}`).then(res => {
-    if (!res.ok) throw new Error('Failed to load LIB');
-    return res.arrayBuffer();
-  });
-  return { manifest: gameLib, buffer };
+export async function loadGameLib(gameLib: BbkGameLib, source: GameSource): Promise<LoadedGameLib> {
+  const buffer =
+    source === 'local'
+      ? await getLocalBbkGameLibDataApi(gameLib.id).then(b => b ?? Promise.reject(new Error('Failed to load LIB')))
+      : await fetch(`${R2_STATIC_BASE_URL}/${gameLib.url}`).then(res => {
+          if (!res.ok) throw new Error('Failed to load LIB');
+          return res.arrayBuffer();
+        });
+  return { source, manifest: gameLib, buffer };
 }
 
 export async function parseLocalGameFile(file: File): Promise<[Omit<BbkGameLib, 'id'>, ArrayBuffer]> {
@@ -38,7 +38,7 @@ export async function parseLocalGameFile(file: File): Promise<[Omit<BbkGameLib, 
       version,
       sha256,
       size: libBuffer.byteLength,
-      scopeId: sha256.slice(0, 16),
+      scopeId: `local_${sha256.slice(0, 16)}`,
       engineOptions: '',
       publishedAt: null,
     },

@@ -2,6 +2,7 @@ import { type ChangeEvent, useState } from 'react';
 import dayjs from 'dayjs';
 import type { BbkGame, BbkGameLib } from '@/apis/game';
 import { saveLocalBbkGameLibApi } from '@/apis/game';
+import type { GameSource } from '@/utils/database';
 import { loadGameLib, parseLocalGameFile, type LoadedGameLib } from '@/utils/lib';
 import ArrowIcon from '@/assets/icons/arrow.svg?react';
 import CloseIcon from '@/assets/icons/close.svg?react';
@@ -9,14 +10,14 @@ import DeleteIcon from '@/assets/icons/delete.svg?react';
 
 interface SwitchGameDialogProps {
   readonly games: readonly BbkGame[];
-  readonly selectedLibId: number | null;
+  readonly selectedLib: LoadedGameLib | null;
   readonly onClose: () => void;
   readonly onGameSelect: (loaded: LoadedGameLib) => void;
   readonly onDeleteLib: (libId: number) => void;
 }
 
-export function SwitchGameDialog({ games, selectedLibId, onClose, onGameSelect, onDeleteLib }: SwitchGameDialogProps) {
-  const selectedGameId = findGameIdByLibId(games, selectedLibId);
+export function SwitchGameDialog({ games, selectedLib, onClose, onGameSelect, onDeleteLib }: SwitchGameDialogProps) {
+  const selectedGameId = findGameIdByLibId(games, selectedLib);
   const [expandedGameId, setExpandedGameId] = useState<number | null>(selectedGameId);
   const [loading, setLoading] = useState(false);
 
@@ -24,10 +25,11 @@ export function SwitchGameDialog({ games, selectedLibId, onClose, onGameSelect, 
     setExpandedGameId(id => (id === gameId ? null : gameId));
   };
 
-  const handleLibSelect = (lib: BbkGameLib) => {
-    if (selectedLibId === lib.id || loading) return;
+  const handleLibSelect = (lib: BbkGameLib, source: GameSource) => {
+    if (selectedLib?.source === source && selectedLib.manifest.id === lib.id) return;
+    if (loading) return;
     setLoading(true);
-    loadGameLib(lib)
+    loadGameLib(lib, source)
       .then(loaded => {
         onClose();
         onGameSelect(loaded);
@@ -45,7 +47,7 @@ export function SwitchGameDialog({ games, selectedLibId, onClose, onGameSelect, 
       .then(([lib, buffer]) => {
         return saveLocalBbkGameLibApi(lib, buffer).then(savedLib => {
           onClose();
-          onGameSelect({ manifest: savedLib, buffer });
+          onGameSelect({ source: 'local', manifest: savedLib, buffer });
         });
       })
       .finally(() => {
@@ -87,6 +89,7 @@ export function SwitchGameDialog({ games, selectedLibId, onClose, onGameSelect, 
 
           {games.map(game => {
             const expanded = expandedGameId === game.id;
+            const libSource = game.id === -1 ? 'local' : 'remote';
             return (
               <section className="mt-2 first:mt-0" key={game.id} aria-label={game.name}>
                 <button
@@ -106,14 +109,14 @@ export function SwitchGameDialog({ games, selectedLibId, onClose, onGameSelect, 
                   <div className="p-[7px_0_2px_17px]">
                     {game.libs.map(lib => {
                       const meta = formatGameLibMeta(lib);
-                      const selected = selectedLibId === lib.id;
-                      const deletable = lib.id < 0 && !selected;
+                      const selected = selectedLib?.source === libSource && selectedLib.manifest.id === lib.id;
+                      const deletable = libSource === 'local' && !selected;
                       return (
                         <button
                           type="button"
                           key={lib.id}
                           className={`relative mt-2 flex min-h-16 w-full items-center gap-2.5 rounded-lg border border-[rgba(177,142,78,0.34)] bg-[linear-gradient(180deg,rgba(42,43,39,0.82),rgba(17,18,16,0.88))] p-[10px_42px_10px_12px] text-left text-[#ead6a4] first:mt-0 ${selected ? 'border-[#d39d3c] bg-[linear-gradient(180deg,rgba(67,54,28,0.75),rgba(23,20,15,0.94))] shadow-[inset_0_0_0_1px_rgba(255,217,139,0.2),0_0_0_1px_rgba(211,157,60,0.25)]' : ''} ${deletable ? 'p-[10px_64px_10px_12px]' : ''}`}
-                          onClick={() => handleLibSelect(lib)}
+                          onClick={() => handleLibSelect(lib, libSource)}
                         >
                           <span className="grid min-w-0 gap-1">
                             <strong className="overflow-hidden text-[17px] leading-[1.12] text-ellipsis whitespace-nowrap text-[#f2dfad]">
@@ -179,10 +182,11 @@ export function SwitchGameDialog({ games, selectedLibId, onClose, onGameSelect, 
   );
 }
 
-function findGameIdByLibId(games: readonly BbkGame[], libId: number | null): number | null {
-  if (libId === null) return null;
+function findGameIdByLibId(games: readonly BbkGame[], selectedLib: LoadedGameLib | null): number | null {
+  if (!selectedLib) return null;
+  if (selectedLib.source === 'local') return -1;
   for (const game of games) {
-    if (game.libs.some(lib => lib.id === libId)) return game.id;
+    if (game.libs.some(lib => lib.id === selectedLib.manifest.id)) return game.id;
   }
   return null;
 }

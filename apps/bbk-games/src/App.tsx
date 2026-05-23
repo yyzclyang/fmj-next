@@ -13,7 +13,7 @@ import { SwitchConfirmDialog } from '@/components/SwitchConfirmDialog';
 import { SwitchGameDialog } from '@/components/SwitchGameDialog';
 import { type LoadedGameLib, loadGameLib } from '@/utils/lib';
 import { audio } from '@/utils/audio';
-import { loadLastLibId, saveLastLibId, WebSaveStore } from '@/utils/save';
+import { loadLastGameMeta, saveLastGameMeta, WebSaveStore } from '@/utils/web-save-store';
 import { parseEngineOptions } from '@/utils/utils';
 import { loadKeyBindings, lookupKeyCode, saveKeyBindings } from '@/utils/key-bindings';
 import { KeyBindingsDialog } from '@/components/KeyBindingsDialog';
@@ -29,15 +29,7 @@ function App() {
   const localGames =
     useLiveQuery(async () => {
       const libs = await db.lib.toArray();
-      return [
-        {
-          id: -1,
-          name: '本地游戏',
-          description: '',
-          coverUrl: '',
-          libs: libs.map(lib => ({ ...lib, id: -Math.abs(lib.id) })),
-        },
-      ];
+      return [{ id: -1, name: '本地游戏', description: '', coverUrl: '', libs }];
     }) ?? [];
   const totalGames = [...localGames, ...remoteGames];
   const [loadedGameLib, setLoadedGameLib] = useState<LoadedGameLib | null>(null);
@@ -46,20 +38,22 @@ function App() {
   const [encounterRate, setEncounterRate] = useState(5);
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
 
-  const loadGames = async () => {
+  const loadRemoteGames = async () => {
     return getBbkGamesApi().then(({ list }) => {
       setRemoteGames(list);
       return list;
     });
   };
 
-  const startLoadedGameLib = (loaded: LoadedGameLib) => {
+  const startLoadedGameLib = async (loaded: LoadedGameLib) => {
     const runtime = runtimeRef.current;
     if (!runtime) return;
     saveStore.current = new WebSaveStore({
+      source: loaded.source,
       scopeId: loaded.manifest.scopeId,
-      sha256: loaded.manifest.sha256,
+      libId: loaded.manifest.id,
     });
+    await saveStore.current.preload();
     runtime.start({
       lib: new Uint8Array(loaded.buffer),
       engineOptions: parseEngineOptions(loaded.manifest.engineOptions) ?? {},
@@ -68,10 +62,13 @@ function App() {
     runtime.debug.combat.setEncounterRate(encounterRate / 100);
   };
 
-  const handleGameSelect = (loaded: LoadedGameLib) => {
+  const handleGameSelect = async (loaded: LoadedGameLib) => {
     setLoadedGameLib(loaded);
-    saveLastLibId(loaded.manifest.id);
-    startLoadedGameLib(loaded);
+    saveLastGameMeta({
+      source: loaded.source,
+      libId: loaded.manifest.id,
+    });
+    await startLoadedGameLib(loaded);
   };
 
   const handleKeyPress = (key: KeyCode) => {
@@ -92,8 +89,9 @@ function App() {
     if (loadedGameLib !== null) runtimeRef.current?.debug.combat.setEncounterRate(value / 100);
   };
 
-  const handleDeleteLib = (libId: number) => {
-    if (confirm('确定删除此游戏？')) deleteLocalBbkGameLibApi(libId);
+  const handleDeleteLib = async (libId: number) => {
+    if (!confirm('确定删除此游戏？')) return;
+    await deleteLocalBbkGameLibApi(libId);
   };
 
   useEffect(() => {
@@ -111,20 +109,17 @@ function App() {
     });
     runtimeRef.current = runtime;
 
-    const lastLibId = loadLastLibId();
-
-    loadGames().then(async remoteGameList => {
-      if (lastLibId === null) return;
-      const localLibs = await db.lib.toArray();
-      const totalLibs = [
-        ...remoteGameList.flatMap(g => g.libs),
-        ...localLibs.map(lib => ({ ...lib, id: -Math.abs(lib.id) })),
-      ];
-      const lib = totalLibs.find(l => l.id === lastLibId);
+    const lastMeta = loadLastGameMeta();
+    loadRemoteGames().then(async remoteGames => {
+      if (!lastMeta) return;
+      const lib =
+        lastMeta.source === 'local'
+          ? await db.lib.get(lastMeta.libId)
+          : remoteGames.flatMap(g => g.libs).find(l => l.id === lastMeta.libId);
       if (!lib) return;
-      const loaded = await loadGameLib(lib);
+      const loaded = await loadGameLib(lib, lastMeta.source);
       setLoadedGameLib(loaded);
-      startLoadedGameLib(loaded);
+      await startLoadedGameLib(loaded);
     });
 
     return () => {
@@ -183,7 +178,7 @@ function App() {
       {openDialog === 'switch' ? (
         <SwitchGameDialog
           games={totalGames}
-          selectedLibId={loadedGameLib?.manifest.id ?? null}
+          selectedLib={loadedGameLib}
           onClose={() => setOpenDialog(null)}
           onGameSelect={handleGameSelect}
           onDeleteLib={handleDeleteLib}

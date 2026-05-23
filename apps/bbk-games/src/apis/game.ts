@@ -38,16 +38,20 @@ export async function getBbkGamesApi(current = 1, pageSize = 20): Promise<ListRe
 export async function saveLocalBbkGameLibApi(lib: Omit<BbkGameLib, 'id'>, buffer: ArrayBuffer): Promise<BbkGameLib> {
   const id = await db.lib.add(lib as BbkGameLib);
   await db.libBuffer.add({ libId: id, buffer } as LibBuffer);
-  return { ...lib, id: -Math.abs(id) };
+  return { ...lib, id };
 }
 
 export async function deleteLocalBbkGameLibApi(id: number): Promise<void> {
-  const realId = Math.abs(id);
-  await db.lib.delete(realId);
-  await db.libBuffer.where('libId').equals(realId).delete();
+  const lib = await db.lib.get(id);
+  if (!lib) return;
+  await Promise.all([
+    db.lib.delete(id),
+    db.libBuffer.where('libId').equals(id).delete(),
+    db.save.where('scopeId').equals(lib.scopeId).delete(),
+  ]);
 }
 
 export async function getLocalBbkGameLibDataApi(libId: number): Promise<ArrayBufferLike | undefined> {
-  const record = await db.libBuffer.where('libId').equals(Math.abs(libId)).first();
+  const record = await db.libBuffer.where('libId').equals(libId).first();
   return record?.buffer;
 }

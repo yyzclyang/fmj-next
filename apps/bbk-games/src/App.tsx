@@ -31,7 +31,7 @@ function App() {
       const libs = await db.lib.toArray();
       return [{ id: -1, name: '本地游戏', description: '', coverUrl: '', libs }];
     }) ?? [];
-  const totalGames = [...localGames, ...remoteGames];
+  const totalGames = [...localGames, ...remoteGames].filter(g => g.libs.length);
   const [loadedGameLib, setLoadedGameLib] = useState<LoadedGameLib | null>(null);
   const gameTitle = loadedGameLib?.manifest.name ?? '';
   const [speed, setSpeed] = useState(1);

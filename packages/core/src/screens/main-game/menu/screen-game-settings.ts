@@ -6,11 +6,11 @@ import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
 import { moveSelectionWrap } from './menu-select';
 
-const SETTINGS_ITEMS = ['地图信息', '穿墙模式', '原版伤害', 'Miss 判定'] as const;
+const SETTINGS_ITEMS = ['地图信息', '穿墙模式', '宝箱提示', '原版伤害', 'Miss 判定'] as const;
 const FRAME_LEFT = 72;
 const FRAME_TOP = 43;
 const FRAME_WIDTH = 176;
-const FRAME_HEIGHT = 100;
+const FRAME_HEIGHT = 116;
 const LINE_GAP = 16;
 
 type SettingsMenuItem = (typeof SETTINGS_ITEMS)[number];
@@ -67,6 +67,10 @@ export class ScreenGameSettings extends BaseScreen {
         this.game.state.allowWallWalking = !this.game.state.allowWallWalking;
         this.showMessage(this.game.state.allowWallWalking ? '穿墙模式已开启' : '穿墙模式已关闭');
         return;
+      case '宝箱提示':
+        this.game.state.boxHighlight = !this.game.state.boxHighlight;
+        this.showMessage(this.game.state.boxHighlight ? '宝箱提示已开启' : '宝箱提示已关闭');
+        return;
       case '原版伤害':
         this.game.state.useOriginalDamageFormula = !this.game.state.useOriginalDamageFormula;
         this.showMessage(this.game.state.useOriginalDamageFormula ? '原版伤害已开启' : '原版伤害已关闭');
@@ -90,6 +94,8 @@ export class ScreenGameSettings extends BaseScreen {
         return this.game.state.showPosition ? '[开启]' : '[关闭]';
       case '穿墙模式':
         return this.game.state.allowWallWalking ? '[开启]' : '[关闭]';
+      case '宝箱提示':
+        return this.game.state.boxHighlight ? '[开启]' : '[关闭]';
       case '原版伤害':
         return this.game.state.useOriginalDamageFormula ? '[开启]' : '[关闭]';
       case 'Miss 判定':

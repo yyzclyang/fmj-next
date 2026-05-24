@@ -1,5 +1,5 @@
 import type { Game } from '@/game/game';
-import { COLOR_BLACK, COLOR_WHITE } from '@/rendering/color';
+import { COLOR_BLACK, COLOR_RED, COLOR_WHITE } from '@/rendering/color';
 import { Surface } from '@/rendering/surface';
 import { drawText, getTextWidth, wrapTextBlock } from '@/rendering/text-render';
 import { Direction, type WalkingSprite } from '@/characters';
@@ -244,7 +244,19 @@ export class ScreenMainGame extends BaseScreen {
   }
 
   private drawBox(surface: Surface, screenX: number, screenY: number, obj: SceneObject): void {
-    if (this.drawWalkingSprite(surface, obj.walkingSprite, screenX, screenY, obj.direction, obj.step)) return;
+    const drawn = this.drawWalkingSprite(surface, obj.walkingSprite, screenX, screenY, obj.direction, obj.step);
+    if (this.game.state.boxHighlight && obj.step < 2 && obj.eventId > 0) {
+      if (isTileVisible(screenX, screenY)) {
+        const size = 9;
+        const cx = screenX * MAP_TILE_SIZE + Math.floor(MAP_TILE_SIZE / 2);
+        const by = screenY * MAP_TILE_SIZE + MAP_TILE_SIZE - 1;
+        for (let i = 0; i < size; i++) {
+          const w = Math.min(i + 1, size - i) * 2 - 1;
+          surface.fillRect(cx - Math.floor(w / 2), by - size + i, w, 1, COLOR_RED);
+        }
+      }
+    }
+    if (drawn) return;
 
     if (!isTileVisible(screenX, screenY)) return;
     const left = screenX * MAP_TILE_SIZE + Math.floor((MAP_TILE_SIZE - BOX_WIDTH) / 2);

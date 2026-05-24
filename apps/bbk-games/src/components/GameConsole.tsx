@@ -1,9 +1,13 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { KeyCode } from '@fmj-next/core';
 
 interface GameConsoleProps {
   readonly onPressKey: (key: KeyCode) => void;
 }
+
+const REPEAT_DELAY = 320;
+const REPEAT_INTERVAL = 100;
+const DIRECTION_KEYS = [KeyCode.Up, KeyCode.Down, KeyCode.Left, KeyCode.Right];
 
 const funcMenuItems = [
   { key: KeyCode.Search, icon: '⌕', label: '搜索' },
@@ -14,6 +18,36 @@ const funcMenuItems = [
 
 export function GameConsole({ onPressKey }: GameConsoleProps) {
   const [functionPanelOpen, setFunctionPanelOpen] = useState(false);
+  const pressed = useRef<Record<number, boolean>>({});
+  const lastFire = useRef<Record<number, number>>({});
+
+  const setKey = (key: KeyCode, down: boolean) => {
+    if (down) {
+      pressed.current[key] = true;
+      onPressKey(key);
+      lastFire.current[key] = performance.now() + REPEAT_DELAY;
+      navigator?.vibrate?.(32);
+    } else {
+      pressed.current[key] = false;
+    }
+  };
+
+  useEffect(() => {
+    let raf = 0;
+    const loop = () => {
+      const now = performance.now();
+      for (const key of DIRECTION_KEYS) {
+        if (pressed.current[key] && now - lastFire.current[key] >= REPEAT_INTERVAL) {
+          onPressKey(key);
+          lastFire.current[key] = now;
+        }
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(raf);
+  }, [onPressKey]);
+
   const handleKeyPress = (key: KeyCode, pattern = 64) => {
     onPressKey(key);
     setFunctionPanelOpen(false);
@@ -94,7 +128,10 @@ export function GameConsole({ onPressKey }: GameConsoleProps) {
               type="button"
               className="console-dpad-btn press-effect rounded-[10px_10px_5px_5px]"
               aria-label="上"
-              onClick={() => handleKeyPress(KeyCode.Up)}
+              onPointerDown={() => setKey(KeyCode.Up, true)}
+              onPointerUp={() => setKey(KeyCode.Up, false)}
+              onPointerLeave={() => setKey(KeyCode.Up, false)}
+              onPointerCancel={() => setKey(KeyCode.Up, false)}
             >
               ▲
             </button>
@@ -104,7 +141,10 @@ export function GameConsole({ onPressKey }: GameConsoleProps) {
               type="button"
               className="console-dpad-btn press-effect rounded-[10px_5px_5px_10px]"
               aria-label="左"
-              onClick={() => handleKeyPress(KeyCode.Left)}
+              onPointerDown={() => setKey(KeyCode.Left, true)}
+              onPointerUp={() => setKey(KeyCode.Left, false)}
+              onPointerLeave={() => setKey(KeyCode.Left, false)}
+              onPointerCancel={() => setKey(KeyCode.Left, false)}
             >
               ◀
             </button>
@@ -116,7 +156,10 @@ export function GameConsole({ onPressKey }: GameConsoleProps) {
               type="button"
               className="console-dpad-btn press-effect rounded-[5px_10px_10px_5px]"
               aria-label="右"
-              onClick={() => handleKeyPress(KeyCode.Right)}
+              onPointerDown={() => setKey(KeyCode.Right, true)}
+              onPointerUp={() => setKey(KeyCode.Right, false)}
+              onPointerLeave={() => setKey(KeyCode.Right, false)}
+              onPointerCancel={() => setKey(KeyCode.Right, false)}
             >
               ▶
             </button>
@@ -126,7 +169,10 @@ export function GameConsole({ onPressKey }: GameConsoleProps) {
               type="button"
               className="console-dpad-btn press-effect rounded-[5px_5px_10px_10px]"
               aria-label="下"
-              onClick={() => handleKeyPress(KeyCode.Down)}
+              onPointerDown={() => setKey(KeyCode.Down, true)}
+              onPointerUp={() => setKey(KeyCode.Down, false)}
+              onPointerLeave={() => setKey(KeyCode.Down, false)}
+              onPointerCancel={() => setKey(KeyCode.Down, false)}
             >
               ▼
             </button>

@@ -19,6 +19,7 @@
     inset 0 0 0 2px #050504,
     inset 0 1px 12px rgba(255, 229, 158, 0.08),
     0 4px 0 #050504;
+  touch-action: none;
 }
 
 @utility console-dpad-btn {
@@ -36,6 +37,7 @@
   box-shadow:
     inset 0 0 0 2px #050504,
     inset 0 10px 18px rgba(255, 255, 255, 0.035);
+  touch-action: none;
 }
 
 @utility console-confirm-btn {
@@ -46,6 +48,7 @@
     inset 0 13px 18px rgba(255, 214, 164, 0.12),
     0 5px 0 #050504,
     0 0 0 2px rgba(131, 96, 45, 0.75);
+  touch-action: none;
 }
 
 @utility press-effect {

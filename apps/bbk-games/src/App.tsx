@@ -35,7 +35,8 @@ function App() {
   const [loadedGameLib, setLoadedGameLib] = useState<LoadedGameLib | null>(null);
   const gameTitle = loadedGameLib?.manifest.name ?? '';
   const [speed, setSpeed] = useState(1);
-  const [encounterRate, setEncounterRate] = useState(5);
+  const [encounterRate, setEncounterRate] = useState(4);
+  const [battleRewardMultiplier, setBattleRewardMultiplier] = useState(1);
   const [openDialog, setOpenDialog] = useState<OpenDialog>(null);
 
   const loadRemoteGames = async () => {
@@ -59,7 +60,7 @@ function App() {
       engineOptions: parseEngineOptions(loaded.manifest.engineOptions) ?? {},
     });
     runtime.setSpeed(speed);
-    runtime.debug.combat.setEncounterRate(encounterRate / 100);
+    runtime.cheat.combat.setEncounterRate(encounterRate / 100);
   };
 
   const handleGameSelect = async (loaded: LoadedGameLib) => {
@@ -86,7 +87,15 @@ function App() {
 
   const handleEncounterRateChange = (value: number) => {
     setEncounterRate(value);
-    if (loadedGameLib !== null) runtimeRef.current?.debug.combat.setEncounterRate(value / 100);
+    if (loadedGameLib !== null) runtimeRef.current?.cheat.combat.setEncounterRate(value / 100);
+  };
+
+  const handleBattleRewardMultiplierChange = (value: number) => {
+    setBattleRewardMultiplier(value);
+    if (loadedGameLib !== null) {
+      runtimeRef.current?.cheat.combat.setExpMultiplier(value);
+      runtimeRef.current?.cheat.combat.setMoneyMultiplier(value);
+    }
   };
 
   const handleDeleteLib = async (libId: number) => {
@@ -164,9 +173,11 @@ function App() {
         <SettingsDialog
           speed={speed}
           encounterRate={encounterRate}
+          battleRewardMultiplier={battleRewardMultiplier}
           onClose={() => setOpenDialog(null)}
           onSpeedChange={handleSpeedChange}
           onEncounterRateChange={handleEncounterRateChange}
+          onBattleRewardMultiplierChange={handleBattleRewardMultiplierChange}
           onOpenKeyBindings={() => setOpenDialog('keybindings')}
         />
       ) : null}

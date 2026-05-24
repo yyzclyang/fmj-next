@@ -2,7 +2,8 @@ import {
   Engine,
   KeyCode,
   type AudioPort,
-  type DebugApi,
+  type DebugGoodsArg,
+  type DebugPlayerIncreaseInput,
   type EngineHost,
   type GameEngineOptions,
   type SaveStore,
@@ -22,31 +23,34 @@ export interface BrowserRuntimeStartOptions {
   readonly engineOptions?: GameEngineOptions;
 }
 
+export interface CheatApi {
+  bag: {
+    add(list?: readonly DebugGoodsArg[], count?: number): void;
+    addMoney(value: number): void;
+  };
+  player: {
+    increase(actorIds: readonly number[], input: DebugPlayerIncreaseInput): void;
+  };
+  combat: {
+    setEncounterRate(rate?: number | null): void;
+    setExpMultiplier(multiplier: number): void;
+    setMoneyMultiplier(multiplier: number): void;
+  };
+}
+
 export class BrowserRuntime {
-  readonly debug: DebugApi = {
-    getSnapshot: () => this.engine?.debug.getSnapshot() ?? null,
+  readonly cheat: CheatApi = {
     bag: {
-      list: () => this.engine?.debug.bag.list() ?? [],
-      listAll: () => this.engine?.debug.bag.listAll() ?? [],
-      add: (type, index, count) => this.engine?.debug.bag.add(type, index, count) ?? null,
-      addAll: count => this.engine?.debug.bag.addAll(count) ?? [],
-      delete: (type, index, count) => this.engine?.debug.bag.delete(type, index, count) ?? false,
-      addMoney: value => this.engine?.debug.bag.addMoney(value) ?? 0,
+      add: (list, count) => { this.engine?.debug.bag.add(list, count); },
+      addMoney: value => { this.engine?.debug.bag.addMoney(value); },
     },
     player: {
-      list: () => this.engine?.debug.player.list() ?? [],
-      listAll: () => this.engine?.debug.player.listAll() ?? [],
-      add: ids => this.engine?.debug.player.add(ids) ?? [],
-      increase: (actorIds, input) => this.engine?.debug.player.increase(actorIds, input) ?? [],
-    },
-    script: {
-      start: (type, index) => this.engine?.debug.script.start(type, index) ?? false,
+      increase: (actorIds, input) => { this.engine?.debug.player.increase(actorIds, input); },
     },
     combat: {
-      listMonsters: () => this.engine?.debug.combat.listMonsters() ?? [],
-      listBackgrounds: () => this.engine?.debug.combat.listBackgrounds() ?? [],
-      start: options => this.engine?.debug.combat.start(options) ?? false,
-      setEncounterRate: rate => this.engine?.debug.combat.setEncounterRate(rate) ?? 0,
+      setEncounterRate: rate => { this.engine?.debug.combat.setEncounterRate(rate); },
+      setExpMultiplier: multiplier => { this.engine?.debug.combat.setExpMultiplier(multiplier); },
+      setMoneyMultiplier: multiplier => { this.engine?.debug.combat.setMoneyMultiplier(multiplier); },
     },
   };
   private readonly presenter: CanvasPresenter;

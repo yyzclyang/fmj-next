@@ -4,18 +4,22 @@ import CloseIcon from '@/assets/icons/close.svg?react';
 interface SettingsDialogProps {
   readonly speed: number;
   readonly encounterRate: number;
+  readonly battleRewardMultiplier: number;
   readonly onClose: () => void;
   readonly onSpeedChange: (speed: number) => void;
   readonly onEncounterRateChange: (encounterRate: number) => void;
+  readonly onBattleRewardMultiplierChange: (multiplier: number) => void;
   readonly onOpenKeyBindings?: () => void;
 }
 
 export function SettingsDialog({
   speed,
   encounterRate,
+  battleRewardMultiplier,
   onClose,
   onSpeedChange,
   onEncounterRateChange,
+  onBattleRewardMultiplierChange,
   onOpenKeyBindings,
 }: SettingsDialogProps) {
   const speedText = speed.toFixed(1);
@@ -25,6 +29,9 @@ export function SettingsDialog({
   };
   const handleEncounterRateChange = (event: ChangeEvent<HTMLInputElement>) => {
     onEncounterRateChange(Number(event.currentTarget.value));
+  };
+  const handleBattleRewardMultiplierChange = (event: ChangeEvent<HTMLInputElement>) => {
+    onBattleRewardMultiplierChange(Number(event.currentTarget.value));
   };
 
   return (
@@ -95,6 +102,28 @@ export function SettingsDialog({
           <div className="flex justify-between text-sm text-[#f0e2bd]">
             <span>1%</span>
             <span>99%</span>
+          </div>
+        </div>
+        <div className="px-3 py-2">
+          <div className="flex items-center justify-between gap-3 text-[19px] font-extrabold text-[#d7b866]">
+            <span>战斗收益倍率</span>
+            <strong className="min-w-16 rounded-[7px] border border-[#b4893f] bg-black/35 p-2 text-center text-base text-[#f1dfb5]">
+              {battleRewardMultiplier}x
+            </strong>
+          </div>
+          <input
+            className="my-4 mb-2 w-full accent-[#c79b42]"
+            name="battleRewardMultiplier"
+            type="range"
+            min="1"
+            max="10"
+            step="1"
+            value={battleRewardMultiplier}
+            onChange={handleBattleRewardMultiplierChange}
+          />
+          <div className="flex justify-between text-sm text-[#f0e2bd]">
+            <span>1x</span>
+            <span>10x</span>
           </div>
         </div>
         {onOpenKeyBindings ? (

@@ -161,6 +161,16 @@ export class CombatRuntime {
   private randomFightConfig: CombatInitFightParams | null = null;
   private randomFightEnabled = false;
   private randomEncounterRate = DEFAULT_RANDOM_ENCOUNTER_RATE;
+  private _expMultiplier = 1;
+  private _moneyMultiplier = 1;
+
+  setExpMultiplier(value: number): void {
+    this._expMultiplier = value;
+  }
+
+  setMoneyMultiplier(value: number): void {
+    this._moneyMultiplier = value;
+  }
   private activeSession: CombatSession | null = null;
   // 重复行动按角色资源 id 记录，避免队伍站位变化后串用别人的动作。
   private readonly lastPlayerActions = new Map<number, CombatAction>();
@@ -397,8 +407,10 @@ export class CombatRuntime {
 
   settleWin(session: CombatSession): CombatWinSettlement {
     if (this.activeSession !== session) throw new Error('结算了不属于当前运行时的战斗');
-    const exp = session.monsters.reduce((sum, monster) => sum + monster.exp, 0);
-    const money = session.monsters.reduce((sum, monster) => sum + monster.money, 0);
+    const rawExp = session.monsters.reduce((sum, monster) => sum + monster.exp, 0);
+    const rawMoney = session.monsters.reduce((sum, monster) => sum + monster.money, 0);
+    const exp = Math.trunc(rawExp * this._expMultiplier);
+    const money = Math.trunc(rawMoney * this._moneyMultiplier);
     this.game.state.money += money;
     const settlement = {
       exp,

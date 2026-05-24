@@ -6,10 +6,9 @@ import type { BaseGoods } from '@/goods';
 import { ResourceType } from '@/lib/resource-utils';
 import { createLogger } from '@/utils/logger';
 
-const DEFAULT_DEBUG_PLAYER_COUNT = 4;
 const logger = createLogger('调试');
+
 const DEBUG_PLAYER_INCREASE_KEYS = [
-  'level',
   'hp',
   'hpMax',
   'mp',
@@ -48,15 +47,6 @@ export interface DebugApi {
   combat: DebugCombatApi;
 }
 
-export interface DebugBagApi {
-  list(): DebugGoodsItem[];
-  listAll(): DebugGoodsItem[];
-  add(type: number, index: number, count?: number): DebugGoodsItem | null;
-  addAll(count?: number): DebugGoodsItem[];
-  delete(type: number, index: number, count?: number): boolean;
-  addMoney(value: number): number;
-}
-
 export interface DebugGoodsItem {
   type: number;
   index: number;
@@ -67,15 +57,37 @@ export interface DebugGoodsItem {
   description: string;
 }
 
-export interface DebugPlayerApi {
-  list(): DebugPlayerItem[];
-  listAll(): DebugPlayerItem[];
-  add(ids?: readonly number[]): DebugPlayerItem[];
-  increase(actorIds: readonly number[], input: DebugPlayerIncreaseInput): DebugPlayerItem[];
+export interface DebugGoodsArg {
+  type: number;
+  index: number;
+}
+
+export interface DebugBagApi {
+  list(all?: boolean): DebugGoodsItem[];
+  add(list?: readonly DebugGoodsArg[], count?: number): DebugGoodsItem[];
+  delete(list: readonly DebugGoodsArg[], count: number): void;
+  addMoney(value: number): number;
+}
+
+export interface DebugPlayerItem {
+  index: number;
+  name: string;
+  level: number;
+  hp: number;
+  hpMax: number;
+  mp: number;
+  mpMax: number;
+  attack: number;
+  defense: number;
+  agility: number;
+  spirit: number;
+  luck: number;
+  exp: number;
+  inParty: boolean;
+  isControl: boolean;
 }
 
 export interface DebugPlayerIncreaseInput {
-  level?: number;
   hp?: number;
   hpMax?: number;
   mp?: number;
@@ -86,6 +98,12 @@ export interface DebugPlayerIncreaseInput {
   spirit?: number;
   luck?: number;
   exp?: number;
+}
+
+export interface DebugPlayerApi {
+  list(all?: boolean): DebugPlayerItem[];
+  add(actorIds: readonly number[]): DebugPlayerItem[];
+  increase(actorIds: readonly number[], input: DebugPlayerIncreaseInput): DebugPlayerItem[];
 }
 
 export interface DebugScriptApi {
@@ -133,13 +151,6 @@ export interface DebugCombatStartOptions {
   allowTossArm?: boolean;
 }
 
-export interface DebugCombatApi {
-  listMonsters(): DebugCombatMonsterItem[];
-  listBackgrounds(): DebugCombatBackgroundItem[];
-  start(options?: readonly number[] | DebugCombatStartOptions): boolean;
-  setEncounterRate(rate?: number | null): number;
-}
-
 export interface DebugCombatMonsterItem {
   index: number;
   name: string;
@@ -165,29 +176,12 @@ export interface DebugCarryGoodsItem {
   name: string;
 }
 
-export interface DebugCombatBackgroundItem {
-  index: number;
-  width: number;
-  height: number;
-  frames: number;
-}
-
-export interface DebugPlayerItem {
-  index: number;
-  name: string;
-  level: number;
-  hp: number;
-  hpMax: number;
-  mp: number;
-  mpMax: number;
-  attack: number;
-  defense: number;
-  agility: number;
-  spirit: number;
-  luck: number;
-  exp: number;
-  inParty: boolean;
-  isControl: boolean;
+export interface DebugCombatApi {
+  listMonsters(): DebugCombatMonsterItem[];
+  start(options?: readonly number[] | DebugCombatStartOptions): boolean;
+  setEncounterRate(rate?: number | null): number;
+  setExpMultiplier(multiplier: number): void;
+  setMoneyMultiplier(multiplier: number): void;
 }
 
 export function createDebugApi(getGame: () => Game | null): DebugApi {
@@ -214,46 +208,36 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
       };
     },
     bag: {
-      list() {
+      list(all = false) {
         const game = getGame();
-        const items = game?.bag.allGoodsList.map(item => toDebugGoodsItem(item.goods, item.count)) ?? [];
-        console.table(items);
-        return items;
-      },
-      listAll() {
-        const game = getGame();
-        const items = game
+        if (!game) return [];
+        const items = all
           ? listAllGoods(game).map(goods => toDebugGoodsItem(goods, game.getGoodsCount(goods.type, goods.index)))
-          : [];
+          : game.bag.allGoodsList.map(item => toDebugGoodsItem(item.goods, item.count));
         console.table(items);
         return items;
       },
-      add(type: number, index: number, count = 1) {
-        if (count <= 0) return null;
-        const game = getGame();
-        const goods = game?.bag.addGoods(type, index, count) ?? null;
-        const item = goods ? toDebugGoodsItem(goods, game?.getGoodsCount(type, index) ?? 0) : null;
-        if (item) console.table([item]);
-        return item;
-      },
-      addAll(count = 1) {
+      add(list?: readonly DebugGoodsArg[], count = 1) {
         if (count <= 0) return [];
         const game = getGame();
         if (!game) return [];
+        const targets = list?.length ? list : listAllGoods(game).map(g => ({ type: g.type, index: g.index }));
         const items: DebugGoodsItem[] = [];
-        for (const goods of listAllGoods(game)) {
-          game.bag.addGoods(goods.type, goods.index, count);
-          items.push(toDebugGoodsItem(goods, game.getGoodsCount(goods.type, goods.index)));
+        for (const { type, index } of targets) {
+          const goods = game.bag.addGoods(type, index, count);
+          if (goods) items.push(toDebugGoodsItem(goods, game.getGoodsCount(type, index)));
         }
         console.table(items);
         return items;
       },
-      delete(type: number, index: number, count = 1) {
-        if (count <= 0) return false;
+      delete(list: readonly DebugGoodsArg[], count) {
+        if (count <= 0 || !list.length) return;
         const game = getGame();
-        const ok = game?.consumeGoods(type, index, count) ?? false;
-        logger.log('背包', ok ? `已删除道具 ${type}-${index} x${count}` : `删除道具失败 ${type}-${index} x${count}`);
-        return ok;
+        if (!game) return;
+        for (const { type, index } of list) {
+          const deleted = game.consumeGoods(type, index, count);
+          if (!deleted) logger.log('背包', `删除道具失败 ${type}-${index} x${count}`);
+        }
       },
       addMoney(value: number) {
         const game = getGame();
@@ -264,28 +248,25 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
       },
     },
     player: {
-      list() {
-        const game = getGame();
-        const items = game ? listPartyPlayers(game).map(player => toDebugPlayerItem(game, player)) : [];
-        console.table(items);
-        return items;
-      },
-      listAll() {
-        const game = getGame();
-        const items = game ? listAllPlayers(game).map(player => toDebugPlayerItem(game, player)) : [];
-        console.table(items);
-        return items;
-      },
-      add(actorIds?: readonly number[]) {
+      list(all = false) {
         const game = getGame();
         if (!game) return [];
-        const ids = actorIds ?? listAllPlayerIds(game).slice(0, DEFAULT_DEBUG_PLAYER_COUNT);
-        // 默认批量补人只用于调试多角色菜单，实际入队仍走 Game.addActor。
-        const items = ids.map(id => toDebugPlayerItem(game, addDebugPlayer(game, id)));
+        const items = all
+          ? listAllPlayers(game).map(player => toDebugPlayerItem(game, player))
+          : listPartyPlayers(game).map(player => toDebugPlayerItem(game, player));
+        console.table(items);
+        return items;
+      },
+      add(actorIds: readonly number[]) {
+        if (!actorIds.length) return [];
+        const game = getGame();
+        if (!game) return [];
+        const items = actorIds.map(id => toDebugPlayerItem(game, addDebugPlayer(game, id)));
         console.table(items);
         return items;
       },
       increase(actorIds: readonly number[], input: DebugPlayerIncreaseInput) {
+        if (!actorIds.length) return [];
         const game = getGame();
         if (!game) return [];
         const players = resolveDebugPlayers(game, actorIds, input);
@@ -308,12 +289,6 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
       listMonsters() {
         const game = getGame();
         const items = game ? listAllMonsters(game).map(toDebugCombatMonsterItem) : [];
-        console.table(items);
-        return items;
-      },
-      listBackgrounds() {
-        const game = getGame();
-        const items = game ? listAllCombatBackgrounds(game) : [];
         console.table(items);
         return items;
       },
@@ -346,6 +321,18 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         const currentRate = game.combat.setRandomEncounterRate(nextRate);
         logger.log('战斗', `当前遇敌几率:${currentRate}`);
         return currentRate;
+      },
+      setExpMultiplier(multiplier: number) {
+        const game = getGame();
+        if (!game) return;
+        game.combat.setExpMultiplier(assertDebugMultiplier(multiplier, 'expMultiplier'));
+        logger.log('战斗', `经验倍率:${multiplier}`);
+      },
+      setMoneyMultiplier(multiplier: number) {
+        const game = getGame();
+        if (!game) return;
+        game.combat.setMoneyMultiplier(assertDebugMultiplier(multiplier, 'moneyMultiplier'));
+        logger.log('战斗', `金钱倍率:${multiplier}`);
       },
     },
   };
@@ -403,11 +390,9 @@ function applyDebugPlayerState(game: Game, input: DebugCombatPlayerStateInput): 
 }
 
 function resolveDebugPlayers(game: Game, actorIds: readonly number[], input: DebugPlayerIncreaseInput): Player[] {
-  if (!Array.isArray(actorIds)) throw new Error('player.increase 第一个参数必须是角色 id 数组');
   assertDebugObject(input, 'player.increase');
   assertDebugKnownKeys(input, DEBUG_PLAYER_INCREASE_KEYS, 'player.increase');
-  const ids = actorIds.length === 0 ? listAllPlayerIds(game) : actorIds;
-  return ids.map((id, i) => {
+  return actorIds.map((id, i) => {
     const actorId = assertDebugPositiveInt(id, `actorIds[${i}]`);
     const player = game.getPlayer(actorId);
     if (!player) throw new Error(`角色资源不存在: ARS 1-${actorId}`);
@@ -418,7 +403,6 @@ function resolveDebugPlayers(game: Game, actorIds: readonly number[], input: Deb
 // 这里复用脚本 ATTRIBADD 的字段编号，方便调试结果和 Kotlin 行为对照。
 function applyDebugPlayerIncrease(player: Player, input: DebugPlayerIncreaseInput): void {
   let applied = false;
-  applied = addDebugPlayerAttribute(player, 0, input.level, 'level') || applied;
   applied = addDebugPlayerAttribute(player, 1, input.attack, 'attack') || applied;
   applied = addDebugPlayerAttribute(player, 2, input.defense, 'defense') || applied;
   applied = addDebugPlayerAttribute(player, 3, input.agility, 'agility') || applied;
@@ -503,6 +487,12 @@ function assertDebugRate(value: number, name: string): number {
   return value;
 }
 
+function assertDebugMultiplier(value: number, name: string): number {
+  if (typeof value !== 'number' || !Number.isFinite(value)) throw new Error(`调试参数 ${name} 必须是数字: ${value}`);
+  if (value < 0) throw new Error(`调试参数 ${name} 不能小于 0: ${value}`);
+  return value;
+}
+
 function clampDebugInt(value: number, name: string, min: number, max: number): number {
   const intValue = assertDebugInt(value, name);
   if (intValue < min) return min;
@@ -538,17 +528,6 @@ function listAllMonsters(game: Game): Monster[] {
     if (!monster) throw new Error(`怪物资源不存在: ARS 3-${id}`);
     return monster;
   });
-}
-
-function listAllCombatBackgrounds(game: Game): DebugCombatBackgroundItem[] {
-  return game.datLib
-    .listResourceKeys(ResourceType.PIC)
-    .filter(key => key.type === 4)
-    .map(key => {
-      const image = game.datLib.getImage(ResourceType.PIC, 4, key.index);
-      if (!image) throw new Error(`战斗背景资源不存在: PIC 4-${key.index}`);
-      return { index: key.index, width: image.width, height: image.height, frames: image.number };
-    });
 }
 
 function getFirstCombatBackgroundIndex(game: Game): number {

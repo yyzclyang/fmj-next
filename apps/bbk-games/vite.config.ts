@@ -16,9 +16,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'BBK Games',
-        short_name: 'BBK',
-        description: '经典 BBK RPG 模拟器',
+        name: 'BBK RPG',
+        short_name: 'BBK RPG',
+        description: 'BBK RPG 模拟器',
         theme_color: '#1a1b18',
         background_color: '#050504',
         icons: [

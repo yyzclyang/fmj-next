@@ -228,24 +228,24 @@ export class ScreenMainGame extends BaseScreen {
     this.drawNpc(surface, screenX, screenY, obj);
   }
 
-  private drawNpc(surface: Surface, screenX: number, screenY: number, obj: SceneObject): void {
-    if (this.drawWalkingSprite(surface, obj.walkingSprite, screenX, screenY, obj.direction, obj.step)) return;
+  private drawNpc(surface: Surface, screenX: number, screenY: number, npx: SceneObject): void {
+    if (this.drawWalkingSprite(surface, npx.walkingSprite, screenX, screenY, npx.direction, npx.step)) return;
 
     if (!isTileVisible(screenX, screenY)) return;
     const left = screenX * MAP_TILE_SIZE + Math.floor((MAP_TILE_SIZE - NPC_WIDTH) / 2);
     const top = screenY * MAP_TILE_SIZE + (MAP_TILE_SIZE - NPC_HEIGHT);
     surface.fillRect(left, top, NPC_WIDTH, NPC_HEIGHT, COLOR_BLACK);
     surface.fillRect(left + 1, top + 1, NPC_WIDTH - 2, NPC_HEIGHT - 2, COLOR_WHITE);
-    drawFacingMark(surface, left, top, NPC_WIDTH, NPC_HEIGHT, obj.direction);
-    if ((obj.step & 1) === 1) {
+    drawFacingMark(surface, left, top, NPC_WIDTH, NPC_HEIGHT, npx.direction);
+    if ((npx.step & 1) === 1) {
       surface.fillRect(left + 2, top + NPC_HEIGHT - 3, 2, 1, COLOR_BLACK);
       surface.fillRect(left + NPC_WIDTH - 4, top + NPC_HEIGHT - 3, 2, 1, COLOR_BLACK);
     }
   }
 
-  private drawBox(surface: Surface, screenX: number, screenY: number, obj: SceneObject): void {
-    const drawn = this.drawWalkingSprite(surface, obj.walkingSprite, screenX, screenY, obj.direction, obj.step);
-    if (this.game.state.boxHighlight && obj.step < 2 && obj.eventId > 0) {
+  private drawBox(surface: Surface, screenX: number, screenY: number, box: SceneObject): void {
+    const drawn = this.drawWalkingSprite(surface, box.walkingSprite, screenX, screenY, box.direction, box.step);
+    if (this.game.state.boxHighlight && box.step < 2 && box.eventId > 0) {
       if (isTileVisible(screenX, screenY)) {
         const size = 9;
         const cx = screenX * MAP_TILE_SIZE + Math.floor(MAP_TILE_SIZE / 2);
@@ -263,13 +263,13 @@ export class ScreenMainGame extends BaseScreen {
     const top = screenY * MAP_TILE_SIZE + (MAP_TILE_SIZE - BOX_HEIGHT);
     surface.fillRect(left, top, BOX_WIDTH, BOX_HEIGHT, COLOR_BLACK);
     surface.fillRect(left + 1, top + 1, BOX_WIDTH - 2, BOX_HEIGHT - 2, COLOR_WHITE);
-    if (obj.step >= 2) {
+    if (box.step >= 2) {
       surface.fillRect(left + 2, top + 2, BOX_WIDTH - 4, BOX_HEIGHT - 4, COLOR_WHITE);
       surface.fillRect(left + 2, top + 4, BOX_WIDTH - 4, 1, COLOR_BLACK);
       surface.fillRect(left + 3, top + 6, BOX_WIDTH - 6, 1, COLOR_BLACK);
       return;
     }
-    if (obj.step === 1) {
+    if (box.step === 1) {
       surface.fillRect(left + 1, top + 5, BOX_WIDTH - 2, 1, COLOR_BLACK);
       surface.fillRect(left + 3, top + 1, BOX_WIDTH - 5, 1, COLOR_BLACK);
       return;

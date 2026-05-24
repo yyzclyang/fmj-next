@@ -71,10 +71,6 @@ function cmdIf(game: Game, reader: ScriptReader): CommandBuilder {
   return {
     len: 4,
     execute: process => {
-      const boxKey = game.consumePendingBoxEvent();
-      if (boxKey) {
-        game.rememberBoxEvent(boxKey, eventId);
-      }
       if (game.hasEvent(eventId)) {
         logger.log('分支', `IF 事件=${eventId} 地址=${address}`);
         process.gotoAddress(address);

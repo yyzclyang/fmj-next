@@ -262,7 +262,6 @@ export class MainSceneRuntime {
     this.overlayValue = null;
     this.returnToMenuOnCallback = options.returnToMenuOnCallback ?? false;
     this.deleteAllNpc();
-    this.game.clearPendingBoxEvent();
     this.game.state.scriptType = type;
     this.game.state.scriptIndex = index;
     this.game.resetLocalVariables();
@@ -390,7 +389,6 @@ export class MainSceneRuntime {
 
     this.currentMapValue = mapRes;
     this.tileSetValue = this.loadTileSet(mapRes);
-    this.game.clearPendingBoxEvent();
     this.game.state.mapType = type;
     this.game.state.mapIndex = index;
     this.game.state.mapScreenX = screenX;
@@ -802,30 +800,18 @@ export class MainSceneRuntime {
     const pos = this.getFacingMapPosition();
     const obj = this.getSceneObjectAt(pos.x, pos.y);
     if (obj) {
-      if (obj.kind === 'box') {
-        if (this.game.isBoxCollected(this.getBoxEventKey(obj.x, obj.y, obj.resId))) {
-          logger.log('对象事件', `箱子已收集，编号=${obj.id}, 事件=${obj.eventId}`);
-          return;
-        }
-        this.game.setPendingBoxEvent(this.getBoxEventKey(obj.x, obj.y, obj.resId));
-      } else {
-        this.game.clearPendingBoxEvent();
-      }
       if (obj.eventId <= 0) {
         logger.log('对象事件', `${obj.kind} 编号=${obj.id} 无事件`);
-        this.game.clearPendingBoxEvent();
         return;
       }
       const triggered = this.scriptProcess?.triggerEvent(obj.eventId) ?? false;
       if (!triggered) {
         logger.warn('对象事件', `${obj.kind} 编号=${obj.id} 事件=${obj.eventId} 未触发`);
-        this.game.clearPendingBoxEvent();
       } else {
         logger.log('对象事件', `${obj.kind} 编号=${obj.id} 事件=${obj.eventId}`);
       }
       return;
     }
-    this.game.clearPendingBoxEvent();
     this.triggerMapEvent(pos.x, pos.y);
   }
 

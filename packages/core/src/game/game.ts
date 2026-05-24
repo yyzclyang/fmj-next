@@ -49,8 +49,6 @@ export class Game {
   state: GameState = createInitialGameState();
   mainScene: ScreenMainGame | null = null;
   mainSceneRuntime: MainSceneRuntime | null = null;
-  private readonly boxEventMap = new Map<string, number>();
-  private pendingBoxEventKey: string | null = null;
   private readonly surface = new Surface(SCREEN_WIDTH, SCREEN_HEIGHT);
   readonly screenStack = new ScreenStack();
   private readonly host: EngineHost;
@@ -178,8 +176,6 @@ export class Game {
       '状态',
       `应用读档状态 地图=${state.mapType}:${state.mapIndex}, 脚本=${state.scriptType}:${state.scriptIndex}, 运行时=${runtimeSnapshot ? '有' : '无'}`
     );
-    this.boxEventMap.clear();
-    this.pendingBoxEventKey = null;
     this.combat.reset();
     this.state = {
       ...createInitialGameState(),
@@ -336,15 +332,8 @@ export class Game {
     }
   }
 
-  rememberBoxEvent(boxKey: string, eventId: number): void {
-    if (this.boxEventMap.has(boxKey)) return;
-    this.boxEventMap.set(boxKey, eventId);
-  }
-
   isBoxCollected(boxKey: string): boolean {
-    if (this.state.collectedBoxKeys.includes(boxKey)) return true;
-    const eventId = this.boxEventMap.get(boxKey);
-    return eventId !== undefined && this.hasEvent(eventId);
+    return this.state.collectedBoxKeys.includes(boxKey);
   }
 
   markBoxCollected(boxKey: string): void {
@@ -352,23 +341,7 @@ export class Game {
     this.state.collectedBoxKeys.push(boxKey);
   }
 
-  setPendingBoxEvent(boxKey: string | null): void {
-    this.pendingBoxEventKey = boxKey;
-  }
-
-  consumePendingBoxEvent(): string | null {
-    const boxKey = this.pendingBoxEventKey;
-    this.pendingBoxEventKey = null;
-    return boxKey;
-  }
-
-  clearPendingBoxEvent(): void {
-    this.pendingBoxEventKey = null;
-  }
-
   private resetRunState(): void {
-    this.boxEventMap.clear();
-    this.pendingBoxEventKey = null;
     this.combat.reset();
     this.state = this.createInitialState();
   }

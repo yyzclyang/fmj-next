@@ -20,11 +20,11 @@ export type SaveLoadOperation = (typeof SaveLoadOperation)[keyof typeof SaveLoad
 
 const logger = createLogger('存档页');
 const TITLE_LEFT = 20;
-const TITLE_TOP = 10;
-const TITLE_HEIGHT = 25;
+const TITLE_TOP = 5;
+const TITLE_HEIGHT = 30;
 const SLOT_LEFT = 20;
 const SLOT_TOP = 40;
-const SLOT_HEIGHT = 25;
+const SLOT_HEIGHT = 30;
 const SLOT_WIDTH = SCREEN_WIDTH - 40;
 const SLOT_NUMBER_LEFT = 25;
 const HEAD_LEFT = 50;
@@ -115,7 +115,13 @@ export class ScreenSaveLoadGame extends BaseScreen {
       drawText(surface, `${i + 1}.`, SLOT_NUMBER_LEFT, top + SLOT_TEXT_TOP_OFFSET);
       const draw = i === this.selectedIndex ? drawSelectedText : drawText;
       this.drawHeads(surface, slot.summary, top);
-      draw(surface, this.getSlotText(slot), this.getSlotTextLeft(slot.summary), top + SLOT_TEXT_TOP_OFFSET);
+      const textLeft = this.getSlotTextLeft(slot.summary);
+      draw(surface, this.getSlotText(slot), textLeft, top + SLOT_TEXT_TOP_OFFSET);
+      if (slot.summary) {
+        const date = formatSaveDate(slot.summary.savedAt);
+        const dateLeft = SLOT_LEFT + SLOT_WIDTH - getTextWidth(date) - 4;
+        drawText(surface, date, dateLeft, top + SLOT_TEXT_TOP_OFFSET);
+      }
     }
   }
 
@@ -167,7 +173,8 @@ export class ScreenSaveLoadGame extends BaseScreen {
     if (slot.corrupt) return '存档损坏';
     if (!slot.summary) return EMPTY_SAVE_TEXT;
     const sceneName = slot.summary.sceneName || '未命名';
-    return fitText(sceneName, SCREEN_WIDTH - this.getSlotTextLeft(slot.summary) - 25);
+    const maxSceneWidth = SCREEN_WIDTH - this.getSlotTextLeft(slot.summary) - 70;
+    return fitText(sceneName, maxSceneWidth);
   }
 
   private getSlotTextLeft(summary: SaveSlotSummary | null): number {
@@ -234,6 +241,13 @@ class ScreenOverwriteSaveConfirm extends BaseScreen {
         return;
     }
   }
+}
+
+function formatSaveDate(iso: string): string {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function fitText(text: string, maxWidth: number): string {

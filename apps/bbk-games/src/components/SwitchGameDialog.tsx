@@ -142,7 +142,10 @@ export function SwitchGameDialog({ games, selectedLib, onClose, onGameSelect, on
                             </span>
                           ) : null}
                           {isLoading ? (
-                            <LoadingIcon className="absolute top-1/2 right-3 size-5 -translate-y-1/2 text-[#d7bc75]" aria-hidden="true" />
+                            <LoadingIcon
+                              className="absolute top-1/2 right-3 size-5 -translate-y-1/2 text-[#d7bc75]"
+                              aria-hidden="true"
+                            />
                           ) : null}
                           {deletable ? (
                             <span

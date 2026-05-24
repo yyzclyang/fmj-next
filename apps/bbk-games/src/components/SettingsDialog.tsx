@@ -61,14 +61,14 @@ export function SettingsDialog({
           </button>
         </header>
         <div className="px-3 py-2">
-          <div className="flex items-center justify-between gap-3 text-[19px] font-extrabold text-[#d7b866]">
+          <div className="flex items-center justify-between gap-3 text-[17px] font-extrabold text-[#d7b866]">
             <span>速度</span>
-            <strong className="min-w-16 rounded-[7px] border border-[#b4893f] bg-black/35 p-2 text-center text-base text-[#f1dfb5]">
+            <strong className="min-w-16 rounded-[7px] border border-[#b4893f] bg-black/35 px-2 py-1 text-center text-base text-[#f1dfb5]">
               {speedText}x
             </strong>
           </div>
           <input
-            className="my-4 mb-2 w-full accent-[#c79b42]"
+            className="my-2 w-full accent-[#c79b42]"
             name="speed"
             type="range"
             min="0.5"
@@ -83,14 +83,14 @@ export function SettingsDialog({
           </div>
         </div>
         <div className="px-3 py-2">
-          <div className="flex items-center justify-between gap-3 text-[19px] font-extrabold text-[#d7b866]">
+          <div className="flex items-center justify-between gap-3 text-[17px] font-extrabold text-[#d7b866]">
             <span>遇敌</span>
-            <strong className="min-w-16 rounded-[7px] border border-[#b4893f] bg-black/35 p-2 text-center text-base text-[#f1dfb5]">
+            <strong className="min-w-16 rounded-[7px] border border-[#b4893f] bg-black/35 px-2 py-1 text-center text-base text-[#f1dfb5]">
               {encounterRate}%
             </strong>
           </div>
           <input
-            className="my-4 mb-2 w-full accent-[#c79b42]"
+            className="my-2 w-full accent-[#c79b42]"
             name="encounterRate"
             type="range"
             min="1"
@@ -105,14 +105,14 @@ export function SettingsDialog({
           </div>
         </div>
         <div className="px-3 py-2">
-          <div className="flex items-center justify-between gap-3 text-[19px] font-extrabold text-[#d7b866]">
+          <div className="flex items-center justify-between gap-3 text-[17px] font-extrabold text-[#d7b866]">
             <span>战斗收益倍率</span>
-            <strong className="min-w-16 rounded-[7px] border border-[#b4893f] bg-black/35 p-2 text-center text-base text-[#f1dfb5]">
+            <strong className="min-w-16 rounded-[7px] border border-[#b4893f] bg-black/35 px-2 py-1 text-center text-base text-[#f1dfb5]">
               {battleRewardMultiplier}x
             </strong>
           </div>
           <input
-            className="my-4 mb-2 w-full accent-[#c79b42]"
+            className="my-2 w-full accent-[#c79b42]"
             name="battleRewardMultiplier"
             type="range"
             min="1"

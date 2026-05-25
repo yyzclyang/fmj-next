@@ -3,7 +3,7 @@ import type { BbkGameLib } from '@/apis/game';
 
 export interface LibBuffer {
   id: number;
-  libId: number;
+  sha256: string;
   buffer: ArrayBufferLike;
 }
 
@@ -30,6 +30,16 @@ class BbkGamesDB extends Dexie {
       lib: '++id',
       libBuffer: '++id, libId',
       save: '++id, scopeId, slot, [scopeId+slot]',
+    });
+    this.version(2).stores({
+      libBuffer: '++id, sha256',
+    }).upgrade(async tx => {
+      const libs = await tx.table('lib').toArray();
+      const libMap = new Map(libs.map(l => [l.id, l]));
+      await tx.table('libBuffer').toCollection().modify(buf => {
+        const lib = libMap.get(buf.libId);
+        if (lib) buf.sha256 = lib.sha256;
+      });
     });
   }
 }

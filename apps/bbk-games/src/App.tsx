@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createBrowserRuntime, type BrowserRuntime } from '@fmj-next/browser';
 import { KeyCode } from '@fmj-next/core';
 import { useLiveQuery } from 'dexie-react-hooks';
-import { getBbkGamesApi, deleteLocalBbkGameLibApi, type BbkGame } from '@/apis/game';
+import { getBbkGamesApi, type BbkGame } from '@/apis/game';
 import { db } from '@/utils/database';
 import { DesktopGameHeader } from '@/components/DesktopGameHeader';
 import { GameConsole } from '@/components/GameConsole';
@@ -100,11 +100,6 @@ function App() {
     }
   };
 
-  const handleDeleteLib = async (libId: number) => {
-    if (!confirm('确定删除此游戏？')) return;
-    await deleteLocalBbkGameLibApi(libId);
-  };
-
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -194,7 +189,6 @@ function App() {
           selectedLib={loadedGameLib}
           onClose={() => setOpenDialog(null)}
           onGameSelect={handleGameSelect}
-          onDeleteLib={handleDeleteLib}
         />
       ) : null}
 

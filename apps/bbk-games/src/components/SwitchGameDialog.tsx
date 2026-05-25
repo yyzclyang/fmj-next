@@ -1,7 +1,7 @@
 import { type ChangeEvent, useState } from 'react';
 import dayjs from 'dayjs';
 import type { BbkGame, BbkGameLib } from '@/apis/game';
-import { saveLocalBbkGameLibApi } from '@/apis/game';
+import { saveLocalBbkGameLibApi, deleteLocalBbkGameLibApi } from '@/apis/game';
 import type { GameSource } from '@/utils/database';
 import { loadGameLib, parseLocalGameFile, type LoadedGameLib } from '@/utils/lib';
 import ArrowIcon from '@/assets/icons/arrow.svg?react';
@@ -14,10 +14,9 @@ interface SwitchGameDialogProps {
   readonly selectedLib: LoadedGameLib | null;
   readonly onClose: () => void;
   readonly onGameSelect: (loaded: LoadedGameLib) => void;
-  readonly onDeleteLib: (libId: number) => void;
 }
 
-export function SwitchGameDialog({ games, selectedLib, onClose, onGameSelect, onDeleteLib }: SwitchGameDialogProps) {
+export function SwitchGameDialog({ games, selectedLib, onClose, onGameSelect }: SwitchGameDialogProps) {
   const selectedGameId = findGameIdByLibId(games, selectedLib);
   const [expandedGameId, setExpandedGameId] = useState<number | null>(selectedGameId);
   const [loadingLibId, setLoadingLibId] = useState<number | null>(null);
@@ -36,6 +35,12 @@ export function SwitchGameDialog({ games, selectedLib, onClose, onGameSelect, on
         onGameSelect(loaded);
       })
       .finally(() => setLoadingLibId(null));
+  };
+
+  const handleDeleteLib = async (e: React.MouseEvent, lib: BbkGameLib) => {
+    e.stopPropagation();
+    if (!confirm('确定删除此游戏？')) return;
+    await deleteLocalBbkGameLibApi(lib.id);
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -159,10 +164,7 @@ export function SwitchGameDialog({ games, selectedLib, onClose, onGameSelect, on
                               className="absolute top-1/2 right-3 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-[rgba(239,226,189,0.5)] hover:bg-[rgba(239,226,189,0.08)] hover:text-[#e07050] active:text-[#c05040]"
                               role="button"
                               aria-label={`删除 ${lib.name}`}
-                              onClick={e => {
-                                e.stopPropagation();
-                                onDeleteLib(lib.id);
-                              }}
+                              onClick={e => handleDeleteLib(e, lib)}
                             >
                               <DeleteIcon className="size-4.5" aria-hidden="true" />
                             </span>

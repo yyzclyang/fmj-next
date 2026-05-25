@@ -14,7 +14,7 @@ export interface LoadedGameLib {
 export async function loadGameLib(gameLib: BbkGameLib, source: GameSource): Promise<LoadedGameLib> {
   const buffer =
     source === 'local'
-      ? await getLocalBbkGameLibDataApi(gameLib.id).then(b => b ?? Promise.reject(new Error('Failed to load LIB')))
+      ? await getLocalBbkGameLibDataApi(gameLib.sha256).then(b => b ?? Promise.reject(new Error('Failed to load LIB')))
       : await fetch(`${R2_STATIC_BASE_URL}/${gameLib.url}`).then(res => {
           if (!res.ok) throw new Error('Failed to load LIB');
           return res.arrayBuffer();

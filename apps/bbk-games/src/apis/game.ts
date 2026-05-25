@@ -36,8 +36,10 @@ export async function getBbkGamesApi(current = 1, pageSize = 20): Promise<ListRe
 }
 
 export async function saveLocalBbkGameLibApi(lib: Omit<BbkGameLib, 'id'>, buffer: ArrayBuffer): Promise<BbkGameLib> {
-  const id = await db.lib.add(lib as BbkGameLib);
-  await db.libBuffer.add({ libId: id, buffer } as LibBuffer);
+  const [id] = await Promise.all([
+    db.lib.add(lib as BbkGameLib),
+    db.libBuffer.put({ sha256: lib.sha256, buffer } as LibBuffer),
+  ]);
   return { ...lib, id };
 }
 
@@ -46,12 +48,14 @@ export async function deleteLocalBbkGameLibApi(id: number): Promise<void> {
   if (!lib) return;
   await Promise.all([
     db.lib.delete(id),
-    db.libBuffer.where('libId').equals(id).delete(),
     db.save.where('scopeId').equals(lib.scopeId).delete(),
   ]);
+  const remaining = await db.lib.where('sha256').equals(lib.sha256).count();
+  if (remaining === 0)
+    await db.libBuffer.where('sha256').equals(lib.sha256).delete();
 }
 
-export async function getLocalBbkGameLibDataApi(libId: number): Promise<ArrayBufferLike | undefined> {
-  const record = await db.libBuffer.where('libId').equals(libId).first();
+export async function getLocalBbkGameLibDataApi(sha256: string): Promise<ArrayBufferLike | undefined> {
+  const record = await db.libBuffer.where('sha256').equals(sha256).first();
   return record?.buffer;
 }

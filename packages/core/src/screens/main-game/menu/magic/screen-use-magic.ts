@@ -9,8 +9,8 @@ import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
 import { createLogger } from '@/utils/logger';
-import { getPartyPlayers } from './party-utils';
-import { drawPlayerState } from './screen-actor-state';
+import { getPartyPlayers } from '../party-utils';
+import { drawPlayerState } from '../properties/screen-actor-state';
 
 const NAME_LEFT = 4;
 const NAME_TOP = 4;

@@ -3,7 +3,7 @@ import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
-import { drawVerticalMenu } from './menu-select';
+import { drawVerticalMenu } from '../menu-select';
 
 const PROPERTY_ITEMS = ['状态', '穿戴'] as const;
 const LINE_GAP = 16;

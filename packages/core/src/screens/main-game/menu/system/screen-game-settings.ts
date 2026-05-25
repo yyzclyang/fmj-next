@@ -4,7 +4,7 @@ import type { Surface } from '@/rendering/surface';
 import { drawSelectedText, drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
-import { moveSelectionWrap } from './menu-select';
+import { moveSelectionWrap } from '../menu-select';
 
 const SETTINGS_ITEMS = ['地图信息', '穿墙模式', '宝箱提示', '原版伤害', 'Miss 判定'] as const;
 const FRAME_LEFT = 72;

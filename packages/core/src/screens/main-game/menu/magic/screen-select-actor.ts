@@ -4,39 +4,35 @@ import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
-import { drawVerticalMenu, moveSelectionClamp } from './menu-select';
+import { drawVerticalMenu, moveSelectionWrap } from '../menu-select';
 
-const FRAME_LEFT = 50;
-const FRAME_TOP = 14;
-const FRAME_WIDTH = 86;
-const TEXT_LEFT = 53;
-const TEXT_TOP = 17;
 const LINE_GAP = 16;
-const PADDING_HEIGHT = 6;
+const TEXT_PADDING = 3;
 
-export interface ScreenSelectGoodsActorCallbacks {
+export interface ScreenSelectActorCallbacks {
   onConfirm(player: Player): void;
+  onCancel(): void;
 }
 
-// 物品装备分支的角色选择弹窗，坐标按 Kotlin 匿名 screen 固定。
-export class ScreenSelectGoodsActor extends BaseScreen {
+// 多角色使用魔法前先选角色；单角色场景由主菜单直接确认。
+export class ScreenSelectActor extends BaseScreen {
   private selectedIndex = 0;
 
   constructor(
     game: Game,
     private readonly players: readonly Player[],
-    private readonly callbacks: ScreenSelectGoodsActorCallbacks
+    private readonly callbacks: ScreenSelectActorCallbacks
   ) {
     super(game);
   }
 
   override draw(surface: Surface): void {
-    drawInsetPanel(surface, FRAME_LEFT, FRAME_TOP, FRAME_WIDTH, PADDING_HEIGHT + LINE_GAP * this.players.length);
+    drawInsetPanel(surface, 39, 29, 86, this.players.length * LINE_GAP + TEXT_PADDING * 2);
     drawVerticalMenu(surface, {
       items: this.players.map(player => player.name),
       selectedIndex: this.selectedIndex,
-      left: TEXT_LEFT,
-      top: TEXT_TOP,
+      left: 42,
+      top: 32,
       lineGap: LINE_GAP,
     });
   }
@@ -53,18 +49,20 @@ export class ScreenSelectGoodsActor extends BaseScreen {
         this.confirm();
         return;
       case KeyCode.Cancel:
-        this.close();
+        this.callbacks.onCancel();
         return;
     }
   }
 
   private moveSelection(step: number): void {
-    this.selectedIndex = moveSelectionClamp(this.selectedIndex, step, this.players.length);
+    this.selectedIndex = moveSelectionWrap(this.selectedIndex, step, this.players.length);
   }
 
   private confirm(): void {
     const player = this.players[this.selectedIndex];
-    if (!player) throw new Error('没有可选择的装备角色');
+    if (!player) {
+      throw new Error('没有可选择的角色');
+    }
     this.callbacks.onConfirm(player);
   }
 }

@@ -7,7 +7,7 @@ import { Surface } from '@/rendering/surface';
 import { KeyCode } from '@/utils/key-code';
 import { ORIGIN_SCREEN_HEIGHT, ORIGIN_SCREEN_WIDTH } from '@/utils/constants';
 import { BaseScreen } from '../base-screen';
-import { SaveLoadOperation, ScreenSaveLoadGame } from '../main-game/menu/screen-save-load-game';
+import { SaveLoadOperation, ScreenSaveLoadGame } from '../main-game/menu/system/screen-save-load-game';
 
 const SELECTOR_RESOURCE_START = 250;
 const SELECTOR_RESOURCE_END = 255;

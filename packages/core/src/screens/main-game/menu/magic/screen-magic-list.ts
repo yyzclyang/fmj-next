@@ -5,7 +5,7 @@ import type { Surface } from '@/rendering/surface';
 import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
-import { moveSelectionClamp } from './menu-select';
+import { moveSelectionClamp } from '../menu-select';
 
 export interface ScreenMagicListCallbacks {
   onConfirm(magic: BaseMagic): void;

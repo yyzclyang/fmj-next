@@ -1,5 +1,5 @@
 import type { Game } from '@/game/game';
-import { SaveLoadOperation, ScreenSaveLoadGame } from '@/screens/main-game/menu/screen-save-load-game';
+import { SaveLoadOperation, ScreenSaveLoadGame } from '@/screens/main-game/menu/system/screen-save-load-game';
 import { ScriptChoiceScreen, ScriptMenuScreen } from '@/screens/main-game/script/choice-menu-screen';
 import { createLogger } from '@/utils/logger';
 import type { CommandBuilder } from '../script-command-builder';

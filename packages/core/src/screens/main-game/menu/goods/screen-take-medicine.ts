@@ -8,8 +8,8 @@ import { drawText } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
 import { createLogger } from '@/utils/logger';
-import { getPartyPlayers } from './party-utils';
-import { drawPlayerState } from './screen-actor-state';
+import { getPartyPlayers } from '../party-utils';
+import { drawPlayerState } from '../properties/screen-actor-state';
 
 export type MedicineGoods = GoodsMedicine | GoodsMedicineLife | GoodsMedicinePermanent;
 

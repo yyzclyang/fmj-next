@@ -8,9 +8,9 @@ import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { SCREEN_HEIGHT, SCREEN_WIDTH } from '@/utils/constants';
 import { KeyCode } from '@/utils/key-code';
-import { getPartyPlayers } from './party-utils';
-import { ScreenChangeEquipment } from './screen-change-equipment';
-import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from './screen-goods-list';
+import { getPartyPlayers } from '../party-utils';
+import { ScreenChangeEquipment } from '../goods/screen-change-equipment';
+import { ScreenGoodsList, ScreenGoodsListMode, type ScreenGoodsListItem } from '../goods/screen-goods-list';
 
 const EQUIPMENT_SLOT_LAYOUTS = [
   {

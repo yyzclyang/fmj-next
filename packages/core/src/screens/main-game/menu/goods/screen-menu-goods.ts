@@ -3,36 +3,37 @@ import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
-import { drawVerticalMenu, moveSelectionWrap } from './menu-select';
+import { createLogger } from '@/utils/logger';
+import { drawVerticalMenu, moveSelectionClamp } from '../menu-select';
 
-const SYSTEM_ITEMS = ['读入进度', '存储进度', '游戏设置', '结束游戏'] as const;
+const GOODS_ITEMS = ['使用', '装备', '丢弃'] as const;
 const LINE_GAP = 16;
-const TEXT_PADDING = 3;
-export type SystemMenuItem = (typeof SYSTEM_ITEMS)[number];
+const logger = createLogger('菜单');
+export type GoodsMenuItem = (typeof GOODS_ITEMS)[number];
 
-export interface ScreenMenuSystemCallbacks {
-  onConfirm(item: SystemMenuItem): void;
+export interface ScreenMenuGoodsCallbacks {
+  onConfirm(item: GoodsMenuItem): void;
   onCancel(): void;
 }
 
-// 当前屏幕高度足够展示四项，所以系统菜单不沿用 Kotlin 的滚动箭头。
-export class ScreenMenuSystem extends BaseScreen {
+// 物品菜单只保留三项分流，具体列表由一级菜单回调打开。
+export class ScreenMenuGoods extends BaseScreen {
   private selectedIndex = 0;
 
   constructor(
     game: Game,
-    private readonly callbacks: ScreenMenuSystemCallbacks
+    private readonly callbacks: ScreenMenuGoodsCallbacks
   ) {
     super(game);
   }
 
   override draw(surface: Surface): void {
-    drawInsetPanel(surface, 39, 29, 71, SYSTEM_ITEMS.length * LINE_GAP + TEXT_PADDING * 2);
+    drawInsetPanel(surface, 39, 39, 39, 55);
     drawVerticalMenu(surface, {
-      items: SYSTEM_ITEMS,
+      items: GOODS_ITEMS,
       selectedIndex: this.selectedIndex,
       left: 42,
-      top: 32,
+      top: 42,
       lineGap: LINE_GAP,
     });
   }
@@ -49,17 +50,19 @@ export class ScreenMenuSystem extends BaseScreen {
         this.confirm();
         return;
       case KeyCode.Cancel:
+        logger.log('物品', '物品菜单取消');
         this.callbacks.onCancel();
         return;
     }
   }
 
   private moveSelection(step: number): void {
-    this.selectedIndex = moveSelectionWrap(this.selectedIndex, step, SYSTEM_ITEMS.length);
+    this.selectedIndex = moveSelectionClamp(this.selectedIndex, step, GOODS_ITEMS.length);
   }
 
   private confirm(): void {
-    const item = SYSTEM_ITEMS[this.selectedIndex];
+    const item = GOODS_ITEMS[this.selectedIndex];
+    logger.log('物品', `物品菜单选择 ${item}`);
     this.callbacks.onConfirm(item);
   }
 }

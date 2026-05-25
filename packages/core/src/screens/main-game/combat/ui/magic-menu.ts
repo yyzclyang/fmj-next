@@ -10,7 +10,7 @@ import { logCombatMenu } from '@/combat/combat-log';
 import type { Game } from '@/game/game';
 import { type BaseMagic, MagicAttack, MagicAuxiliary, MagicSpecial } from '@/magic';
 import type { ScreenStack } from '@/screens/screen-stack';
-import { ScreenMagicList } from '@/screens/main-game/menu/screen-magic-list';
+import { ScreenMagicList } from '@/screens/main-game/menu/magic/screen-magic-list';
 import { getFirstTargetPlayerIndex } from '../actions/targeting';
 
 interface CombatMagicMenuOptions {

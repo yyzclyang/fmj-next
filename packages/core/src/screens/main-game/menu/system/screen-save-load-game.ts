@@ -9,7 +9,7 @@ import { BaseScreen } from '@/screens/base-screen';
 import { SCREEN_WIDTH } from '@/utils/constants';
 import { KeyCode } from '@/utils/key-code';
 import { createLogger } from '@/utils/logger';
-import { moveSelectionWrap } from './menu-select';
+import { moveSelectionWrap } from '../menu-select';
 
 export const SaveLoadOperation = {
   Save: 'save',

@@ -9,14 +9,14 @@ import type { Player } from '@/characters';
 import type { Game } from '@/game/game';
 import { GoodsEquipment, GoodsHiddenWeapon, GoodsWeapon } from '@/goods';
 import type { ScreenStack } from '@/screens/screen-stack';
-import { ScreenChangeEquipment } from '@/screens/main-game/menu/screen-change-equipment';
+import { ScreenChangeEquipment } from '@/screens/main-game/menu/goods/screen-change-equipment';
 import {
   ScreenGoodsList,
   ScreenGoodsListMode,
   type ScreenGoodsListActions,
   type ScreenGoodsListItem,
-} from '@/screens/main-game/menu/screen-goods-list';
-import { ScreenSelectActor } from '@/screens/main-game/menu/screen-select-actor';
+} from '@/screens/main-game/menu/goods/screen-goods-list';
+import { ScreenSelectActor } from '@/screens/main-game/menu/magic/screen-select-actor';
 
 interface CombatGoodsMenuOptions {
   readonly game: Game;

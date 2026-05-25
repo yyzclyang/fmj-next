@@ -6,7 +6,7 @@ import { drawText, wrapTextBlock } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
 import { createLogger } from '@/utils/logger';
-import { drawTriangleCursor } from './menu-select';
+import { drawTriangleCursor } from '../menu-select';
 
 export const ScreenGoodsListMode = {
   Sale: 'sale',

@@ -7,8 +7,8 @@ import type { Surface } from '@/rendering/surface';
 import { drawText, getTextWidth } from '@/rendering/text-render';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
-import { drawTriangleCursor } from './menu-select';
-import { getPartyPlayers } from './party-utils';
+import { drawTriangleCursor } from '../menu-select';
+import { getPartyPlayers } from '../party-utils';
 
 const HEAD_LEFT = 10;
 const HEAD_TOP = 2;

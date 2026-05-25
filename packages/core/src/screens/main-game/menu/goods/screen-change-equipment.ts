@@ -7,8 +7,8 @@ import type { Surface } from '@/rendering/surface';
 import { BaseScreen } from '@/screens/base-screen';
 import { KeyCode } from '@/utils/key-code';
 import { createLogger } from '@/utils/logger';
-import { drawTriangleCursor } from './menu-select';
-import { drawPlayerState } from './screen-actor-state';
+import { drawTriangleCursor } from '../menu-select';
+import { drawPlayerState } from '../properties/screen-actor-state';
 
 const GOODS_LEFT = 8;
 const GOODS_TOP = 2;

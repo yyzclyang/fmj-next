@@ -14,10 +14,10 @@ export const DefaultKeyBindings: KeyBindings = {
   [KeyCode.Enter]: ['Enter'],
   [KeyCode.Cancel]: ['Escape'],
   [KeyCode.Repeat]: ['KeyR'],
-  [KeyCode.Search]: ['Digit1'],
-  [KeyCode.Insert]: ['Digit2'],
-  [KeyCode.Modify]: ['Digit3'],
-  [KeyCode.Delete]: ['Digit4'],
+  [KeyCode.Search]: ['KeyS'],
+  [KeyCode.Insert]: ['KeyI'],
+  [KeyCode.Modify]: ['KeyM'],
+  [KeyCode.Delete]: ['KeyD'],
 };
 
 export const KeyCodeLabels: Record<KeyCodeType, string> = {

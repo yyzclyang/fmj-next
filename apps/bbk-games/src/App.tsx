@@ -59,9 +59,9 @@ function App() {
       lib: new Uint8Array(loaded.buffer),
       engineOptions: parseEngineOptions(loaded.manifest.engineOptions) ?? {},
     });
-    handleSpeedChange(1)
-    handleEncounterRateChange(0.4)
-    handleBattleRewardMultiplierChange(1)
+    handleSpeedChange(1);
+    handleEncounterRateChange(0.4);
+    handleBattleRewardMultiplierChange(1);
   };
 
   const handleGameSelect = async (loaded: LoadedGameLib) => {

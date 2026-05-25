@@ -161,16 +161,10 @@ export class CombatRuntime {
   private randomFightConfig: CombatInitFightParams | null = null;
   private randomFightEnabled = false;
   private randomEncounterRate = DEFAULT_RANDOM_ENCOUNTER_RATE;
-  private _expMultiplier = 1;
-  private _moneyMultiplier = 1;
+  private expMultiplier = 1;
+  private moneyMultiplier = 1;
+  private goodsMultiplier = 1;
 
-  setExpMultiplier(value: number): void {
-    this._expMultiplier = value;
-  }
-
-  setMoneyMultiplier(value: number): void {
-    this._moneyMultiplier = value;
-  }
   private activeSession: CombatSession | null = null;
   // 重复行动按角色资源 id 记录，避免队伍站位变化后串用别人的动作。
   private readonly lastPlayerActions = new Map<number, CombatAction>();
@@ -182,6 +176,9 @@ export class CombatRuntime {
     this.randomFightConfig = null;
     this.randomFightEnabled = false;
     this.randomEncounterRate = DEFAULT_RANDOM_ENCOUNTER_RATE;
+    this.expMultiplier = 1;
+    this.moneyMultiplier = 1;
+    this.goodsMultiplier = 1;
     this.lastPlayerActions.clear();
   }
 
@@ -217,6 +214,18 @@ export class CombatRuntime {
   setRandomEncounterRate(rate: number | null): number {
     this.randomEncounterRate = rate ?? DEFAULT_RANDOM_ENCOUNTER_RATE;
     return this.randomEncounterRate;
+  }
+
+  setExpMultiplier(value: number): void {
+    this.expMultiplier = value;
+  }
+
+  setMoneyMultiplier(value: number): void {
+    this.moneyMultiplier = value;
+  }
+
+  setGoodsMultiplier(value: number): void {
+    this.goodsMultiplier = value;
   }
 
   getLastPlayerActions(): Map<number, CombatAction> {
@@ -291,9 +300,7 @@ export class CombatRuntime {
     if (result === 'win') session.settleWin();
     logCombatFinish(result);
     const recoverBefore =
-      result === 'win' || result === 'flee' || result === 'maxRound'
-        ? captureCombatLogStates(session.players)
-        : null;
+      result === 'win' || result === 'flee' || result === 'maxRound' ? captureCombatLogStates(session.players) : null;
     this.activeSession = null;
     if (result === 'win' && recoverBefore) {
       this.recoverPlayersAfterWin(session.players);
@@ -409,8 +416,8 @@ export class CombatRuntime {
     if (this.activeSession !== session) throw new Error('结算了不属于当前运行时的战斗');
     const rawExp = session.monsters.reduce((sum, monster) => sum + monster.exp, 0);
     const rawMoney = session.monsters.reduce((sum, monster) => sum + monster.money, 0);
-    const exp = Math.trunc(rawExp * this._expMultiplier);
-    const money = Math.trunc(rawMoney * this._moneyMultiplier);
+    const exp = Math.trunc(rawExp * this.expMultiplier);
+    const money = Math.trunc(rawMoney * this.moneyMultiplier);
     this.game.state.money += money;
     const settlement = {
       exp,
@@ -469,9 +476,10 @@ export class CombatRuntime {
       const playerRoll = (roll % Math.max(1, playerLuck)) + 1;
       const monsterRoll = monster.totalLuck > 0 ? roll % monster.totalLuck : 0;
       if (playerRoll <= monsterRoll || roll % 4 === 0) continue;
-      const goods = this.game.bag.addGoods(drop.goods.type, drop.goods.index, drop.count);
+      const count = session.isRandomFight ? drop.count * this.goodsMultiplier : drop.count;
+      const goods = this.game.bag.addGoods(drop.goods.type, drop.goods.index, count);
       if (!goods) throw new Error(`战斗掉落物品不存在: GRS ${drop.goods.type}-${drop.goods.index}`);
-      res.push({ goods, count: drop.count });
+      res.push({ goods, count });
     }
     return res;
   }

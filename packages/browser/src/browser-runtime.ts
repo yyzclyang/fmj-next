@@ -35,6 +35,7 @@ export interface CheatApi {
     setEncounterRate(rate?: number | null): void;
     setExpMultiplier(multiplier: number): void;
     setMoneyMultiplier(multiplier: number): void;
+    setGoodsMultiplier(multiplier: number): void;
   };
 }
 
@@ -51,6 +52,7 @@ export class BrowserRuntime {
       setEncounterRate: rate => { this.engine?.debug.combat.setEncounterRate(rate); },
       setExpMultiplier: multiplier => { this.engine?.debug.combat.setExpMultiplier(multiplier); },
       setMoneyMultiplier: multiplier => { this.engine?.debug.combat.setMoneyMultiplier(multiplier); },
+      setGoodsMultiplier: multiplier => { this.engine?.debug.combat.setGoodsMultiplier(multiplier); },
     },
   };
   private readonly presenter: CanvasPresenter;

@@ -182,6 +182,7 @@ export interface DebugCombatApi {
   setEncounterRate(rate?: number | null): number;
   setExpMultiplier(multiplier: number): void;
   setMoneyMultiplier(multiplier: number): void;
+  setGoodsMultiplier(multiplier: number): void;
 }
 
 export function createDebugApi(getGame: () => Game | null): DebugApi {
@@ -333,6 +334,12 @@ export function createDebugApi(getGame: () => Game | null): DebugApi {
         if (!game) return;
         game.combat.setMoneyMultiplier(assertDebugMultiplier(multiplier, 'moneyMultiplier'));
         logger.log('战斗', `金钱倍率:${multiplier}`);
+      },
+      setGoodsMultiplier(multiplier: number) {
+        const game = getGame();
+        if (!game) return;
+        game.combat.setGoodsMultiplier(assertDebugMultiplier(multiplier, 'goodsMultiplier'));
+        logger.log('战斗', `物品倍率:${multiplier}`);
       },
     },
   };

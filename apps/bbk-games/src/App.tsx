@@ -59,8 +59,9 @@ function App() {
       lib: new Uint8Array(loaded.buffer),
       engineOptions: parseEngineOptions(loaded.manifest.engineOptions) ?? {},
     });
-    runtime.setSpeed(speed);
-    runtime.cheat.combat.setEncounterRate(encounterRate / 100);
+    handleSpeedChange(1)
+    handleEncounterRateChange(0.4)
+    handleBattleRewardMultiplierChange(1)
   };
 
   const handleGameSelect = async (loaded: LoadedGameLib) => {
@@ -95,6 +96,7 @@ function App() {
     if (loadedGameLib !== null) {
       runtimeRef.current?.cheat.combat.setExpMultiplier(value);
       runtimeRef.current?.cheat.combat.setMoneyMultiplier(value);
+      runtimeRef.current?.cheat.combat.setGoodsMultiplier(value);
     }
   };
 

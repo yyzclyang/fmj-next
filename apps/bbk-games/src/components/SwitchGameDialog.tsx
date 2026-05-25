@@ -46,9 +46,16 @@ export function SwitchGameDialog({ games, selectedLib, onClose, onGameSelect, on
     setLoadingLibId(Infinity);
     parseLocalGameFile(file)
       .then(([lib, buffer]) => {
-        return saveLocalBbkGameLibApi(lib, buffer).then(savedLib => {
+        const localLibs = games.find(g => g.id === -1)?.libs ?? [];
+        const existingLib = localLibs.find(l => l.sha256 === lib.sha256);
+        if (existingLib) {
+          loadGameLib(existingLib, 'local').then(loaded => onGameSelect(loaded));
           onClose();
+          return;
+        }
+        return saveLocalBbkGameLibApi(lib, buffer).then(savedLib => {
           onGameSelect({ source: 'local', manifest: savedLib, buffer });
+          onClose();
         });
       })
       .finally(() => setLoadingLibId(null));

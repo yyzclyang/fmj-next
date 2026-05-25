@@ -18,6 +18,7 @@ import { KeyCode } from '@/utils/key-code';
 import { createLogger } from '@/utils/logger';
 import { clamp } from '@/utils/math';
 import { ScreenCombat } from './combat/screen-combat';
+import { LearnMagicPage } from './combat/ui/success-pages';
 
 export type Facing = Direction;
 export type SceneObjectKind = 'npc' | 'box';
@@ -223,7 +224,7 @@ export class MainSceneRuntime {
     const process = this.scriptProcess;
     if (process?.busy) {
       process.step(delta);
-      process.timerStep(delta);
+      if (process.busy) process.timerStep(delta);
       return;
     }
 
@@ -287,8 +288,12 @@ export class MainSceneRuntime {
       logger.warn('脚本', 'CALLBACK 已忽略: process 不是当前进程');
       return false;
     }
+    while (process.parent) {
+      process.stop();
+      process = process.parent;
+    }
     process.stop();
-    if (this.returnToMenuOnCallback && !process.parent) {
+    if (this.returnToMenuOnCallback) {
       logger.log('脚本', 'CALLBACK 返回开始菜单');
       this.returnToMenuOnCallback = false;
       this.scriptProcess = null;
@@ -672,6 +677,25 @@ export class MainSceneRuntime {
 
   clearOverlay(): void {
     this.overlayValue = null;
+  }
+
+  showLearnMagic(playerName: string, magicName: string, process: ScriptProcess): void {
+    const page = new LearnMagicPage(this.game, playerName, magicName);
+    let elapsed = 0;
+    let skipped = false;
+    const overlay: ScreenOverlay = {
+      coversScreen: true,
+      draw: surface => page.draw(surface),
+      onKey: () => { skipped = true; },
+    };
+    const operation: ScriptOperation = {
+      update: delta => {
+        if (skipped) return false;
+        elapsed += delta;
+        return elapsed < 1000;
+      },
+    };
+    process.wait(this.withOverlay(operation, overlay));
   }
 
   openBox(id: number): void {

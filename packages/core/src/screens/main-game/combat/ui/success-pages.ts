@@ -102,7 +102,7 @@ class LevelUpPage implements SuccessPage {
   }
 }
 
-class LearnMagicPage implements SuccessPage {
+export class LearnMagicPage implements SuccessPage {
   private readonly infoImage: ResImage | null;
 
   constructor(

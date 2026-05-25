@@ -110,7 +110,7 @@ function cmdLearnMagic(game: Game, reader: ScriptReader): CommandBuilder {
 
   return {
     len: 6,
-    execute: () => {
+    execute: process => {
       const player = game.getPlayer(actorId);
       const magic = game.datLib.getMagic(type, index);
       if (!player || !magic) {
@@ -119,7 +119,8 @@ function cmdLearnMagic(game: Game, reader: ScriptReader): CommandBuilder {
       }
       player.learnMagic(magic);
       logger.log('角色', `LEARNMAGIC ${player.name} 学会 ${magic.name} ${type}:${index}`);
-      game.mainScene?.showTip(`${player.name}学会:${magic.name}`);
+      const runtime = game.mainSceneRuntime;
+      runtime?.showLearnMagic(player.name, magic.name, process);
     },
   };
 }

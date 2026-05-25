@@ -684,7 +684,7 @@ export class MainSceneRuntime {
     let elapsed = 0;
     let skipped = false;
     const overlay: ScreenOverlay = {
-      coversScreen: true,
+      coversScreen: false,
       draw: surface => page.draw(surface),
       onKey: () => { skipped = true; },
     };

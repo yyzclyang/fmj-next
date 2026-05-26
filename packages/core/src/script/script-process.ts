@@ -42,6 +42,10 @@ export class ScriptProcess {
     private readonly headerSize: number
   ) {}
 
+  getCurrentCommandIndex(): number {
+    return this.currentIndex;
+  }
+
   start(): void {
     this.running = true;
     this.resumeOnRestore = false;
@@ -150,6 +154,11 @@ export class ScriptProcess {
       return;
     }
     this.currentIndex = target;
+  }
+
+  gotoCommand(index: number): void {
+    if (index < 0 || index >= this.commands.length) return;
+    this.currentIndex = index;
   }
 
   triggerEvent(eventId: number): boolean {

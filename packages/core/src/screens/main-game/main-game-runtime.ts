@@ -326,14 +326,17 @@ export class MainSceneRuntime {
       `进入 怪物=${params.monsterTypes.filter(type => type > 0).join(',')}, 最大回合=${params.roundMax}, 胜利=${params.winAddress}, 失败=${params.lossAddress}`
     );
     process.pause();
+    const nextCommandIndex = process.getCurrentCommandIndex();
     const session = this.game.combat.enterFight(
       params,
       result => {
         logger.log('战斗', `结束 结果=${result}`);
-        if (result === 'win') {
-          process.gotoAddress(params.winAddress);
-        } else if (result === 'loss') {
-          process.gotoAddress(params.lossAddress);
+        if (result === 'win') process.gotoAddress(params.winAddress);
+        if (result === 'loss') process.gotoAddress(params.lossAddress);
+        // maxRound: 继续执行 ENTERFIGHT 的下一条指令
+        // 回合事件会改变 currentIndex，需要恢复到战斗开始时的位置
+        if (result === 'maxRound') process.gotoCommand(nextCommandIndex);
+        if (result === 'flee') {
         }
         process.start();
       },

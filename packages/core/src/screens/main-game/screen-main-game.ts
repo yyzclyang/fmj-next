@@ -65,6 +65,20 @@ export class ScreenMainGame extends BaseScreen {
     this.runtime.update(delta);
   }
 
+  // 战斗期间脚本进程能继续步进
+  // 只步进脚本进程，不触发 timer、不更新 NPC
+  override performUpdate(delta: number): void {
+    if (!this.screenStack.isEmpty) {
+      const process = this.runtime.activeProcess;
+      if (process?.busy) process.step(delta);
+      this.updateTip(delta);
+      this.screenStack.update(delta);
+    } else {
+      this.updateTip(delta);
+      this.runtime.update(delta);
+    }
+  }
+
   draw(surface: Surface): void {
     this.drawMainGame(surface);
   }

@@ -131,6 +131,10 @@ export class MainSceneRuntime {
     }
   }
 
+  get activeProcess(): ScriptProcess | null {
+    return this.scriptProcess;
+  }
+
   get currentMap(): ResMap | null {
     return this.currentMapValue;
   }

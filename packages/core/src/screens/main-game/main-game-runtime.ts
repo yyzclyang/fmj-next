@@ -689,7 +689,9 @@ export class MainSceneRuntime {
     const overlay: ScreenOverlay = {
       coversScreen: false,
       draw: surface => page.draw(surface),
-      onKey: () => { skipped = true; },
+      onKey: () => {
+        skipped = true;
+      },
     };
     const operation: ScriptOperation = {
       update: delta => {

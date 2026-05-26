@@ -12,6 +12,7 @@ import type { CombatAction } from './combat-actions';
 import {
   captureCombatLogStates,
   logCombatFighterEffects,
+  logCombatAction,
   logCombatFinish,
   logCombatSettlement,
   logCombatStart,
@@ -293,6 +294,22 @@ export class CombatRuntime {
     this.activeSession = session;
     logCombatStart(params, isRandomFight, session.players, session.monsters);
     return session;
+  }
+
+  addPlayerToActiveCombat(player: Player): void {
+    const session = this.activeSession;
+    if (!session) return;
+    if (session.players.length >= 3) return;
+    if (session.players.some(p => p.index === player.index)) return;
+    session.players.push(player);
+    const i = session.players.length - 1;
+    const pos = PLAYER_POS[Math.min(i, PLAYER_POS.length - 1)]!;
+    const sprite = player.fightingSprite;
+    if (!sprite) return;
+    player.activeStatuses.clearFlags(STATUS_FLAGS_ALL);
+    sprite.setCombatPos(pos.x, pos.y);
+    sprite.currentFrame = PlayerFightingFrame.Idle;
+    logCombatAction(`${player.name} 加入战斗 (${session.players.length}/3)`);
   }
 
   finish(session: CombatSession, result: CombatFinishResult): void {

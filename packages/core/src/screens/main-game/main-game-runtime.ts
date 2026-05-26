@@ -422,6 +422,7 @@ export class MainSceneRuntime {
     this.syncVisiblePlayer();
     const player = this.game.addActor(screenActorId);
     if (!player) return;
+    this.game.combat.addPlayerToActiveCombat(player);
     this.setResourcePlayerMapPosition(
       player,
       this.game.state.mapScreenX + screenX,

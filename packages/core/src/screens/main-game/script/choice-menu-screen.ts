@@ -1,4 +1,5 @@
 import type { Game } from '@/game/game';
+import { COLOR_BLACK } from '@/rendering/color';
 import { drawInsetPanel } from '@/rendering/panel';
 import type { Surface } from '@/rendering/surface';
 import { drawSelectedText, drawText, getTextWidth, TEXT_LINE_HEIGHT } from '@/rendering/text-render';
@@ -8,6 +9,8 @@ import { KeyCode } from '@/utils/key-code';
 
 const FRAME_PADDING_X = 3;
 const FRAME_PADDING_Y = 3;
+const MAX_VISIBLE_ITEMS = 8;
+const SCROLL_INDICATOR_SIZE = 6;
 
 interface ScriptMenuLayout {
   readonly items: readonly string[];
@@ -35,7 +38,7 @@ export class ScriptChoiceScreen extends BaseScreen {
   }
 
   override draw(surface: Surface): void {
-    drawScriptMenu(surface, this.layout, this.selectedIndex);
+    drawScriptMenu(surface, this.layout, 0, this.layout.items.length, this.selectedIndex);
   }
 
   override onKey(key: KeyCode): boolean | undefined {
@@ -56,6 +59,7 @@ export class ScriptChoiceScreen extends BaseScreen {
 
 export class ScriptMenuScreen extends BaseScreen {
   private selectedIndex = 0;
+  private scrollOffset = 0;
   private readonly layout: ScriptMenuLayout;
 
   constructor(
@@ -69,16 +73,24 @@ export class ScriptMenuScreen extends BaseScreen {
   }
 
   override draw(surface: Surface): void {
-    drawScriptMenu(surface, this.layout, this.selectedIndex);
+    const start = this.scrollOffset;
+    const end = Math.min(start + MAX_VISIBLE_ITEMS, this.layout.items.length);
+    drawScriptMenu(surface, this.layout, start, end, this.selectedIndex);
   }
 
   override onKey(key: KeyCode): boolean | undefined {
     switch (key) {
       case KeyCode.Up:
-        if (this.selectedIndex > 0) this.selectedIndex -= 1;
+        if (this.selectedIndex > 0) {
+          this.selectedIndex -= 1;
+          if (this.selectedIndex < this.scrollOffset) this.scrollOffset = this.selectedIndex;
+        }
         return;
       case KeyCode.Down:
-        if (this.selectedIndex < this.layout.items.length - 1) this.selectedIndex += 1;
+        if (this.selectedIndex < this.layout.items.length - 1) {
+          this.selectedIndex += 1;
+          if (this.selectedIndex >= this.scrollOffset + MAX_VISIBLE_ITEMS) this.scrollOffset += 1;
+        }
         return;
       case KeyCode.Enter:
         this.close();
@@ -94,9 +106,12 @@ export class ScriptMenuScreen extends BaseScreen {
 
 function createCenteredScriptMenuLayout(items: readonly string[]): ScriptMenuLayout {
   const textWidth = Math.max(...items.map(getTextWidth));
-  const textHeight = TEXT_LINE_HEIGHT * items.length;
+  const visibleCount = Math.min(items.length, MAX_VISIBLE_ITEMS);
+  const needScroll = items.length > MAX_VISIBLE_ITEMS;
+  const scrollPadding = needScroll ? SCROLL_INDICATOR_SIZE * 2 : 0;
+  const textHeight = TEXT_LINE_HEIGHT * visibleCount;
   const frameWidth = textWidth + FRAME_PADDING_X * 2;
-  const frameHeight = textHeight + FRAME_PADDING_Y * 2;
+  const frameHeight = textHeight + FRAME_PADDING_Y * 2 + scrollPadding;
   const left = Math.floor((SCREEN_WIDTH - frameWidth) / 2);
   const top = Math.floor((SCREEN_HEIGHT - frameHeight) / 2);
 
@@ -105,17 +120,38 @@ function createCenteredScriptMenuLayout(items: readonly string[]): ScriptMenuLay
     left,
     top,
     textLeft: left + FRAME_PADDING_X,
-    textTop: top + FRAME_PADDING_Y,
+    textTop: top + FRAME_PADDING_Y + (needScroll ? SCROLL_INDICATOR_SIZE : 0),
     frameWidth,
     frameHeight,
   };
 }
 
-function drawScriptMenu(surface: Surface, layout: ScriptMenuLayout, selectedIndex: number): void {
+function drawScriptMenu(
+  surface: Surface,
+  layout: ScriptMenuLayout,
+  start: number,
+  end: number,
+  selectedIndex: number
+): void {
   drawInsetPanel(surface, layout.left, layout.top, layout.frameWidth, layout.frameHeight);
-  for (let i = 0; i < layout.items.length; i += 1) {
+  const cx = layout.left + Math.floor(layout.frameWidth / 2);
+  if (start > 0) drawTriangleUp(surface, cx, layout.top + 1);
+  if (end < layout.items.length) drawTriangleDown(surface, cx, layout.top + layout.frameHeight - SCROLL_INDICATOR_SIZE);
+  for (let i = start; i < end; i += 1) {
     const draw = i === selectedIndex ? drawSelectedText : drawText;
-    draw(surface, layout.items[i] ?? '', layout.textLeft, layout.textTop + i * TEXT_LINE_HEIGHT);
+    draw(surface, layout.items[i] ?? '', layout.textLeft, layout.textTop + (i - start) * TEXT_LINE_HEIGHT);
+  }
+}
+
+function drawTriangleUp(surface: Surface, cx: number, top: number): void {
+  for (let i = 0; i < 3; i += 1) {
+    surface.fillRect(cx - i, top + 2 + i, i * 2 + 1, 1, COLOR_BLACK);
+  }
+}
+
+function drawTriangleDown(surface: Surface, cx: number, top: number): void {
+  for (let i = 0; i < 3; i += 1) {
+    surface.fillRect(cx - i, top + 2 - i, i * 2 + 1, 1, COLOR_BLACK);
   }
 }
 

@@ -18,6 +18,7 @@ import {
   preparedAction,
 } from './action-preparer-types';
 import { createMissAnimation, getAnimationPoint, isMagicMissed, rollGuardedPlayerTarget } from '../flow/action-utils';
+import { TextFloatAnimation } from '../animations/raise-animations';
 import { captureFighterStates, createRaiseAnimations } from '../flow/post-action';
 import { prepareAttackAction, prepareAttackAllAction, prepareNopAction } from './prepare-physical';
 import { canAttackAllTargets } from '../actions/attack-all';
@@ -146,15 +147,22 @@ export function prepareSpecialMagicAction(ctx: CombatPrepareContext, action: Spe
     if (!target) return noPreparedAction();
     action.target = target;
   }
+  const targetSprite = action.target.fightingSprite;
   const steal = action.target.tryStealGoods(action.actor);
+  const raiseAnimations: CombatActionAnimation[] = [];
   logCombatAction(`${action.actor.name}施展${action.magic.name}`);
   if (steal) {
     const goods = ctx.game.bag.addGoods(steal.type, steal.index, 1);
     if (!goods) throw new Error(`战斗偷取物品不存在: GRS ${steal.type}-${steal.index}`);
-    ctx.setMessage(`获得${goods.name}`);
     logCombatEffect(`${action.actor.name}从${action.target.name}获得${goods.name}`);
+    if (targetSprite) {
+      raiseAnimations.push(new TextFloatAnimation(`获得${goods.name}`, targetSprite.combatX, targetSprite.combatY));
+    }
   } else {
     logCombatEffect(`${action.actor.name}偷取${action.target.name}失败`);
+    if (targetSprite) {
+      raiseAnimations.push(new TextFloatAnimation('偷窃失败', targetSprite.combatX, targetSprite.combatY));
+    }
   }
   return preparedAction(
     action,
@@ -163,7 +171,7 @@ export function prepareSpecialMagicAction(ctx: CombatPrepareContext, action: Spe
       targets: [action.target],
       srs: action.magic.animation,
       srsPoint: getAnimationPoint([action.target], false),
-      raiseAnimations: [],
+      raiseAnimations,
       hitTargets: false,
     })
   );

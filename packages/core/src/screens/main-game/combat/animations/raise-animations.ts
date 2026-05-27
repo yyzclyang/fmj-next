@@ -213,3 +213,29 @@ function drawSignedSmallNum(
     x += smallNumImage.width + 1;
   }
 }
+
+export class TextFloatAnimation implements CombatActionAnimation {
+  private dy = 0;
+  private dt = 0;
+  private elapsed = 0;
+
+  constructor(
+    private readonly text: string,
+    private readonly x: number,
+    private readonly y: number
+  ) {}
+
+  update(delta: number): boolean {
+    this.elapsed += delta;
+    while (this.elapsed >= COMBAT_FRAME_INTERVAL) {
+      this.elapsed -= COMBAT_FRAME_INTERVAL;
+      this.dt += 1;
+      this.dy -= this.dt;
+    }
+    return this.dt <= RAISE_NUMBER_FLOAT_STEPS;
+  }
+
+  draw(surface: Surface): void {
+    drawText(surface, this.text, this.x, this.y + this.dy);
+  }
+}

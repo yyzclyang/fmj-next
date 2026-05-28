@@ -60,7 +60,7 @@ function App() {
       engineOptions: parseEngineOptions(loaded.manifest.engineOptions) ?? {},
     });
     handleSpeedChange(1);
-    handleEncounterRateChange(0.4);
+    handleEncounterRateChange(4);
     handleBattleRewardMultiplierChange(1);
   };
 
